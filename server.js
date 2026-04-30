@@ -13,7 +13,7 @@ const PORT = Number(process.env.PORT || 8765);
 const { buildStatus }     = require("./lib/status");
 const { fetchAllWeather } = require("./lib/weather");
 const { fetchNews }       = require("./lib/news");
-const { readLatestRace }  = require("./lib/jv_cache");
+const { readLatestRace, readAllRaces } = require("./lib/jv_cache");
 const { buildConclusion } = require("./lib/conclusion");
 const { loadVenues }      = require("./lib/venues");
 const { clearCache }      = require("./lib/fetch");
@@ -49,12 +49,48 @@ async function serve(req, res) {
     if (p === "/api/conclusion") {
       return jsonRes(res, 200, buildConclusion(readLatestRace()));
     }
+    if (p === "/api/races") {
+      const races = readAllRaces();
+      if (!races.length) {
+        return jsonRes(res, 503, {
+          ok: false, status: "unavailable", races: [],
+          reason: "出走馬データはまだ取得していません。JRA-VAN（有料）の接続設定後に表示されます。",
+        });
+      }
+      const summaries = races.map(race => {
+        const c = buildConclusion(race);
+        return {
+          raceName: race.race_name || null,
+          raceId: race.race_id || null,
+          course: race.course || null,
+          venue: race.venue || null,
+          isDummy: !!race.is_dummy || /DUMMY|TEST|テスト|ダミー|SYNTHETIC/i.test(race.source || ""),
+          verdict: c.verdict,
+          topGrade: c.topGrade,
+          topPick: c.picks?.[0] ? { number: c.picks[0].number, name: c.picks[0].name, odds: c.picks[0].odds, ev: c.picks[0].ev, grade: c.picks[0].grade } : null,
+          confidence: c.confidence,
+          hasOverpop: (c.overpopular || []).length > 0,
+          hasUnderval: (c.undervalued || []).length > 0,
+        };
+      });
+      return jsonRes(res, 200, { ok: true, fetchedAt: new Date().toISOString(), raceCount: summaries.length, races: summaries });
+    }
     if (p === "/api/refresh") {
       clearCache();
       return jsonRes(res, 200, { ok: true });
     }
     if (p === "/api/venues") {
       return jsonRes(res, 200, { ok: true, venues: loadVenues() });
+    }
+    if (p === "/api/result") {
+      const { readResult, listResults } = require("./lib/finalize");
+      const raceId = u.query?.raceId;
+      if (raceId) {
+        const r = readResult(raceId);
+        if (!r) return jsonRes(res, 404, { ok: false, reason: "結果データなし(JV-Link接続後に取得)" });
+        return jsonRes(res, 200, { ok: true, result: r });
+      }
+      return jsonRes(res, 200, { ok: true, available: listResults() });
     }
 
     // 静的ファイル

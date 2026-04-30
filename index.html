@@ -2,9 +2,17 @@
 <html lang="ja" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0e1a" />
-  <title>KEIBA NAVIGATOR</title>
+  <meta name="description" content="競馬の期待値判定アシスタント — 買わないAI" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="KEIBA NAV" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+  <title>KEIBA NAVIGATOR — 買わないAI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -20,16 +28,8 @@
             mono: ["SFMono-Regular", "Menlo", "Consolas", "monospace"],
           },
           colors: {
-            base:    { DEFAULT: "#0a0e1a", card: "#141a29", elev: "#1c2438", border: "#2a334a" },
-            ink:     { DEFAULT: "#f1f5f9", soft: "#cbd5e1", mute: "#64748b", dim: "#475569" },
-          },
-          boxShadow: {
-            "glow-em": "0 0 40px rgba(16, 185, 129, 0.25)",
-            "glow-em-lg": "0 0 60px rgba(16, 185, 129, 0.4)",
-            "glow-cr": "0 0 30px rgba(239, 68, 68, 0.18)",
-            "glow-am": "0 0 30px rgba(245, 158, 11, 0.25)",
-            "glow-pu": "0 0 30px rgba(168, 85, 247, 0.3)",
-            "card": "0 4px 24px rgba(0, 0, 0, 0.4)",
+            base: { DEFAULT: "#0a0e1a", card: "#141a29", elev: "#1c2438", border: "#2a334a" },
+            ink:  { DEFAULT: "#f1f5f9", soft: "#cbd5e1", mute: "#64748b", dim: "#475569" },
           },
           backgroundImage: {
             "mesh": "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(16,185,129,0.18), transparent 60%), radial-gradient(ellipse 60% 50% at 100% 100%, rgba(59,130,246,0.10), transparent 60%), radial-gradient(ellipse 60% 50% at 0% 80%, rgba(168,85,247,0.08), transparent 60%)",
@@ -48,221 +48,356 @@
   <header class="sticky top-0 z-50 backdrop-blur-xl bg-base/85 border-b border-base-border">
     <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-300 via-emerald-500 to-teal-700 grid place-items-center font-black text-base text-emerald-950 shadow-glow-em shrink-0">K</div>
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-300 via-emerald-500 to-teal-700 grid place-items-center font-black text-base text-emerald-950 shrink-0">K</div>
         <div class="min-w-0">
           <div class="font-display font-black text-base tracking-tight leading-none">KEIBA NAVIGATOR</div>
-          <div class="text-[10px] text-ink-mute mt-1">押した時だけ最新を取得</div>
+          <div class="text-[10px] text-ink-mute mt-1">買わないAI — 押した時だけ最新を取得</div>
         </div>
       </div>
       <button id="btn-refresh" class="btn-refresh group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap shrink-0">
-        <span class="icon">↻</span>
-        <span class="label">更新</span>
+        <span class="icon">↻</span><span class="label">更新</span>
       </button>
     </div>
     <div class="max-w-2xl mx-auto px-4 pb-2 text-[11px] text-ink-mute flex items-center gap-2">
-      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
       <span>最終更新: <span id="last-updated">未取得</span></span>
     </div>
   </header>
 
-  <main class="max-w-2xl mx-auto px-4 py-5 space-y-4">
+  <!-- ═══════════ ホーム タブ ═══════════ -->
+  <main class="tab-pane" id="tab-home">
+    <div class="max-w-2xl mx-auto px-4 py-5 space-y-4">
 
-    <!-- ─── 仮データ警告(該当時のみ) ─── -->
-    <section id="demo-banner" class="demo-banner" hidden>
-      <span class="demo-icon">⚠️</span>
-      <div>
-        <div class="demo-title">これは仮データです</div>
-        <div class="demo-sub">UI動作確認用のサンプル。<b>実際の馬券判断には使わないでください。</b></div>
-      </div>
-    </section>
-
-    <!-- ─── 質問見出し ─── -->
-    <h1 class="hero-question">今日は買う？見送る？</h1>
-
-    <!-- ─── 結論カード(最も大きく、色で一目) ─── -->
-    <section id="big-verdict" class="big-verdict v-loading">
-      <div class="bv-row">
-        <div id="bv-icon" class="bv-icon">⚪</div>
-        <div class="bv-text">
-          <div class="bv-label">結論</div>
-          <div id="bv-title" class="bv-title">読み込み中…</div>
+      <!-- 仮データ警告 -->
+      <section id="demo-banner" class="demo-banner" hidden>
+        <span class="demo-icon">⚠️</span>
+        <div>
+          <div class="demo-title">これは仮データです</div>
+          <div class="demo-sub">UI動作確認用のサンプル。<b>実際の馬券判断には使わないでください。</b></div>
         </div>
-      </div>
-      <p id="bv-reason" class="bv-reason">「更新」を押してください。</p>
-    </section>
+      </section>
 
-    <!-- ─── 買うならこれ ─── -->
-    <section id="card-pick" class="simple-card sc-buy" hidden>
-      <h2 class="sc-title">🟢 買うならこれ</h2>
-      <div class="pick-row">
-        <div id="pick-num" class="big-num color-buy">--</div>
-        <div class="pick-info">
-          <div id="pick-name" class="pick-name">--</div>
-          <div id="pick-reason" class="pick-reason">--</div>
-        </div>
-      </div>
-      <div id="pick-suggest" class="pick-suggest">買い目: <span id="pick-suggest-text">--</span></div>
-    </section>
+      <!-- 質問見出し -->
+      <h1 class="hero-question">今日は買う？見送る？</h1>
 
-    <!-- ─── 穴で面白い (該当時のみ) ─── -->
-    <section id="card-underval" class="simple-card sc-under" hidden>
-      <h2 class="sc-title">🟣 穴で面白い</h2>
-      <div class="pick-row">
-        <div id="under-num" class="big-num color-under">--</div>
-        <div class="pick-info">
-          <div id="under-name" class="pick-name">--</div>
-          <div id="under-reason" class="pick-reason">--</div>
-        </div>
-      </div>
-    </section>
+      <!-- 全レース一覧 (複数取得時のみ表示) -->
+      <section id="card-races" class="simple-card sc-info" hidden>
+        <h2 class="sc-title">📋 今日のレース一覧 <span id="races-count" class="text-ink-mute text-xs ml-1"></span></h2>
+        <p class="races-hint">グレード順・狙えるレースが上に来ます。タップしてもデータは追加では取りません。</p>
+        <ul id="races-list" class="races-list"></ul>
+      </section>
 
-    <!-- ─── 危険な人気馬 (該当時のみ) ─── -->
-    <section id="card-danger" class="simple-card sc-danger" hidden>
-      <h2 class="sc-title">🔴 危険な人気馬</h2>
-      <div class="pick-row">
-        <div id="danger-num" class="big-num color-danger">--</div>
-        <div class="pick-info">
-          <div id="danger-name" class="pick-name">--</div>
-          <div id="danger-reason" class="pick-reason">--</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ─── 今日のひとこと ─── -->
-    <section id="card-advice" class="simple-card sc-advice">
-      <h2 class="sc-title">💬 今日のひとこと</h2>
-      <p id="advice-text" class="advice-text">「更新」を押すと、その時点のデータで判定します。</p>
-    </section>
-
-    <!-- ─── ▼ もっと詳しく見る (折りたたみ群) ─── -->
-
-    <details class="details-pro">
-      <summary class="pro-summary">
-        <span class="pro-icon">📊</span>
-        <span class="pro-title">もっと詳しく見る — 期待値の数字</span>
-        <span class="caret">▾</span>
-      </summary>
-      <div class="pro-body">
-
-        <!-- 期待値ベースの詳細(従来のhero/BUY/AVOID/OVERPOP/UNDERVALを統合・コンパクト化) -->
-        <div class="pro-meta-grid">
-          <div class="pro-meta">
-            <div class="pro-meta-label">使用モデル</div>
-            <div id="pro-model" class="pro-meta-val">--</div>
+      <!-- 結論カード -->
+      <section id="big-verdict" class="big-verdict v-loading">
+        <div class="bv-row">
+          <div id="bv-icon" class="bv-icon">⚪</div>
+          <div class="bv-text">
+            <div class="bv-label">結論</div>
+            <div id="bv-title" class="bv-title">読み込み中…</div>
           </div>
-          <div class="pro-meta">
-            <div class="pro-meta-label">信頼度</div>
-            <div id="pro-confidence" class="pro-meta-val">--</div>
+          <div id="bv-grade" class="bv-grade" hidden>--</div>
+        </div>
+        <p id="bv-reason" class="bv-reason">「更新」を押してください。</p>
+      </section>
+
+      <!-- AI実績スナップショット -->
+      <section id="card-ai-track" class="ai-track">
+        <div class="ai-track-head">
+          <span class="ai-track-title">📊 このAIは信頼できる?</span>
+          <span id="ai-period-label" class="ai-track-period">直近1週間</span>
+        </div>
+        <div id="ai-trust-label" class="ai-trust-label trust-pending">まだ判断できません</div>
+        <div id="ai-trust-note"  class="ai-trust-note">記録が少なすぎます</div>
+        <div class="ai-track-grid">
+          <div class="ai-track-cell">
+            <div class="ai-track-key">エア</div>
+            <div class="ai-track-row"><span class="ai-track-mlbl">回収率</span><span id="ai-air-rec" class="ai-track-mval">--</span></div>
+            <div class="ai-track-row"><span class="ai-track-mlbl">的中率</span><span id="ai-air-hit" class="ai-track-mval">--</span></div>
+            <div class="ai-track-row"><span class="ai-track-mlbl">件数</span>  <span id="ai-air-cnt" class="ai-track-mval">0件</span></div>
           </div>
-          <div class="pro-meta">
-            <div class="pro-meta-label">レース判定</div>
-            <div id="pro-verdict" class="pro-meta-val">--</div>
+          <div class="ai-track-cell">
+            <div class="ai-track-key">リアル</div>
+            <div class="ai-track-row"><span class="ai-track-mlbl">回収率</span><span id="ai-real-rec" class="ai-track-mval">--</span></div>
+            <div class="ai-track-row"><span class="ai-track-mlbl">的中率</span><span id="ai-real-hit" class="ai-track-mval">--</span></div>
+            <div class="ai-track-row"><span class="ai-track-mlbl">件数</span>  <span id="ai-real-cnt" class="ai-track-mval">0件</span></div>
           </div>
         </div>
+        <canvas id="ai-mini-chart" class="ai-mini-chart" width="600" height="64"></canvas>
+      </section>
 
-        <h3 class="pro-h3">買い候補(オッズ的におトクな順)</h3>
-        <ul id="buy-list" class="pro-list">
-          <li class="pro-empty">未取得</li>
-        </ul>
-
-        <h3 class="pro-h3">人気しすぎで危険</h3>
-        <ul id="overpopular-list" class="pro-list">
-          <li class="pro-empty">該当なし</li>
-        </ul>
-
-        <h3 class="pro-h3">穴で面白い</h3>
-        <ul id="undervalued-list" class="pro-list">
-          <li class="pro-empty">該当なし</li>
-        </ul>
-
-        <h3 class="pro-h3">期待値マイナス(避ける)</h3>
-        <ul id="avoid-list" class="pro-list">
-          <li class="pro-empty">該当なし</li>
-        </ul>
-
-        <h3 class="pro-h3">判断の理由(細かい根拠)</h3>
-        <ul id="reason-list" class="pro-reason-list">
-          <li class="pro-empty">未取得</li>
-        </ul>
-      </div>
-    </details>
-
-    <details class="details-pro">
-      <summary class="pro-summary">
-        <span class="pro-icon">🐎</span>
-        <span class="pro-title">出馬表(全頭)</span>
-        <span class="caret">▾</span>
-      </summary>
-      <div class="pro-body">
-        <p id="detail-message" class="pro-note">未取得</p>
-        <div class="overflow-x-auto mt-3">
-          <table id="horse-table" hidden class="w-full text-sm tabular">
-            <thead>
-              <tr class="text-left text-ink-mute text-[10px] uppercase tracking-widest border-b border-base-border">
-                <th class="py-2 px-2">枠</th><th class="py-2 px-2">馬番</th><th class="py-2 px-2">馬名</th><th class="py-2 px-2">性齢</th><th class="py-2 px-2">斤量</th><th class="py-2 px-2">騎手</th><th class="py-2 px-2">調教師</th><th class="py-2 px-2 text-right">単勝</th><th class="py-2 px-2 text-right">人気</th><th class="py-2 px-2 text-right">前走</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+      <!-- 買うならこれ -->
+      <section id="card-pick" class="simple-card sc-buy" hidden>
+        <h2 class="sc-title">🟢 買うならこれ</h2>
+        <div class="pick-row">
+          <div id="pick-num" class="big-num color-buy">--</div>
+          <div class="pick-info">
+            <div id="pick-name" class="pick-name">--</div>
+            <div id="pick-reason" class="pick-reason">--</div>
+          </div>
         </div>
-      </div>
-    </details>
+        <div id="pick-suggest" class="pick-suggest">買い目: <span id="pick-suggest-text">--</span></div>
+        <div class="pick-actions">
+          <button id="btn-record-air"  class="btn-rec btn-rec-air"  type="button">🧪 エア馬券で記録</button>
+          <button id="btn-record-real" class="btn-rec btn-rec-real" type="button">💰 リアル馬券で記録</button>
+        </div>
+        <p id="pick-record-note" class="pick-record-note" hidden>仮データのため記録できません(実データ取得後に有効化されます)。</p>
+      </section>
 
-    <details class="details-pro">
-      <summary class="pro-summary">
-        <span class="pro-icon">🌤</span>
-        <span class="pro-title">競馬場の天気(参考)</span>
-        <span class="caret">▾</span>
-      </summary>
-      <div id="weather-grid" class="weather-grid-mini pro-body">
-        <div class="pro-empty">未取得</div>
-      </div>
-    </details>
+      <!-- 穴で面白い -->
+      <section id="card-underval" class="simple-card sc-under" hidden>
+        <h2 class="sc-title">🟣 穴で面白い</h2>
+        <div class="pick-row">
+          <div id="under-num" class="big-num color-under">--</div>
+          <div class="pick-info">
+            <div id="under-name" class="pick-name">--</div>
+            <div id="under-reason" class="pick-reason">--</div>
+          </div>
+        </div>
+      </section>
 
-    <details class="details-pro">
-      <summary class="pro-summary">
-        <span class="pro-icon">📰</span>
-        <span class="pro-title">関連ニュース <span id="news-count" class="ml-1 text-ink-mute text-xs"></span></span>
-        <span class="caret">▾</span>
-      </summary>
-      <ul id="news-list" class="pro-news-list">
-        <li class="pro-empty">未取得</li>
-      </ul>
-    </details>
+      <!-- 危険な人気馬 -->
+      <section id="card-danger" class="simple-card sc-danger" hidden>
+        <h2 class="sc-title">🔴 危険な人気馬</h2>
+        <div class="pick-row">
+          <div id="danger-num" class="big-num color-danger">--</div>
+          <div class="pick-info">
+            <div id="danger-name" class="pick-name">--</div>
+            <div id="danger-reason" class="pick-reason">--</div>
+          </div>
+        </div>
+      </section>
 
-    <details class="details-pro">
-      <summary class="pro-summary">
-        <span class="pro-icon">📡</span>
-        <span class="pro-title">データの取得状況 <span id="status-counts" class="ml-1 text-ink-mute text-xs"></span></span>
-        <span class="caret">▾</span>
-      </summary>
-      <ul id="status-list" class="pro-status-list">
-        <li class="pro-empty">未取得</li>
-      </ul>
-    </details>
+      <!-- 今日のひとこと -->
+      <section id="card-advice" class="simple-card sc-advice">
+        <h2 class="sc-title">💬 今日のひとこと</h2>
+        <p id="advice-text" class="advice-text">「更新」を押すと、その時点のデータで判定します。</p>
+      </section>
 
-    <!-- ─── SETUP (only when JV-Link unavailable) ─── -->
-    <section id="setup-banner" class="card-setup" hidden>
-      <h2 class="sc-title">🔧 本格データを使うには</h2>
-      <p class="text-sm text-ink-soft mb-4 leading-relaxed">
-        今は「天気」と「ニュース」だけ自動で取れています。<br>
-        オッズ・出馬表・過去成績などは下の5ステップで取れるようになります。
-      </p>
-      <ol class="setup-steps">
-        <li><span class="step-num">1</span><div><b>JRA-VANを契約</b> <span class="text-ink-mute">月額2,090円</span><br><a class="link-em" target="_blank" rel="noopener" href="https://jra-van.jp/dlb/">公式サイトへ →</a></div></li>
-        <li><span class="step-num">2</span><div><b>JV-Linkをインストール</b> <span class="text-ink-mute">Windows専用</span><br><a class="link-em" target="_blank" rel="noopener" href="https://jra-van.jp/dlb/sdv/sdk.html">ダウンロード →</a></div></li>
-        <li><span class="step-num">3</span><div><b>32bit Pythonをインストール</b><br><a class="link-em" target="_blank" rel="noopener" href="https://www.python.org/downloads/windows/">Python公式 →</a></div></li>
-        <li><span class="step-num">4</span><div><b>必要なライブラリを入れる</b><br><code class="code-pill">py -3.12-32 -m pip install pywin32</code></div></li>
-        <li><span class="step-num">5</span><div><b>接続テスト</b><br><code class="code-pill">py -3.12-32 jv_bridge\jv_fetch.py init</code></div></li>
-      </ol>
-    </section>
+      <!-- もっと詳しく見る -->
+      <details class="details-pro">
+        <summary class="pro-summary"><span class="pro-icon">📊</span><span class="pro-title">もっと詳しく見る — 期待値の数字</span><span class="caret">▾</span></summary>
+        <div class="pro-body">
+          <div class="pro-meta-grid">
+            <div class="pro-meta"><div class="pro-meta-label">使用モデル</div><div id="pro-model" class="pro-meta-val">--</div></div>
+            <div class="pro-meta"><div class="pro-meta-label">信頼度</div><div id="pro-confidence" class="pro-meta-val">--</div></div>
+            <div class="pro-meta"><div class="pro-meta-label">判定</div><div id="pro-verdict" class="pro-meta-val">--</div></div>
+          </div>
+          <h3 class="pro-h3">買い候補(オッズ的におトクな順)</h3>
+          <ul id="buy-list" class="pro-list"><li class="pro-empty">未取得</li></ul>
+          <h3 class="pro-h3">人気しすぎで危険</h3>
+          <ul id="overpopular-list" class="pro-list"><li class="pro-empty">該当なし</li></ul>
+          <h3 class="pro-h3">穴で面白い</h3>
+          <ul id="undervalued-list" class="pro-list"><li class="pro-empty">該当なし</li></ul>
+          <h3 class="pro-h3">期待値マイナス(避ける)</h3>
+          <ul id="avoid-list" class="pro-list"><li class="pro-empty">該当なし</li></ul>
+          <h3 class="pro-h3">判断の理由</h3>
+          <ul id="reason-list" class="pro-reason-list"><li class="pro-empty">未取得</li></ul>
+        </div>
+      </details>
 
+      <details class="details-pro">
+        <summary class="pro-summary"><span class="pro-icon">🐎</span><span class="pro-title">出馬表(全頭)</span><span class="caret">▾</span></summary>
+        <div class="pro-body">
+          <p id="detail-message" class="pro-note">未取得</p>
+          <div class="overflow-x-auto mt-3">
+            <table id="horse-table" hidden class="w-full text-sm tabular">
+              <thead>
+                <tr class="text-left text-ink-mute text-[10px] uppercase tracking-widest border-b border-base-border">
+                  <th class="py-2 px-2">枠</th><th class="py-2 px-2">馬番</th><th class="py-2 px-2">馬名</th><th class="py-2 px-2">性齢</th><th class="py-2 px-2">斤量</th><th class="py-2 px-2">騎手</th><th class="py-2 px-2">調教師</th><th class="py-2 px-2 text-right">単勝</th><th class="py-2 px-2 text-right">人気</th><th class="py-2 px-2 text-right">前走</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details class="details-pro">
+        <summary class="pro-summary"><span class="pro-icon">🌤</span><span class="pro-title">競馬場の天気(参考)</span><span class="caret">▾</span></summary>
+        <div id="weather-grid" class="weather-grid-mini pro-body"><div class="pro-empty">未取得</div></div>
+      </details>
+
+      <details class="details-pro">
+        <summary class="pro-summary"><span class="pro-icon">📰</span><span class="pro-title">関連ニュース <span id="news-count" class="ml-1 text-ink-mute text-xs"></span></span><span class="caret">▾</span></summary>
+        <ul id="news-list" class="pro-news-list"><li class="pro-empty">未取得</li></ul>
+      </details>
+
+      <details class="details-pro">
+        <summary class="pro-summary"><span class="pro-icon">📡</span><span class="pro-title">データの取得状況 <span id="status-counts" class="ml-1 text-ink-mute text-xs"></span></span><span class="caret">▾</span></summary>
+        <ul id="status-list" class="pro-status-list"><li class="pro-empty">未取得</li></ul>
+      </details>
+
+      <!-- セットアップ案内 -->
+      <section id="setup-banner" class="card-setup" hidden>
+        <h2 class="sc-title">🔧 本格データを使うには</h2>
+        <p class="text-sm text-ink-soft mb-4 leading-relaxed">
+          今は「天気」と「ニュース」だけ自動で取れています。<br>
+          オッズ・出馬表・過去成績などは下の5ステップで取れるようになります。
+        </p>
+        <ol class="setup-steps">
+          <li><span class="step-num">1</span><div><b>JRA-VANを契約</b> <span class="text-ink-mute">月額2,090円</span><br><a class="link-em" target="_blank" rel="noopener" href="https://jra-van.jp/dlb/">公式サイトへ →</a></div></li>
+          <li><span class="step-num">2</span><div><b>JV-Linkをインストール</b> <span class="text-ink-mute">Windows専用</span><br><a class="link-em" target="_blank" rel="noopener" href="https://jra-van.jp/dlb/sdv/sdk.html">ダウンロード →</a></div></li>
+          <li><span class="step-num">3</span><div><b>32bit Pythonをインストール</b><br><a class="link-em" target="_blank" rel="noopener" href="https://www.python.org/downloads/windows/">Python公式 →</a></div></li>
+          <li><span class="step-num">4</span><div><b>必要なライブラリを入れる</b><br><code class="code-pill">py -3.12-32 -m pip install pywin32</code></div></li>
+          <li><span class="step-num">5</span><div><b>接続テスト</b><br><code class="code-pill">py -3.12-32 jv_bridge\jv_fetch.py init</code></div></li>
+        </ol>
+      </section>
+
+      <p class="footer-note">気象庁 / Google News / JV-Link(要契約) ／ 買い目は仮の分析です。最終判断はご自身で。</p>
+    </div>
   </main>
 
-  <footer class="max-w-2xl mx-auto px-4 py-10 text-center text-[11px] text-ink-mute">
-    <div>気象庁 / Google News / JV-Link(要契約)</div>
-    <div class="mt-1.5">買い目は仮の分析です。最終判断はご自身で。</div>
-  </footer>
+  <!-- ═══════════ 記録 タブ ═══════════ -->
+  <main class="tab-pane" id="tab-record" hidden>
+    <div class="max-w-2xl mx-auto px-4 py-5 space-y-4">
+      <h1 class="hero-question">記録の検証</h1>
+      <p class="rec-intro">エア(仮想購入) と リアル(実購入) を別々に記録して、AI判断の実力を見ます。</p>
+
+      <div class="period-pills">
+        <button class="period-pill" data-period="today">今日</button>
+        <button class="period-pill active" data-period="week">1週間</button>
+        <button class="period-pill" data-period="month">1ヶ月</button>
+        <button class="period-pill" data-period="all">全部</button>
+      </div>
+
+      <div class="rec-tabs">
+        <button class="rec-tab active" data-rec="air">🧪 エア馬券</button>
+        <button class="rec-tab" data-rec="real">💰 リアル馬券</button>
+        <button class="rec-tab" data-rec="compare">⚖️ 比較</button>
+      </div>
+
+      <!-- エア / リアル の単独表示 -->
+      <section id="rec-list-pane" class="rec-list-pane">
+        <div class="rec-stats-grid">
+          <div class="rec-stat"><div class="rec-stat-label">件数</div><div id="rec-count"  class="rec-stat-val">0</div></div>
+          <div class="rec-stat"><div class="rec-stat-label">的中率</div><div id="rec-hit"    class="rec-stat-val">--</div></div>
+          <div class="rec-stat"><div class="rec-stat-label">回収率</div><div id="rec-recovery" class="rec-stat-val">--</div></div>
+          <div class="rec-stat"><div class="rec-stat-label">収支</div><div id="rec-pnl"      class="rec-stat-val">--</div></div>
+        </div>
+        <p class="rec-note">⚠ 着順データはJV-Link接続後にしか取得できません。それまで記録は「結果待ち」のままです。</p>
+
+        <!-- 可視化: 累計収支ライン + グレード分布 -->
+        <div id="rec-charts" class="rec-charts" hidden>
+          <h3 class="pro-h3">累計収支(確定済のみ)</h3>
+          <canvas id="chart-pnl" class="rec-chart" width="640" height="180"></canvas>
+          <h3 class="pro-h3">グレード分布</h3>
+          <div id="grade-dist" class="grade-dist"></div>
+        </div>
+
+        <ul id="rec-list" class="rec-list"><li class="pro-empty">記録がありません</li></ul>
+      </section>
+
+      <!-- 比較 -->
+      <section id="rec-compare-pane" class="rec-list-pane" hidden>
+        <p class="rec-intro">エアとリアルの差を見ます。リアルがエアより悪ければ「買い時」を逃したサイン、エアが悪ければ「ロジックが弱い」サインです。</p>
+        <div class="rec-stats-grid">
+          <div class="rec-stat"><div class="rec-stat-label">エア 回収率</div><div id="cmp-air-rec" class="rec-stat-val">--</div></div>
+          <div class="rec-stat"><div class="rec-stat-label">リアル 回収率</div><div id="cmp-real-rec" class="rec-stat-val">--</div></div>
+          <div class="rec-stat"><div class="rec-stat-label">エア 件数</div><div id="cmp-air-count" class="rec-stat-val">0</div></div>
+          <div class="rec-stat"><div class="rec-stat-label">リアル 件数</div><div id="cmp-real-count" class="rec-stat-val">0</div></div>
+        </div>
+        <div class="rec-cmp-summary">
+          <div class="rec-cmp-row">
+            <div class="rec-cmp-key">エア収支</div>
+            <div id="cmp-air-pnl" class="rec-cmp-val">--</div>
+          </div>
+          <div class="rec-cmp-row">
+            <div class="rec-cmp-key">リアル収支</div>
+            <div id="cmp-real-pnl" class="rec-cmp-val">--</div>
+          </div>
+          <div class="rec-cmp-row rec-cmp-diff">
+            <div class="rec-cmp-key">乖離 (エア − リアル)</div>
+            <div id="cmp-diff" class="rec-cmp-val">--</div>
+          </div>
+        </div>
+        <h3 class="pro-h3">累計収支(エア vs リアル)</h3>
+        <canvas id="chart-compare" class="rec-chart" width="640" height="200"></canvas>
+        <p class="rec-note">※ 結果未確定の記録は「結果待ち」として収支に含めません。JV-Link接続後に着順を反映します。</p>
+      </section>
+
+      <button id="btn-clear-records" class="btn-danger-outline">🗑 全記録を消去</button>
+    </div>
+  </main>
+
+  <!-- ═══════════ 設定 タブ ═══════════ -->
+  <main class="tab-pane" id="tab-settings" hidden>
+    <div class="max-w-2xl mx-auto px-4 py-5 space-y-4">
+      <h1 class="hero-question">設定</h1>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">💼 資金管理</h2>
+        <p class="settings-hint">破産しないために、最初に1度だけ設定します。</p>
+        <label class="settings-row">
+          <span class="settings-label">1日の予算 (円)</span>
+          <input id="set-daily" type="number" min="0" step="100" class="settings-input" placeholder="例: 3000">
+        </label>
+        <label class="settings-row">
+          <span class="settings-label">1レース上限 (円)</span>
+          <input id="set-perrace" type="number" min="0" step="100" class="settings-input" placeholder="例: 1000">
+        </label>
+        <label class="settings-row">
+          <span class="settings-label">最小EV閾値 (1.10推奨)</span>
+          <input id="set-minev" type="number" min="1.0" max="2.0" step="0.05" class="settings-input" placeholder="1.10">
+        </label>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">🎯 戦略</h2>
+        <p class="settings-hint">買い目の方向性を選びます。</p>
+        <div class="strategy-grid">
+          <button class="strategy-btn" data-strategy="safe">
+            <div class="strategy-name">安全</div>
+            <div class="strategy-sub">複勝中心</div>
+          </button>
+          <button class="strategy-btn active" data-strategy="balance">
+            <div class="strategy-name">バランス</div>
+            <div class="strategy-sub">単勝+複勝</div>
+          </button>
+          <button class="strategy-btn" data-strategy="aggro">
+            <div class="strategy-name">攻め</div>
+            <div class="strategy-sub">馬連狙い</div>
+          </button>
+        </div>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">⚖️ リスク感覚</h2>
+        <div class="strategy-grid">
+          <button class="strategy-btn active" data-risk="tight">
+            <div class="strategy-name">堅め</div>
+            <div class="strategy-sub">本命70 / 押さえ30</div>
+          </button>
+          <button class="strategy-btn" data-risk="standard">
+            <div class="strategy-name">標準</div>
+            <div class="strategy-sub">本命50 / 押さえ50</div>
+          </button>
+        </div>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">⚙️ メンテナンス</h2>
+        <button id="btn-clear-all"  class="btn-danger-outline">🗑 全データを消去 (記録 + 設定)</button>
+        <button id="btn-reload"     class="btn-info-outline">🔄 アプリを再読み込み</button>
+        <p class="settings-hint mt-3">壊れた状態をクリアしたい時に使ってください。</p>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">ℹ️ このアプリについて</h2>
+        <p class="settings-text">
+          <b>KEIBA NAVIGATOR</b> は競馬の「<b>買わない</b>」判断を助けるアプリです。<br>
+          オッズに対して期待値マイナスの馬を <b>買わせない</b> ことを最優先にしています。<br>
+          自動的に馬券を購入する機能はありません。最終判断はご自身でお願いします。
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <!-- ═══════════ ボトムタブ ═══════════ -->
+  <nav class="bottom-tabs" id="bottom-tabs">
+    <button class="bt-btn active" data-tab="home"><span class="bt-icon">🏠</span><span class="bt-label">ホーム</span></button>
+    <button class="bt-btn" data-tab="record"><span class="bt-icon">📋</span><span class="bt-label">記録</span></button>
+    <button class="bt-btn" data-tab="settings"><span class="bt-icon">💼</span><span class="bt-label">設定</span></button>
+  </nav>
 
   <script src="app.js"></script>
 </body>
