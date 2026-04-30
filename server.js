@@ -1,0 +1,91 @@
+"use strict";
+// ローカル開発用サーバー (Vercel ではこのファイルは使われず、api/*.js が使われる)
+// 本番のapi/*.jsとロジックを共有するため、すべて lib/ を経由する。
+
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const url_mod = require("url");
+
+const ROOT = __dirname;
+const PORT = Number(process.env.PORT || 8765);
+
+const { buildStatus }     = require("./lib/status");
+const { fetchAllWeather } = require("./lib/weather");
+const { fetchNews }       = require("./lib/news");
+const { readLatestRace }  = require("./lib/jv_cache");
+const { buildConclusion } = require("./lib/conclusion");
+const { loadVenues }      = require("./lib/venues");
+const { clearCache }      = require("./lib/fetch");
+
+function jsonRes(res, status, obj) {
+  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(JSON.stringify(obj));
+}
+
+async function serve(req, res) {
+  try {
+    const u = url_mod.parse(req.url, true);
+    const p = u.pathname || "/";
+
+    if (p === "/api/status") {
+      return jsonRes(res, 200, buildStatus());
+    }
+    if (p === "/api/weather") {
+      return jsonRes(res, 200, await fetchAllWeather());
+    }
+    if (p === "/api/news") {
+      const data = await fetchNews();
+      return jsonRes(res, data.ok ? 200 : 502, data);
+    }
+    if (p === "/api/race") {
+      const race = readLatestRace();
+      if (!race) return jsonRes(res, 503, {
+        ok: false, status: "unavailable",
+        reason: "出走馬データはまだ取得していません。JRA-VAN（有料）の接続設定が完了すると、ここに表示されます。",
+      });
+      return jsonRes(res, 200, { ok: true, race });
+    }
+    if (p === "/api/conclusion") {
+      return jsonRes(res, 200, buildConclusion(readLatestRace()));
+    }
+    if (p === "/api/refresh") {
+      clearCache();
+      return jsonRes(res, 200, { ok: true });
+    }
+    if (p === "/api/venues") {
+      return jsonRes(res, 200, { ok: true, venues: loadVenues() });
+    }
+
+    // 静的ファイル
+    let filePath = path.join(ROOT, decodeURIComponent(p));
+    if (!filePath.startsWith(ROOT)) { res.writeHead(403); return res.end("Forbidden"); }
+    let stat = null;
+    try { stat = fs.statSync(filePath); } catch {}
+    if (stat && stat.isDirectory()) {
+      filePath = path.join(filePath, "index.html");
+      try { stat = fs.statSync(filePath); } catch { stat = null; }
+    }
+    if (!stat) { res.writeHead(404); return res.end("Not Found"); }
+
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = {
+      ".html": "text/html; charset=utf-8",
+      ".js":   "application/javascript; charset=utf-8",
+      ".css":  "text/css; charset=utf-8",
+      ".json": "application/json; charset=utf-8",
+      ".svg":  "image/svg+xml",
+      ".png":  "image/png",
+      ".ico":  "image/x-icon",
+      ".txt":  "text/plain; charset=utf-8",
+    }[ext] || "application/octet-stream";
+    res.writeHead(200, { "Content-Type": mime, "Cache-Control": "no-store" });
+    fs.createReadStream(filePath).pipe(res);
+  } catch (e) {
+    try { jsonRes(res, 500, { ok: false, error: String(e.message || e) }); } catch {}
+  }
+}
+
+http.createServer(serve).listen(PORT, "127.0.0.1", () => {
+  console.log(`🏇 KEIBA NAVIGATOR (local) on http://127.0.0.1:${PORT}`);
+});
