@@ -44,6 +44,18 @@
 
   <div class="fixed inset-0 -z-10 bg-mesh pointer-events-none"></div>
 
+  <!-- ─── トースト通知 (保存・更新完了) ─── -->
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- ─── 接続状態バナー (常時) ─── -->
+  <div id="conn-banner" class="conn-banner conn-disconnected" role="status">
+    <span class="conn-dot"></span>
+    <div class="conn-text">
+      <div id="conn-title" class="conn-title">JV-Link 未接続</div>
+      <div id="conn-sub"   class="conn-sub">AIは仮の分析のみ・実データ未接続です</div>
+    </div>
+  </div>
+
   <!-- ─── Header ─── -->
   <header class="sticky top-0 z-50 backdrop-blur-xl bg-base/85 border-b border-base-border">
     <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">

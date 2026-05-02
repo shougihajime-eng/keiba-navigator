@@ -27,6 +27,65 @@ body {
 .btn-refresh.loading .icon { display: inline-block; animation: spin 0.8s linear infinite; }
 @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
+/* ─── トースト ─── */
+.toast {
+  position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 14px);
+  transform: translateX(-50%);
+  z-index: 100;
+  background: rgba(20, 26, 41, 0.95);
+  color: #f1f5f9;
+  border: 1px solid #2a334a;
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-size: 13px; font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  animation: toastIn 0.18s ease-out;
+}
+.toast.toast-ok { border-color: rgba(16,185,129,0.5); color: #6ee7b7; }
+.toast.toast-warn { border-color: rgba(245,158,11,0.5); color: #fcd34d; }
+.toast.toast-err { border-color: rgba(239,68,68,0.5); color: #fca5a5; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* ─── 接続状態バナー (常時表示・最上部) ─── */
+.conn-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  font-size: 12px; line-height: 1.4;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  position: sticky; top: 0; z-index: 70;
+  backdrop-filter: blur(12px);
+}
+.conn-banner .conn-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.conn-text { flex: 1; min-width: 0; }
+.conn-title { font-weight: 800; color: #f1f5f9; }
+.conn-sub   { font-size: 10.5px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+.conn-disconnected {
+  background: rgba(127,29,29,0.85);
+  color: #fee2e2;
+}
+.conn-disconnected .conn-dot { background: #f87171; box-shadow: 0 0 8px rgba(248,113,113,0.7); }
+.conn-disconnected .conn-title { color: #fecaca; }
+.conn-disconnected .conn-sub   { color: rgba(254,226,226,0.78); }
+.conn-dummy {
+  background: rgba(146,64,14,0.85);
+  color: #fef3c7;
+}
+.conn-dummy .conn-dot { background: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.7); }
+.conn-dummy .conn-title { color: #fde68a; }
+.conn-dummy .conn-sub   { color: rgba(254,243,199,0.78); }
+.conn-connected {
+  background: rgba(4,120,87,0.85);
+  color: #d1fae5;
+}
+.conn-connected .conn-dot { background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,0.7); }
+.conn-connected .conn-title { color: #a7f3d0; }
+.conn-connected .conn-sub   { color: rgba(209,250,229,0.78); }
+
+/* ヘッダーは接続バナーの下に来るので sticky 位置を調整 */
+header.sticky { top: 50px; }
+
 /* ─── 質問見出し ─── */
 .hero-question {
   font-size: 24px; font-weight: 900; color: #f1f5f9;

@@ -82,6 +82,10 @@ async function serve(req, res) {
     if (p === "/api/venues") {
       return jsonRes(res, 200, { ok: true, venues: loadVenues() });
     }
+    if (p === "/api/connection") {
+      const { getConnectionStatus } = require("./lib/connection_status");
+      return jsonRes(res, 200, getConnectionStatus());
+    }
     if (p === "/api/result") {
       const { readResult, listResults } = require("./lib/finalize");
       const raceId = u.query?.raceId;
@@ -91,6 +95,65 @@ async function serve(req, res) {
         return jsonRes(res, 200, { ok: true, result: r });
       }
       return jsonRes(res, 200, { ok: true, available: listResults() });
+    }
+    if (p === "/api/finalize" && req.method === "POST") {
+      const { finalizeBatch } = require("./lib/finalize");
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        const payload = body ? JSON.parse(body) : {};
+        const bets = Array.isArray(payload.bets) ? payload.bets : [];
+        const updates = finalizeBatch(bets);
+        return jsonRes(res, 200, { ok: true, count: updates.length, updates });
+      } catch (e) {
+        return jsonRes(res, 400, { ok: false, error: String(e.message || e) });
+      }
+    }
+    if (p === "/api/g1-history") {
+      const { readG1, listG1 } = require("./lib/g1_history");
+      const id = u.query?.id;
+      if (id) {
+        const r = readG1(id);
+        if (!r) return jsonRes(res, 404, { ok: false, reason: "G1履歴データなし(JV-Link接続後に集計)" });
+        return jsonRes(res, 200, { ok: true, history: r });
+      }
+      return jsonRes(res, 200, { ok: true, available: listG1() });
+    }
+    if (p === "/api/odds-movement") {
+      const { detectMovements } = require("./lib/odds_movement");
+      const race = readLatestRace();
+      if (!race) return jsonRes(res, 503, { ok: false, reason: "レースデータ未取得" });
+      const moves = detectMovements(race);
+      return jsonRes(res, 200, {
+        ok: true,
+        raceId: race.race_id || race.raceId || null,
+        movements: moves,
+        threshold: { minDiffPct: 5, largeMovePct: 10 },
+        note: "JV-Link接続後・複数回更新で履歴が蓄積され、変動が検出されます。",
+      });
+    }
+    if (p === "/api/schedule") {
+      const { recommendNextUpdate, PHASE_INTERVAL_SEC } = require("./lib/scheduler");
+      const races = readAllRaces();
+      let nextStart = null;
+      for (const r of races) {
+        const s = r.race_start || r.start_time || null;
+        if (!s) continue;
+        const t = new Date(s).getTime();
+        if (isNaN(t)) continue;
+        if (t > Date.now() - 30 * 60 * 1000 && (!nextStart || t < new Date(nextStart).getTime())) {
+          nextStart = s;
+        }
+      }
+      const rec = recommendNextUpdate(nextStart);
+      return jsonRes(res, 200, {
+        ok: true,
+        nextRaceStart: nextStart,
+        phase: rec.phase,
+        intervalSec: rec.intervalSec,
+        nextAt: rec.nextAt,
+        phasesConfig: PHASE_INTERVAL_SEC,
+      });
     }
 
     // 静的ファイル

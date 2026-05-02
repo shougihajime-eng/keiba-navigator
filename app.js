@@ -57,6 +57,18 @@ function escapeHtml(s) {
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 
+// ─── トースト (kyotei-style 状態可視化) ─────────────────────
+let _toastTimer = null;
+function showToast(text, kind = "ok") {
+  const el = $("#toast");
+  if (!el) return;
+  el.textContent = text;
+  el.className = "toast toast-" + kind;
+  el.hidden = false;
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.hidden = true; }, 2500);
+}
+
 function fmtOdds(v) { if (v == null || v === "") return "--"; const n = Number(v); return Number.isFinite(n) ? n.toFixed(1) : String(v); }
 function fmtPct(v)  { if (v == null) return "--"; const n = Number(v); return Number.isFinite(n) ? (n * 100).toFixed(1) + "%" : "--"; }
 function fmtYen(v)  { if (v == null || isNaN(v)) return "--"; return Math.round(Number(v)).toLocaleString("ja-JP") + "円"; }
@@ -210,10 +222,10 @@ function renderAdvice(c) {
   $("#advice-text").textContent = buildAdvice(c);
 }
 
-// ─── AI実績スナップショット（ホーム画面・1週間） ────────────
+// ─── AI実績スナップショット（ホーム画面・1週間・dummy除外） ────────────
 function renderAiTrack() {
   const store = loadStore();
-  const week = filterByPeriod(store.bets || [], "week");
+  const week = filterByPeriod(filterDummy(store.bets || []), "week");  // ★dummy除外
   const air  = week.filter(b => b.type === "air");
   const real = week.filter(b => b.type === "real");
   const sa = calcStats(air), sr = calcStats(real);
@@ -318,6 +330,35 @@ function renderReason(c) {
     ul.appendChild(li); return;
   }
   for (const r of list) { const li = document.createElement("li"); li.textContent = r; ul.appendChild(li); }
+}
+
+// ─── 接続状態バナー ─────────────────────────────────────────
+async function refreshConnection() {
+  const r = await getJson("/api/connection");
+  const c = r.body || {};
+  const banner = $("#conn-banner");
+  const title  = $("#conn-title");
+  const sub    = $("#conn-sub");
+  if (!banner) return;
+
+  if (c.connected && c.canTrustPredictions) {
+    banner.className = "conn-banner conn-connected";
+    title.textContent = "✅ JV-Link 接続済 (実データ反映中)";
+    const ageMin = c.ageSec != null ? Math.floor(c.ageSec / 60) : null;
+    sub.textContent = ageMin != null ? `最終同期: ${ageMin}分前 / 実レース ${c.realRaceCount}件` : "最終同期: --";
+  } else if (c.onlyDummyData) {
+    banner.className = "conn-banner conn-dummy";
+    title.textContent = "⚠️ 仮データのみ (実データ未接続)";
+    sub.textContent = "JV-Link接続後にAIが本格稼働します。今は動作確認用の仮データのみ";
+  } else if (c.noData) {
+    banner.className = "conn-banner conn-disconnected";
+    title.textContent = "🔴 JV-Link 未接続 / レースデータなし";
+    sub.textContent = "AIは仮の分析のみ・本格データはJRA-VAN契約とJV-Link設定後に表示";
+  } else {
+    banner.className = "conn-banner conn-disconnected";
+    title.textContent = "🔴 JV-Link 未接続";
+    sub.textContent = "AIは仮の分析のみ・実データ未接続です";
+  }
 }
 
 // ─── DATA STATUS ───────────────────────────────────────────
@@ -464,6 +505,7 @@ async function refreshRaces() {
     return;
   }
   const races = r.body.races;
+  // 1レースだけでも、複数あるかのように見せると初心者が混乱する → 1件は隠す
   if (races.length <= 1) { card.hidden = true; return; }
   card.hidden = false;
   cnt.textContent = `(${races.length}件)`;
@@ -524,9 +566,11 @@ function autoSaveAirBet(c) {
     auto: true,
     amount,
     raceName: raceKey,
+    raceId: c.raceMeta?.raceId || null,
     target: `${top.number} ${top.name || ""}`.trim(),
     betType: "tan",
     odds: top.odds, prob: top.prob, ev: top.ev, grade: top.grade,
+    dataSource: c.dataSource || c.raceMeta?.dataSource || "jv_link",
     result: { won: null, payout: null, finishedAt: null },
   });
   saveStore(store);
@@ -543,7 +587,7 @@ async function refreshAll() {
   const original = labelEl.textContent;
   labelEl.textContent = "更新中…";
   try {
-    await Promise.all([refreshStatus(), refreshConclusion(), refreshRaces(), refreshWeather(), refreshNews(), refreshDetail()]);
+    await Promise.all([refreshConnection(), refreshStatus(), refreshConclusion(), refreshRaces(), refreshWeather(), refreshNews(), refreshDetail()]);
     // 結論データから自動保存(仮データはスキップ)
     autoSaveAirBet(_currentConclusion);
     // ホームのAI実績スナップショットを更新
@@ -552,6 +596,7 @@ async function refreshAll() {
     labelEl.textContent = original;
     btn.classList.remove("loading"); btn.disabled = false;
     isRefreshing = false;
+    showToast("✓ 最新データを取得しました");
   }
 }
 
@@ -559,9 +604,45 @@ async function refreshAll() {
 function switchTab(name) {
   for (const pane of $$(".tab-pane")) pane.hidden = (pane.id !== `tab-${name}`);
   for (const b of $$(".bt-btn")) b.classList.toggle("active", b.dataset.tab === name);
-  if (name === "record")   renderRecords();
+  if (name === "record")   { renderRecords(); autoFinalizePending().catch(() => {}); }
   if (name === "settings") renderSettings();
   window.scrollTo(0, 0);
+}
+
+// 保留中bets を /api/finalize に POST して結果データがあれば確定する
+async function autoFinalizePending() {
+  const store = loadStore();
+  const pending = (store.bets || []).filter(b =>
+    !(b.result?.won === true || b.result?.won === false)
+    && b.dataSource !== "dummy"
+    && (b.raceId || b.race_id)
+  );
+  if (pending.length === 0) return;
+  try {
+    const r = await fetch("/api/finalize", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bets: pending }),
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j.ok || !j.updates?.length) return;
+    // 更新を localStorage に反映
+    const updateMap = new Map(j.updates.map(u => [u.id, u.finalize]));
+    let changed = false;
+    for (const b of store.bets) {
+      const fin = updateMap.get(b.id);
+      if (!fin) continue;
+      b.result = { won: fin.won, payout: fin.payout, finishedAt: fin.finishedAt };
+      b.factors = fin.factors;
+      b.profit  = fin.profit;
+      changed = true;
+    }
+    if (changed) {
+      saveStore(store);
+      renderRecords();
+      renderAiTrack();
+    }
+  } catch {}
 }
 
 // ─── 馬券記録 ──────────────────────────────────────────────
@@ -589,12 +670,14 @@ function recordBet(kind /* 'air' | 'real' */) {
     type: kind,
     amount,
     raceName: _currentRaceMeta?.raceName || "(レース名なし)",
+    raceId:   _currentRaceMeta?.raceId || null,
     target: `${pick.number} ${pick.name || ""}`.trim(),
     betType: "tan",   // 現状は単勝想定。将来 strategy に応じて変更
     odds: pick.odds,
     prob: pick.prob,
     ev: pick.ev,
     grade: pick.grade,
+    dataSource: _currentConclusion?.dataSource || _currentRaceMeta?.dataSource || "unknown",
     result: { won: null, payout: null, finishedAt: null },
   });
   saveStore(store);
@@ -605,7 +688,7 @@ let _recPeriod = "week"; // 期間フィルター: today | week | month | all
 
 function renderRecords() {
   const store = loadStore();
-  const allBets = store.bets || [];
+  const allBets = filterDummy(store.bets || []);  // ★dummy除外
   const periodBets = filterByPeriod(allBets, _recPeriod);
   // タブ切替: air / real / compare
   const activeRec = $$(".rec-tab").length ? [...$$(".rec-tab")].find(b => b.classList.contains("active"))?.dataset.rec : "air";
@@ -632,6 +715,13 @@ function filterByPeriod(bets, period) {
               : period === "month"  ? now - 30 * day
               : 0;
   return bets.filter(b => new Date(b.ts).getTime() >= cutoff);
+}
+
+// 仮データ起源のbetは集計に含めない(混入禁止ルール)
+let _includeDummy = false;
+function filterDummy(bets) {
+  if (_includeDummy) return [...bets];
+  return bets.filter(b => b.dataSource !== "dummy");
 }
 
 function calcStats(bets) {
@@ -891,6 +981,7 @@ function persistSettings() {
     minEv:   Number.isFinite(ev) && ev > 0 ? ev : 1.10,
   };
   saveStore(store);
+  showToast("✓ 保存しました");
 }
 
 // ─── イベント設定 ──────────────────────────────────────────
@@ -931,6 +1022,7 @@ function setupEvents() {
       store.strategy = b.dataset.strategy;
       saveStore(store);
       for (const o of $$('[data-strategy]')) o.classList.toggle("active", o === b);
+      showToast("✓ 戦略: " + b.querySelector(".strategy-name")?.textContent);
     });
   }
   // 設定: リスク
@@ -940,6 +1032,7 @@ function setupEvents() {
       store.risk = b.dataset.risk;
       saveStore(store);
       for (const o of $$('[data-risk]')) o.classList.toggle("active", o === b);
+      showToast("✓ リスク: " + b.querySelector(".strategy-name")?.textContent);
     });
   }
   // 設定: 入力欄(blur 保存)
@@ -968,7 +1061,11 @@ function setupEvents() {
 
 document.addEventListener("DOMContentLoaded", () => {
   setupEvents();
+  // 接続バナーは初期表示時にも更新(更新ボタン押す前から状態を見せる)
+  refreshConnection().catch(() => {});
   // 初期化: 記録/設定タブの初期描画(裏側でも整合性確保)
   try { renderSettings(); } catch (e) { console.warn(e); }
   try { renderRecords();  } catch (e) { console.warn(e); }
+  // ホームのAI実績は記録があれば最初から見せる
+  try { renderAiTrack(); } catch (e) { console.warn(e); }
 });

@@ -164,6 +164,128 @@ def cmd_status(args) -> int:
     return 0
 
 
+def cmd_watch(args) -> int:
+    """発走前後で取得頻度を変えながら継続的にRT取得する。
+    フェーズ:
+      idle:       30分間隔
+      t-60min:    5分間隔
+      t-30min:    2分間隔
+      t-10min:    30秒間隔 (最重要監視)
+      t+5min:     30秒間隔(直後の確定オッズと結果)
+      after t+15: 通常 idle に戻る
+
+    Ctrl+C で停止。
+    """
+    if not (require_pywin32() and require_32bit()):
+        return cmd_init(args)
+    import time
+    try:
+        race_dt = dt.datetime.fromisoformat(args.startat) if args.startat else None
+    except Exception:
+        print(f"[NG] --startat は ISO 形式 (例: 2026-05-01T15:40:00+09:00) で指定してください")
+        return 5
+
+    print(f"[INFO] watch モード開始。race={args.raceid} startat={args.startat}")
+    print(f"       Ctrl+C で停止。データは ../data/jv_cache/ に保存されます。")
+
+    try:
+        while True:
+            now = dt.datetime.now(dt.timezone.utc)
+            if race_dt is not None:
+                # race_dt と now の差(秒)
+                delta = (race_dt - now).total_seconds()
+            else:
+                delta = None
+
+            # 取得実行 (RTオッズ + 馬体重等)
+            try:
+                cmd_rt(args)
+            except Exception as e:
+                print(f"[WARN] RT取得失敗: {e}")
+
+            # 次回までの待機時間決定
+            if delta is None:
+                wait = 30 * 60
+                phase = "idle (発走時刻不明)"
+            elif delta > 60 * 60:
+                wait = 30 * 60; phase = "idle"
+            elif delta > 30 * 60:
+                wait = 5 * 60;  phase = "t-60min"
+            elif delta > 10 * 60:
+                wait = 2 * 60;  phase = "t-30min"
+            elif delta > -15 * 60:
+                wait = 30;       phase = "t-10min/直後"
+            else:
+                print(f"[INFO] 発走から15分以上経過 → watch 終了")
+                return 0
+            print(f"[{phase}] 残り {int(delta) if delta else '?'} 秒  次回まで {wait} 秒")
+            time.sleep(wait)
+    except KeyboardInterrupt:
+        print("\n[STOP] watch モード停止")
+        return 0
+
+
+def cmd_aggregate(args) -> int:
+    """G1過去10年集計用にJVOpenで蓄積系データを取得する。
+    DataSpec 'RACE' で一定期間分のRACEデータを取得。
+    結果を ../data/jv_cache/aggregate_<from>-<to>/ に保存。
+    バイナリ完全パースは仕様書取得後に実装(現状は raw + recordType のみ)。
+    """
+    if not (require_pywin32() and require_32bit()):
+        return cmd_init(args)
+    try:
+        jv = init_jvlink(args.sid)
+        # JVOpen(dataspec, fromtime, option, readcount, downloadcount, lastfiletimestamp)
+        rc, readcount, downloadcount, lastfiletime = jv.JVOpen(
+            args.dataspec, args.fromtime, args.option, 0, 0, ""
+        )
+        if rc != 0:
+            raise RuntimeError(f"JVOpen failed rc={rc}")
+        agg_dir = CACHE_DIR / f"aggregate_{args.fromtime[:8]}_{args.dataspec}"
+        agg_dir.mkdir(parents=True, exist_ok=True)
+        out_path = agg_dir / f"raw_{int(dt.datetime.now().timestamp())}.bin"
+        records = []
+        with open(out_path, "wb") as f:
+            while True:
+                buf_size = 256000
+                buf = ""
+                fname = ""
+                rc, buf, fname = jv.JVRead(buf, buf_size, fname)
+                if rc == 0:
+                    break
+                if rc == -1:
+                    raise RuntimeError("JVRead error -1")
+                if rc == -3:
+                    continue
+                data = buf.encode("shift_jis", errors="replace") if isinstance(buf, str) else buf
+                f.write(data)
+                rec_type = data[:2].decode("ascii", errors="replace") if len(data) >= 2 else ""
+                records.append({"recordType": rec_type, "size": len(data)})
+
+        try: jv.JVClose()
+        except Exception: pass
+
+        meta = {
+            "ok": True,
+            "mode": "aggregate",
+            "dataspec": args.dataspec,
+            "fromtime": args.fromtime,
+            "rawFile": str(out_path.relative_to(CACHE_DIR)),
+            "recordCount": len(records),
+            "fetchedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "note": "完全パースはJVData仕様書取得後。",
+        }
+        meta_path = agg_dir / "meta.json"
+        meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        write_status("ready", lastAggregate=meta)
+        print(f"[OK] 集計取得完了。{len(records)} レコード → {out_path.name}")
+        return 0
+    except Exception as e:
+        write_status("aggregate_failed", error=str(e), trace=traceback.format_exc())
+        print(f"[NG] JVOpen aggregate 失敗: {e}")
+        return 6
+
+
 def main():
     parser = argparse.ArgumentParser(description="JV-Link bridge for 競馬ダッシュボード")
     sub = parser.add_subparsers(dest="mode", required=True)
@@ -178,13 +300,24 @@ def main():
 
     sub.add_parser("status", help="現在のステータスを表示")
 
+    p_watch = sub.add_parser("watch", help="発走前後で頻度を変えながら継続的に取得")
+    p_watch.add_argument("--sid", default="UNKNOWN")
+    p_watch.add_argument("--dataspec", default="0B31")
+    p_watch.add_argument("--raceid", required=True)
+    p_watch.add_argument("--startat", help="ISO datetime (例: 2026-05-01T15:40:00+09:00)")
+
+    p_agg = sub.add_parser("aggregate", help="蓄積系データ(過去成績/血統等)を一括取得")
+    p_agg.add_argument("--sid", default="UNKNOWN")
+    p_agg.add_argument("--dataspec", default="RACE", help="例: RACE/UMA/SE/HR")
+    p_agg.add_argument("--fromtime", required=True, help="例: 20140101000000 (10年前)")
+    p_agg.add_argument("--option", default="1", help="1=今回 2=今回+前回 3=ダイアログあり 4=セットアップ")
+
     args = parser.parse_args()
-    if args.mode == "init":
-        sys.exit(cmd_init(args))
-    elif args.mode == "rt":
-        sys.exit(cmd_rt(args))
-    elif args.mode == "status":
-        sys.exit(cmd_status(args))
+    if args.mode == "init":      sys.exit(cmd_init(args))
+    elif args.mode == "rt":      sys.exit(cmd_rt(args))
+    elif args.mode == "watch":   sys.exit(cmd_watch(args))
+    elif args.mode == "aggregate": sys.exit(cmd_aggregate(args))
+    elif args.mode == "status":  sys.exit(cmd_status(args))
 
 
 if __name__ == "__main__":
