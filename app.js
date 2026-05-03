@@ -114,6 +114,12 @@ async function getJson(url) {
     let body = null;
     try { body = await r.json(); }
     catch { body = { error: "JSON parse failed (HTTP " + r.status + ")" }; }
+    // レート制限/サーバーエラーをUIに通知
+    if (r.status === 429) {
+      try { showToast("⏳ レート制限中です。少し時間を置いて再度更新してください", "warn"); } catch {}
+    } else if (r.status >= 500 && r.status < 600) {
+      try { showToast("⚠ サーバーエラー (" + r.status + ")。時間を置いて再試行してください", "warn"); } catch {}
+    }
     return { ok: r.ok, status: r.status, body };
   } catch (e) {
     return { ok: false, status: 0, body: { error: String(e.message || e) } };
@@ -655,9 +661,18 @@ function autoSaveAirBet(c) {
 
 // ─── REFRESH ALL ───────────────────────────────────────────
 let isRefreshing = false;
+let _lastRefreshAt = 0;
+const REFRESH_COOLDOWN_MS = 5000; // 連打防止
 async function refreshAll() {
   if (isRefreshing) return;
+  const sinceLast = Date.now() - _lastRefreshAt;
+  if (sinceLast < REFRESH_COOLDOWN_MS) {
+    const remain = Math.ceil((REFRESH_COOLDOWN_MS - sinceLast) / 1000);
+    try { showToast("⏳ あと " + remain + " 秒お待ちください (連打防止)", "warn"); } catch {}
+    return;
+  }
   isRefreshing = true;
+  _lastRefreshAt = Date.now();
   const btn = $("#btn-refresh");
   btn.classList.add("loading"); btn.disabled = true;
   const labelEl = btn.querySelector(".label");
