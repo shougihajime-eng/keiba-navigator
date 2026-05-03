@@ -10,22 +10,15 @@ const $$ = (s) => document.querySelectorAll(s);
 
 // ─── localStorage キー ───────────────────────────────────────
 const LS_KEY = "keiba_nav_v1";
+const LS_TMP = LS_KEY + ":tmp";
+const LS_BAK = LS_KEY + ":bak";
+const STORE_VERSION = 1;
+const MAX_BETS = 5000;          // bet数の上限(QuotaExceeded予防)
+const QUOTA_TRIM_KEEP = 4000;   // QuotaExceeded時に残す件数
 
-function loadStore() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return defaultStore();
-    const parsed = JSON.parse(raw);
-    // 互換性 + デフォルト値補完
-    return Object.assign(defaultStore(), parsed);
-  } catch { return defaultStore(); }
-}
-function saveStore(s) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(s)); }
-  catch (e) { console.warn("localStorage write failed:", e); }
-}
 function defaultStore() {
   return {
+    version: STORE_VERSION,
     funds: { daily: null, perRace: null, minEv: 1.10 },
     strategy: "balance",
     risk: "tight",
@@ -33,11 +26,95 @@ function defaultStore() {
   };
 }
 
+function migrateStore(parsed) {
+  if (!parsed || typeof parsed !== "object") return defaultStore();
+  // version 1: 現状の形式
+  // 将来 version > 1 のとき、ここで段階的にマイグレートする
+  if (!parsed.version) parsed.version = STORE_VERSION;
+  // 必須プロパティの欠損補完
+  if (!parsed.funds || typeof parsed.funds !== "object") parsed.funds = defaultStore().funds;
+  if (!Array.isArray(parsed.bets)) parsed.bets = [];
+  if (typeof parsed.strategy !== "string") parsed.strategy = "balance";
+  if (typeof parsed.risk !== "string") parsed.risk = "tight";
+  return parsed;
+}
+
+let _loadCorruptionDetected = false;
+function loadStore() {
+  let raw = null;
+  try {
+    raw = localStorage.getItem(LS_KEY);
+    if (!raw) return defaultStore();
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) throw new Error("invalid_format");
+    return Object.assign(defaultStore(), migrateStore(parsed));
+  } catch (e) {
+    // 壊れていた → バックアップに退避(復旧用)
+    try {
+      if (raw) localStorage.setItem(LS_BAK + "_" + Date.now(), raw);
+    } catch {}
+    _loadCorruptionDetected = true;
+    return defaultStore();
+  }
+}
+
+// アトミック保存: tmp に書いて読み戻し検証 → 成功時のみ本番キーに反映
+// 失敗パターン:
+//   - QuotaExceededError: 古いbetを自動トリムしてリトライ
+//   - その他: トーストで通知しつつ false を返す
+let _saveBusy = false;
+function saveStore(s) {
+  if (_saveBusy) {
+    // 同時保存の取り合いを防ぐ(局所的・短時間の保護)
+  }
+  _saveBusy = true;
+  try {
+    return _saveStoreInner(s);
+  } finally { _saveBusy = false; }
+}
+
+function _saveStoreInner(s, retry = 0) {
+  try {
+    const json = JSON.stringify(s);
+    localStorage.setItem(LS_TMP, json);
+    const back = localStorage.getItem(LS_TMP);
+    if (back !== json) throw new Error("verify_failed");
+    localStorage.setItem(LS_KEY, json);
+    try { localStorage.removeItem(LS_TMP); } catch {}
+    return { ok: true };
+  } catch (e) {
+    const isQuota = e && (e.name === "QuotaExceededError" || /quota/i.test(String(e.message || e)));
+    if (isQuota && retry < 1 && Array.isArray(s.bets) && s.bets.length > QUOTA_TRIM_KEEP) {
+      // 古いbetをトリム(新しい順を残す)
+      const trimmed = [...s.bets].sort((a, b) => (b.ts || "").localeCompare(a.ts || "")).slice(0, QUOTA_TRIM_KEEP);
+      const droppedCount = s.bets.length - trimmed.length;
+      s.bets = trimmed;
+      try { showToast("⚠ 容量上限に達したため古い記録 " + droppedCount + "件を削除しました", "warn"); } catch {}
+      return _saveStoreInner(s, retry + 1);
+    }
+    if (typeof showToast === "function") showToast("✕ 保存に失敗しました: " + (e.message || e), "err");
+    console.warn("[saveStore] failed", e);
+    return { ok: false, error: String(e.message || e) };
+  }
+}
+
+// localStorage 利用率(目安)
+function storageUsagePct() {
+  try {
+    const raw = localStorage.getItem(LS_KEY) || "";
+    // 多くのブラウザで5MB(=5*1024*1024 bytes)が目安
+    return Math.min(100, Math.round((raw.length / (5 * 1024 * 1024)) * 100));
+  } catch { return null; }
+}
+
 // ─── 共通ユーティリティ ─────────────────────────────────────
 async function getJson(url) {
   try {
     const r = await fetch(url, { cache: "no-store" });
-    return { ok: r.ok, status: r.status, body: await r.json() };
+    let body = null;
+    try { body = await r.json(); }
+    catch { body = { error: "JSON parse failed (HTTP " + r.status + ")" }; }
+    return { ok: r.ok, status: r.status, body };
   } catch (e) {
     return { ok: false, status: 0, body: { error: String(e.message || e) } };
   }
@@ -648,13 +725,13 @@ async function autoFinalizePending() {
 // ─── 馬券記録 ──────────────────────────────────────────────
 function recordBet(kind /* 'air' | 'real' */) {
   if (!_currentConclusion?.ok || !_currentConclusion.picks?.length) {
-    alert("買い候補がないため記録できません。");
+    showToast("買い候補がないため記録できません", "warn");
     return;
   }
   const isDummy = !!(_currentRaceMeta?.isDummy)
     || (typeof _currentRaceMeta?.source === "string" && /DUMMY|TEST|テスト|ダミー|SYNTHETIC/i.test(_currentRaceMeta.source));
   if (isDummy) {
-    alert("仮データのため記録できません。実データ取得後に有効化されます。");
+    showToast("仮データのため記録できません(実データ取得後に有効化)", "warn");
     return;
   }
   const pick = _currentConclusion.picks[0];
@@ -672,7 +749,7 @@ function recordBet(kind /* 'air' | 'real' */) {
     raceName: _currentRaceMeta?.raceName || "(レース名なし)",
     raceId:   _currentRaceMeta?.raceId || null,
     target: `${pick.number} ${pick.name || ""}`.trim(),
-    betType: "tan",   // 現状は単勝想定。将来 strategy に応じて変更
+    betType: "tan",
     odds: pick.odds,
     prob: pick.prob,
     ev: pick.ev,
@@ -680,8 +757,13 @@ function recordBet(kind /* 'air' | 'real' */) {
     dataSource: _currentConclusion?.dataSource || _currentRaceMeta?.dataSource || "unknown",
     result: { won: null, payout: null, finishedAt: null },
   });
-  saveStore(store);
-  alert(`${kind === "air" ? "🧪 エア" : "💰 リアル"}馬券として記録しました。\n結果はJV-Link接続後に着順データで確定します。`);
+  const r = saveStore(store);
+  if (r.ok) {
+    showToast(`${kind === "air" ? "🧪 エア" : "💰 リアル"} 馬券として記録しました`);
+    // 記録タブ・ホームを即時リフレッシュ
+    try { renderAiTrack(); } catch {}
+    try { renderRecords(); } catch {}
+  }
 }
 
 let _recPeriod = "week"; // 期間フィルター: today | week | month | all
@@ -968,6 +1050,7 @@ function renderSettings() {
   $("#set-minev").value   = store.funds.minEv   ?? "";
   for (const b of $$('[data-strategy]')) b.classList.toggle("active", b.dataset.strategy === store.strategy);
   for (const b of $$('[data-risk]'))     b.classList.toggle("active", b.dataset.risk     === store.risk);
+  refreshStorageUsage();
 }
 
 function persistSettings() {
@@ -980,8 +1063,8 @@ function persistSettings() {
     perRace: Number.isFinite(pr) && pr > 0 ? pr : null,
     minEv:   Number.isFinite(ev) && ev > 0 ? ev : 1.10,
   };
-  saveStore(store);
-  showToast("✓ 保存しました");
+  const r = saveStore(store);
+  if (r.ok) showToast("✓ 保存しました");
 }
 
 // ─── イベント設定 ──────────────────────────────────────────
@@ -1035,10 +1118,9 @@ function setupEvents() {
       showToast("✓ リスク: " + b.querySelector(".strategy-name")?.textContent);
     });
   }
-  // 設定: 入力欄(blur 保存)
+  // 設定: 入力欄 (change のみ — blur は change と二重発火するので削除)
   for (const sel of ["#set-daily", "#set-perrace", "#set-minev"]) {
     $(sel).addEventListener("change", persistSettings);
-    $(sel).addEventListener("blur",   persistSettings);
   }
 
   // 全記録消去
@@ -1057,6 +1139,64 @@ function setupEvents() {
     location.reload();
   });
   $("#btn-reload").addEventListener("click", () => location.reload());
+
+  // エクスポート
+  $("#btn-export")?.addEventListener("click", () => {
+    try {
+      const raw = localStorage.getItem(LS_KEY) || JSON.stringify(defaultStore());
+      const blob = new Blob([raw], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      a.href = url; a.download = `keiba_navigator_backup_${ts}.json`;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
+      showToast("✓ エクスポートしました");
+    } catch (e) {
+      showToast("✕ エクスポート失敗: " + (e.message || e), "err");
+    }
+  });
+
+  // インポート
+  $("#file-import")?.addEventListener("change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (typeof parsed !== "object" || parsed === null) throw new Error("invalid format");
+      // 既存データの安全のため、現在の保存をバックアップ
+      try {
+        const cur = localStorage.getItem(LS_KEY);
+        if (cur) localStorage.setItem(LS_BAK + "_imported_" + Date.now(), cur);
+      } catch {}
+      const r = saveStore(Object.assign(defaultStore(), migrateStore(parsed)));
+      if (r.ok) {
+        showToast("✓ インポートしました");
+        renderSettings();
+        renderRecords();
+        renderAiTrack();
+      }
+    } catch (e) {
+      showToast("✕ インポート失敗: " + (e.message || e), "err");
+    } finally {
+      ev.target.value = "";  // 同じファイルを連続で選べるようにリセット
+    }
+  });
+}
+
+// 保存容量を設定タブに表示
+function refreshStorageUsage() {
+  const el = $("#storage-usage");
+  if (!el) return;
+  const pct = storageUsagePct();
+  const store = loadStore();
+  const betCount = store.bets?.length || 0;
+  if (pct == null) { el.textContent = "保存容量: --"; return; }
+  el.textContent = `保存容量: 約 ${pct}% / 記録 ${betCount}件 (上限 ${MAX_BETS}件目安)`;
+  if (pct >= 80) el.style.color = "#fca5a5";
+  else if (pct >= 50) el.style.color = "#fcd34d";
+  else el.style.color = "";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1068,4 +1208,8 @@ document.addEventListener("DOMContentLoaded", () => {
   try { renderRecords();  } catch (e) { console.warn(e); }
   // ホームのAI実績は記録があれば最初から見せる
   try { renderAiTrack(); } catch (e) { console.warn(e); }
+  // 起動時に corruption が検出されていれば通知
+  if (_loadCorruptionDetected) {
+    setTimeout(() => showToast("⚠ 保存データの一部が壊れていたため初期化しました(バックアップは保持)", "warn"), 800);
+  }
 });

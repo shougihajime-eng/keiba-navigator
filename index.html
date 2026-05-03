@@ -387,6 +387,17 @@
       </section>
 
       <section class="simple-card sc-info">
+        <h2 class="sc-title">💾 バックアップ / 復元</h2>
+        <p class="settings-hint">記録と設定を JSON ファイルでエクスポート/インポートできます。端末故障や localStorage 消去前のバックアップ用。</p>
+        <button id="btn-export" class="btn-info-outline">⬇ 全データをエクスポート (JSON)</button>
+        <label class="btn-info-outline btn-as-label">
+          ⬆ JSONからインポート
+          <input id="file-import" type="file" accept=".json,application/json" hidden>
+        </label>
+        <p id="storage-usage" class="settings-hint mt-2">保存容量: --</p>
+      </section>
+
+      <section class="simple-card sc-info">
         <h2 class="sc-title">⚙️ メンテナンス</h2>
         <button id="btn-clear-all"  class="btn-danger-outline">🗑 全データを消去 (記録 + 設定)</button>
         <button id="btn-reload"     class="btn-info-outline">🔄 アプリを再読み込み</button>
