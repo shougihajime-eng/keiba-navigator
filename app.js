@@ -10,11 +10,9 @@ const $$ = (s) => document.querySelectorAll(s);
 
 // ─── localStorage キー ───────────────────────────────────────
 const LS_KEY = "keiba_nav_v1";
-const LS_TMP = LS_KEY + ":tmp";
 const LS_BAK = LS_KEY + ":bak";
 const STORE_VERSION = 1;
-const MAX_BETS = 5000;          // bet数の上限(QuotaExceeded予防)
-const QUOTA_TRIM_KEEP = 4000;   // QuotaExceeded時に残す件数
+const MAX_BETS = 5000;
 
 function defaultStore() {
   return {
@@ -28,10 +26,7 @@ function defaultStore() {
 
 function migrateStore(parsed) {
   if (!parsed || typeof parsed !== "object") return defaultStore();
-  // version 1: 現状の形式
-  // 将来 version > 1 のとき、ここで段階的にマイグレートする
   if (!parsed.version) parsed.version = STORE_VERSION;
-  // 必須プロパティの欠損補完
   if (!parsed.funds || typeof parsed.funds !== "object") parsed.funds = defaultStore().funds;
   if (!Array.isArray(parsed.bets)) parsed.bets = [];
   if (typeof parsed.strategy !== "string") parsed.strategy = "balance";
@@ -39,70 +34,78 @@ function migrateStore(parsed) {
   return parsed;
 }
 
+// ─── Storage 経由の同期キャッシュ ────────────────────────────
+// アプリ全体は loadStore() を sync で呼ぶ前提なので、
+// 起動時に Storage.load() を await してキャッシュに入れる。
+// 以降は _storeCache が真。saveStore はキャッシュを更新しつつ
+// Storage に async で永続化する (localStorage + cloud)。
+let _storeCache = null;
 let _loadCorruptionDetected = false;
+
 function loadStore() {
-  let raw = null;
+  if (_storeCache) return _storeCache;
+  // 同期ブートストラップ: localStorage から直接読む (init 前のフォールバック)
   try {
-    raw = localStorage.getItem(LS_KEY);
-    if (!raw) return defaultStore();
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) { _storeCache = defaultStore(); return _storeCache; }
     const parsed = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null) throw new Error("invalid_format");
-    return Object.assign(defaultStore(), migrateStore(parsed));
+    if (typeof parsed !== "object" || parsed === null) throw new Error("invalid");
+    _storeCache = Object.assign(defaultStore(), migrateStore(parsed));
+    return _storeCache;
   } catch (e) {
-    // 壊れていた → バックアップに退避(復旧用)
     try {
+      const raw = localStorage.getItem(LS_KEY);
       if (raw) localStorage.setItem(LS_BAK + "_" + Date.now(), raw);
     } catch {}
     _loadCorruptionDetected = true;
-    return defaultStore();
+    _storeCache = defaultStore();
+    return _storeCache;
   }
 }
 
-// アトミック保存: tmp に書いて読み戻し検証 → 成功時のみ本番キーに反映
-// 失敗パターン:
-//   - QuotaExceededError: 古いbetを自動トリムしてリトライ
-//   - その他: トーストで通知しつつ false を返す
-let _saveBusy = false;
 function saveStore(s) {
-  if (_saveBusy) {
-    // 同時保存の取り合いを防ぐ(局所的・短時間の保護)
+  _storeCache = s;
+  if (window.Storage) {
+    // cloud + localStorage の両方を Storage が面倒見る
+    window.Storage.save(s).then(r => {
+      if (!r.ok && typeof showToast === "function") {
+        showToast("✕ 保存失敗: " + (r.error || "unknown"), "err");
+      }
+    }).catch(e => {
+      if (typeof showToast === "function") showToast("✕ 保存失敗: " + (e.message || e), "err");
+    });
+    return { ok: true };  // 楽観的UI返却
   }
-  _saveBusy = true;
+  // Storage 未読込時のフォールバック
   try {
-    return _saveStoreInner(s);
-  } finally { _saveBusy = false; }
-}
-
-function _saveStoreInner(s, retry = 0) {
-  try {
-    const json = JSON.stringify(s);
-    localStorage.setItem(LS_TMP, json);
-    const back = localStorage.getItem(LS_TMP);
-    if (back !== json) throw new Error("verify_failed");
-    localStorage.setItem(LS_KEY, json);
-    try { localStorage.removeItem(LS_TMP); } catch {}
+    localStorage.setItem(LS_KEY, JSON.stringify(s));
     return { ok: true };
   } catch (e) {
-    const isQuota = e && (e.name === "QuotaExceededError" || /quota/i.test(String(e.message || e)));
-    if (isQuota && retry < 1 && Array.isArray(s.bets) && s.bets.length > QUOTA_TRIM_KEEP) {
-      // 古いbetをトリム(新しい順を残す)
-      const trimmed = [...s.bets].sort((a, b) => (b.ts || "").localeCompare(a.ts || "")).slice(0, QUOTA_TRIM_KEEP);
-      const droppedCount = s.bets.length - trimmed.length;
-      s.bets = trimmed;
-      try { showToast("⚠ 容量上限に達したため古い記録 " + droppedCount + "件を削除しました", "warn"); } catch {}
-      return _saveStoreInner(s, retry + 1);
-    }
-    if (typeof showToast === "function") showToast("✕ 保存に失敗しました: " + (e.message || e), "err");
-    console.warn("[saveStore] failed", e);
+    if (typeof showToast === "function") showToast("✕ 保存失敗: " + (e.message || e), "err");
     return { ok: false, error: String(e.message || e) };
   }
 }
 
-// localStorage 利用率(目安)
+// 起動時にクラウドからロード (Supabase 設定済 + ログイン済の場合)
+async function hydrateFromCloud() {
+  if (!window.Storage) return;
+  try {
+    await window.Storage.init();
+    if (window.Storage.mode === "cloud") {
+      const cloud = await window.Storage.load();
+      if (cloud) {
+        _storeCache = cloud;
+        try { localStorage.setItem(LS_KEY, JSON.stringify(cloud)); } catch {}
+        if (typeof showToast === "function") showToast("☁️ クラウドから同期しました", "ok");
+        try { renderSettings(); renderRecords(); renderAiTrack(); } catch {}
+      }
+    }
+  } catch (e) { console.warn("[hydrateFromCloud] failed", e); }
+}
+
 function storageUsagePct() {
   try {
     const raw = localStorage.getItem(LS_KEY) || "";
-    // 多くのブラウザで5MB(=5*1024*1024 bytes)が目安
     return Math.min(100, Math.round((raw.length / (5 * 1024 * 1024)) * 100));
   } catch { return null; }
 }
@@ -1172,6 +1175,44 @@ function setupEvents() {
     }
   });
 
+  // ─── クラウド同期 (Supabase) ─────────────────────────
+  $("#btn-signin")?.addEventListener("click", async () => {
+    const email = ($("#cloud-email")?.value || "").trim();
+    if (!email || !email.includes("@")) { showToast("メールアドレスを入力してください", "warn"); return; }
+    try {
+      await window.Storage.signIn(email);
+      showToast("📧 ログインリンクをメールで送信しました。リンクをタップしてください", "ok");
+    } catch (e) {
+      showToast("✕ ログイン失敗: " + (e.message || e), "err");
+    }
+  });
+  $("#btn-signout")?.addEventListener("click", async () => {
+    if (!confirm("ログアウトします。クラウド同期は停止し、以後の保存はこの端末の localStorage にのみ行われます。")) return;
+    try {
+      await window.Storage.signOut();
+      showToast("ログアウトしました");
+    } catch (e) { showToast("✕ ログアウト失敗: " + (e.message || e), "err"); }
+  });
+  $("#btn-migrate")?.addEventListener("click", async () => {
+    if (!confirm("この端末の localStorage 内の記録を Supabase へアップロードします。サーバ側の同名IDは上書きされます。続行しますか?")) return;
+    try {
+      const r = await window.Storage.migrateToCloud();
+      if (r.ok) showToast("✓ クラウドへアップロードしました");
+      else showToast("✕ アップロード失敗: " + (r.error || "unknown"), "err");
+    } catch (e) {
+      showToast("✕ アップロード失敗: " + (e.message || e), "err");
+    }
+  });
+
+  // Supabase 認証状態が変わったらUI更新
+  if (window.Storage) {
+    window.Storage.onChange(() => {
+      try { refreshCloudUi(); } catch {}
+      // ログイン直後はクラウドからリロード
+      if (window.Storage.mode === "cloud") hydrateFromCloud();
+    });
+  }
+
   // インポート
   $("#file-import")?.addEventListener("change", async (ev) => {
     const file = ev.target.files?.[0];
@@ -1214,16 +1255,47 @@ function refreshStorageUsage() {
   else el.style.color = "";
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+// クラウド同期状態の表示・ボタン制御
+function refreshCloudUi() {
+  const txt = $("#cloud-status-text");
+  const emailIn = $("#cloud-email");
+  const inBtn   = $("#btn-signin");
+  const outBtn  = $("#btn-signout");
+  const migBtn  = $("#btn-migrate");
+  if (!txt) return;
+  const s = window.Storage;
+  if (!s) {
+    txt.textContent = "Storage 未読込 (ページを再読み込みしてください)";
+    return;
+  }
+  if (!s.cloudConfigured) {
+    txt.textContent = "🔵 ローカルモード (config.js が未設定 — localStorage のみで動作)";
+    [emailIn, inBtn, outBtn, migBtn].forEach(el => el && (el.hidden = true));
+    return;
+  }
+  if (s.mode === "cloud") {
+    txt.textContent = `☁️ クラウド同期中 (${s.user?.email || "ログイン済"})`;
+    if (emailIn) emailIn.hidden = true;
+    if (inBtn)   inBtn.hidden = true;
+    if (outBtn)  outBtn.hidden = false;
+    if (migBtn)  migBtn.hidden = false;
+  } else {
+    txt.textContent = "⚪ Supabase 設定済 — メールアドレスでログインすると同期開始";
+    if (emailIn) emailIn.hidden = false;
+    if (inBtn)   inBtn.hidden = false;
+    if (outBtn)  outBtn.hidden = true;
+    if (migBtn)  migBtn.hidden = true;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   setupEvents();
-  // 接続バナーは初期表示時にも更新(更新ボタン押す前から状態を見せる)
   refreshConnection().catch(() => {});
-  // 初期化: 記録/設定タブの初期描画(裏側でも整合性確保)
-  try { renderSettings(); } catch (e) { console.warn(e); }
+  // クラウド初期化 → 既存のlocalStorage読込より先に
+  try { await hydrateFromCloud(); } catch {}
+  try { renderSettings(); refreshCloudUi(); } catch (e) { console.warn(e); }
   try { renderRecords();  } catch (e) { console.warn(e); }
-  // ホームのAI実績は記録があれば最初から見せる
-  try { renderAiTrack(); } catch (e) { console.warn(e); }
-  // 起動時に corruption が検出されていれば通知
+  try { renderAiTrack();  } catch (e) { console.warn(e); }
   if (_loadCorruptionDetected) {
     setTimeout(() => showToast("⚠ 保存データの一部が壊れていたため初期化しました(バックアップは保持)", "warn"), 800);
   }

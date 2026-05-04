@@ -741,6 +741,19 @@ details[open] .caret { transform: rotate(180deg); }
 }
 .btn-info-outline:hover { background: rgba(96,165,250,0.08); }
 
+/* クラウド同期UI */
+.cloud-actions { display: grid; gap: 8px; margin-top: 8px; }
+.cloud-email-input {
+  width: 100%;
+  text-align: left;
+}
+.btn-as-label {
+  display: block;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
 .settings-text { font-size: 13px; color: #cbd5e1; line-height: 1.7; margin: 0; }
 
 /* ─── Mobile fine-tune ─── */

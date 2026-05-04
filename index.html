@@ -39,6 +39,10 @@
     };
   </script>
   <link rel="stylesheet" href="styles.css">
+  <!-- Supabase クライアント (任意・config.js が未設定なら未使用) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="storage.js"></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -384,6 +388,22 @@
             <div class="strategy-sub">本命50 / 押さえ50</div>
           </button>
         </div>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">☁️ クラウド同期 (Supabase)</h2>
+        <p id="cloud-status-text" class="settings-hint">読込中…</p>
+        <div id="cloud-actions" class="cloud-actions">
+          <input id="cloud-email" type="email" inputmode="email" placeholder="メールアドレス" class="settings-input cloud-email-input" hidden>
+          <button id="btn-signin"  class="btn-info-outline" type="button" hidden>📧 メールでログイン (Magic Link)</button>
+          <button id="btn-signout" class="btn-danger-outline" type="button" hidden>ログアウト</button>
+          <button id="btn-migrate" class="btn-info-outline" type="button" hidden>📤 端末データをクラウドへアップロード</button>
+        </div>
+        <p class="settings-hint mt-2 text-[11px]">
+          未設定: <code>config.js</code> に <code>SUPABASE_URL</code> と <code>SUPABASE_ANON_KEY</code> を入れて、
+          <code>db/schema.sql</code> を Supabase の SQL Editor で実行してください。
+          設定済みでログインすると、複数端末で記録が同期されます。
+        </p>
       </section>
 
       <section class="simple-card sc-info">
