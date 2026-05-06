@@ -849,6 +849,55 @@ details[open] .caret { transform: rotate(180deg); }
   color: var(--ink-2);
   border-radius: 0 var(--r-xs) var(--r-xs) 0;
 }
+.ai-calib {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px dashed var(--line-2);
+}
+.ai-calib-title {
+  font-size: var(--fs-xs); font-weight: 800;
+  color: var(--ink-2);
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+}
+.ai-calib-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--sp-1);
+}
+.ai-calib-cell {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-xs);
+  padding: 6px 4px;
+  text-align: center;
+}
+.ai-calib-cell.cal-pending  { opacity: 0.55; }
+.ai-calib-cell.cal-up    { border-color: var(--acc-buy-line);    background: var(--acc-buy-soft); }
+.ai-calib-cell.cal-down  { border-color: var(--acc-warn-line);   background: var(--acc-warn-soft); }
+.ai-calib-cell.cal-bad   { border-color: var(--acc-danger-line); background: var(--acc-danger-soft); }
+.ai-calib-grade {
+  font-size: var(--fs-md); font-weight: 900;
+  color: var(--ink-1);
+  line-height: 1;
+}
+.ai-calib-ratio {
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.ai-calib-n {
+  font-size: 10px;
+  color: var(--ink-4);
+  margin-top: 2px;
+}
+.ai-calib-hint {
+  margin-top: var(--sp-2);
+  font-size: 11px;
+  color: var(--ink-4);
+}
 
 /* ═══════════════════════════════════════════════════════════
    期間フィルター (記録タブ)

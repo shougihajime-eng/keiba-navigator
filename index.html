@@ -137,6 +137,13 @@
           仮データで記録された馬券は学習に使いません(混入禁止)。</p>
           <p class="ai-level-detail-note">JV-Link(JRA-VAN契約) 接続後は学習モデルが LightGBM/ディープラーニングに自動で切替わり、過去レースから本格学習を始めます。</p>
         </details>
+
+        <!-- グレード別の自己学習 (calibration) -->
+        <div id="ai-calib" class="ai-calib" hidden>
+          <div class="ai-calib-title">📈 AI の自己学習 — グレード別の予想と実績</div>
+          <div class="ai-calib-grid" id="ai-calib-grid"></div>
+          <div class="ai-calib-hint" id="ai-calib-hint">サンプルが10件以上溜まったグレードから補正が効きます</div>
+        </div>
       </section>
 
       <!-- AI実績スナップショット -->

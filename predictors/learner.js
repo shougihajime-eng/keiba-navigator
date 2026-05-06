@@ -103,15 +103,89 @@
     return { pct, hint };
   }
 
+  // ─── グレード別の実績校正 (online calibration) ──────────────
+  // 設計:
+  //   グレード S/A/B/C/D 別に「予想EV」と「実績回収率」を比較。
+  //   実績/予想 の比 (calibrationRatio) を計算し、UI 上の「補正後EV」として
+  //   利用する。データが少ないグレードは比 = 1.0 (補正なし)。
+  //
+  //   信頼区間: サンプル数 n が少ないと比は noisy なので、
+  //             n が小さいときは 1.0 へ収縮 (Bayesian shrinkage)。
+  //             effectiveRatio = (n * ratio + k * 1.0) / (n + k), k=10
+  //
+  // これは「AIが自分の予測のズレを学習する」最初の一歩。
+  // JV-Link 接続後は LightGBM モデル自体がこの校正を内包するため、
+  // weights.lgbm が learner_state に入った時点でこの層は無効化できる。
+  const GRADES = ["S", "A", "B", "C", "D"];
+  const SHRINKAGE_K = 10;
+
+  function gradeOf(bet) {
+    if (bet?.grade && GRADES.includes(bet.grade)) return bet.grade;
+    const ev = Number(bet?.ev);
+    if (!Number.isFinite(ev)) return null;
+    if (ev >= 1.30) return "S";
+    if (ev >= 1.10) return "A";
+    if (ev >= 1.00) return "B";
+    if (ev >= 0.85) return "C";
+    return "D";
+  }
+
+  function computeCalibration(bets) {
+    const cleaned = (Array.isArray(bets) ? bets : []).filter(b => b && b.dataSource !== "dummy");
+    const confirmed = cleaned.filter(b => b.result?.won === true || b.result?.won === false);
+    const byGrade = {};
+    for (const g of GRADES) byGrade[g] = { samples: 0, hits: 0, spent: 0, ret: 0, evSum: 0 };
+    for (const b of confirmed) {
+      const g = gradeOf(b); if (!g) continue;
+      const slot = byGrade[g];
+      slot.samples += 1;
+      slot.hits    += b.result.won ? 1 : 0;
+      slot.spent   += b.amount || 0;
+      slot.ret     += b.result.won ? (b.result.payout || 0) : 0;
+      slot.evSum   += Number.isFinite(Number(b.ev)) ? Number(b.ev) : 1.0;
+    }
+    const out = {};
+    for (const g of GRADES) {
+      const s = byGrade[g];
+      const expectedRate = s.samples ? s.evSum / s.samples : null;            // 予想 EV 平均
+      const actualRate   = s.spent   ? s.ret / s.spent : null;                // 実績回収率
+      const rawRatio     = (expectedRate && expectedRate > 0 && actualRate != null) ? actualRate / expectedRate : null;
+      const eff = rawRatio != null
+        ? (s.samples * rawRatio + SHRINKAGE_K * 1.0) / (s.samples + SHRINKAGE_K)
+        : 1.0;
+      out[g] = {
+        samples: s.samples, hits: s.hits,
+        spent: s.spent, returned: s.ret,
+        expectedRate, actualRate,
+        rawRatio,
+        ratio: eff,                           // 実際に EV にかける倍率
+        // UI 用: ★信頼度 (samples / 30 を 0..1 にクリップ)
+        confidence: Math.min(1, s.samples / 30),
+      };
+    }
+    return out;
+  }
+
+  // 補正後 EV (UI 表示用)
+  function calibratedEV(grade, ev, calibration) {
+    if (!grade || ev == null || !calibration) return ev;
+    const slot = calibration[grade];
+    if (!slot || !Number.isFinite(slot.ratio)) return ev;
+    return Number(ev) * slot.ratio;
+  }
+
   // ─── Supabase 同期 ──────────────────────────────────────────
   async function cloudSync(supabase, userId, bets) {
     if (!supabase || !userId) return { ok: false, reason: "not_signed_in" };
     const stats = computeStats(bets);
+    const calib = computeCalibration(bets);
     try {
       await supabase.from("learner_state").upsert({
         user_id:    userId,
         model_name: MODEL_NAME,
-        weights:    {},  // 現状 heuristic は固定重み。学習モデル差替後にここを更新
+        // weights: グレード別校正の倍率 (実質的な学習結果)
+        // JV-Link 接続後は ここに lgbm: { ... } も追加して LightGBM の重みを保存
+        weights:    { calibration_by_grade: calib },
         metrics: {
           samples:  stats.samples,
           hits:     stats.hits,
@@ -134,6 +208,9 @@
     LEVELS,
     levelMeta,
     computeStats,
+    computeCalibration,
+    calibratedEV,
+    gradeOf,
     cloudSync,
   };
 })(typeof window !== "undefined" ? window : globalThis);

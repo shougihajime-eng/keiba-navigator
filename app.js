@@ -328,6 +328,42 @@ function renderAiLevel() {
       window.Learner.cloudSync(sb, window.Storage.user.id, store.bets || []);
     }
   } catch (e) { /* silent */ }
+
+  // グレード別の自己校正 (calibration) を可視化
+  renderAiCalibration();
+}
+
+function renderAiCalibration() {
+  if (!window.Learner) return;
+  const wrap = document.getElementById("ai-calib");
+  const grid = document.getElementById("ai-calib-grid");
+  if (!wrap || !grid) return;
+  const store = loadStore();
+  const calib = window.Learner.computeCalibration(store.bets || []);
+  const hasAny = Object.values(calib).some(c => c.samples > 0);
+  wrap.hidden = !hasAny;
+  if (!hasAny) return;
+  grid.innerHTML = "";
+  for (const g of ["S", "A", "B", "C", "D"]) {
+    const c = calib[g];
+    const ratio = Number.isFinite(c.ratio) ? c.ratio : 1.0;
+    const pct = Math.round(ratio * 100);
+    let cls = "cal-pending";
+    if (c.samples >= 10) {
+      if (ratio >= 1.10) cls = "cal-up";
+      else if (ratio >= 0.90) cls = "";
+      else if (ratio >= 0.70) cls = "cal-down";
+      else cls = "cal-bad";
+    }
+    const cell = document.createElement("div");
+    cell.className = "ai-calib-cell " + cls;
+    cell.innerHTML = `
+      <div class="ai-calib-grade">${g}</div>
+      <div class="ai-calib-ratio">×${(ratio).toFixed(2)}</div>
+      <div class="ai-calib-n">n=${c.samples}</div>
+    `;
+    grid.appendChild(cell);
+  }
 }
 
 // ─── AI実績スナップショット（ホーム画面・1週間・dummy除外） ────────────
