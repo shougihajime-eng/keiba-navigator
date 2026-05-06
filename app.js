@@ -1267,6 +1267,99 @@ function renderCompare(allBets) {
   drawMonthlyChart($("#chart-monthly"), air, real);
   drawRollingHitChart($("#chart-rolling"), air, real);
   renderGradeCompare(air, real);
+  renderBacktest(allBets);
+}
+
+// 🧠 バックテスト: 補正前 vs 補正後
+//   - 時系列カーブ: Learner.backtest (look-ahead 排除な rolling 校正)
+//   - 静的サマリ: Backtest.run (今のAIで全件再評価)
+function renderBacktest(allBets) {
+  drawBacktestChart($("#chart-backtest"), allBets);
+  renderBacktestSummary($("#backtest-summary"), allBets);
+}
+
+function drawBacktestChart(canvas, allBets) {
+  if (!canvas || !window.Learner?.backtest) return;
+  const result = window.Learner.backtest(allBets || []);
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (!result.raw.length) {
+    ctx.fillStyle = "#64748b";
+    ctx.font = "12px Inter, sans-serif";
+    ctx.fillText("確定済記録なし(記録を入れて結果を確定すると進化曲線が出ます)", 12, H / 2);
+    return;
+  }
+  const allCum = [...result.raw.map(p => p.cum), ...result.calibrated.map(p => p.cum)];
+  const minV = Math.min(0, ...allCum);
+  const maxV = Math.max(0, ...allCum);
+  const padX = 40, padY = 20;
+  const plotW = W - padX * 2, plotH = H - padY * 2;
+  const n = result.raw.length;
+  const xAt = i => padX + (n === 1 ? plotW / 2 : (plotW * i) / (n - 1));
+  const yAt = v => padY + plotH - ((v - minV) / Math.max(1, maxV - minV)) * plotH;
+  // ゼロ線
+  ctx.strokeStyle = "rgba(255,255,255,0.10)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padX, yAt(0)); ctx.lineTo(W - padX, yAt(0)); ctx.stroke();
+  // 補正前 (灰)
+  ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 2;
+  ctx.beginPath();
+  result.raw.forEach((p, i) => { const x = xAt(i), y = yAt(p.cum); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+  ctx.stroke();
+  // 補正後 (緑)
+  ctx.strokeStyle = "#34d399"; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  result.calibrated.forEach((p, i) => { const x = xAt(i), y = yAt(p.cum); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+  ctx.stroke();
+  // 見送り点
+  ctx.fillStyle = "rgba(168,85,247,0.55)";
+  result.calibrated.forEach((p, i) => {
+    if (!p.included) { ctx.beginPath(); ctx.arc(xAt(i), yAt(p.cum), 2.5, 0, Math.PI * 2); ctx.fill(); }
+  });
+  // Y軸ラベル
+  ctx.fillStyle = "#64748b"; ctx.font = "10px Inter, sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText("¥" + Math.round(maxV).toLocaleString("ja-JP"), padX - 4, padY + 8);
+  ctx.fillText("¥0", padX - 4, yAt(0) + 3);
+  ctx.fillText("¥" + Math.round(minV).toLocaleString("ja-JP"), padX - 4, H - padY + 4);
+  ctx.textAlign = "left";
+  // 凡例
+  ctx.fillStyle = "#94a3b8"; ctx.fillRect(padX,        6, 12, 4);
+  ctx.fillStyle = "#cbd5e1"; ctx.fillText("補正前 AI",  padX + 16, 12);
+  ctx.fillStyle = "#34d399"; ctx.fillRect(padX + 100,  6, 12, 4);
+  ctx.fillStyle = "#cbd5e1"; ctx.fillText("補正後 AI",  padX + 116, 12);
+  ctx.fillStyle = "rgba(168,85,247,0.7)";
+  ctx.beginPath(); ctx.arc(padX + 200, 8, 2.5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = "#cbd5e1"; ctx.fillText("見送り", padX + 208, 12);
+}
+
+function renderBacktestSummary(el, allBets) {
+  if (!el || !window.Backtest?.run) return;
+  const r = window.Backtest.run(allBets || []);
+  if (!r || r.evaluable === 0) {
+    el.className = "backtest-summary bs-neutral";
+    el.innerHTML = `<div class="bs-row"><span class="bs-key">評価可能な記録</span><span class="bs-val">${r?.evaluable ?? 0} 件</span></div>
+      <div class="bs-verdict">確定済(EV/オッズ付き)の記録を増やすと、AI の進化が見えます</div>`;
+    return;
+  }
+  const imp = r.improvement;
+  let cls = "backtest-summary ";
+  if (imp != null && imp > 0.03) cls += "bs-good";
+  else if (imp != null && imp < -0.03) cls += "bs-bad";
+  else cls += "bs-neutral";
+  el.className = cls;
+  const orig = r.original, hypo = r.hypothetical, d = r.verdictDelta;
+  const fmtPctOrDash = (v) => v != null ? `${(v*100).toFixed(0)}%` : "--";
+  const fmtYen = (v) => `¥${Math.round(v || 0).toLocaleString("ja-JP")}`;
+  const insightsHtml = (r.insight || []).map(s => `<li>${s}</li>`).join("");
+  el.innerHTML = `
+    <div class="bs-row"><span class="bs-key">評価可能な記録</span><span class="bs-val">${r.evaluable} / ${r.total} 件</span></div>
+    <div class="bs-row"><span class="bs-key">補正前 回収率</span><span class="bs-val">${fmtPctOrDash(orig.recovery)} (${orig.hits}/${orig.samples}的中)</span></div>
+    <div class="bs-row"><span class="bs-key">補正後 回収率</span><span class="bs-val">${fmtPctOrDash(hypo.recovery)} (${hypo.hits}/${hypo.samples}的中)</span></div>
+    <div class="bs-row bs-diff"><span class="bs-key">改善幅</span><span class="bs-val">${imp != null ? ((imp>=0?'+':'')+(imp*100).toFixed(0)+'%') : '--'}</span></div>
+    <div class="bs-row"><span class="bs-key">判定変化</span><span class="bs-val">買→見送 ${d.becamePass} / 見送→買 ${d.becameBuy}</span></div>
+    ${insightsHtml ? `<ul class="bs-insight">${insightsHtml}</ul>` : ""}
+  `;
 }
 
 // ─── 月次収支 (エア vs リアル) 棒グラフ ──────────────────────

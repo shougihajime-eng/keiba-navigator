@@ -1840,3 +1840,55 @@ a:hover { text-decoration-color: var(--acc-buy-2); }
   margin-top: 4px;
   line-height: 1.5;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   🧠 バックテスト サマリー
+   ═══════════════════════════════════════════════════════════ */
+.backtest-summary {
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.backtest-summary.bs-good    { border-left: 3px solid var(--acc-buy-2); }
+.backtest-summary.bs-bad     { border-left: 3px solid var(--acc-warn-2); }
+.backtest-summary.bs-neutral { border-left: 3px solid var(--ink-4); }
+.bs-row {
+  display: flex; justify-content: space-between;
+  padding: 3px 0;
+  font-variant-numeric: tabular-nums;
+}
+.bs-row + .bs-row { border-top: 1px dashed var(--line-1); }
+.bs-key { color: var(--ink-3); }
+.bs-val { color: var(--ink-1); font-weight: 700; }
+.bs-row.bs-diff .bs-val { color: var(--acc-buy-2); font-size: var(--fs-base); }
+.backtest-summary.bs-bad .bs-row.bs-diff .bs-val { color: var(--acc-warn-2); }
+.bs-verdict {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+  background: rgba(0,0,0,0.25);
+  border-radius: var(--r-xs);
+  text-align: center;
+  font-weight: 800;
+  color: var(--ink-1);
+  letter-spacing: 0.02em;
+}
+.backtest-summary.bs-good .bs-verdict { color: var(--acc-buy-2); }
+.backtest-summary.bs-bad .bs-verdict  { color: var(--acc-warn-2); }
+.bs-insight {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: rgba(0,0,0,0.22);
+  border-radius: var(--r-xs);
+  list-style: none;
+  font-size: 11px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.bs-insight li { padding: 3px 0; }
+.bs-insight li + li { border-top: 1px dashed var(--line-1); }
+.bs-insight b { color: var(--ink-1); }

@@ -204,6 +204,88 @@
     }
   }
 
+  // ─── バックテスト: 補正前 vs 補正後 の累積収支カーブ ──────────
+  // 設計:
+  //   各 bet を時系列順に並べ、その時点で「過去のbetだけ」から計算した
+  //   calibration を適用したらどうなっていたかをシミュレーション。
+  //   これは look-ahead バイアスを避けた正しいバックテスト。
+  //
+  // 出力: { raw: [{date, profit, cum}], calibrated: [...], meta: {...} }
+  //
+  //   raw:        ユーザーが実際に置いた全 bet の累積収支
+  //   calibrated: 各時点で calibration を適用し、補正後EV<=1.0 の bet は
+  //               「買わない」として除外した場合の累積収支
+  //
+  // calibrated の方が高ければ、AIの自己学習が実際に役立つことの根拠。
+  function backtest(bets) {
+    const cleaned = (Array.isArray(bets) ? bets : [])
+      .filter(b => b && b.dataSource !== "dummy")
+      .filter(b => b.result?.won === true || b.result?.won === false)
+      .sort((a, b) => {
+        const ta = new Date(a.result.finishedAt || a.ts).getTime();
+        const tb = new Date(b.result.finishedAt || b.ts).getTime();
+        return ta - tb;
+      });
+
+    const raw = [];
+    const calibrated = [];
+    let rawCum = 0, calCum = 0;
+    let calIncluded = 0, calSkipped = 0;
+    const history = [];  // 過去 bet を rolling で蓄積
+
+    for (const b of cleaned) {
+      const date = b.result.finishedAt || b.ts;
+      const profit = (b.result.won ? (b.result.payout || 0) : 0) - (b.amount || 0);
+      rawCum += profit;
+      raw.push({ date, profit, cum: rawCum });
+
+      // この時点での calibration (過去 bet のみから計算 = 厳密な look-ahead 排除)
+      const pastCalib = computeCalibration(history);
+      const grade = gradeOf(b);
+      const slot  = grade ? pastCalib[grade] : null;
+      const ratio = (slot && Number.isFinite(slot.ratio)) ? slot.ratio : 1.0;
+      const calibratedEv = Number.isFinite(Number(b.ev)) ? Number(b.ev) * ratio : null;
+
+      // 補正後EV > 1.0 なら買う、それ以外はスキップ (AIが見送り判断)
+      if (calibratedEv != null && calibratedEv > 1.0) {
+        calCum += profit;
+        calIncluded++;
+        calibrated.push({ date, profit, cum: calCum, included: true, calibratedEv, grade });
+      } else {
+        calSkipped++;
+        // スキップしても累積には載せる (ただし profit=0)
+        calibrated.push({ date, profit: 0, cum: calCum, included: false, calibratedEv, grade });
+      }
+
+      history.push(b);
+    }
+
+    const totalRaw = rawCum;
+    const totalCal = calCum;
+    const advantage = totalCal - totalRaw;
+    const samples = cleaned.length;
+
+    return {
+      raw,
+      calibrated,
+      meta: {
+        samples,
+        calibratedIncluded: calIncluded,
+        calibratedSkipped:  calSkipped,
+        rawFinal:    totalRaw,
+        calFinal:    totalCal,
+        advantage,
+        verdict: samples < 10
+          ? "サンプル数不足 (10件以上で精度が出ます)"
+          : advantage > 0
+            ? `補正後の方が ¥${Math.round(advantage).toLocaleString("ja-JP")} 多い (AI の学習が効いている)`
+            : advantage < 0
+              ? `補正後の方が ¥${Math.round(-advantage).toLocaleString("ja-JP")} 少ない (補正が過保守か、まだ学習不足)`
+              : "差分なし",
+      },
+    };
+  }
+
   global.Learner = {
     LEVELS,
     levelMeta,
@@ -212,5 +294,6 @@
     calibratedEV,
     gradeOf,
     cloudSync,
+    backtest,
   };
 })(typeof window !== "undefined" ? window : globalThis);

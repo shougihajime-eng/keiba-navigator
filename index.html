@@ -425,6 +425,12 @@
         <div id="grade-compare" class="grade-compare"></div>
         <p class="rec-mini-note" id="grade-compare-note">10件以上溜まったグレードのみ評価対象。エアとリアルの回収率の差で「買い時を逃しているか／買いすぎか」が見えます。</p>
 
+        <!-- 🧠 バックテスト: AI の自己学習が本当に効いているか -->
+        <h3 class="pro-h3">🧠 バックテスト: 補正前 vs 補正後</h3>
+        <canvas id="chart-backtest" class="rec-chart" width="640" height="220"></canvas>
+        <div id="backtest-summary" class="backtest-summary">--</div>
+        <p class="rec-mini-note" id="backtest-note">確定済記録を時系列で並べ、「補正前のAI(あなたが実際にやった結果)」と「補正後のAI(各時点までの実績で自己校正していたら)」の累積収支を比較。補正後が高ければ自己学習が確かに役立っている証拠です。</p>
+
         <p class="rec-note">※ 結果未確定の記録は「結果待ち」として収支に含めません。JV-Link接続後に着順を反映します。</p>
       </section>
 
