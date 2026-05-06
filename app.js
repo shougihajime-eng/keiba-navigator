@@ -1123,9 +1123,25 @@ function renderBetList(bets) {
   for (const b of sorted) {
     const li = document.createElement("li");
     li.className = "rec-item";
-    const status = b.result?.won === true  ? `<span class="rec-st rec-win">的中 +${fmtYen(b.result.payout - b.amount)}</span>`
-                 : b.result?.won === false ? `<span class="rec-st rec-lose">外れ -${fmtYen(b.amount)}</span>`
-                 :                            `<span class="rec-st rec-pend">結果待ち</span>`;
+    li.dataset.betId = b.id;
+
+    let status;
+    let actions = "";
+    if (b.result?.won === true) {
+      status = `<span class="rec-st rec-win">的中 +${fmtYen(b.result.payout - b.amount)}</span>`;
+      actions = `<button class="rec-act rec-act-undo" data-act="undo" data-id="${escapeHtml(b.id)}">取り消す</button>`;
+    } else if (b.result?.won === false) {
+      status = `<span class="rec-st rec-lose">外れ -${fmtYen(b.amount)}</span>`;
+      actions = `<button class="rec-act rec-act-undo" data-act="undo" data-id="${escapeHtml(b.id)}">取り消す</button>`;
+    } else {
+      status = `<span class="rec-st rec-pend">結果待ち</span>`;
+      const expected = (b.odds && b.amount) ? Math.round(b.odds * b.amount) : 0;
+      actions = `
+        <button class="rec-act rec-act-win"  data-act="win"  data-id="${escapeHtml(b.id)}" data-default="${expected}">○ 当たり</button>
+        <button class="rec-act rec-act-lose" data-act="lose" data-id="${escapeHtml(b.id)}">× 外れ</button>
+      `;
+    }
+
     const gradeBadge = b.grade ? `<span class="grade-mini grade-${b.grade}">${b.grade}</span>` : "";
     li.innerHTML = `
       <div class="rec-row1">
@@ -1138,9 +1154,50 @@ function renderBetList(bets) {
         <span>${fmtYen(b.amount)} / ${fmtOdds(b.odds)}倍</span>
         <span>${fmtDateTime(b.ts).slice(5)}</span>
       </div>
+      <div class="rec-actions-row">${actions}</div>
     `;
     ul.appendChild(li);
   }
+
+  // 1度だけ delegated handler を仕込む
+  if (!ul.dataset.actsBound) {
+    ul.addEventListener("click", onBetActionClick);
+    ul.dataset.actsBound = "1";
+  }
+}
+
+function onBetActionClick(ev) {
+  const btn = ev.target.closest("button.rec-act");
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id  = btn.dataset.id;
+  if (!id) return;
+  const store = loadStore();
+  const bet = (store.bets || []).find(x => x.id === id);
+  if (!bet) { showToast("記録が見つかりません", "warn"); return; }
+
+  if (act === "win") {
+    const def = btn.dataset.default || "0";
+    const v = prompt(`払戻金を入れてください (円・予想 ${def}円)`, def);
+    if (v === null) return;
+    const payout = Number(String(v).replace(/[,円￥\s]/g, ""));
+    if (!Number.isFinite(payout) || payout < 0) { showToast("払戻金が不正です", "warn"); return; }
+    bet.result = { won: true,  payout: Math.round(payout), finishedAt: new Date().toISOString() };
+    bet.profit = (bet.result.payout || 0) - (bet.amount || 0);
+    showToast("✓ 当たりとして確定しました");
+  } else if (act === "lose") {
+    if (!confirm("この馬券を「外れ」として確定します。よろしいですか?")) return;
+    bet.result = { won: false, payout: 0, finishedAt: new Date().toISOString() };
+    bet.profit = -(bet.amount || 0);
+    showToast("外れとして確定しました");
+  } else if (act === "undo") {
+    if (!confirm("確定を取り消して「結果待ち」に戻します。よろしいですか?")) return;
+    bet.result = null;
+    bet.profit = null;
+    showToast("結果を取り消しました");
+  }
+  saveStore(store);
+  try { renderRecords(); renderAiTrack(); } catch {}
 }
 
 function renderCompare(allBets) {
