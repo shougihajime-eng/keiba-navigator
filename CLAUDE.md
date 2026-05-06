@@ -8,24 +8,33 @@
 
 ### ✅ 直近で済んだこと
 - Supabase クラウド同期を本番設定に切替（`keiba` 専用スキーマ・RLS有効・anon キー埋込済）
-- DB スキーマに `keiba.learner_state` を追加（オンライン学習の重みを保存する器）
-- このプロジェクト専用 CLAUDE.md を作成（次回セッションで「いまここ」を即把握できるように）
+- `keiba.learner_state` テーブル追加 + グレード別の自己学習 (calibration) 実装
+- AI 育成レベル UI（★1〜5）+ ホーム画面に学習グリッド表示
+- **GitHub リポジトリ公開**: https://github.com/shougihajime-eng/keiba-navigator
+- **Vercel 本番デプロイ**: https://keiba-navigator.vercel.app
+- 14 個の Vercel Functions を catch-all (`api/[...slug].js`) 1 個に集約（Hobby 12 個制限を回避）
+- Supabase Auth の URI Allow List に Vercel URL と localhost を追加（Magic Link 動作）
 
 ### 🟡 進行中
 - なし
 
 ### 🔜 次の一歩
-1. **GitHub リモート + Vercel 公開**（現状はローカルのみ。`origin` 未設定）
-2. **JV-Link（JRA-VAN 月額¥2,090）契約 → 実データ取得**（実データ無しではどんな AI も育たない）
-3. JV-Link 接続後に **LightGBM/勾配ブースティング** に差し替え（`learner_state.weights` の器は既に用意済）
+1. **JV-Link（JRA-VAN 月額¥2,090）契約 → 実データ取得**（実データ無しではどんな AI も育たない・このプロジェクト最大の壁）
+2. JV-Link 接続後に **LightGBM/勾配ブースティング** に差し替え（`learner_state.weights` の器は既に用意済）
+3. ディープラーニング（PyTorch / TensorFlow.js）の学習パイプライン整備（JV-Link 過去10年データから）
 
 ---
 
 ## 本番URL / 環境
 
-- **本番**: 未デプロイ（Vercel に上げる予定。`vercel.json` 設定済）
+- **本番（Vercel）**: https://keiba-navigator.vercel.app
+- **GitHub**: https://github.com/shougihajime-eng/keiba-navigator
+- **Vercel Dashboard**: https://vercel.com/shougihajime-3368s-projects/keiba-navigator
 - **ローカル**: `npm start` で `http://127.0.0.1:8765`
 - **PWA**: `manifest.json` 設定済。スマホで「ホーム画面に追加」可
+
+注: 本番 (Vercel) では JV-Link は動作しない（JV-Link は Windows 32bit 専用）。
+本番は「天気・ニュース・既存記録の閲覧と学習可視化」用。実データの取り込みはローカル PC で `jv_bridge/jv_fetch.py` を回し、`data/jv_cache/*.json` を git push すると Vercel にも反映できる構成。
 
 ## 技術構成
 
