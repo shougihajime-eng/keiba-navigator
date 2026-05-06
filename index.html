@@ -126,6 +126,16 @@
         </div>
       </details>
 
+      <!-- 🏁 保存した手動レースの横断ランキング -->
+      <section id="card-saved-races" class="saved-races" hidden>
+        <div class="sr-head">
+          <h2 class="sr-title">🏁 保存したレース <span id="saved-races-count" class="sr-count">0件</span></h2>
+          <button id="btn-clear-saved" type="button" class="sr-clear">🗑 全消去</button>
+        </div>
+        <p class="sr-hint">期待値の高い順。<b>🏆 今日のベスト1</b> はAIが最も狙えると判定したレース。タップで詳細を表示。</p>
+        <ul id="saved-races-list" class="sr-list"></ul>
+      </section>
+
       <!-- 全レース一覧 (複数取得時のみ表示) -->
       <section id="card-races" class="simple-card sc-info" hidden>
         <h2 class="sc-title">📋 今日のレース一覧 <span id="races-count" class="text-ink-mute text-xs ml-1"></span></h2>

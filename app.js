@@ -605,6 +605,129 @@ async function refreshConclusion() {
   renderProDetails(c);
 }
 
+// ─── 保存済みレースの管理 (今日の横断ランキング) ──────────────
+const SR_KEY = "keiba_saved_races_v1";
+
+function loadSavedRaces() {
+  try {
+    const raw = localStorage.getItem(SR_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    // 今日(0時以降) のものだけに限定
+    const start = new Date(); start.setHours(0,0,0,0);
+    return Array.isArray(arr) ? arr.filter(r => new Date(r.savedAt).getTime() >= start.getTime()) : [];
+  } catch { return []; }
+}
+
+function saveSavedRaces(arr) {
+  try { localStorage.setItem(SR_KEY, JSON.stringify(arr)); } catch {}
+}
+
+function pushSavedRace(entry) {
+  const arr = loadSavedRaces();
+  // 同じ raceName + 同じ入力テキスト ならID差し替えで上書き
+  const dup = arr.findIndex(r => r.raceName === entry.raceName && r.inputText === entry.inputText);
+  if (dup >= 0) arr[dup] = entry;
+  else arr.unshift(entry);
+  // 上限 30 件
+  if (arr.length > 30) arr.length = 30;
+  saveSavedRaces(arr);
+}
+
+// 補正後 EV を計算 (calibration を適用したトップ pick の EV)
+function calibratedTopEv(c) {
+  const top = c?.picks?.[0];
+  if (!top) return null;
+  const r = getCalibrationRatio(top.grade);
+  return r ? Number(top.ev) * r : Number(top.ev);
+}
+
+function renderSavedRacesList() {
+  const card = $("#card-saved-races");
+  const list = $("#saved-races-list");
+  const cnt  = $("#saved-races-count");
+  if (!card || !list) return;
+  const arr = loadSavedRaces();
+  if (!arr.length) { card.hidden = true; return; }
+  card.hidden = false;
+  // 補正後 top EV の高い順にソート
+  const ranked = arr.map(r => ({ ...r, calEv: calibratedTopEv(r.conclusion) }))
+                    .sort((a, b) => (b.calEv ?? -Infinity) - (a.calEv ?? -Infinity));
+  if (cnt) cnt.textContent = `${ranked.length}件`;
+  list.innerHTML = "";
+  for (let i = 0; i < ranked.length; i++) {
+    const r = ranked[i];
+    const top = r.conclusion?.picks?.[0];
+    const calEv = r.calEv;
+    const li = document.createElement("li");
+    li.className = "sr-row" + (i === 0 ? " sr-best" : "");
+    li.dataset.id = r.id;
+    const evPctText = (calEv != null && Number.isFinite(calEv))
+      ? `${(calEv-1)*100 >= 0 ? "+" : ""}${((calEv-1)*100).toFixed(0)}%` : "--";
+    const grade = top?.grade || "--";
+    const verdict = r.conclusion?.verdictTitle || verdictToHuman(r.conclusion?.verdict);
+    li.innerHTML = `
+      ${i === 0 ? '<div class="sr-badge">🏆 今日のベスト1</div>' : ""}
+      <div class="sr-main">
+        <div class="sr-name">${escapeHtml(r.raceName || "(レース名なし)")}</div>
+        <div class="sr-meta">
+          <span class="sr-grade sr-grade-${grade}">${grade}</span>
+          <span class="sr-ev">補正後EV ${evPctText}</span>
+          <span class="sr-verdict">${escapeHtml(verdict || "判定")}</span>
+        </div>
+      </div>
+      <div class="sr-actions">
+        <button class="sr-load" data-id="${r.id}" type="button">表示</button>
+        <button class="sr-del"  data-id="${r.id}" type="button" aria-label="削除">×</button>
+      </div>
+    `;
+    list.appendChild(li);
+  }
+  // 行クリックで「表示」、× で削除
+  list.querySelectorAll(".sr-load").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      loadSavedRace(btn.dataset.id);
+    });
+  });
+  list.querySelectorAll(".sr-del").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const arr = loadSavedRaces().filter(r => r.id !== id);
+      saveSavedRaces(arr);
+      renderSavedRacesList();
+      showToast("削除しました", "ok");
+    });
+  });
+  list.querySelectorAll(".sr-row").forEach(row => {
+    row.addEventListener("click", () => loadSavedRace(row.dataset.id));
+  });
+}
+
+function loadSavedRace(id) {
+  const arr = loadSavedRaces();
+  const r = arr.find(x => x.id === id);
+  if (!r) return;
+  _manualMode = true;
+  _currentConclusion = r.conclusion;
+  _currentRaceMeta = r.conclusion?.raceMeta || null;
+  // 入力欄も復元
+  const ta = $("#mi-textarea"); if (ta && r.inputText) ta.value = r.inputText;
+  const nameEl = $("#mi-race-name"); if (nameEl) nameEl.value = r.raceName || "";
+  renderBigVerdict(r.conclusion);
+  renderPickCard(r.conclusion);
+  renderDangerCard(r.conclusion);
+  renderUnderCard(r.conclusion);
+  renderAdvice(r.conclusion);
+  renderProDetails(r.conclusion);
+  refreshConnection();
+  showToast(`📥 「${r.raceName || "保存済"}」を表示`, "ok");
+  // 結論カードまでスクロール
+  const bv = $("#big-verdict");
+  if (bv && bv.scrollIntoView) bv.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 // ─── 手動入力モード ────────────────────────────────────────
 async function submitManual() {
   const ta = $("#mi-textarea");
@@ -633,8 +756,17 @@ async function submitManual() {
     renderAdvice(c);
     renderProDetails(c);
     refreshConnection();
+    // 保存して横断ランキングへ反映 (期待値が出ているレースのみ)
     if (c?.ok && c.picks?.length) {
-      showToast(`📈 判定完了: ${c.verdictTitle || ''}`, "ok");
+      pushSavedRace({
+        id: "sr_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        raceName: raceName || `手動入力 ${new Date().toLocaleString("ja-JP")}`,
+        savedAt: new Date().toISOString(),
+        inputText: text,
+        conclusion: c,
+      });
+      renderSavedRacesList();
+      showToast(`📈 判定完了: ${c.verdictTitle || ''} — レースを保存しました`, "ok");
     } else {
       showToast(`⚠ ${c?.verdictReason || c?.reason || '判定できませんでした'}`, "warn");
     }
@@ -1653,6 +1785,16 @@ function setupEvents() {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") submitManual();
   });
 
+  // 保存レースの全消去
+  const clrBtn = $("#btn-clear-saved");
+  if (clrBtn) clrBtn.addEventListener("click", () => {
+    if (confirm("保存した全レースを消去します。よろしいですか?")) {
+      saveSavedRaces([]);
+      renderSavedRacesList();
+      showToast("保存レースを消去しました", "ok");
+    }
+  });
+
   // 記録ボタン
   $("#btn-record-air") .addEventListener("click", () => recordBet("air"));
   $("#btn-record-real").addEventListener("click", () => recordBet("real"));
@@ -1949,6 +2091,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { renderSettings(); refreshCloudUi(); } catch (e) { console.warn(e); }
   try { renderRecords();  } catch (e) { console.warn(e); }
   try { renderAiTrack();  } catch (e) { console.warn(e); }
+  try { renderSavedRacesList(); } catch (e) { console.warn(e); }
   if (_loadCorruptionDetected) {
     setTimeout(() => showToast("⚠ 保存データの一部が壊れていたため初期化しました(バックアップは保持)", "warn"), 800);
   }
