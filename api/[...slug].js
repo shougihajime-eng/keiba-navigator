@@ -45,6 +45,11 @@ module.exports = async (req, res) => {
       return ok(res, { ok: true, race });
     }
     if (path === "/conclusion") return ok(res, buildConclusion(readLatestRace()));
+    if (path === "/conclusion-manual" && req.method === "POST") {
+      const { buildManualConclusion } = require("../lib/manual_race");
+      const payload = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
+      return ok(res, buildManualConclusion(payload));
+    }
     if (path === "/races") {
       const races = readAllRaces();
       if (!races.length) {

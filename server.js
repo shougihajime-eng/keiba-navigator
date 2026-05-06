@@ -49,6 +49,17 @@ async function serve(req, res) {
     if (p === "/api/conclusion") {
       return jsonRes(res, 200, buildConclusion(readLatestRace()));
     }
+    if (p === "/api/conclusion-manual" && req.method === "POST") {
+      const { buildManualConclusion } = require("./lib/manual_race");
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        const payload = body ? JSON.parse(body) : {};
+        return jsonRes(res, 200, buildManualConclusion(payload));
+      } catch (e) {
+        return jsonRes(res, 400, { ok: false, error: String(e.message || e) });
+      }
+    }
     if (p === "/api/races") {
       const races = readAllRaces();
       if (!races.length) {

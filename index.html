@@ -97,6 +97,33 @@
       <!-- 質問見出し -->
       <h1 class="hero-question">今日は買う？見送る？</h1>
 
+      <!-- 📝 手動でEVチェック (無料路線・本命機能) -->
+      <details class="manual-input" id="manual-input-section" open>
+        <summary class="mi-summary">
+          <span class="mi-icon">📝</span>
+          <span class="mi-title">手動でEVチェック</span>
+          <span class="mi-sub">無料・JV-Link 不要</span>
+          <span class="caret">▾</span>
+        </summary>
+        <div class="mi-body">
+          <p class="mi-help">
+            JRA公式の <a href="https://www.jra.go.jp/keiba/" target="_blank" rel="noopener">オッズ画面</a> を見ながら、各馬を 1 行ずつ入力してください。<br>
+            形式: <code>馬番 馬名 オッズ 人気 前走着順</code>(順不同・空白／カンマ区切り)
+          </p>
+          <textarea id="mi-textarea" rows="7" spellcheck="false" placeholder="1 ディープ 3.2 1 1
+2 オルフェ 5.5 2 3
+3 キタサン 8.0 3 2
+4 サトノ 12.0 4 5
+5 グランプリ 25.0 5 8
+6 ハジメ 60.0 6 10"></textarea>
+          <div class="mi-actions">
+            <input id="mi-race-name" placeholder="レース名 (任意)" class="mi-name-input" maxlength="60">
+            <button id="mi-submit" type="button" class="mi-submit">📈 期待値を判定</button>
+          </div>
+          <p class="mi-note" id="mi-note">⚠ 結果(着順)は確定後に「記録」タブから手動で当たり／外れを入力してください。</p>
+        </div>
+      </details>
+
       <!-- 全レース一覧 (複数取得時のみ表示) -->
       <section id="card-races" class="simple-card sc-info" hidden>
         <h2 class="sc-title">📋 今日のレース一覧 <span id="races-count" class="text-ink-mute text-xs ml-1"></span></h2>
@@ -130,6 +157,12 @@
           <div id="ai-level-bar" class="ai-level-bar" style="width:0%"></div>
         </div>
         <div class="ai-level-hint" id="ai-level-hint">記録を増やすと育ちます</div>
+        <!-- 💡 AIが学んだこと (実績から自動生成される自然言語インサイト) -->
+        <div id="ai-insight" class="ai-insight" hidden>
+          <div class="ai-insight-title">💡 AIが学んだこと</div>
+          <ul id="ai-insight-list" class="ai-insight-list"></ul>
+        </div>
+
         <details class="ai-level-detail">
           <summary>育成のしくみ</summary>
           <p>確定した馬券の的中・回収率からレベルが上がります。<br>
@@ -273,20 +306,31 @@
         <ul id="status-list" class="pro-status-list"><li class="pro-empty">未取得</li></ul>
       </details>
 
-      <!-- セットアップ案内 -->
+      <!-- 案内バナー (無料路線が主役) -->
       <section id="setup-banner" class="card-setup" hidden>
-        <h2 class="sc-title">🔧 本格データを使うには</h2>
+        <h2 class="sc-title">🚀 無料で今すぐ始める</h2>
         <p class="text-sm text-ink-soft mb-4 leading-relaxed">
-          今は「天気」と「ニュース」だけ自動で取れています。<br>
-          オッズ・出馬表・過去成績などは下の5ステップで取れるようになります。
+          JV-Link / JRA-VAN 契約なしでも <b>このアプリは完全に動作します</b>。<br>
+          下の3ステップで「育つAI」を回し始めましょう。
         </p>
         <ol class="setup-steps">
-          <li><span class="step-num">1</span><div><b>JRA-VANを契約</b> <span class="text-ink-mute">月額2,090円</span><br><a class="link-em" target="_blank" rel="noopener" href="https://jra-van.jp/dlb/">公式サイトへ →</a></div></li>
-          <li><span class="step-num">2</span><div><b>JV-Linkをインストール</b> <span class="text-ink-mute">Windows専用</span><br><a class="link-em" target="_blank" rel="noopener" href="https://jra-van.jp/dlb/sdv/sdk.html">ダウンロード →</a></div></li>
-          <li><span class="step-num">3</span><div><b>32bit Pythonをインストール</b><br><a class="link-em" target="_blank" rel="noopener" href="https://www.python.org/downloads/windows/">Python公式 →</a></div></li>
-          <li><span class="step-num">4</span><div><b>必要なライブラリを入れる</b><br><code class="code-pill">py -3.12-32 -m pip install pywin32</code></div></li>
-          <li><span class="step-num">5</span><div><b>接続テスト</b><br><code class="code-pill">py -3.12-32 jv_bridge\jv_fetch.py init</code></div></li>
+          <li><span class="step-num">1</span><div><b>📝 手動でEVチェック</b><br><span class="text-ink-mute">画面上部のセクションに、JRA公式のオッズを見ながら馬を入力。期待値プラスの馬・買うべきでない人気馬が一発で見える。</span></div></li>
+          <li><span class="step-num">2</span><div><b>💰 馬券を記録</b><br><span class="text-ink-mute">「エア馬券」(仮想購入) でも OK。買った馬と金額を残す → 結果を入力 → AIが自分のクセを学習。</span></div></li>
+          <li><span class="step-num">3</span><div><b>📊 AIが自動で育つ</b><br><span class="text-ink-mute">「グレード別の自己校正」が自動で走り、AIの予測ズレを補正。10件記録するごとに精度が上がる。</span></div></li>
         </ol>
+        <details class="setup-advanced">
+          <summary class="setup-advanced-summary">🛠 上級者向け: JV-Link 自動取得 (任意・有料)</summary>
+          <div class="setup-advanced-body">
+            <p class="text-xs text-ink-mute mb-2 leading-relaxed">
+              JRA-VAN(月額2,090円) を契約すれば、出馬表・オッズ・過去成績を自動取得できます。手動入力は不要になります。Windows 32bit 環境のみ対応。
+            </p>
+            <ul class="setup-advanced-list">
+              <li><a class="link-em" target="_blank" rel="noopener" href="https://jra-van.jp/dlb/">JRA-VAN 契約</a></li>
+              <li><a class="link-em" target="_blank" rel="noopener" href="https://jra-van.jp/dlb/sdv/sdk.html">JV-Link SDK</a></li>
+              <li><code class="code-pill">py -3.12-32 jv_bridge\jv_fetch.py init</code></li>
+            </ul>
+          </div>
+        </details>
       </section>
 
       <p class="footer-note">気象庁 / Google News / JV-Link(要契約) ／ 買い目は仮の分析です。最終判断はご自身で。</p>

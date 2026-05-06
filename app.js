@@ -217,6 +217,18 @@ function buildAdvice(c) {
 // 現在の結論データキャッシュ(記録時に参照)
 let _currentConclusion = null;
 let _currentRaceMeta = null;
+let _manualMode = false;  // 手動入力モード (true の間は ↻ 更新で上書きされない)
+
+// ─── 学習補正 (calibration) を 1 馬の EV に適用 ────────────────
+function getCalibrationRatio(grade) {
+  if (!window.Learner || !grade) return null;
+  try {
+    const calib = window.Learner.computeCalibration(loadStore().bets || []);
+    const slot = calib[grade];
+    if (!slot || slot.samples < 10) return null;
+    return slot.ratio;
+  } catch { return null; }
+}
 
 // ─── 結論カード ────────────────────────────────────────────
 function renderBigVerdict(c) {
@@ -254,15 +266,21 @@ function renderPickCard(c) {
   $("#pick-num").textContent  = top.number;
   $("#pick-name").textContent = top.name || "(馬名未取得)";
 
-  // 理由は最大3行(短く)
+  // 理由は最大3行(短く) + 学習補正の適用
   const reasonLines = [];
   const popularity = top.popularity ?? 99;
-  if (popularity >= 6 && top.ev >= 1.10)   reasonLines.push("人気のわりに妙味あり");
-  else if (top.grade === "S")              reasonLines.push("オッズと予想のバランスが良い");
-  else if (top.grade === "A")              reasonLines.push("オッズ的にちょっとおいしい");
-  else if (c.verdict === "neutral")        reasonLines.push("信頼度は低めなので少額で");
-  else                                     reasonLines.push("候補までは届くが推奨度は低め");
-  reasonLines.push(`期待値 ${fmtEvPct(top.ev)}・${fmtOdds(top.odds)}倍・${popularity !== 99 ? popularity + "番人気" : "人気未取得"}`);
+  const calRatio = getCalibrationRatio(top.grade);
+  const calibratedEv = calRatio ? top.ev * calRatio : top.ev;
+  if (popularity >= 6 && calibratedEv >= 1.10) reasonLines.push("人気のわりに妙味あり");
+  else if (top.grade === "S")                  reasonLines.push("オッズと予想のバランスが良い");
+  else if (top.grade === "A")                  reasonLines.push("オッズ的にちょっとおいしい");
+  else if (c.verdict === "neutral")            reasonLines.push("信頼度は低めなので少額で");
+  else                                         reasonLines.push("候補までは届くが推奨度は低め");
+  if (calRatio) {
+    reasonLines.push(`実績補正後 ${fmtEvPct(calibratedEv)}・予想 ${fmtEvPct(top.ev)} × ×${calRatio.toFixed(2)}・${fmtOdds(top.odds)}倍`);
+  } else {
+    reasonLines.push(`期待値 ${fmtEvPct(top.ev)}・${fmtOdds(top.odds)}倍・${popularity !== 99 ? popularity + "番人気" : "人気未取得"}`);
+  }
   $("#pick-reason").textContent = reasonLines.join(" / ");
 
   const sg = c.bets || {};
@@ -331,6 +349,8 @@ function renderAiLevel() {
 
   // グレード別の自己校正 (calibration) を可視化
   renderAiCalibration();
+  // 自然言語インサイト
+  renderAiInsight();
 }
 
 function renderAiCalibration() {
@@ -491,18 +511,19 @@ async function refreshConnection() {
     title.textContent = "✅ JV-Link 接続済 (実データ反映中)";
     const ageMin = c.ageSec != null ? Math.floor(c.ageSec / 60) : null;
     sub.textContent = ageMin != null ? `最終同期: ${ageMin}分前 / 実レース ${c.realRaceCount}件` : "最終同期: --";
+  } else if (_manualMode) {
+    banner.className = "conn-banner conn-manual";
+    title.textContent = "📝 手動入力モード (無料)";
+    sub.textContent = "あなたが入力したオッズで判定中。記録するとAIが学習します。";
   } else if (c.onlyDummyData) {
     banner.className = "conn-banner conn-dummy";
-    title.textContent = "⚠️ 仮データのみ (実データ未接続)";
-    sub.textContent = "JV-Link接続後にAIが本格稼働します。今は動作確認用の仮データのみ";
-  } else if (c.noData) {
-    banner.className = "conn-banner conn-disconnected";
-    title.textContent = "🔴 JV-Link 未接続 / レースデータなし";
-    sub.textContent = "AIは仮の分析のみ・本格データはJRA-VAN契約とJV-Link設定後に表示";
+    title.textContent = "⚠️ 仮データのみ";
+    sub.textContent = "上の「📝 手動でEVチェック」を使うと無料で本格判定できます";
   } else {
-    banner.className = "conn-banner conn-disconnected";
-    title.textContent = "🔴 JV-Link 未接続";
-    sub.textContent = "AIは仮の分析のみ・実データ未接続です";
+    // noData も含む既定: 「無料で使える」フレーミング
+    banner.className = "conn-banner conn-free";
+    title.textContent = "🟢 無料モード";
+    sub.textContent = "上の「📝 手動でEVチェック」で今すぐ判定できます (JV-Link 不要)";
   }
 }
 
@@ -534,6 +555,8 @@ async function refreshStatus() {
 
 // ─── CONCLUSION ────────────────────────────────────────────
 async function refreshConclusion() {
+  // 手動入力モード中は JV-Link 取得で上書きしない
+  if (_manualMode) return;
   const r = await getJson("/api/conclusion");
   let c;
   if (r.status === 0) {
@@ -549,6 +572,86 @@ async function refreshConclusion() {
   renderUnderCard(c);
   renderAdvice(c);
   renderProDetails(c);
+}
+
+// ─── 手動入力モード ────────────────────────────────────────
+async function submitManual() {
+  const ta = $("#mi-textarea");
+  const text = (ta?.value || "").trim();
+  const raceName = ($("#mi-race-name")?.value || "").trim();
+  if (!text) {
+    showToast("⚠ 入力欄が空です。馬の情報を1行ずつ入れてください", "warn");
+    return;
+  }
+  const btn = $("#mi-submit");
+  if (btn) { btn.disabled = true; btn.classList.add("loading"); }
+  try {
+    const res = await fetch("/api/conclusion-manual", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, raceName: raceName || null }),
+    });
+    const c = await res.json();
+    _manualMode = true;
+    _currentConclusion = c;
+    _currentRaceMeta = c?.raceMeta || null;
+    renderBigVerdict(c);
+    renderPickCard(c);
+    renderDangerCard(c);
+    renderUnderCard(c);
+    renderAdvice(c);
+    renderProDetails(c);
+    refreshConnection();
+    if (c?.ok && c.picks?.length) {
+      showToast(`📈 判定完了: ${c.verdictTitle || ''}`, "ok");
+    } else {
+      showToast(`⚠ ${c?.verdictReason || c?.reason || '判定できませんでした'}`, "warn");
+    }
+  } catch (e) {
+    showToast("通信エラー: " + (e?.message || e), "err");
+  } finally {
+    if (btn) { btn.disabled = false; btn.classList.remove("loading"); }
+  }
+}
+
+function clearManualMode() {
+  _manualMode = false;
+  refreshConnection();
+}
+
+// ─── AI が学んだこと (insight) ──────────────────────────────
+function renderAiInsight() {
+  if (!window.Learner) return;
+  const wrap = $("#ai-insight");
+  const ul   = $("#ai-insight-list");
+  if (!wrap || !ul) return;
+  const calib = window.Learner.computeCalibration(loadStore().bets || []);
+  const insights = [];
+  for (const g of ["S", "A", "B", "C", "D"]) {
+    const c = calib[g];
+    if (!c || c.samples < 10) continue;
+    const dev = (1 - c.ratio) * 100;
+    const label = ({ S: "S級(強い買い)", A: "A級(買い)", B: "B級(微プラス)", C: "C級(微マイナス)", D: "D級(マイナス)" })[g] || g;
+    if (Math.abs(dev) < 5) {
+      insights.push(`${label}: 予想と実績がほぼ一致 ✓ (n=${c.samples})`);
+    } else if (dev > 0) {
+      insights.push(`${label}: 予想より ${dev.toFixed(0)}% 甘め — 自動で ${(c.ratio).toFixed(2)} 倍に補正中 (n=${c.samples})`);
+    } else {
+      insights.push(`${label}: 予想より ${(-dev).toFixed(0)}% 辛め — 自動で ${(c.ratio).toFixed(2)} 倍に補正中 (n=${c.samples})`);
+    }
+  }
+  if (!insights.length) {
+    wrap.hidden = true;
+    return;
+  }
+  wrap.hidden = false;
+  ul.innerHTML = "";
+  for (const t of insights) {
+    const li = document.createElement("li");
+    li.className = "ai-insight-item";
+    li.textContent = t;
+    ul.appendChild(li);
+  }
 }
 
 // ─── WEATHER ───────────────────────────────────────────────
@@ -1147,7 +1250,19 @@ function persistSettings() {
 // ─── イベント設定 ──────────────────────────────────────────
 function setupEvents() {
   // 更新ボタン
-  $("#btn-refresh").addEventListener("click", () => refreshAll());
+  $("#btn-refresh").addEventListener("click", () => {
+    // 手動入力モードはユーザー意図的な ↻ で解除
+    if (_manualMode) clearManualMode();
+    refreshAll();
+  });
+
+  // 手動入力 (無料路線)
+  const miBtn = $("#mi-submit");
+  if (miBtn) miBtn.addEventListener("click", () => submitManual());
+  const miTa  = $("#mi-textarea");
+  if (miTa) miTa.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") submitManual();
+  });
 
   // 記録ボタン
   $("#btn-record-air") .addEventListener("click", () => recordBet("air"));

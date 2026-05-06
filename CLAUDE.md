@@ -7,21 +7,23 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
-- Supabase クラウド同期を本番設定に切替（`keiba` 専用スキーマ・RLS有効・anon キー埋込済）
-- `keiba.learner_state` テーブル追加 + グレード別の自己学習 (calibration) 実装
-- AI 育成レベル UI（★1〜5）+ ホーム画面に学習グリッド表示
-- **GitHub リポジトリ公開**: https://github.com/shougihajime-eng/keiba-navigator
-- **Vercel 本番デプロイ**: https://keiba-navigator.vercel.app
-- 14 個の Vercel Functions を catch-all (`api/[...slug].js`) 1 個に集約（Hobby 12 個制限を回避）
-- Supabase Auth の URI Allow List に Vercel URL と localhost を追加（Magic Link 動作）
+- **無料路線で本格機能**: 「📝 手動でEVチェック」モード追加。JV-Link 不要で完全に動作
+  - `lib/manual_race.js` がテキストパース → `buildConclusion` 互換レース構築
+  - `POST /api/conclusion-manual` (catch-all + ローカル両対応)
+- **学習結果の live UI 適用**: グレード別 calibration 倍率を picks の表示EVに反映 (n≥10で発火)
+- **「AIが学んだこと」インサイト**: S/A/B/C/D 別に「予想より N% 甘め／辛め」を自然言語で表示
+- **接続バナーを再構成**: 「JV-Link 未接続 → 無料モード」へ pivot。手動入力モード時は紫バナー
+- **setup-banner pivot**: JV-Link 押し付けを廃止 → 無料3ステップ案内、JV-Linkは「上級者向け」に降格
+- 既存: Supabase keiba スキーマ、AI 育成レベル ★1-5、GitHub + Vercel 公開、catch-all集約
 
 ### 🟡 進行中
 - なし
 
 ### 🔜 次の一歩
-1. **JV-Link（JRA-VAN 月額¥2,090）契約 → 実データ取得**（実データ無しではどんな AI も育たない・このプロジェクト最大の壁）
-2. JV-Link 接続後に **LightGBM/勾配ブースティング** に差し替え（`learner_state.weights` の器は既に用意済）
-3. ディープラーニング（PyTorch / TensorFlow.js）の学習パイプライン整備（JV-Link 過去10年データから）
+1. **本番(Vercel) で動作確認**: 手動入力 → 期待値判定 → エア記録 → AIレベル進化 のフロー
+2. **馬券記録の手動結果入力**: 結果(着順)を手で当たり/外れ確定する UI 強化
+3. **過去レース記録の CSV インポート**: 既存の馬券データを取り込んで AI を一気に育成
+4. (任意) JV-Link → LightGBM 差し替え (有料路線・後回し)
 
 ---
 
