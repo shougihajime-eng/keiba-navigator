@@ -1264,6 +1264,202 @@ function renderCompare(allBets) {
   }
   // dual-line chart
   drawDualChart($("#chart-compare"), air, real);
+  drawMonthlyChart($("#chart-monthly"), air, real);
+  drawRollingHitChart($("#chart-rolling"), air, real);
+  renderGradeCompare(air, real);
+}
+
+// ─── 月次収支 (エア vs リアル) 棒グラフ ──────────────────────
+function monthlyPnL(bets) {
+  const map = new Map();
+  for (const b of bets) {
+    if (!(b.result?.won === true || b.result?.won === false)) continue;
+    const ts = b.result.finishedAt || b.ts;
+    const ym = (ts || "").slice(0, 7);  // "YYYY-MM"
+    if (!ym) continue;
+    const pnl = (b.result.won ? (b.result.payout || 0) : 0) - (b.amount || 0);
+    map.set(ym, (map.get(ym) || 0) + pnl);
+  }
+  return map;
+}
+
+function drawMonthlyChart(canvas, airBets, realBets) {
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const mA = monthlyPnL(airBets);
+  const mR = monthlyPnL(realBets);
+  const months = [...new Set([...mA.keys(), ...mR.keys()])].sort();
+  if (months.length === 0) {
+    ctx.fillStyle = "#64748b"; ctx.font = "13px Inter, sans-serif";
+    ctx.fillText("月次データがまだありません", 16, H / 2);
+    return;
+  }
+  const recent = months.slice(-12);  // 直近12ヶ月
+  const allVals = recent.flatMap(m => [mA.get(m) || 0, mR.get(m) || 0, 0]);
+  const minV = Math.min(...allVals);
+  const maxV = Math.max(...allVals);
+
+  const padL = 44, padR = 12, padT = 30, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const groupW = plotW / recent.length;
+  const barW = Math.max(4, Math.min(18, (groupW - 4) / 2));
+  const yAt = v => padT + plotH - ((v - minV) / Math.max(1, maxV - minV)) * plotH;
+
+  // 0 line
+  ctx.strokeStyle = "rgba(255,255,255,0.10)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, yAt(0)); ctx.lineTo(W - padR, yAt(0)); ctx.stroke();
+
+  // y-axis labels
+  ctx.fillStyle = "#64748b"; ctx.font = "10px Inter, sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText(fmtYen(maxV), padL - 4, padT + 4);
+  ctx.fillText(fmtYen(0),    padL - 4, yAt(0) + 3);
+  if (minV < 0) ctx.fillText(fmtYen(minV), padL - 4, padT + plotH + 3);
+  ctx.textAlign = "left";
+
+  // bars
+  recent.forEach((m, i) => {
+    const cx = padL + groupW * i + groupW / 2;
+    const a = mA.get(m) || 0;
+    const r = mR.get(m) || 0;
+    const aTop = Math.min(yAt(0), yAt(a));
+    const aH = Math.abs(yAt(a) - yAt(0));
+    const rTop = Math.min(yAt(0), yAt(r));
+    const rH = Math.abs(yAt(r) - yAt(0));
+    ctx.fillStyle = a >= 0 ? "rgba(52,211,153,0.85)" : "rgba(239,68,68,0.78)";
+    ctx.fillRect(cx - barW - 1, aTop, barW, Math.max(1, aH));
+    ctx.fillStyle = r >= 0 ? "rgba(251,146,60,0.85)" : "rgba(239,68,68,0.55)";
+    ctx.fillRect(cx + 1,        rTop, barW, Math.max(1, rH));
+    // x label (MM)
+    ctx.fillStyle = "#64748b"; ctx.font = "10px Inter, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(m.slice(2), cx, H - 8);
+  });
+
+  // 凡例
+  ctx.font = "11px Inter, sans-serif";
+  ctx.fillStyle = "#34d399"; ctx.fillRect(padL,        8, 12, 10);
+  ctx.fillStyle = "#cbd5e1"; ctx.textAlign = "left"; ctx.fillText("エア",    padL + 18, 17);
+  ctx.fillStyle = "#fb923c"; ctx.fillRect(padL + 70,   8, 12, 10);
+  ctx.fillStyle = "#cbd5e1"; ctx.fillText("リアル",   padL + 88, 17);
+}
+
+// ─── 直近20件のローリング的中率 ──────────────────────────────
+function rollingHitSeries(bets, window = 20) {
+  const confirmed = bets.filter(b => b.result?.won === true || b.result?.won === false)
+    .sort((a, b) => (a.result.finishedAt || a.ts).localeCompare(b.result.finishedAt || b.ts));
+  const out = [];
+  for (let i = 0; i < confirmed.length; i++) {
+    const start = Math.max(0, i - window + 1);
+    const slice = confirmed.slice(start, i + 1);
+    const hits = slice.filter(b => b.result.won).length;
+    out.push(hits / slice.length);
+  }
+  return out;
+}
+
+function drawRollingHitChart(canvas, airBets, realBets) {
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const sA = rollingHitSeries(airBets);
+  const sR = rollingHitSeries(realBets);
+  if (sA.length === 0 && sR.length === 0) {
+    ctx.fillStyle = "#64748b"; ctx.font = "13px Inter, sans-serif";
+    ctx.fillText("ローリング表示には結果確定の記録が必要です", 16, H / 2);
+    return;
+  }
+  const padL = 44, padR = 12, padT = 26, padB = 22;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxLen = Math.max(sA.length, sR.length, 2);
+  const xAt = i => padL + (plotW * i) / Math.max(1, maxLen - 1);
+  const yAt = v => padT + plotH - v * plotH;  // 0..1
+
+  // grid (0%, 25%, 50%, 75%, 100%)
+  ctx.strokeStyle = "rgba(255,255,255,0.07)"; ctx.lineWidth = 1;
+  ctx.fillStyle = "#64748b"; ctx.font = "10px Inter, sans-serif"; ctx.textAlign = "right";
+  for (const v of [0, 0.25, 0.5, 0.75, 1.0]) {
+    const y = yAt(v);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    ctx.fillText(`${(v*100).toFixed(0)}%`, padL - 4, y + 3);
+  }
+  ctx.textAlign = "left";
+
+  // air green
+  if (sA.length > 0) {
+    ctx.strokeStyle = "#34d399"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    sA.forEach((v, i) => { const x = xAt(i), y = yAt(v); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+    ctx.stroke();
+  }
+  // real orange
+  if (sR.length > 0) {
+    ctx.strokeStyle = "#fb923c"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    sR.forEach((v, i) => { const x = xAt(i), y = yAt(v); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+    ctx.stroke();
+  }
+
+  // 凡例
+  ctx.font = "11px Inter, sans-serif";
+  ctx.fillStyle = "#34d399"; ctx.fillRect(padL,        8, 12, 4);
+  ctx.fillStyle = "#cbd5e1"; ctx.fillText("エア",    padL + 18, 13);
+  ctx.fillStyle = "#fb923c"; ctx.fillRect(padL + 70,   8, 12, 4);
+  ctx.fillStyle = "#cbd5e1"; ctx.fillText("リアル",   padL + 88, 13);
+}
+
+// ─── グレード別の比較テーブル ────────────────────────────────
+function renderGradeCompare(airBets, realBets) {
+  const wrap = $("#grade-compare");
+  if (!wrap) return;
+  const grades = ["S", "A", "B", "C", "D"];
+  const groupBy = (bets) => {
+    const m = {};
+    for (const g of grades) m[g] = [];
+    for (const b of bets) {
+      const g = b.grade && grades.includes(b.grade) ? b.grade
+              : (window.Learner?.gradeOf?.(b)) || null;
+      if (g && grades.includes(g)) m[g].push(b);
+    }
+    return m;
+  };
+  const ga = groupBy(airBets);
+  const gr = groupBy(realBets);
+  wrap.innerHTML = `
+    <table class="grade-compare-table">
+      <thead>
+        <tr><th>グレード</th><th>エア 件数</th><th>エア 回収率</th><th>リアル 件数</th><th>リアル 回収率</th><th>差</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  `;
+  const tbody = wrap.querySelector("tbody");
+  let any = false;
+  for (const g of grades) {
+    const sa = calcStats(ga[g]);
+    const sr = calcStats(gr[g]);
+    const eligible = (sa.confirmedCount >= 10) || (sr.confirmedCount >= 10);
+    if (!eligible) continue;
+    any = true;
+    const diff = (sa.recovery != null && sr.recovery != null) ? sa.recovery - sr.recovery : null;
+    const diffPct = diff != null ? `${diff >= 0 ? "+" : ""}${(diff * 100).toFixed(0)}%` : "--";
+    const diffCls = diff == null ? "" : (diff >= 0 ? "diff-pos" : "diff-neg");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="grade-mini grade-${g}">${g}</span></td>
+      <td>${sa.confirmedCount}</td>
+      <td>${sa.recovery != null ? `${(sa.recovery*100).toFixed(0)}%` : "--"}</td>
+      <td>${sr.confirmedCount}</td>
+      <td>${sr.recovery != null ? `${(sr.recovery*100).toFixed(0)}%` : "--"}</td>
+      <td class="${diffCls}">${diffPct}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  if (!any) {
+    wrap.innerHTML = `<p class="pro-empty">10件以上確定したグレードがまだありません</p>`;
+  }
 }
 
 function cumulativeSeries(bets) {

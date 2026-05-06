@@ -1363,6 +1363,52 @@ details[open] .caret { transform: rotate(180deg); }
 .diff-pos { color: #6ee7b7; }
 .diff-neg { color: #fca5a5; }
 
+.rec-mini-note {
+  margin-top: var(--sp-1);
+  margin-bottom: var(--sp-3);
+  font-size: 11px;
+  color: var(--ink-4);
+  line-height: 1.5;
+}
+
+/* グレード別比較テーブル */
+.grade-compare {
+  margin-top: var(--sp-2);
+  background: rgba(0,0,0,0.20);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2);
+  overflow-x: auto;
+}
+.grade-compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.grade-compare-table th,
+.grade-compare-table td {
+  padding: 6px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--line-1);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.grade-compare-table th {
+  color: var(--ink-4);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: rgba(0,0,0,0.18);
+}
+.grade-compare-table th:first-child,
+.grade-compare-table td:first-child {
+  text-align: center;
+}
+.grade-compare-table td.diff-pos,
+.grade-compare-table td.diff-neg {
+  font-weight: 800;
+}
+
 /* ═══════════════════════════════════════════════════════════
    設定タブ
    ═══════════════════════════════════════════════════════════ */

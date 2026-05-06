@@ -412,6 +412,19 @@
         </div>
         <h3 class="pro-h3">累計収支(エア vs リアル)</h3>
         <canvas id="chart-compare" class="rec-chart" width="640" height="200"></canvas>
+
+        <h3 class="pro-h3">月次収支(エア vs リアル)</h3>
+        <canvas id="chart-monthly" class="rec-chart" width="640" height="220"></canvas>
+        <p class="rec-mini-note" id="monthly-note">月別の収支を並べて、季節や開催の癖を見ます。</p>
+
+        <h3 class="pro-h3">直近20件 ローリング的中率</h3>
+        <canvas id="chart-rolling" class="rec-chart" width="640" height="180"></canvas>
+        <p class="rec-mini-note" id="rolling-note">直近20件の的中率を1件ずつ動かして表示。AI が育っていれば右肩上がりになります。</p>
+
+        <h3 class="pro-h3">グレード別の比較(S/A/B/C/D)</h3>
+        <div id="grade-compare" class="grade-compare"></div>
+        <p class="rec-mini-note" id="grade-compare-note">10件以上溜まったグレードのみ評価対象。エアとリアルの回収率の差で「買い時を逃しているか／買いすぎか」が見えます。</p>
+
         <p class="rec-note">※ 結果未確定の記録は「結果待ち」として収支に含めません。JV-Link接続後に着順を反映します。</p>
       </section>
 
