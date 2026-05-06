@@ -771,6 +771,86 @@ details[open] .caret { transform: rotate(180deg); }
 }
 
 /* ═══════════════════════════════════════════════════════════
+   AI 育成レベル (★1-5)
+   ═══════════════════════════════════════════════════════════ */
+.ai-level {
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(168,85,247,0.10), transparent 60%),
+    radial-gradient(120% 100% at 100% 100%, rgba(59,130,246,0.10), transparent 60%),
+    var(--surface-1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  position: relative;
+  overflow: hidden;
+}
+.ai-level-head {
+  display: flex; align-items: center; gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.ai-level-stars {
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: var(--acc-gold);
+  text-shadow: 0 0 12px rgba(251,191,36,0.40);
+  font-weight: 900;
+  white-space: nowrap;
+}
+.ai-level-text { min-width: 0; }
+.ai-level-name {
+  font-size: var(--fs-lg); font-weight: 900;
+  color: var(--ink-1);
+  line-height: 1.2;
+}
+.ai-level-sub {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.ai-level-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: rgba(0,0,0,0.32);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+.ai-level-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--acc-info), var(--acc-rare-2), var(--acc-gold));
+  border-radius: var(--r-pill);
+  transition: width .5s ease;
+  box-shadow: 0 0 10px rgba(168,85,247,0.40);
+}
+.ai-level-hint {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin-top: var(--sp-2);
+  letter-spacing: 0.02em;
+}
+.ai-level-detail {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.ai-level-detail summary {
+  cursor: pointer;
+  color: var(--ink-2);
+  font-weight: 700;
+  padding: 2px 0;
+}
+.ai-level-detail summary::marker { color: var(--ink-4); }
+.ai-level-detail p { margin-top: var(--sp-2); line-height: 1.55; }
+.ai-level-detail-note {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--acc-info);
+  background: var(--acc-info-soft);
+  color: var(--ink-2);
+  border-radius: 0 var(--r-xs) var(--r-xs) 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
    期間フィルター (記録タブ)
    ═══════════════════════════════════════════════════════════ */
 .period-pills {

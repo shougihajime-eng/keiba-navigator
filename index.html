@@ -43,6 +43,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="storage.js"></script>
+  <script src="predictors/learner.js"></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -67,7 +68,7 @@
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-300 via-emerald-500 to-teal-700 grid place-items-center font-black text-base text-emerald-950 shrink-0">K</div>
         <div class="min-w-0">
           <div class="font-display font-black text-base tracking-tight leading-none">KEIBA NAVIGATOR</div>
-          <div class="text-[10px] text-ink-mute mt-1">買わないAI — 押した時だけ最新を取得</div>
+          <div class="text-[10px] text-ink-mute mt-1">回収率100%超を目指す育成型 AI</div>
         </div>
       </div>
       <button id="btn-refresh" class="btn-refresh group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap shrink-0">
@@ -114,6 +115,28 @@
           <div id="bv-grade" class="bv-grade" hidden>--</div>
         </div>
         <p id="bv-reason" class="bv-reason">「更新」を押してください。</p>
+      </section>
+
+      <!-- AI 育成レベル (★1〜★5) -->
+      <section id="card-ai-level" class="ai-level">
+        <div class="ai-level-head">
+          <div class="ai-level-stars" id="ai-level-stars">★☆☆☆☆</div>
+          <div class="ai-level-text">
+            <div class="ai-level-name" id="ai-level-name">ひよこ AI</div>
+            <div class="ai-level-sub"  id="ai-level-sub">まだ学習開始前</div>
+          </div>
+        </div>
+        <div class="ai-level-bar-wrap">
+          <div id="ai-level-bar" class="ai-level-bar" style="width:0%"></div>
+        </div>
+        <div class="ai-level-hint" id="ai-level-hint">記録を増やすと育ちます</div>
+        <details class="ai-level-detail">
+          <summary>育成のしくみ</summary>
+          <p>確定した馬券の的中・回収率からレベルが上がります。<br>
+          ★5「世界クラス AI」は <b>500件以上</b> + <b>回収率100%超</b> が条件。<br>
+          仮データで記録された馬券は学習に使いません(混入禁止)。</p>
+          <p class="ai-level-detail-note">JV-Link(JRA-VAN契約) 接続後は学習モデルが LightGBM/ディープラーニングに自動で切替わり、過去レースから本格学習を始めます。</p>
+        </details>
       </section>
 
       <!-- AI実績スナップショット -->
@@ -422,6 +445,23 @@
         <button id="btn-clear-all"  class="btn-danger-outline">🗑 全データを消去 (記録 + 設定)</button>
         <button id="btn-reload"     class="btn-info-outline">🔄 アプリを再読み込み</button>
         <p class="settings-hint mt-3">壊れた状態をクリアしたい時に使ってください。</p>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">🎯 このAIの目標</h2>
+        <p class="settings-text">
+          競馬で <b>毎レース100%当たる</b> ことは原理的にできません(完全な確率事象)。<br>
+          このアプリが目指すのは <b>「長期で見たら回収率100%超」</b>。<br>
+          そのために <b>期待値マイナスのレースは絶対に推奨しない</b> ことを最優先にしています。
+        </p>
+        <p class="settings-text mt-3">
+          <b>育つ仕組み:</b> 記録された馬券の的中・回収率から ★1 →★5 へ進化します。<br>
+          ★5「世界クラス」は <b>500件以上 + 回収率100%超</b> が条件で、簡単には到達しません。<br>
+          現状の予測は単純なヒューリスティックです。<b>JV-Link(JRA-VAN契約)</b> 接続後は <b>LightGBM・ディープラーニング</b> に自動で切替わり、過去レースから本格学習します。
+        </p>
+        <p class="settings-text mt-3 text-[12px] text-ink-mute">
+          ※ どんなAIでも「絶対当たる」はあり得ません。最終判断はご自身でお願いします。
+        </p>
       </section>
 
       <section class="simple-card sc-info">

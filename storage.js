@@ -115,6 +115,7 @@
     const cfg = global.KEIBA_CONFIG;
     _supabase = global.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true },
+      db:   { schema: cfg.SUPABASE_SCHEMA || "keiba" },
     });
     // セッション復元
     try {
@@ -243,6 +244,8 @@
     get user() { return _user; },
     get cloudConfigured() { return isCloudConfigured(); },
     get loadCorruptionDetected() { return _loadCorruptionDetected; },
+    // 認証セッション付きの Supabase クライアントを返す (Learner 等で再利用するため)
+    getSupabase() { return _supabase; },
 
     onChange(cb) { listeners.add(cb); return () => listeners.delete(cb); },
 

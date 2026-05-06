@@ -308,8 +308,31 @@ function renderAdvice(c) {
   $("#advice-text").textContent = buildAdvice(c);
 }
 
+// ─── AI 育成レベル (★1-5) ────────────────────────────────────
+// dummy 起源を除外した「全期間」の馬券から計算 (累積育成)
+function renderAiLevel() {
+  if (!window.Learner) return;
+  const store = loadStore();
+  const stats = window.Learner.computeStats(store.bets || []);
+  const stars = "★".repeat(stats.level) + "☆".repeat(5 - stats.level);
+  const elStars = $("#ai-level-stars"); if (elStars) elStars.textContent = stars;
+  const elName  = $("#ai-level-name");  if (elName)  elName.textContent  = stats.levelName;
+  const elSub   = $("#ai-level-sub");   if (elSub)   elSub.textContent   = stats.levelSub;
+  const elBar   = $("#ai-level-bar");   if (elBar)   elBar.style.width   = (stats.progress?.pct || 0) + "%";
+  const elHint  = $("#ai-level-hint");  if (elHint)  elHint.textContent  = stats.progress?.hint || "";
+
+  // ログイン中なら learner_state にも同期 (失敗してもUIには出さない)
+  try {
+    const sb = window.Storage?.getSupabase?.();
+    if (sb && window.Storage.user && window.Learner.cloudSync) {
+      window.Learner.cloudSync(sb, window.Storage.user.id, store.bets || []);
+    }
+  } catch (e) { /* silent */ }
+}
+
 // ─── AI実績スナップショット（ホーム画面・1週間・dummy除外） ────────────
 function renderAiTrack() {
+  renderAiLevel();
   const store = loadStore();
   const week = filterByPeriod(filterDummy(store.bets || []), "week");  // ★dummy除外
   const air  = week.filter(b => b.type === "air");
