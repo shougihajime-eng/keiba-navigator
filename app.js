@@ -1387,7 +1387,97 @@ function setupEvents() {
     });
   }
 
-  // インポート
+  // ─── CSV インポート ─────────────────────────────────
+  let _pendingCsvBets = null;
+  $("#btn-csv-sample")?.addEventListener("click", (ev) => {
+    if (!window.CsvImport) return;
+    ev.preventDefault();
+    const blob = new Blob(["﻿" + window.CsvImport.sampleCsv()], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "keiba_bets_sample.csv";
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
+  });
+
+  $("#file-csv-import")?.addEventListener("change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file || !window.CsvImport) return;
+    try {
+      const parsed = await window.CsvImport.parseFile(file);
+      if (parsed.errors.length) {
+        showToast("✕ CSV読込み失敗: " + parsed.errors[0].msg, "err");
+        return;
+      }
+      const { bets, errors } = window.CsvImport.toBets(parsed.rows);
+      _pendingCsvBets = bets;
+      const wrap = $("#csv-preview");
+      const summary = $("#csv-preview-summary");
+      const body = $("#csv-preview-body");
+      if (!wrap || !summary || !body) return;
+      wrap.hidden = false;
+      summary.textContent =
+        `成功 ${bets.length} 行 / エラー ${errors.length} 行` +
+        (errors.length ? ` (例: 行${errors[0].row} ${errors[0].msgs[0]})` : "");
+      body.innerHTML = "";
+      const showRows = bets.slice(0, 10);
+      const tbl = document.createElement("table");
+      tbl.className = "csv-preview-table";
+      tbl.innerHTML = `<thead><tr><th>日付</th><th>レース</th><th>種類</th><th>金額</th><th>馬</th><th>オッズ</th><th>結果</th></tr></thead>`;
+      const tbody = document.createElement("tbody");
+      for (const b of showRows) {
+        const tr = document.createElement("tr");
+        const ds = b.ts ? new Date(b.ts).toISOString().slice(0, 10) : "--";
+        const wonText = b.result == null ? "結果待ち" : (b.result.won ? "○" : "×");
+        tr.innerHTML = `<td>${escapeHtml(ds)}</td><td>${escapeHtml(b.raceName||"--")}</td><td>${b.type}</td><td>${b.amount}円</td><td>${escapeHtml(b.target||"--")}</td><td>${b.odds??"--"}</td><td>${wonText}</td>`;
+        tbody.appendChild(tr);
+      }
+      tbl.appendChild(tbody);
+      body.appendChild(tbl);
+      if (bets.length > showRows.length) {
+        const more = document.createElement("p");
+        more.className = "csv-preview-more";
+        more.textContent = `…他 ${bets.length - showRows.length} 件`;
+        body.appendChild(more);
+      }
+    } catch (e) {
+      showToast("✕ CSV解析失敗: " + (e.message || e), "err");
+    } finally {
+      ev.target.value = "";
+    }
+  });
+
+  $("#btn-csv-cancel")?.addEventListener("click", () => {
+    _pendingCsvBets = null;
+    const wrap = $("#csv-preview"); if (wrap) wrap.hidden = true;
+  });
+
+  $("#btn-csv-confirm")?.addEventListener("click", () => {
+    if (!_pendingCsvBets || !_pendingCsvBets.length) {
+      showToast("取り込むデータがありません", "warn");
+      return;
+    }
+    if (!confirm(`${_pendingCsvBets.length} 件の馬券記録を取り込みます。続行しますか?`)) return;
+    const store = loadStore();
+    // 既存の id と衝突しないように unique id を再採番
+    const existingIds = new Set((store.bets || []).map(b => b.id));
+    let added = 0, skipped = 0;
+    for (const b of _pendingCsvBets) {
+      let id = b.id;
+      while (existingIds.has(id)) id = id + "_" + Math.random().toString(36).slice(2, 6);
+      if (existingIds.has(b.id)) { skipped++; }
+      existingIds.add(id);
+      store.bets.push({ ...b, id });
+      added++;
+    }
+    saveStore(store);
+    _pendingCsvBets = null;
+    const wrap = $("#csv-preview"); if (wrap) wrap.hidden = true;
+    showToast(`✓ ${added} 件取り込みました${skipped ? ` (重複 ${skipped} 件は別IDで保存)` : ""}`);
+    try { renderRecords(); renderAiTrack(); } catch {}
+  });
+
+  // インポート (JSON)
   $("#file-import")?.addEventListener("change", async (ev) => {
     const file = ev.target.files?.[0];
     if (!file) return;

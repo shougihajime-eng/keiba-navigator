@@ -918,6 +918,108 @@ details[open] .caret { transform: rotate(180deg); }
 }
 
 /* ═══════════════════════════════════════════════════════════
+   CSV インポート (設定タブ)
+   ═══════════════════════════════════════════════════════════ */
+.csv-import-actions {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.csv-import-actions .btn-info-outline { flex: 1 1 auto; min-width: 160px; }
+
+.csv-format-help {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.csv-format-help summary {
+  cursor: pointer;
+  color: var(--ink-2);
+  font-weight: 700;
+  padding: 4px 0;
+}
+.csv-format-text { margin-top: var(--sp-2); line-height: 1.55; color: var(--ink-3); }
+.csv-format-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--sp-2);
+  font-size: 11px;
+}
+.csv-format-table th,
+.csv-format-table td {
+  padding: 4px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--line-1);
+  color: var(--ink-2);
+  vertical-align: top;
+}
+.csv-format-table th {
+  color: var(--ink-3);
+  font-weight: 800;
+  background: rgba(0,0,0,0.18);
+}
+.csv-format-table code {
+  background: rgba(0,0,0,0.32);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--acc-info-2);
+}
+
+.csv-preview {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--acc-info-line);
+  border-radius: var(--r-sm);
+}
+.csv-preview-head {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.csv-preview-title {
+  font-size: var(--fs-sm); font-weight: 800;
+  color: var(--ink-1);
+}
+.csv-preview-summary {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.csv-preview-body {
+  max-height: 240px;
+  overflow: auto;
+  background: rgba(0,0,0,0.25);
+  border-radius: var(--r-xs);
+  padding: var(--sp-2);
+}
+.csv-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.csv-preview-table th,
+.csv-preview-table td {
+  padding: 3px 6px;
+  text-align: left;
+  border-bottom: 1px solid var(--line-1);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.csv-preview-table th { color: var(--ink-4); font-weight: 700; }
+.csv-preview-more {
+  margin-top: var(--sp-2);
+  font-size: 11px;
+  color: var(--ink-4);
+  text-align: center;
+}
+.csv-preview-actions {
+  display: flex; gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.csv-preview-actions button { flex: 1 1 auto; }
+
+/* ═══════════════════════════════════════════════════════════
    期間フィルター (記録タブ)
    ═══════════════════════════════════════════════════════════ */
 .period-pills {

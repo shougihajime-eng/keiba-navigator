@@ -44,6 +44,7 @@
   <script src="config.js"></script>
   <script src="storage.js"></script>
   <script src="predictors/learner.js"></script>
+  <script src="lib/csv_import.js"></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -489,6 +490,52 @@
           <input id="file-import" type="file" accept=".json,application/json" hidden>
         </label>
         <p id="storage-usage" class="settings-hint mt-2">保存容量: --</p>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">📥 CSV から馬券記録を取り込む</h2>
+        <p class="settings-hint">Excel/Numbers/Google Sheets で作った馬券履歴 CSV を取り込めます。<b>過去の記録を取り込むと、AI の育成レベルが一気に進みます。</b></p>
+
+        <div class="csv-import-actions">
+          <a id="btn-csv-sample"  class="btn-info-outline" download="keiba_bets_sample.csv" href="#">📋 サンプルCSVを保存</a>
+          <label class="btn-info-outline btn-as-label">
+            ⬆ CSV ファイルを選ぶ
+            <input id="file-csv-import" type="file" accept=".csv,text/csv" hidden>
+          </label>
+        </div>
+
+        <details class="csv-format-help">
+          <summary>CSV の書き方(列の説明)</summary>
+          <p class="csv-format-text">1行目に列名を書き、2行目以降にデータを書きます。空白でも問題のない列は飛ばしてOK。</p>
+          <table class="csv-format-table">
+            <thead><tr><th>列名</th><th>説明</th><th>例</th></tr></thead>
+            <tbody>
+              <tr><td><code>date</code></td><td>馬券日(必須)</td><td>2026-04-20</td></tr>
+              <tr><td><code>race_name</code></td><td>レース名(任意)</td><td>皐月賞</td></tr>
+              <tr><td><code>type</code></td><td>air or real(任意・既定 air)</td><td>real</td></tr>
+              <tr><td><code>amount</code></td><td>賭け金(必須・円)</td><td>1000</td></tr>
+              <tr><td><code>target</code></td><td>馬番／組み合わせ(任意)</td><td>3</td></tr>
+              <tr><td><code>bet_type</code></td><td>tan/fuku/uren/...(任意)</td><td>tan</td></tr>
+              <tr><td><code>odds</code></td><td>オッズ(任意)</td><td>5.2</td></tr>
+              <tr><td><code>won</code></td><td>当たり=true/○/1、外れ=false/×/0</td><td>true</td></tr>
+              <tr><td><code>payout</code></td><td>払戻金(円・当たりのみ)</td><td>5200</td></tr>
+              <tr><td><code>grade</code></td><td>S/A/B/C/D(任意)</td><td>A</td></tr>
+            </tbody>
+          </table>
+          <p class="csv-format-text mt-2">⚠ Excel で保存するときは <b>「CSV UTF-8」</b> を選んでください。普通の CSV(Shift_JIS) も自動判別しますが、文字化けする場合があります。</p>
+        </details>
+
+        <div id="csv-preview" class="csv-preview" hidden>
+          <div class="csv-preview-head">
+            <div class="csv-preview-title">取り込み内容のプレビュー</div>
+            <div id="csv-preview-summary" class="csv-preview-summary"></div>
+          </div>
+          <div class="csv-preview-body" id="csv-preview-body"></div>
+          <div class="csv-preview-actions">
+            <button id="btn-csv-cancel"  class="btn-info-outline" type="button">キャンセル</button>
+            <button id="btn-csv-confirm" class="btn-rec btn-rec-real" type="button">✓ この内容で取り込む</button>
+          </div>
+        </div>
       </section>
 
       <section class="simple-card sc-info">
