@@ -45,6 +45,7 @@
   <script src="storage.js"></script>
   <script src="predictors/learner.js"></script>
   <script src="lib/csv_import.js"></script>
+  <script src="lib/kelly.js"></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -216,6 +217,14 @@
           </div>
         </div>
         <div id="pick-suggest" class="pick-suggest">買い目: <span id="pick-suggest-text">--</span></div>
+        <!-- Kelly基準の推奨金額 (1日予算 + 補正後勝率から自動算出) -->
+        <div id="pick-stake" class="pick-stake" hidden>
+          <div class="ps-row">
+            <span class="ps-label">推奨金額</span>
+            <span id="pick-stake-amount" class="ps-amount">--</span>
+          </div>
+          <div id="pick-stake-reason" class="ps-reason">--</div>
+        </div>
         <div class="pick-actions">
           <button id="btn-record-air"  class="btn-rec btn-rec-air"  type="button">🧪 エア馬券で記録</button>
           <button id="btn-record-real" class="btn-rec btn-rec-real" type="button">💰 リアル馬券で記録</button>

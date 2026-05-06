@@ -1756,3 +1756,41 @@ a:hover { text-decoration-color: var(--acc-buy-2); }
   font-variant-numeric: tabular-nums;
 }
 .ai-insight-item + .ai-insight-item { border-top: 1px dashed var(--line-1); padding-top: 6px; margin-top: 3px; }
+
+/* ═══════════════════════════════════════════════════════════
+   💴 Kelly 推奨金額 (pick_card 内)
+   ═══════════════════════════════════════════════════════════ */
+.pick-stake {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.03));
+  border: 1px solid var(--acc-buy-line);
+  border-left-width: 3px;
+  border-radius: var(--r-sm);
+}
+.ps-row {
+  display: flex; align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.ps-label {
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+}
+.ps-amount {
+  font-size: var(--fs-2xl);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.ps-amount-positive { color: var(--acc-buy-2); text-shadow: 0 0 14px rgba(52,211,153,0.30); }
+.ps-amount-zero     { color: var(--ink-4); }
+.ps-reason {
+  font-size: 11px;
+  color: var(--ink-4);
+  margin-top: 4px;
+  line-height: 1.5;
+}

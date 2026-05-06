@@ -294,12 +294,43 @@ function renderPickCard(c) {
     : c.verdict === "neutral" ? "🟡 少額ならこれ"
     :                            "⚪ 候補だけ表示";
 
+  // Kelly基準の推奨金額 (補正後 prob を使う)
+  renderStakeSuggestion(c, top, calRatio);
+
   // 仮データ時は記録ボタン無効化(「仮データで買い推奨しない」「未取得を取得済みのように扱わない」原則)
   const isDummy = !!(c?.raceMeta?.isDummy)
     || (typeof c?.raceMeta?.source === "string" && /DUMMY|TEST|テスト|ダミー|SYNTHETIC/i.test(c.raceMeta.source));
   $("#btn-record-air").disabled  = isDummy;
   $("#btn-record-real").disabled = isDummy;
   $("#pick-record-note").hidden  = !isDummy;
+}
+
+// Kelly基準の推奨金額を pick_card 内に描画
+function renderStakeSuggestion(c, top, calRatio) {
+  const wrap = $("#pick-stake");
+  const amtEl = $("#pick-stake-amount");
+  const reasonEl = $("#pick-stake-reason");
+  if (!wrap || !amtEl || !reasonEl) return;
+  if (!window.Kelly || !top || !c?.ok) { wrap.hidden = true; return; }
+  const store = loadStore();
+  const bankroll  = store.funds?.daily   || null;
+  const perRace   = store.funds?.perRace || null;
+  // 補正後 prob を使う (calRatio がある場合は EV と同じ調整を prob にも適用すると過剰補正)
+  // ここでは prob はそのまま、odds × prob × ratio = 補正後EV と整合する形で勝率を縮める
+  const prob = (calRatio && top.prob) ? top.prob * Math.min(1, calRatio) : top.prob;
+  const out = window.Kelly.suggestStake({
+    prob, odds: top.odds, bankroll, perRaceCap: perRace, confidence: c.confidence,
+  });
+  wrap.hidden = false;
+  if (out.stake > 0) {
+    amtEl.textContent = `¥${out.stake.toLocaleString("ja-JP")}`;
+    amtEl.className = "ps-amount ps-amount-positive";
+    reasonEl.textContent = `${out.reason} (期待値 ${fmtEvPct(out.ev)})`;
+  } else {
+    amtEl.textContent = "¥0";
+    amtEl.className = "ps-amount ps-amount-zero";
+    reasonEl.textContent = out.reason || "推奨できません";
+  }
 }
 
 function renderDangerCard(c) {
@@ -916,7 +947,19 @@ function recordBet(kind /* 'air' | 'real' */) {
   }
   const pick = _currentConclusion.picks[0];
   const store = loadStore();
-  const amount = Number(prompt("購入金額(円)を入力してください", String(store.funds.perRace || 100))) || 0;
+  // 推奨初期値: Kelly 基準 → perRace 上限 → 100円
+  let suggested = store.funds.perRace || 100;
+  if (window.Kelly && pick) {
+    try {
+      const calRatio = getCalibrationRatio(pick.grade);
+      const prob = (calRatio && pick.prob) ? pick.prob * Math.min(1, calRatio) : pick.prob;
+      const k = window.Kelly.suggestStake({
+        prob, odds: pick.odds, bankroll: store.funds.daily, perRaceCap: store.funds.perRace, confidence: _currentConclusion.confidence,
+      });
+      if (k.stake > 0) suggested = k.stake;
+    } catch {}
+  }
+  const amount = Number(prompt("購入金額(円)を入力してください\n(Kelly基準の推奨額をプリセット)", String(suggested))) || 0;
   if (amount <= 0) return;
   if (store.funds.perRace && amount > store.funds.perRace) {
     if (!confirm(`1レース上限 ${store.funds.perRace}円 を超えています。続行しますか?`)) return;
