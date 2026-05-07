@@ -54,6 +54,16 @@
   <!-- ─── トースト通知 (保存・更新完了) ─── -->
   <div id="toast" class="toast" hidden></div>
 
+  <!-- ─── iOS ホーム画面追加バナー (Safari & 非standalone のみ表示) ─── -->
+  <div id="a2hs-banner" class="a2hs-banner" hidden>
+    <div class="a2hs-icon">📲</div>
+    <div class="a2hs-text">
+      <div class="a2hs-title">ホーム画面に追加</div>
+      <div class="a2hs-sub">下の <span class="a2hs-share">⬆</span> ボタン → <b>「ホーム画面に追加」</b> で通知が使えます</div>
+    </div>
+    <button class="a2hs-close" id="a2hs-close" type="button" aria-label="閉じる">×</button>
+  </div>
+
   <!-- ─── 接続状態バナー (常時) ─── -->
   <div id="conn-banner" class="conn-banner conn-disconnected" role="status">
     <span class="conn-dot"></span>
@@ -112,12 +122,15 @@
             JRA公式の <a href="https://www.jra.go.jp/keiba/" target="_blank" rel="noopener">オッズ画面</a> を見ながら、各馬を 1 行ずつ入力してください。<br>
             形式: <code>馬番 馬名 オッズ 人気 前走着順</code>(順不同・空白／カンマ区切り)
           </p>
-          <textarea id="mi-textarea" rows="7" spellcheck="false" placeholder="1 ディープ 3.2 1 1
+          <textarea id="mi-textarea" rows="7" spellcheck="false" inputmode="text" autocapitalize="none" placeholder="1 ディープ 3.2 1 1
 2 オルフェ 5.5 2 3
 3 キタサン 8.0 3 2
 4 サトノ 12.0 4 5
 5 グランプリ 25.0 5 8
-6 ハジメ 60.0 6 10"></textarea>
+6 ハジメ 60.0 6 10
+
+(任意) 騎手名・調教師名を末尾に追加すると相性分析も働きます:
+1 ディープ 3.2 1 1 ルメール 国枝"></textarea>
           <div class="mi-actions">
             <input id="mi-race-name" placeholder="レース名 (任意)" class="mi-name-input" maxlength="60">
             <button id="mi-submit" type="button" class="mi-submit">📈 期待値を判定</button>
@@ -441,6 +454,19 @@
         <div id="backtest-summary" class="backtest-summary">--</div>
         <p class="rec-mini-note" id="backtest-note">確定済記録を時系列で並べ、「補正前のAI(あなたが実際にやった結果)」と「補正後のAI(各時点までの実績で自己校正していたら)」の累積収支を比較。補正後が高ければ自己学習が確かに役立っている証拠です。</p>
 
+        <h3 class="pro-h3">💴 Kelly基準シミュレーション (実際 vs Kelly vs 等額)</h3>
+        <canvas id="chart-kelly-sim" class="rec-chart" width="640" height="220"></canvas>
+        <div id="kelly-sim-summary" class="kelly-sim-summary">--</div>
+        <p class="rec-mini-note" id="kelly-sim-note">過去の確定済記録を「あなたが実際に買った金額」「Kelly基準で買っていた場合」「全部同じ金額(1レース上限)で買った場合」で比較。Kellyの方が高ければ、賭け金配分を最適化する余地があります。1日予算と1レース上限は現在の設定を全期間に適用しています。</p>
+
+        <h3 class="pro-h3">🎯 騎手・調教師の相性</h3>
+        <div class="affinity-tabs">
+          <button class="aff-tab active" data-aff="jockey" type="button">騎手</button>
+          <button class="aff-tab" data-aff="trainer" type="button">調教師</button>
+        </div>
+        <div id="affinity-list" class="affinity-list"></div>
+        <p class="rec-mini-note" id="affinity-note">手動入力で <b>馬名 オッズ 人気 前走着順 騎手名 調教師名</b> の順で書くと、騎手・調教師の相性も学習されます。3件以上記録があった人だけ回収率の高い順に表示。</p>
+
         <p class="rec-note">※ 結果未確定の記録は「結果待ち」として収支に含めません。JV-Link接続後に着順を反映します。</p>
       </section>
 
@@ -501,6 +527,18 @@
             <div class="strategy-sub">本命50 / 押さえ50</div>
           </button>
         </div>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">📱 通知 (朝の「今日のベスト1」)</h2>
+        <p class="settings-hint">朝6〜12時にアプリを開いた時、保存済みレースから <b>「今日のベスト1」</b>(補正後EVが最も高いレース) を通知します。</p>
+        <button id="btn-notify-toggle" class="btn-info-outline" type="button">🔔 通知をONにする</button>
+        <p id="notify-status" class="settings-hint mt-2">--</p>
+        <button id="btn-notify-test"   class="btn-info-outline" type="button">🔔 テスト通知を出す</button>
+        <p class="settings-hint mt-3 text-[11px]">
+          <b>iPhoneの場合:</b> Safariで開いた状態で 共有 → <b>「ホーム画面に追加」</b> をしてから、ホーム画面のアイコンから起動してください。<br>
+          ブラウザのままでは通知が使えません。
+        </p>
       </section>
 
       <section class="simple-card sc-info">

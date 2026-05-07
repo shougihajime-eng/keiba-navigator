@@ -1109,6 +1109,8 @@ function recordBet(kind /* 'air' | 'real' */) {
     prob: pick.prob,
     ev: pick.ev,
     grade: pick.grade,
+    jockey:  pick.jockey  || null,
+    trainer: pick.trainer || null,
     dataSource: _currentConclusion?.dataSource || _currentRaceMeta?.dataSource || "unknown",
     result: { won: null, payout: null, finishedAt: null },
   });
@@ -1400,6 +1402,218 @@ function renderCompare(allBets) {
   drawRollingHitChart($("#chart-rolling"), air, real);
   renderGradeCompare(air, real);
   renderBacktest(allBets);
+  renderKellySim(allBets);
+  renderAffinity(allBets);
+}
+
+// ─── Kelly基準シミュレーション (実際 vs Kelly vs 等額) ──────────
+function renderKellySim(allBets) {
+  const canvas = $("#chart-kelly-sim");
+  const summary = $("#kelly-sim-summary");
+  if (!canvas || !summary) return;
+  const store = loadStore();
+  const bankroll = store.funds?.daily   || null;
+  const perRace  = store.funds?.perRace || null;
+  if (!window.Kelly || !bankroll) {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#64748b"; ctx.font = "13px Inter, sans-serif";
+    ctx.fillText("1日予算が未設定です。設定タブで予算を入れると比較できます。", 16, canvas.height / 2);
+    summary.textContent = "1日予算が未設定";
+    summary.className = "kelly-sim-summary";
+    return;
+  }
+  const sim = simulateKelly(allBets, bankroll, perRace);
+  drawKellySimChart(canvas, sim);
+  if (sim.samples < 1) {
+    summary.textContent = "確定済の記録がありません";
+    summary.className = "kelly-sim-summary";
+    return;
+  }
+  const fmtY = (v) => (v >= 0 ? "+" : "") + Math.round(v).toLocaleString("ja-JP") + "円";
+  let verdict = "";
+  if (sim.kellyFinal > sim.actualFinal && sim.kellyFinal > sim.flatFinal) {
+    const diff = sim.kellyFinal - sim.actualFinal;
+    verdict = `🟢 Kelly基準だと ${fmtY(diff)} 多く勝てた可能性 (賭け金配分の最適化余地あり)`;
+  } else if (sim.actualFinal > sim.kellyFinal && sim.actualFinal > sim.flatFinal) {
+    verdict = `✓ あなたの実際の賭け方が Kelly より良い結果。良い感覚を持っています`;
+  } else if (sim.flatFinal > sim.kellyFinal && sim.flatFinal > sim.actualFinal) {
+    verdict = `🟡 等額が最強 — まだサンプル不足、推定勝率の精度が足りていない可能性`;
+  } else {
+    verdict = "差が小さい — もう少し記録を増やしましょう";
+  }
+  summary.innerHTML = `
+    <div class="ks-row"><span class="ks-key">実際:</span><span class="ks-val">${fmtY(sim.actualFinal)}</span></div>
+    <div class="ks-row"><span class="ks-key">Kelly:</span><span class="ks-val">${fmtY(sim.kellyFinal)} <span class="ks-meta">(${sim.kellyIncluded}件採用 / ${sim.kellySkipped}件見送り)</span></span></div>
+    <div class="ks-row"><span class="ks-key">等額:</span><span class="ks-val">${fmtY(sim.flatFinal)}</span></div>
+    <div class="ks-verdict">${verdict}</div>
+  `;
+  summary.className = "kelly-sim-summary";
+}
+
+function simulateKelly(allBets, bankroll, perRaceCap) {
+  const confirmed = (allBets || [])
+    .filter(b => b && b.dataSource !== "dummy")
+    .filter(b => b.result?.won === true || b.result?.won === false)
+    .sort((a, b) => (a.result?.finishedAt || a.ts).localeCompare(b.result?.finishedAt || b.ts));
+
+  const flatStake = perRaceCap || Math.max(100, Math.floor(bankroll / 10));
+  const actual = [], kelly = [], flat = [];
+  let aCum = 0, kCum = 0, fCum = 0;
+  let kIncluded = 0, kSkipped = 0;
+
+  for (const b of confirmed) {
+    const won = !!b.result.won;
+    const payout = won ? (b.result.payout || 0) : 0;
+    const aProfit = payout - (b.amount || 0);
+    aCum += aProfit;
+    actual.push(aCum);
+
+    // Kelly stake
+    let kProfit = 0;
+    if (window.Kelly && b.prob != null && b.odds != null) {
+      const out = window.Kelly.suggestStake({
+        prob: Number(b.prob), odds: Number(b.odds),
+        bankroll, perRaceCap, confidence: 0.30,
+      });
+      const stake = out.stake;
+      if (stake > 0) {
+        kProfit = won ? (Math.round(stake * Number(b.odds)) - stake) : -stake;
+        kIncluded++;
+      } else {
+        kSkipped++;
+      }
+    }
+    kCum += kProfit;
+    kelly.push(kCum);
+
+    // 等額 stake
+    const fProfit = won ? (Math.round(flatStake * Number(b.odds || 0)) - flatStake) : -flatStake;
+    fCum += fProfit;
+    flat.push(fCum);
+  }
+
+  return {
+    actual, kelly, flat,
+    actualFinal: aCum, kellyFinal: kCum, flatFinal: fCum,
+    samples: confirmed.length,
+    kellyIncluded: kIncluded, kellySkipped: kSkipped,
+    flatStake,
+  };
+}
+
+function drawKellySimChart(canvas, sim) {
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (!sim.samples) {
+    ctx.fillStyle = "#64748b"; ctx.font = "14px Inter, sans-serif";
+    ctx.fillText("確定済みの記録がありません", 16, H / 2);
+    return;
+  }
+  const all = [0, ...sim.actual, ...sim.kelly, ...sim.flat];
+  const minV = Math.min(...all);
+  const maxV = Math.max(...all);
+  const padX = 30, padT = 20, padB = 26;
+  const plotW = W - padX * 2, plotH = H - padT - padB;
+  const N = sim.samples;
+  const xAt = i => padX + (N === 1 ? plotW / 2 : (plotW * i) / (N - 1));
+  const yAt = v => padT + plotH - ((v - minV) / Math.max(1, maxV - minV)) * plotH;
+
+  // 0グリッド
+  ctx.strokeStyle = "rgba(255,255,255,0.08)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padX, yAt(0)); ctx.lineTo(W - padX, yAt(0)); ctx.stroke();
+
+  const drawLine = (series, color, lw) => {
+    ctx.strokeStyle = color; ctx.lineWidth = lw;
+    ctx.beginPath();
+    series.forEach((v, i) => { const x = xAt(i), y = yAt(v); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+    ctx.stroke();
+  };
+  drawLine(sim.flat,   "#94a3b8", 1.5);  // 等額: 灰
+  drawLine(sim.actual, "#fb923c", 2);    // 実際: オレンジ
+  drawLine(sim.kelly,  "#34d399", 2.5);  // Kelly: 緑
+
+  // 凡例
+  ctx.font = "11px Inter, sans-serif";
+  ctx.fillStyle = "#34d399"; ctx.fillRect(padX, 6, 12, 4);
+  ctx.fillStyle = "#cbd5e1"; ctx.fillText("Kelly", padX + 16, 12);
+  ctx.fillStyle = "#fb923c"; ctx.fillRect(padX + 70, 6, 12, 4);
+  ctx.fillStyle = "#cbd5e1"; ctx.fillText("実際", padX + 86, 12);
+  ctx.fillStyle = "#94a3b8"; ctx.fillRect(padX + 130, 6, 12, 4);
+  ctx.fillStyle = "#cbd5e1"; ctx.fillText("等額", padX + 146, 12);
+}
+
+// ─── 騎手・調教師の相性 ───────────────────────────────────
+let _affinityKey = "jockey";  // "jockey" | "trainer"
+function renderAffinity(allBets) {
+  const wrap = $("#affinity-list");
+  if (!wrap) return;
+  // タブ切替
+  for (const t of $$(".aff-tab")) {
+    if (!t.dataset.bound) {
+      t.addEventListener("click", () => {
+        _affinityKey = t.dataset.aff;
+        for (const o of $$(".aff-tab")) o.classList.toggle("active", o === t);
+        const store = loadStore();
+        renderAffinity(filterDummy(store.bets || []));
+      });
+      t.dataset.bound = "1";
+    }
+    t.classList.toggle("active", t.dataset.aff === _affinityKey);
+  }
+  const stats = computeAffinityStats(allBets, _affinityKey);
+  wrap.innerHTML = "";
+  if (!stats.length) {
+    wrap.innerHTML = `<div class="pro-empty">まだデータがありません。手動入力で末尾に騎手名・調教師名を入れて記録してください</div>`;
+    return;
+  }
+  for (const s of stats) {
+    const recoveryPct = s.recovery != null ? Math.round(s.recovery * 100) : null;
+    const hitPct = s.hitRate != null ? Math.round(s.hitRate * 100) : null;
+    const cls = recoveryPct == null ? "" : (recoveryPct >= 100 ? "aff-good" : recoveryPct >= 80 ? "aff-mid" : "aff-bad");
+    const el = document.createElement("div");
+    el.className = "aff-row " + cls;
+    el.innerHTML = `
+      <div class="aff-name">${escapeHtml(s.key)}</div>
+      <div class="aff-meta">
+        <span class="aff-cnt">${s.samples}件</span>
+        <span class="aff-hit">的中 ${hitPct != null ? hitPct + "%" : "--"}</span>
+        <span class="aff-rec">回収 ${recoveryPct != null ? recoveryPct + "%" : "--"}</span>
+      </div>
+      <div class="aff-pnl">${s.pnl >= 0 ? "+" : ""}${Math.round(s.pnl).toLocaleString("ja-JP")}円</div>
+    `;
+    wrap.appendChild(el);
+  }
+}
+
+function computeAffinityStats(allBets, key) {
+  const groups = new Map();
+  const keyName = key === "trainer" ? "trainer" : "jockey";
+  for (const b of (allBets || [])) {
+    if (!b || b.dataSource === "dummy") continue;
+    const k = b[keyName];
+    if (!k || typeof k !== "string") continue;
+    if (b.result?.won === undefined || b.result?.won === null) continue;
+    let g = groups.get(k);
+    if (!g) { g = { key: k, samples: 0, hits: 0, spent: 0, ret: 0 }; groups.set(k, g); }
+    g.samples += 1;
+    g.hits    += b.result.won ? 1 : 0;
+    g.spent   += b.amount || 0;
+    g.ret     += b.result.won ? (b.result.payout || 0) : 0;
+  }
+  const out = [];
+  for (const g of groups.values()) {
+    if (g.samples < 3) continue;
+    out.push({
+      key: g.key,
+      samples: g.samples, hits: g.hits,
+      hitRate: g.samples ? g.hits / g.samples : null,
+      recovery: g.spent ? g.ret / g.spent : null,
+      pnl: g.ret - g.spent,
+    });
+  }
+  return out.sort((a, b) => (b.recovery ?? -Infinity) - (a.recovery ?? -Infinity));
 }
 
 // 🧠 バックテスト: 補正前 vs 補正後
@@ -1880,6 +2094,45 @@ function setupEvents() {
     }
   });
 
+  // ─── 通知 ────────────────────────────────────────────
+  $("#btn-notify-toggle")?.addEventListener("click", async () => {
+    const cur = localStorage.getItem(NOTIFY_ENABLED_KEY) === "1"
+      && (typeof Notification !== "undefined" && Notification.permission === "granted");
+    if (cur) {
+      localStorage.removeItem(NOTIFY_ENABLED_KEY);
+      showToast("通知をOFFにしました");
+      refreshNotifyUi();
+      return;
+    }
+    const ok = await requestNotifyPermission();
+    if (ok) {
+      localStorage.setItem(NOTIFY_ENABLED_KEY, "1");
+      showToast("✓ 通知をONにしました", "ok");
+    }
+    refreshNotifyUi();
+  });
+
+  $("#btn-notify-test")?.addEventListener("click", async () => {
+    if (!isNotifySupported()) { showToast("この端末は通知に対応していません", "warn"); return; }
+    if (Notification.permission !== "granted") {
+      const ok = await requestNotifyPermission();
+      if (!ok) return;
+    }
+    await showLocalNotification(
+      "🔔 KEIBA NAVIGATOR (テスト)",
+      "通知のテストです。朝に「今日のベスト1」がここに表示されます。",
+      "keiba-test"
+    );
+    showToast("✓ テスト通知を送信しました", "ok");
+  });
+
+  // ─── A2HS バナー閉じる ────────────────────────────
+  $("#a2hs-close")?.addEventListener("click", () => {
+    const banner = $("#a2hs-banner");
+    if (banner) banner.hidden = true;
+    try { localStorage.setItem(A2HS_DISMISS_KEY, "1"); } catch {}
+  });
+
   // ─── クラウド同期 (Supabase) ─────────────────────────
   $("#btn-signin")?.addEventListener("click", async () => {
     const email = ($("#cloud-email")?.value || "").trim();
@@ -2050,6 +2303,139 @@ function refreshStorageUsage() {
   else el.style.color = "";
 }
 
+// ─── 通知 (Notification API) ──────────────────────────────
+const NOTIFY_ENABLED_KEY = "keiba_notify_enabled_v1";
+const NOTIFY_LAST_KEY    = "keiba_notify_last_v1";
+
+function isNotifySupported() {
+  return typeof window !== "undefined"
+    && "Notification" in window
+    && "serviceWorker" in navigator;
+}
+
+async function requestNotifyPermission() {
+  if (!isNotifySupported()) {
+    showToast("この端末は通知に対応していません", "warn");
+    return false;
+  }
+  if (Notification.permission === "granted") return true;
+  if (Notification.permission === "denied") {
+    showToast("⚠ 通知が拒否されています。ブラウザ設定で許可してください", "warn");
+    return false;
+  }
+  try {
+    const r = await Notification.requestPermission();
+    return r === "granted";
+  } catch { return false; }
+}
+
+async function showLocalNotification(title, body, tag) {
+  try {
+    const reg = await navigator.serviceWorker?.ready;
+    if (reg && reg.showNotification) {
+      reg.showNotification(title, {
+        body, icon: "/icon.svg", badge: "/icon.svg",
+        tag: tag || "keiba-nav",
+      });
+    } else {
+      new Notification(title, { body, icon: "/icon.svg" });
+    }
+  } catch (e) { console.warn("[notify] failed", e); }
+}
+
+async function maybeShowMorningNotification() {
+  if (!isNotifySupported()) return;
+  if (localStorage.getItem(NOTIFY_ENABLED_KEY) !== "1") return;
+  if (Notification.permission !== "granted") return;
+  const now = new Date();
+  const hour = now.getHours();
+  if (hour < 6 || hour >= 12) return;
+  const today = now.toISOString().slice(0, 10);
+  if (localStorage.getItem(NOTIFY_LAST_KEY) === today) return;
+  const races = loadSavedRaces();
+  if (!races.length) return;
+  const ranked = races.map(r => ({ ...r, calEv: calibratedTopEv(r.conclusion) }))
+                     .sort((a, b) => (b.calEv ?? -Infinity) - (a.calEv ?? -Infinity));
+  const best = ranked[0];
+  const ev = best?.calEv;
+  if (ev == null || !Number.isFinite(ev)) return;
+  const top = best.conclusion?.picks?.[0];
+  if (!top) return;
+  const sign = ev >= 1 ? "+" : "";
+  const evPct = ((ev - 1) * 100).toFixed(0);
+  const title = `🏆 今日のベスト1: ${best.raceName || "保存レース"}`;
+  const body  = `${top.number || "?"}番 ${top.name || ""} / 補正後EV ${sign}${evPct}% / ${(top.odds ?? "?")}倍`;
+  await showLocalNotification(title, body, "keiba-best1-" + today);
+  localStorage.setItem(NOTIFY_LAST_KEY, today);
+}
+
+function refreshNotifyUi() {
+  const btn = $("#btn-notify-toggle");
+  const status = $("#notify-status");
+  const test = $("#btn-notify-test");
+  if (!btn || !status) return;
+  if (!isNotifySupported()) {
+    btn.disabled = true;
+    btn.textContent = "🔔 通知 (この端末は非対応)";
+    status.textContent = "✕ この端末は通知に対応していません (iOSの場合はホーム画面に追加してから開く必要があります)";
+    status.style.color = "#fcd34d";
+    if (test) test.disabled = true;
+    return;
+  }
+  const enabled = localStorage.getItem(NOTIFY_ENABLED_KEY) === "1"
+    && Notification.permission === "granted";
+  if (enabled) {
+    btn.textContent = "🔕 通知をOFFにする";
+    status.textContent = "✓ ON: 朝6〜12時にアプリを開くと「今日のベスト1」を通知します";
+    status.style.color = "#34d399";
+  } else if (Notification.permission === "denied") {
+    btn.disabled = true;
+    btn.textContent = "🔔 通知をONにする";
+    status.textContent = "⚠ 通知が拒否されています (ブラウザ設定で許可してください)";
+    status.style.color = "#fcd34d";
+  } else {
+    btn.textContent = "🔔 通知をONにする";
+    status.textContent = "OFF: ボタンを押すと許可をリクエストします";
+    status.style.color = "";
+  }
+}
+
+// ─── iOS ホーム画面追加バナー ──────────────────────────────
+const A2HS_DISMISS_KEY = "keiba_a2hs_dismissed_v1";
+function maybeShowA2HSBanner() {
+  const banner = $("#a2hs-banner");
+  if (!banner) return;
+  if (localStorage.getItem(A2HS_DISMISS_KEY) === "1") return;
+  // standalone モードなら既にホーム追加済み
+  const isStandalone = window.matchMedia?.("(display-mode: standalone)")?.matches
+    || window.navigator?.standalone === true;
+  if (isStandalone) return;
+  // iOS Safari のみ表示
+  const ua = navigator.userAgent || "";
+  const isIos = /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+  if (!isIos) return;
+  banner.hidden = false;
+}
+
+// ─── URL パラメータ (manifest shortcuts 用) ───────────────
+function applyUrlParams() {
+  try {
+    const sp = new URLSearchParams(location.search);
+    const tab = sp.get("tab");
+    const view = sp.get("view");
+    if (tab && ["home", "record", "settings"].includes(tab)) {
+      switchTab(tab);
+    }
+    if (view === "best1") {
+      // 保存レースまでスクロール
+      setTimeout(() => {
+        const card = $("#card-saved-races");
+        if (card && card.scrollIntoView) card.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+  } catch {}
+}
+
 // クラウド同期状態の表示・ボタン制御
 function refreshCloudUi() {
   const txt = $("#cloud-status-text");
@@ -2083,6 +2469,15 @@ function refreshCloudUi() {
   }
 }
 
+// ─── サービスワーカー登録 (PWA・通知) ──────────────────
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  // ローカル開発(http) でも動く。Vercel(https) でも動く。
+  navigator.serviceWorker.register("/sw.js")
+    .then(() => { /* registered */ })
+    .catch(e => console.warn("[sw] register failed", e));
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   setupEvents();
   refreshConnection().catch(() => {});
@@ -2092,6 +2487,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { renderRecords();  } catch (e) { console.warn(e); }
   try { renderAiTrack();  } catch (e) { console.warn(e); }
   try { renderSavedRacesList(); } catch (e) { console.warn(e); }
+  try { refreshNotifyUi(); } catch (e) { console.warn(e); }
+  try { maybeShowA2HSBanner(); } catch (e) { console.warn(e); }
+  try { applyUrlParams(); } catch (e) { console.warn(e); }
+  registerServiceWorker();
+  // SW が ready になってから朝の通知判定
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.ready
+      .then(() => maybeShowMorningNotification())
+      .catch(() => {});
+  } else {
+    setTimeout(() => maybeShowMorningNotification().catch(() => {}), 500);
+  }
   if (_loadCorruptionDetected) {
     setTimeout(() => showToast("⚠ 保存データの一部が壊れていたため初期化しました(バックアップは保持)", "warn"), 800);
   }

@@ -3,17 +3,33 @@
   "short_name": "KEIBA NAV",
   "description": "競馬の期待値判定アシスタント — 買わないAI",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0e1a",
   "theme_color": "#0a0e1a",
   "lang": "ja",
+  "categories": ["finance", "lifestyle", "utilities"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "今日のベスト1を見る",
+      "short_name": "ベスト1",
+      "description": "保存済レースから補正後EVが最も高いレースを表示",
+      "url": "/?view=best1"
+    },
+    {
+      "name": "記録タブを開く",
+      "short_name": "記録",
+      "description": "馬券の記録と回収率を見る",
+      "url": "/?tab=record"
     }
   ]
 }

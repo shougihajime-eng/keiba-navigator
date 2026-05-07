@@ -2021,3 +2021,123 @@ a:hover { text-decoration-color: var(--acc-buy-2); }
   line-height: 1;
 }
 .sr-del:hover { color: var(--acc-danger-2); border-color: var(--acc-danger-line); }
+
+/* ═══════════════════════════════════════════════════════════
+   A2HS バナー (iOS Safari でホーム画面追加を促す)
+   ═══════════════════════════════════════════════════════════ */
+.a2hs-banner {
+  position: fixed;
+  left: 12px; right: 12px;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(16,185,129,0.95), rgba(59,130,246,0.92));
+  color: #042820;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  animation: toastIn var(--t-mid) var(--ease-out);
+}
+.a2hs-icon { font-size: 28px; flex-shrink: 0; }
+.a2hs-text { flex: 1; min-width: 0; line-height: 1.4; }
+.a2hs-title { font-weight: 800; font-size: 14px; color: #042820; }
+.a2hs-sub   { font-size: 12px; color: rgba(4,40,32,0.86); margin-top: 2px; }
+.a2hs-share { display: inline-block; padding: 0 4px; background: rgba(255,255,255,0.6); border-radius: 4px; }
+.a2hs-close {
+  background: rgba(0,0,0,0.18);
+  border: none;
+  color: #042820;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+.a2hs-close:hover { background: rgba(0,0,0,0.28); }
+
+/* ═══════════════════════════════════════════════════════════
+   Kelly シミュレーション サマリ
+   ═══════════════════════════════════════════════════════════ */
+.kelly-sim-summary {
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+.kelly-sim-summary .ks-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2px 0;
+}
+.kelly-sim-summary .ks-key { color: var(--ink-3); font-weight: 600; }
+.kelly-sim-summary .ks-val { color: var(--ink-1); font-weight: 700; font-variant-numeric: tabular-nums; }
+.kelly-sim-summary .ks-meta { color: var(--ink-4); font-size: 11px; font-weight: 500; margin-left: 6px; }
+.kelly-sim-summary .ks-verdict {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line-1);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   騎手・調教師の相性
+   ═══════════════════════════════════════════════════════════ */
+.affinity-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.aff-tab {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  min-height: 38px;
+  transition: all var(--t-fast) var(--ease-out);
+}
+.aff-tab:hover { color: var(--ink-1); border-color: var(--line-3); }
+.aff-tab.active {
+  background: var(--acc-buy-soft);
+  border-color: var(--acc-buy-line);
+  color: var(--acc-buy-2);
+}
+.affinity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.aff-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+}
+.aff-row.aff-good { border-color: var(--acc-buy-line); background: var(--acc-buy-soft); }
+.aff-row.aff-mid  { border-color: var(--acc-warn-line); background: var(--acc-warn-soft); }
+.aff-row.aff-bad  { border-color: var(--acc-danger-line); background: var(--acc-danger-soft); }
+.aff-name { font-weight: 700; color: var(--ink-1); }
+.aff-meta { display: flex; gap: 10px; color: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.aff-meta .aff-cnt { color: var(--ink-4); }
+.aff-pnl { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink-1); }
+.aff-row.aff-good .aff-pnl { color: var(--acc-buy-2); }
+.aff-row.aff-bad  .aff-pnl { color: var(--acc-danger-2); }
