@@ -7,6 +7,14 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🧰 JV-Link バイナリパーサの骨組み** (`jv_bridge/`):
+  - `io_helpers.py`: SJIS デコード・固定小数 (例: '0032' → 3.2) などの共通変換
+  - `jvdata_struct.py`: RA / SE / O1 / HR の Field 定義テーブル (offset/length は **TODO**)
+  - `parse.py`: `parse_record(bytes) → dict` 汎用パーサ・`RECORD_COMPLETED` フラグで安全運転
+  - `build_race_json.py` / `build_result_json.py`: RA+SE+O1 → races/, HR → results/ への組立
+  - `tests/test_parse.py`: 仕様書未充填の間は自動 skip する smoke テスト
+  - `fixtures/README.md`: 開発者登録 (無料) → SDK サンプル binary の置き場
+  - **状態**: 仕様書 (JRA-VAN SDK 同梱) を入手して RA/SE の offset を埋めれば即動く所まで完成
 - **📱 スマホ最適化＆通知**:
   - `sw.js` を新規作成 (Service Worker・オフライン起動・stale-while-revalidate)
   - 朝6〜12時にアプリを開くと「今日のベスト1」をローカル通知 (`maybeShowMorningNotification`)
@@ -51,9 +59,11 @@
 - なし
 
 ### 🔜 次の一歩
-1. **本番で実運用テスト**: スマホで開いて「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」が来るか確認
-2. **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
-3. (任意) JV-Link → LightGBM 差し替え (有料路線・後回し)
+1. **JRA-VAN 開発者登録 (無料)** → SDK ダウンロード → `jv_bridge/fixtures/` にサンプル binary を配置
+2. **仕様書 PDF の表を見て** `jvdata_struct.py` の RA/SE フィールド (offset/length) を埋め、`RECORD_COMPLETED["RA"]=True` に
+3. `py -3 -m pytest jv_bridge/tests -q` が緑になったら **課金 GO サイン**
+4. **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」が来るか確認
+5. **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
 
 ---
 
