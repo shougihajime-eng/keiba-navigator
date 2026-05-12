@@ -7,6 +7,15 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🧮 集計レイヤを追加** (JV課金前の最重要ピース):
+  - `db/schema.sql` に集計テーブル 4 つ追加:
+    `jockey_stats` / `trainer_stats` / `horse_career` / `course_distance_stats` / `aggregate_meta`
+  - `jv_bridge/aggregate_features.py`: 過去レース (`races/*.json` + `results/*.json`) を横断走査して
+    騎手・調教師・コース別の勝率を集計し、`data/jv_cache/features.json` に書き出す
+  - ベイジアン縮約 (k=20) でサンプル数が少ない時はベースラインに収束 → ノイズ耐性
+  - `--push-supabase` オプションで Supabase テーブルにも UPSERT (任意・service_role 必要)
+  - `tests/test_aggregate.py`: 縮約ロジック・集計・空入力・出力フォーマットの smoke テスト
+  - **これで仕様書転記が終わったら即「騎手勝率」「コース別勝率」などが AI 補正に効くようになる**
 - **🧰 JV-Link バイナリパーサの骨組み** (`jv_bridge/`):
   - `io_helpers.py`: SJIS デコード・固定小数 (例: '0032' → 3.2) などの共通変換
   - `jvdata_struct.py`: RA / SE / O1 / HR の Field 定義テーブル (offset/length は **TODO**)
@@ -59,11 +68,13 @@
 - なし
 
 ### 🔜 次の一歩
-1. **JRA-VAN 開発者登録 (無料)** → SDK ダウンロード → `jv_bridge/fixtures/` にサンプル binary を配置
-2. **仕様書 PDF の表を見て** `jvdata_struct.py` の RA/SE フィールド (offset/length) を埋め、`RECORD_COMPLETED["RA"]=True` に
-3. `py -3 -m pytest jv_bridge/tests -q` が緑になったら **課金 GO サイン**
-4. **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」が来るか確認
-5. **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
+1. **Supabase に新スキーマを反映**: `db/schema.sql` を SQL Editor で再実行 (集計テーブル 5 つが作られる)
+2. **JRA-VAN 開発者登録 (無料)** → SDK ダウンロード → `jv_bridge/fixtures/` にサンプル binary を配置
+3. **仕様書 PDF の表を見て** `jvdata_struct.py` の RA/SE フィールド (offset/length) を埋め、`RECORD_COMPLETED["RA"]=True` に
+4. **Python 32bit + pywin32 を導入** (テスト実行と JV-Link 接続の前提)
+5. `python -m pytest jv_bridge/tests -q` が緑になったら **課金 GO サイン**
+6. **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」が来るか確認
+7. **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
 
 ---
 

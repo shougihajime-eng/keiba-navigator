@@ -110,6 +110,115 @@ create trigger learner_state_updated_at before update on keiba.learner_state
   for each row execute function keiba.set_updated_at();
 
 -- ============================================================
+-- 6. 集計テーブル (JV-Link で取得した過去レースから集計した特徴量)
+--    用途:
+--      jv_bridge/aggregate_features.py が過去レース (RA + SE + HR) を
+--      横断集計して各テーブルへ UPSERT する。
+--      predictors/jv_link_features.js が data/jv_cache/features.json から
+--      読むが、将来は Supabase REST で取りに行く構成にも切替可能。
+--
+--    重要な設計判断:
+--      ・ユーザー固有データではないので user_id を持たない (グローバル参照)
+--      ・誰でも読めるが、書き込みは service_role キーだけ
+--        (集計バッチが自分のPCで動き、service_role で push する想定)
+--      ・JRA-VAN 規約上「再配布」に当たらないよう、生レコードではなく
+--        集計結果のみ保存 (勝率・本数のような数値のみ)
+-- ============================================================
+
+-- 6-1. 騎手別 × (コース,距離,芝ダ) 集計
+create table if not exists keiba.jockey_stats (
+  jockey_name  text not null,
+  course_code  text,                       -- 場コード 01-10 (null = 全場合算)
+  distance     integer,                    -- 距離(m), null = 全距離合算
+  surface      text,                       -- '芝'|'ダ'|'障'|null=全種類
+  samples      integer not null default 0,
+  wins         integer not null default 0,
+  win_rate     numeric generated always as (case when samples > 0 then wins::numeric / samples else 0 end) stored,
+  updated_at   timestamptz default now(),
+  primary key (jockey_name, course_code, distance, surface)
+);
+create index if not exists jockey_stats_name_idx on keiba.jockey_stats(jockey_name);
+
+-- 6-2. 調教師別 × (コース,距離,芝ダ) 集計
+create table if not exists keiba.trainer_stats (
+  trainer_name text not null,
+  course_code  text,
+  distance     integer,
+  surface      text,
+  samples      integer not null default 0,
+  wins         integer not null default 0,
+  win_rate     numeric generated always as (case when samples > 0 then wins::numeric / samples else 0 end) stored,
+  updated_at   timestamptz default now(),
+  primary key (trainer_name, course_code, distance, surface)
+);
+create index if not exists trainer_stats_name_idx on keiba.trainer_stats(trainer_name);
+
+-- 6-3. 馬個別キャリア (出走歴・勝利数・前走情報)
+create table if not exists keiba.horse_career (
+  horse_name      text primary key,
+  total_starts    integer not null default 0,
+  total_wins      integer not null default 0,
+  total_in_three  integer not null default 0,  -- 3着以内
+  last_race_at    date,
+  best_time_sec   numeric,                     -- 持ち時計 (最速タイム)
+  avg_last_3f     numeric,                     -- 上がり3F 平均
+  updated_at      timestamptz default now()
+);
+
+-- 6-4. コース×距離別 全体傾向 (馬場バイアス把握用)
+create table if not exists keiba.course_distance_stats (
+  course_code text not null,
+  distance    integer not null,
+  surface     text not null,                   -- '芝'|'ダ'|'障'
+  samples     integer not null default 0,
+  avg_winning_time_sec  numeric,
+  avg_last_3f           numeric,
+  inside_advantage_pct  numeric,               -- 内枠1-4の勝率
+  updated_at  timestamptz default now(),
+  primary key (course_code, distance, surface)
+);
+
+-- 6-5. 集計バッチの最終実行ログ (UI で「最終更新: ◯月◯日」を出す用)
+create table if not exists keiba.aggregate_meta (
+  key          text primary key,               -- 'jockey_stats'|'trainer_stats'|'horse_career'|'course_distance_stats'
+  last_run_at  timestamptz,
+  source_from  date,                           -- 集計対象の起点日
+  source_to    date,                           -- 集計対象の終端日
+  row_count    integer
+);
+
+-- 6-6. RLS: 認証ユーザーは読み取り可、書き込みは service_role のみ
+alter table keiba.jockey_stats          enable row level security;
+alter table keiba.trainer_stats         enable row level security;
+alter table keiba.horse_career          enable row level security;
+alter table keiba.course_distance_stats enable row level security;
+alter table keiba.aggregate_meta        enable row level security;
+
+drop policy if exists "jockey_stats: read"     on keiba.jockey_stats;
+drop policy if exists "trainer_stats: read"    on keiba.trainer_stats;
+drop policy if exists "horse_career: read"     on keiba.horse_career;
+drop policy if exists "course_stats: read"     on keiba.course_distance_stats;
+drop policy if exists "aggregate_meta: read"   on keiba.aggregate_meta;
+
+create policy "jockey_stats: read"   on keiba.jockey_stats          for select using (auth.role() = 'authenticated');
+create policy "trainer_stats: read"  on keiba.trainer_stats         for select using (auth.role() = 'authenticated');
+create policy "horse_career: read"   on keiba.horse_career          for select using (auth.role() = 'authenticated');
+create policy "course_stats: read"   on keiba.course_distance_stats for select using (auth.role() = 'authenticated');
+create policy "aggregate_meta: read" on keiba.aggregate_meta        for select using (auth.role() = 'authenticated');
+
+-- 書き込みは service_role キー (集計バッチ専用) のみ許可。
+-- service_role は RLS をバイパスするため明示的なポリシー不要。
+
+drop trigger if exists jockey_stats_updated_at  on keiba.jockey_stats;
+drop trigger if exists trainer_stats_updated_at on keiba.trainer_stats;
+drop trigger if exists horse_career_updated_at  on keiba.horse_career;
+drop trigger if exists course_stats_updated_at  on keiba.course_distance_stats;
+create trigger jockey_stats_updated_at  before update on keiba.jockey_stats          for each row execute function keiba.set_updated_at();
+create trigger trainer_stats_updated_at before update on keiba.trainer_stats         for each row execute function keiba.set_updated_at();
+create trigger horse_career_updated_at  before update on keiba.horse_career          for each row execute function keiba.set_updated_at();
+create trigger course_stats_updated_at  before update on keiba.course_distance_stats for each row execute function keiba.set_updated_at();
+
+-- ============================================================
 -- 注意: 完了後、Supabase Dashboard → Settings → API → "Exposed schemas" に
 --       'keiba' を追加すること (PostgREST が外部に公開するため)。
 --       公開しないとクライアントから `from('bets')` 等で見えない。
