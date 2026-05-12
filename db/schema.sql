@@ -187,6 +187,30 @@ create table if not exists keiba.aggregate_meta (
   row_count    integer
 );
 
+-- 6-7. レース結果 (HR 由来・払戻と着順) を Supabase に保存
+--    用途:
+--      手元 PC で取得した結果データを Supabase へ UPSERT すると、
+--      本番 Vercel の API からも結果照合 (finalize) できるようになる。
+--      これにより「リアル馬券の○×を外出先のスマホから確認」が可能に。
+create table if not exists keiba.race_results (
+  race_id      text primary key,                       -- 18 桁 JRA レース ID
+  race_name    text,
+  finished_at  timestamptz,
+  results      jsonb not null default '[]'::jsonb,     -- [{rank, number, name, tan_payout}]
+  payouts      jsonb not null default '{}'::jsonb,     -- {tan, fuku, uren, wide, fuku3, tan3}
+  source       text default 'jv_link',
+  updated_at   timestamptz default now()
+);
+create index if not exists race_results_finished_idx on keiba.race_results(finished_at desc);
+
+alter table keiba.race_results enable row level security;
+drop policy if exists "race_results: read" on keiba.race_results;
+create policy "race_results: read" on keiba.race_results for select using (auth.role() = 'authenticated');
+
+drop trigger if exists race_results_updated_at on keiba.race_results;
+create trigger race_results_updated_at before update on keiba.race_results
+  for each row execute function keiba.set_updated_at();
+
 -- 6-6. RLS: 認証ユーザーは読み取り可、書き込みは service_role のみ
 alter table keiba.jockey_stats          enable row level security;
 alter table keiba.trainer_stats         enable row level security;

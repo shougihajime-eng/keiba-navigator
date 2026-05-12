@@ -130,7 +130,20 @@
     return "D";
   }
 
+  // メモ化キャッシュ (bets の長さ + 末尾 ts をキーにしてヒット判定)
+  let _calibCache = null;     // { key, value }
+  let _backtestCache = null;  // { key, value }
+  function _cacheKey(bets) {
+    if (!Array.isArray(bets) || bets.length === 0) return "empty";
+    const last = bets[bets.length - 1];
+    // bets が in-place 変更されると length が同じでも結果が変わるので、
+    // 末尾要素の ts と result.won を組み合わせて識別する
+    return `${bets.length}|${last?.ts || ""}|${last?.result?.won ?? ""}|${last?.amount ?? ""}`;
+  }
+
   function computeCalibration(bets) {
+    const key = _cacheKey(bets);
+    if (_calibCache && _calibCache.key === key) return _calibCache.value;
     const cleaned = (Array.isArray(bets) ? bets : []).filter(b => b && b.dataSource !== "dummy");
     const confirmed = cleaned.filter(b => b.result?.won === true || b.result?.won === false);
     const byGrade = {};
@@ -163,6 +176,7 @@
         confidence: Math.min(1, s.samples / 30),
       };
     }
+    _calibCache = { key, value: out };
     return out;
   }
 
@@ -218,6 +232,8 @@
   //
   // calibrated の方が高ければ、AIの自己学習が実際に役立つことの根拠。
   function backtest(bets) {
+    const key = _cacheKey(bets);
+    if (_backtestCache && _backtestCache.key === key) return _backtestCache.value;
     const cleaned = (Array.isArray(bets) ? bets : [])
       .filter(b => b && b.dataSource !== "dummy")
       .filter(b => b.result?.won === true || b.result?.won === false)
@@ -265,7 +281,7 @@
     const advantage = totalCal - totalRaw;
     const samples = cleaned.length;
 
-    return {
+    const result = {
       raw,
       calibrated,
       meta: {
@@ -284,6 +300,8 @@
               : "差分なし",
       },
     };
+    _backtestCache = { key, value: result };
+    return result;
   }
 
   global.Learner = {

@@ -28,12 +28,35 @@
 JV-Link は 32bit COM コンポーネントなので、64bit Python では動きません。
 必ず「32bit版」を入れてください。
 
-1. https://www.python.org/downloads/windows/ から
-   「Windows installer (32-bit)」を選んでダウンロード
-2. インストール時、「Add Python to PATH」にチェック
-3. インストール後、PowerShell を開いて以下を実行：
-       py -3.12-32 -m pip install pywin32
-   （Pythonバージョンが違う場合は -3.12-32 の数字を合わせてください）
+【非エンジニア向け・コピペで進める手順】
+
+A) Python 3.12 (32bit) をダウンロード
+   ブラウザで以下のリンクを開いて、自動でダウンロードされる .exe を実行：
+   https://www.python.org/ftp/python/3.12.4/python-3.12.4.exe
+   ※ ファイル名に "amd64" が含まれていないことを確認 (含まれていたら 64bit)
+
+B) インストーラを起動 → 必ず以下にチェック
+   ☑ Add python.exe to PATH   (これを忘れると後で必ず詰みます)
+   ☑ Install launcher for all users (おすすめ・任意)
+   → 「Install Now」をクリック
+
+C) インストール終了後、PowerShell を**新規に**開いて (重要・既存窓は古いPATH)
+   下のコマンドを 1 行ずつコピペして実行:
+
+   py --version                       (3.12.x と出れば OK)
+   py -3.12-32 -m pip install --upgrade pip
+   py -3.12-32 -m pip install pywin32 pytest
+
+D) 動作確認:
+   cd C:\Users\shoug\競馬
+   py -3.12-32 -m pytest jv_bridge\tests -q
+
+   → 全部 PASS または skip と出れば成功。
+
+【困った時の確認コマンド】
+   py -0                              (インストール済 Python の一覧)
+   py -3.12-32 -c "import sys; print(sys.maxsize <= 2**32)"
+   → True と出れば 32bit。False なら 64bit を間違って入れている。
 
 ----------------------------------------------------------------
 ④ 動作テスト

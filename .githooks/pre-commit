@@ -1,0 +1,63 @@
+#!/bin/sh
+# pre-commit hook — JRA-VAN 規約違反になる data/jv_cache 配下の生データを
+# 誤って git add してしまった時にコミットをブロックする。
+#
+# 有効化方法 (リポジトリ毎に 1 度実行):
+#   git config core.hooksPath .githooks
+#
+# このフックがブロックする物:
+#   ・data/jv_cache/raw_*.bin / *.bin  (JV-Link が保存した生バイト列)
+#   ・data/jv_cache/aggregate_* 配下   (蓄積系の生データ)
+#   ・data/jv_cache/results/*.json     (HR レコード由来の生結果)
+#   ・data/jv_cache/races/*.json       (RA+SE+O1 由来の生レース)
+#   ・**.pdf                           (仕様書 PDF の誤コミット防止)
+#
+# 例外 (コミット OK):
+#   ・data/jv_cache/.gitkeep
+#   ・data/jv_cache/features.json     (集計値のみ・規約セーフ)
+#
+# 抜け道:
+#   どうしても push したい時は次でフックをスキップできる (非推奨):
+#     git commit --no-verify
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+forbidden=""
+
+for f in $staged; do
+  case "$f" in
+    # 例外を先に判定 (これらは通す)
+    data/jv_cache/.gitkeep)             continue ;;
+    data/jv_cache/features.json)        continue ;;
+
+    # ここから禁止対象
+    data/jv_cache/raw_*.bin)            forbidden="$forbidden $f" ;;
+    data/jv_cache/*.bin)                forbidden="$forbidden $f" ;;
+    data/jv_cache/aggregate_*/*)        forbidden="$forbidden $f" ;;
+    data/jv_cache/results/*.json)       forbidden="$forbidden $f" ;;
+    data/jv_cache/races/*.json)         forbidden="$forbidden $f" ;;
+    data/jv_cache/_status.json)         forbidden="$forbidden $f" ;;
+    data/jv_cache/latest_race.json)     forbidden="$forbidden $f" ;;
+    *.pdf)                               forbidden="$forbidden $f" ;;
+  esac
+done
+
+if [ -n "$forbidden" ]; then
+  echo ""
+  echo "❌ コミットをブロックしました — JRA-VAN 規約違反になる可能性のあるファイルが含まれています:"
+  for f in $forbidden; do
+    echo "   - $f"
+  done
+  echo ""
+  echo "対処方法:"
+  echo "  これらは git のステージから外してください:"
+  echo "    git reset HEAD <ファイル名>"
+  echo ""
+  echo "  data/jv_cache/ 配下は .gitignore で除外済みです。"
+  echo "  features.json (集計値のみ) は例外として通します。"
+  echo ""
+  echo "  どうしても緊急で通す必要があれば (非推奨):"
+  echo "    git commit --no-verify"
+  exit 1
+fi
+
+exit 0

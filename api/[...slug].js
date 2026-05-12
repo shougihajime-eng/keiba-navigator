@@ -83,20 +83,20 @@ module.exports = async (req, res) => {
       return ok(res, getConnectionStatus());
     }
     if (path === "/result") {
-      const { readResult, listResults } = require("../lib/finalize");
+      const { readResultAsync, listResults } = require("../lib/finalize");
       const raceId = req.query?.raceId;
       if (raceId) {
-        const r = readResult(raceId);
+        const r = await readResultAsync(raceId);
         if (!r) return bad(res, 404, { ok: false, reason: "結果データなし(JV-Link接続後に取得)" });
         return ok(res, { ok: true, result: r });
       }
       return ok(res, { ok: true, available: listResults() });
     }
     if (path === "/finalize" && req.method === "POST") {
-      const { finalizeBatch } = require("../lib/finalize");
+      const { finalizeBatchAsync } = require("../lib/finalize");
       const payload = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
       const bets = Array.isArray(payload.bets) ? payload.bets : [];
-      const updates = finalizeBatch(bets);
+      const updates = await finalizeBatchAsync(bets);
       return ok(res, { ok: true, count: updates.length, updates });
     }
     if (path === "/g1-history") {

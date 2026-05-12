@@ -7,6 +7,18 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🛠️ 設計問題 C〜G を一括修正** (JV課金前の地盤固め):
+  - **C**: `db/schema.sql` に `keiba.race_results` テーブル追加 / `lib/finalize.js` を
+    Supabase 優先・ファイルフォールバックに書き換え → **本番Vercelからも結果照合可**
+  - **D**: `lib/finalize.js` が単複だけでなく **馬連・ワイド・三連複・三連単** にも自動○×対応
+  - **E**: `predictors/learner.js` の `computeCalibration` / `backtest` を**メモ化**
+    (bets の末尾要素キーでキャッシュ判定) → 1000件超でも再計算なし
+  - **F**: `lib/race_id.js` 新規 — `kind()` / `isJraRaceId()` / `parseJraRaceId()` /
+    `labelOf()` で 18桁/`manual_xxx`/`demo_xxx` の判定を一元化。
+    `finalize.js` は `isFinalizableRaceId()` で照合対象を絞る
+  - **G**: `.githooks/pre-commit` 追加 — `data/jv_cache/raw_*.bin` などの
+    JRA-VAN 規約違反になりうるファイルを git commit でブロック (`git config core.hooksPath .githooks` 適用済)
+- **📘 Python 32bit インストール手順を `jv_bridge/SETUP.txt` に詳細化** (コピペで進められる)
 - **🧮 集計レイヤを追加** (JV課金前の最重要ピース):
   - `db/schema.sql` に集計テーブル 4 つ追加:
     `jockey_stats` / `trainer_stats` / `horse_career` / `course_distance_stats` / `aggregate_meta`
