@@ -7,6 +7,23 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **📘 仕様書転記完了 (2026-05-15)** — JRA-VAN 開発者登録 (無料) → SDK Ver4.9.0.2 ダウンロード →
+  C# 構造体 `JV-Data構造体/C#版/JVData_Struct.cs` から RA/SE/O1/HR の全 offset/length を
+  Python 側 `jvdata_struct.py` に**正式転記**:
+  - `RECORD_COMPLETED` 全部 True / `SPEC_VERSION = "4.9.0.1"`
+  - **RA** (1272B): grade_code / distance / track_code / weather / going_shiba / going_dirt
+    / race_name (Hondai 60字) / Ryakusyo10/6/3 / hassou_time / toroku/syusso/nyusen_tosu
+  - **SE** (555B): wakuban / umaban / 馬名 / 性齢 / 騎手8字略称 / 調教師8字略称
+    / 負担重量 / 馬体重 / 増減符号 + 増減差 (符号付き) / 異常区分 / 確定着順 / 単勝オッズ / 人気
+    / マイニング予想 (DM_*) / 脚質判定
+  - **O1** (962B): ヘッダ + 単勝オッズ繰り返し (offset=43, 8B × 最大28頭)
+    + 複勝 (267, 12B×28) + 枠連 (603, 9B×36)
+  - **HR** (719B): 8 券種の offset 全部入り (tan@102 / fuku@141 / wakuren@206 / uren@245
+    / wide@293 / utan@453 / fuku3@549 / tan3@603) — `HR_PAYOUT_LAYOUT` にデフォルト offset
+  - `build_race_json.py` 改修: track_code 由来の going_shiba/dirt 自動切替、weight_diff の符号統合
+  - `build_result_json.py` 改修: `parse_hr_payouts` がデフォルト offset で動くように
+  - `test_parse.py` に転記完了確認テスト追加 (RA/SE/HR/O1 全部 `is_completed=True`)
+  - `fixtures/README.md` を「SDK にサンプル無し・実取得が必要」と正確に書き直し
 - **🔬 妥協なし総点検 (2026-05-15 夜・ユーザー就寝中)** — エージェント3台で全コードを深掘りレビューし、見つかった HIGH/MED 全部を修正:
   - **コア計算ロジック修正**:
     - `predictors/learner.js`: `nextLevelTarget` の OFF-BY-ONE バグ修正 (Lv5 で undefined を返していた)
@@ -133,22 +150,21 @@
 
 ### 🔜 次の一歩 (0 円フェーズ → 月額フェーズ の順)
 
-**フェーズ A (0 円・ここを完走しないと月額に進まない)**:
-1. **JRA-VAN 開発者登録** (https://developer.jra-van.jp/ で無料登録)
-2. **SDK ダウンロード** (https://jra-van.jp/dlb/sdv/sdk.html) → 仕様書 PDF と SampleData/*.bin が手に入る
-3. **32bit Python 3.12 を入れる** → `py -3.12-32 -m pip install pywin32 pytest`
-4. **仕様書を Claude に見せる** → `jvdata_struct.py` の RA/SE/HR の offset 表を 30 分〜1 時間で転記
-5. **SampleData を `jv_bridge/fixtures/<RID>/sample_<RID>.bin` に配置**
-6. `py -3.12-32 -m pytest jv_bridge/tests -q` が **全て passed** になったら **月額契約 GO サイン**
+**フェーズ A (0 円)** — ✅ ほぼ完了:
+1. ✅ JRA-VAN 開発者登録 (無料) — 完了 (`oneone` / 2026-05-15)
+2. ✅ SDK ダウンロード — `JVDTLABSDK4902.zip` を取得済み
+3. ✅ 仕様書転記 — C# 構造体から RA/SE/O1/HR 全 offset を `jvdata_struct.py` に転記済み
+4. 🔜 **32bit Python 3.12 をインストール** (`SETUP.txt` [A-3] 参照) → `py -3.12-32 -m pip install pywin32 pytest`
+5. 🔜 `py -3.12-32 -m pytest jv_bridge/tests -q` で全テスト緑を確認 (サンプルバイナリ無しでも合成テストは緑)
 
 **フェーズ B (月額 2,090 円)**:
-7. **Supabase に新スキーマ反映** (`db/schema.sql` を SQL Editor で再実行 — 集計テーブル 5 つ追加)
-8. **JRA-VAN Data Lab. 契約** (https://jra-van.jp/dlb/) → 利用キー発行
-9. **JV-Link 本体インストール** (SDK 同梱の JVLink_v4_xx.exe)
-10. `py -3.12-32 jv_bridge\jv_fetch.py init` で接続テスト
-11. `py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20140101000000` で 10 年分取得
-12. **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」を確認
-13. **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
+6. **Supabase に新スキーマ反映** (`db/schema.sql` を SQL Editor で再実行)
+7. **JRA-VAN Data Lab. 契約** (https://jra-van.jp/dlb/) → 利用キー発行
+8. **JV-Link 本体インストール** (SDK 同梱の JVLink_v4_xx.exe)
+9. `py -3.12-32 jv_bridge\jv_fetch.py init` で接続テスト
+10. `py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20140101000000` で 10 年分取得
+11. **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」を確認
+12. **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
 
 ---
 

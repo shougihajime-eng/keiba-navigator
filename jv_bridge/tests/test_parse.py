@@ -63,8 +63,9 @@ def test_detect_known_record_ids():
     assert parse.detect_record_id(b"\x00\x01\x02") is None
 
 
-def test_parse_record_spec_pending():
-    # 既知のレコード ID だが仕様書未充填 → spec_pending を返す
+def test_parse_record_spec_pending(monkeypatch):
+    # 仕様書転記が未完だった場合の挙動: 一時的に RA を False にして確認
+    monkeypatch.setitem(jvdata_struct.RECORD_COMPLETED, "RA", False)
     res = parse.parse_record(b"RA" + b"x" * 100)
     assert res is not None
     assert res["_record_id"] == "RA"
@@ -74,6 +75,37 @@ def test_parse_record_spec_pending():
 def test_parse_record_unknown_id():
     # 未登録のレコード種別 → None
     assert parse.parse_record(b"ZZ" + b"x" * 50) is None
+
+
+def test_parse_record_ok_after_transcription():
+    """RECORD_COMPLETED["RA"]=True 状態で、短い bytes でも落ちずに _status='ok'。
+    範囲外フィールドは None になる (slice_field の保護動作)。
+    """
+    assert jvdata_struct.is_completed("RA") is True
+    # RA は 1272 バイトが正規だが、100 バイトしか渡さなくても落ちない
+    res = parse.parse_record(b"RA" + b"\x00" * 100)
+    assert res is not None
+    assert res["_record_id"] == "RA"
+    assert res["_status"] == "ok"
+    # 100 バイトだと race_name (offset 32, len 60) は範囲内なので何か入る
+    # 一方 grade_code (offset 614) は範囲外で None
+    assert "grade_code" in res
+    assert res["grade_code"] is None
+
+
+def test_parse_record_se_ok():
+    """SE も同様に _status='ok' (RECORD_COMPLETED["SE"]=True)。"""
+    assert jvdata_struct.is_completed("SE") is True
+    res = parse.parse_record(b"SE" + b"\x00" * 50)
+    assert res is not None
+    assert res["_record_id"] == "SE"
+    assert res["_status"] == "ok"
+
+
+def test_record_layouts_are_complete():
+    """全レコード種別の RECORD_COMPLETED が True (仕様書転記済み)。"""
+    for rid in ["RA", "SE", "O1", "HR"]:
+        assert jvdata_struct.is_completed(rid), f"{rid} の RECORD_COMPLETED が False"
 
 
 # ── 仕様書転記後に有効化されるテスト (RECORD_COMPLETED 切替で起動) ──

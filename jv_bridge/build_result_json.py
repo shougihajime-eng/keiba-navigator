@@ -106,24 +106,30 @@ def parse_payout_block(buf: bytes, offset: int, count: int,
     return out
 
 
-def parse_hr_payouts(buf: bytes, payout_offsets: Dict[str, int],
+def parse_hr_payouts(buf: bytes,
+                     payout_offsets: Optional[Dict[str, int]] = None,
                      layout_override: Optional[Dict[str, Dict[str, int]]] = None
                      ) -> Dict[str, List[Dict[str, Any]]]:
-    """HR レコード bytes と「各券種の開始 offset」マップから payouts dict を組み立て。
+    """HR レコード bytes から payouts dict を組み立て。
 
-    payout_offsets 例 (仕様書転記後に埋める):
-        {"tan": 41, "fuku": 80, "wakuren": ..., "uren": ..., "wide": ..., "utan": ...,
-         "fuku3": ..., "tan3": ...}
+    通常は jvdata_struct.HR_PAYOUT_LAYOUT のデフォルト offset (仕様書 4.9.0.1 由来)
+    を使う。テスト等で別の offset / レイアウトを使いたい場合は引数で上書き可能。
 
-    layout_override: HR_PAYOUT_LAYOUT の値を上書きしたい場合 (テスト用) に指定。
-    offset または layout が None / 未指定の券種は空配列を返す (落とさない)。
+    payout_offsets: {"tan": 102, "fuku": 141, ...} 形式の上書きマップ (任意)
+    layout_override: HR_PAYOUT_LAYOUT 自体の上書きマップ (任意)
     """
     out: Dict[str, List[Dict[str, Any]]] = {}
     base_layout = jvdata_struct.HR_PAYOUT_LAYOUT
+    overrides = layout_override or {}
+    offset_overrides = payout_offsets or {}
     for ticket, layout in base_layout.items():
-        layout = (layout_override or {}).get(ticket, layout)
-        off = payout_offsets.get(ticket)
-        if layout is None or off is None or off < 0:
+        layout = overrides.get(ticket, layout)
+        if layout is None:
+            out[ticket] = []
+            continue
+        # offset は引数の payout_offsets が優先、無ければ layout["offset"] を使う
+        off = offset_overrides.get(ticket, layout.get("offset"))
+        if off is None or off < 0:
             out[ticket] = []
             continue
         out[ticket] = parse_payout_block(

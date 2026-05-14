@@ -60,6 +60,20 @@ def _surface_from_ra(ra: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def _going_from_ra(ra: Dict[str, Any], surface: Optional[str]) -> Optional[str]:
+    """track_code から芝/ダを判別して going_shiba / going_dirt を選ぶ。
+    芝→ going_shiba、ダート→ going_dirt、障害→ going_shiba をデフォルト。
+    """
+    if surface == "ダート":
+        code = ra.get("going_dirt")
+    else:
+        code = ra.get("going_shiba")
+    if not code:
+        # legacy フィールド名のフォールバック
+        code = ra.get("going")
+    return GOING_LABELS.get(str(code or "").strip())
+
+
 def _course_label(ra: Dict[str, Any]) -> Optional[str]:
     """場名 + 芝/ダ + 距離 e.g. '東京芝1600'。"""
     jyo = JYO_NAMES.get(str(ra.get("jyo_code") or "").strip())
@@ -73,6 +87,24 @@ def _course_label(ra: Dict[str, Any]) -> Optional[str]:
     if distance:
         return f"{jyo}{distance}"
     return jyo
+
+
+def _weight_diff(se: Dict[str, Any]):
+    """SE レコードの weight_diff_sign + weight_diff_value を符号付き整数に統合。
+    新スキーマでは符号と値が別フィールド。旧スキーマ (weight_diff 一体) もサポート。
+    """
+    # 旧スキーマ (test fixture など)
+    if "weight_diff" in se:
+        v = se.get("weight_diff")
+        if isinstance(v, (int, float)):
+            return v
+    sign = (se.get("weight_diff_sign") or "").strip()
+    val  = se.get("weight_diff_value")
+    if val is None or not isinstance(val, (int, float)):
+        return None
+    if sign == "-":
+        return -int(val)
+    return int(val)
 
 
 def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -89,12 +121,18 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
             "sex_age":     _sex_age(se),
             "weight":      se.get("burden_kg"),
             "body_weight": se.get("body_weight"),
-            "weight_diff": se.get("weight_diff"),
+            "weight_diff": _weight_diff(se),
             "jockey":      se.get("jockey_name"),
             "trainer":     se.get("trainer_name"),
-            "prev_finish": se.get("prev_finish"),
+            # JV-Data の SE には「前走着順」は無い (kakutei_jyuni は当該レースの着順)
+            # 前走情報は別レコード (UM/HN/UH 等) から取得する。現状は None。
+            "prev_finish": None,
             "popularity":  se.get("popularity"),
-            "win_odds":    odds_table.get(str(num)) if num is not None else None,
+            "win_odds":    odds_table.get(str(num)) if num is not None
+                            else (se.get("win_odds") if se.get("win_odds") else None),
+            # SE が確定済みなら kakutei_jyuni / time が入る (結果データとしても利用可)
+            "kakutei_jyuni": se.get("kakutei_jyuni"),
+            "ijyou_code":    se.get("ijyou_code"),
         })
 
     surface = _surface_from_ra(ra)
@@ -104,7 +142,7 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
         "course":        _course_label(ra),
         "surface":       surface,
         "distance":      ra.get("distance"),
-        "going":         GOING_LABELS.get(str(ra.get("going") or "").strip()),
+        "going":         _going_from_ra(ra, surface),
         "weather":       WEATHER_LABELS.get(str(ra.get("weather") or "").strip()),
         "is_g1":         (str(ra.get("grade_code") or "").strip() == "1"),
         "source":        "jv_link",
