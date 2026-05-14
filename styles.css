@@ -1432,6 +1432,23 @@ details[open] .caret { transform: rotate(180deg); }
   color: var(--ink-2);
   font-weight: 500;
 }
+/* 用語ツールチップ ⓘ (EV 等の専門用語に title 属性で説明を出す) */
+.settings-tip {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.10);
+  color: var(--ink-mute);
+  font-size: 11px;
+  cursor: help;
+  user-select: none;
+  vertical-align: 1px;
+}
+.settings-tip:hover {
+  background: rgba(255,255,255,0.20);
+  color: var(--ink-1);
+}
 .settings-input {
   width: 130px;
   padding: 10px 12px;
@@ -1694,6 +1711,13 @@ a:hover { text-decoration-color: var(--acc-buy-2); }
   outline: none;
   border-color: var(--acc-rare);
   box-shadow: 0 0 0 3px rgba(168,85,247,0.15);
+}
+/* iPhone SE 等の小型端末で textarea が画面を占有するのを防ぐ */
+@media (max-width: 480px) {
+  #mi-textarea {
+    min-height: 90px;
+    font-size: 12px;
+  }
 }
 .mi-actions {
   display: flex; gap: var(--sp-2);

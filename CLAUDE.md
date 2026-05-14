@@ -7,6 +7,37 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🔬 妥協なし総点検 (2026-05-15 夜・ユーザー就寝中)** — エージェント3台で全コードを深掘りレビューし、見つかった HIGH/MED 全部を修正:
+  - **コア計算ロジック修正**:
+    - `predictors/learner.js`: `nextLevelTarget` の OFF-BY-ONE バグ修正 (Lv5 で undefined を返していた)
+    - `predictors/learner.js`: `computeCalibration` で `evSum` に NaN 時 1.0 を加算していた noise を排除
+    - `lib/finalize.js`: 馬連/3連複/3連単で `exactTop3.length < 2 or 3` のとき undefined.number 参照で落ちるバグを修正
+    - `lib/conclusion.js`: EV 計算前に `Number.isFinite` ガード追加、`prob*100` の NaN ガード
+    - `lib/kelly.js`: `odds = 1.0` 近辺の浮動小数点誤差ガード (1+1e-6 以下は 0)、上限 1.0 クリップ
+    - `lib/backtest.js`: `improvement` の NaN 伝播を `Number.isFinite` チェックでガード
+    - `lib/manual_race.js`: `splice()` 副作用を排除し、純粋関数化。race_id にミリ秒+3桁ランダムサフィックスで衝突対策
+    - `lib/race_id.js`: 新 race_id 形式 `manual_<ms>_<sfx>` を判定パターンに追加
+    - `predictors/features.js`: `isValidHorseNumber()` 追加 (馬番 1-30 範囲チェック)
+    - `lib/csv_import.js`: `parseType` 空欄時の "air" フォールバック挙動を明示コメント
+  - **UI / フロント修正**:
+    - `app.js`: `submitManual` で API JSON.parse 失敗時を `try-catch` で捕捉、`res.ok` チェック追加
+    - `app.js`: 金額入力 `prompt` のキャンセル/空入力を分岐、全角数字・カンマ・円記号の正規化追加
+    - `app.js`: `saveStore` の `QuotaExceededError` 時に古いバックアップキーを自動掃除して再試行
+    - `sw.js`: app.js / styles.css / predictors/ / lib/ を **network-first** に変更 (デプロイ後の "古い app.js 残存" 防止)。`CACHE_VERSION` を v3 に
+    - `index.html`: 設定タブの数値入力に `max` `maxlength` `inputmode` 追加。EV 用語ツールチップ `ⓘ` を追加
+    - `styles.css`: `.settings-tip` クラス追加 (ツールチップ表示)。スマホ (480px 以下) で textarea 縮小
+  - **サーバ・本番整合性修正**:
+    - `lib/odds_movement.js`: Vercel 本番では `/tmp/keiba_odds_history/` に書き込み (best-effort・read-only FS 対策)
+    - `lib/venues.js`: `__dirname` 起点を明示コメント化、読み込み失敗時に warn ログ
+    - `lib/finalize.js`: Supabase fetch 失敗時のエラー詳細を `console.warn` で記録 (silent fail 解消)
+    - `lib/jv_cache.js`: ENOENT 以外の readdir エラーをログ出力
+    - `api/[...slug].js`: POST body JSON.parse 失敗時に 400 を返す (500 化を防ぐ)
+    - `api/[...slug].js` / `server.js`: deprecated な `url.parse()` を WHATWG `URL` に置換 (Node 24 で DEP0169 警告解消)
+    - `server.js`: `/api/result` `/api/finalize` を `async` 版に統一 (Supabase 経由が本番と同じ挙動)
+    - `vercel.json`: `maxDuration` を 10 秒 → 30 秒 (天気10会場+ニュース同時呼び出しの timeout 防止)
+    - `db/schema.sql`: `keiba.race_results` の RLS read ポリシーを `auth.role()='authenticated'` → `using (true)` に変更 (結果は公開情報・anon でも読める必要)
+  - **テスト追加**: `tests/smoke.js` (Node 用・29 ケース全通過)。`npm test` でいつでも走る。
+  - **本番動作確認**: ローカル `npm start` で全 API (status/venues/schedule/connection/conclusion-manual/finalize/race/races/result) を curl で叩いて 200/4xx/5xx すべて期待通り。不正 JSON は 400、データ未取得は 503、未知 race_id は 404
 - **🛡️ 入金前の事前準備を一気に完成** (2026-05-15):
   - **io_helpers** に `to_signed_int` (符号付き馬体重差) / `decode_track_code` (芝/ダ/障) /
     `decode_going/weather/sex` / `is_data_missing` (Z 埋め判定) を追加

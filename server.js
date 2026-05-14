@@ -5,10 +5,18 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-const url_mod = require("url");
 
 const ROOT = __dirname;
 const PORT = Number(process.env.PORT || 8765);
+
+// WHATWG URL API でリクエスト URL をパースする (url.parse() は deprecated)
+function parseReqUrl(req) {
+  const u = new URL(req.url || "/", "http://127.0.0.1");
+  // query を Object に変換 (互換: u.query?.foo の使い方を保てるように)
+  const query = {};
+  for (const [k, v] of u.searchParams.entries()) query[k] = v;
+  return { pathname: u.pathname, query };
+}
 
 const { buildStatus }     = require("./lib/status");
 const { fetchAllWeather } = require("./lib/weather");
@@ -25,7 +33,7 @@ function jsonRes(res, status, obj) {
 
 async function serve(req, res) {
   try {
-    const u = url_mod.parse(req.url, true);
+    const u = parseReqUrl(req);
     const p = u.pathname || "/";
 
     if (p === "/api/status") {
@@ -98,23 +106,24 @@ async function serve(req, res) {
       return jsonRes(res, 200, getConnectionStatus());
     }
     if (p === "/api/result") {
-      const { readResult, listResults } = require("./lib/finalize");
+      // 本番と同じく async 版を使用 (Supabase 優先 → ファイルフォールバック)
+      const { readResultAsync, listResults } = require("./lib/finalize");
       const raceId = u.query?.raceId;
       if (raceId) {
-        const r = readResult(raceId);
+        const r = await readResultAsync(raceId);
         if (!r) return jsonRes(res, 404, { ok: false, reason: "結果データなし(JV-Link接続後に取得)" });
         return jsonRes(res, 200, { ok: true, result: r });
       }
       return jsonRes(res, 200, { ok: true, available: listResults() });
     }
     if (p === "/api/finalize" && req.method === "POST") {
-      const { finalizeBatch } = require("./lib/finalize");
+      const { finalizeBatchAsync } = require("./lib/finalize");
       let body = "";
       for await (const chunk of req) body += chunk;
       try {
         const payload = body ? JSON.parse(body) : {};
         const bets = Array.isArray(payload.bets) ? payload.bets : [];
-        const updates = finalizeBatch(bets);
+        const updates = await finalizeBatchAsync(bets);
         return jsonRes(res, 200, { ok: true, count: updates.length, updates });
       } catch (e) {
         return jsonRes(res, 400, { ok: false, error: String(e.message || e) });

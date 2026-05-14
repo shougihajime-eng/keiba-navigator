@@ -10,21 +10,26 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v2";
+const CACHE_VERSION = "keiba-nav-v3";  // app.js を network-first に変えたため bump
 const PRECACHE = [
   "/",
   "/index.html",
-  "/app.js",
-  "/styles.css",
   "/manifest.json",
   "/icon.svg",
+  // ↓静的のうち変更頻度低めのもののみ pre-cache。app.js/styles.css は network-first で別管理
   "/storage.js",
   "/config.js",
-  "/predictors/learner.js",
-  "/lib/csv_import.js",
-  "/lib/kelly.js",
-  "/lib/backtest.js",
 ];
+
+// network-first で扱う (デプロイ後に古い版が残らないようにする)
+const NETWORK_FIRST_PATHS = [
+  "/app.js", "/styles.css",
+  "/predictors/", "/lib/",
+];
+
+function isNetworkFirst(pathname) {
+  return NETWORK_FIRST_PATHS.some(p => pathname === p || pathname.startsWith(p));
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
@@ -57,9 +62,24 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_VERSION);
+
+    // network-first 対象 (app.js/styles.css/predictors/lib): 必ずネットを先に試す。
+    // ネット失敗時のみキャッシュ。これでデプロイ後の "古い app.js が出続け" を防ぐ。
+    if (isNetworkFirst(url.pathname)) {
+      try {
+        const fresh = await fetch(req, { cache: "no-store" });
+        if (fresh && fresh.ok) cache.put(req, fresh.clone()).catch(() => null);
+        return fresh;
+      } catch {
+        const cached = await cache.match(req);
+        if (cached) return cached;
+        return new Response("offline", { status: 503, statusText: "offline" });
+      }
+    }
+
+    // それ以外 (index.html, icon 等): cache-first → stale-while-revalidate
     const cached = await cache.match(req);
     if (cached) {
-      // バックグラウンドで更新 (stale-while-revalidate)
       fetch(req).then(r => { if (r && r.ok) cache.put(req, r.clone()); }).catch(() => null);
       return cached;
     }
@@ -68,7 +88,6 @@ self.addEventListener("fetch", (event) => {
       if (fresh && fresh.ok) cache.put(req, fresh.clone()).catch(() => null);
       return fresh;
     } catch {
-      // ネット不通時は index.html を返す (ナビゲーションのみ)
       if (req.mode === "navigate") {
         const fallback = await cache.match("/index.html");
         if (fallback) return fallback;

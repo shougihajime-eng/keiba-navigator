@@ -484,15 +484,18 @@
         <p class="settings-hint">破産しないために、最初に1度だけ設定します。</p>
         <label class="settings-row">
           <span class="settings-label">1日の予算 (円)</span>
-          <input id="set-daily" type="number" min="0" step="100" class="settings-input" placeholder="例: 3000">
+          <input id="set-daily" type="number" min="0" max="1000000" step="100" inputmode="numeric" class="settings-input" placeholder="例: 3000">
         </label>
         <label class="settings-row">
           <span class="settings-label">1レース上限 (円)</span>
-          <input id="set-perrace" type="number" min="0" step="100" class="settings-input" placeholder="例: 1000">
+          <input id="set-perrace" type="number" min="0" max="1000000" step="100" inputmode="numeric" class="settings-input" placeholder="例: 1000">
         </label>
         <label class="settings-row">
-          <span class="settings-label">最小EV閾値 (1.10推奨)</span>
-          <input id="set-minev" type="number" min="1.0" max="2.0" step="0.05" class="settings-input" placeholder="1.10">
+          <span class="settings-label">
+            最小EV閾値 (1.10推奨)
+            <small class="settings-tip" title="EV (期待値) は『推定勝率 × オッズ』の数字。1.0 を超えればプラス、超えなければマイナス。1.10 推奨は『プラス幅が10%以上ある馬だけ買う』という保守的な設定です。">ⓘ</small>
+          </span>
+          <input id="set-minev" type="number" min="1.0" max="2.0" step="0.05" inputmode="decimal" class="settings-input" placeholder="1.10">
         </label>
       </section>
 

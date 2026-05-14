@@ -81,6 +81,28 @@ function saveStore(s) {
     localStorage.setItem(LS_KEY, JSON.stringify(s));
     return { ok: true };
   } catch (e) {
+    // QuotaExceededError 等: 古いバックアップキーを掃除して再試行
+    const isQuota = e?.name === "QuotaExceededError"
+                 || /quota/i.test(String(e?.message || ""));
+    if (isQuota) {
+      try {
+        // LS_BAK_<timestamp> キーを古い順に削除
+        const bakKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(LS_BAK)) bakKeys.push(k);
+        }
+        bakKeys.sort();
+        for (const k of bakKeys) localStorage.removeItem(k);
+        // 再試行
+        localStorage.setItem(LS_KEY, JSON.stringify(s));
+        if (typeof showToast === "function") showToast("⚠ 容量超過のため古いバックアップを削除しました", "warn");
+        return { ok: true };
+      } catch (retryErr) {
+        if (typeof showToast === "function") showToast("✕ 保存失敗 (容量超過・救出不能)。設定タブからエクスポートしてバックアップを取ってください", "err");
+        return { ok: false, error: "quota_exceeded" };
+      }
+    }
     if (typeof showToast === "function") showToast("✕ 保存失敗: " + (e.message || e), "err");
     return { ok: false, error: String(e.message || e) };
   }
@@ -745,7 +767,15 @@ async function submitManual() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, raceName: raceName || null }),
     });
-    const c = await res.json();
+    let c;
+    try {
+      c = await res.json();
+    } catch (parseErr) {
+      throw new Error(`サーバーから不正な応答 (HTTP ${res.status})`);
+    }
+    if (!res.ok) {
+      throw new Error(c?.error || c?.message || `サーバーエラー (HTTP ${res.status})`);
+    }
     _manualMode = true;
     _currentConclusion = c;
     _currentRaceMeta = c?.raceMeta || null;
@@ -1091,8 +1121,21 @@ function recordBet(kind /* 'air' | 'real' */) {
       if (k.stake > 0) suggested = k.stake;
     } catch {}
   }
-  const amount = Number(prompt("購入金額(円)を入力してください\n(Kelly基準の推奨額をプリセット)", String(suggested))) || 0;
-  if (amount <= 0) return;
+  // prompt: null=キャンセル / "" =空入力。どちらも処理を中断する。
+  const promptRes = prompt("購入金額(円)を入力してください\n(Kelly基準の推奨額をプリセット)", String(suggested));
+  if (promptRes === null) return;                          // キャンセル
+  const trimmed = String(promptRes).trim();
+  if (!trimmed) return;                                    // 空入力
+  // 全角数字・カンマ・円記号を正規化
+  const normalized = trimmed
+    .replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    .replace(/[,，円￥¥]/g, "")
+    .trim();
+  const amount = Number(normalized);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    showToast("⚠ 金額は1円以上の数値で入力してください", "warn");
+    return;
+  }
   if (store.funds.perRace && amount > store.funds.perRace) {
     if (!confirm(`1レース上限 ${store.funds.perRace}円 を超えています。続行しますか?`)) return;
   }

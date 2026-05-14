@@ -205,7 +205,9 @@ create index if not exists race_results_finished_idx on keiba.race_results(finis
 
 alter table keiba.race_results enable row level security;
 drop policy if exists "race_results: read" on keiba.race_results;
-create policy "race_results: read" on keiba.race_results for select using (auth.role() = 'authenticated');
+-- 結果データは公開情報 (新聞・JRA公式) なので anon でも読める。
+-- これがないと finalize.js の readResultFromSupabase が anon クライアント側から動かない。
+create policy "race_results: read" on keiba.race_results for select using (true);
 
 drop trigger if exists race_results_updated_at on keiba.race_results;
 create trigger race_results_updated_at before update on keiba.race_results

@@ -84,7 +84,10 @@ function scoreHorse(features) {
   if (days > 90) score *= 0.90;
   else if (days < 7) score *= 0.95;
 
-  // 8. 上がり3F: 速いほど高評価 (中立 35.5秒)
+  // 8. 上がり3F: 速いほど高評価 (中立 35.5 秒)。
+  //   式: 1.0 + 0.05 * (35.5 - f3) → f3 が 35.5 より小さい (速い) ほど +、大きい (遅い) ほど -
+  //   例: f3=34.5 (速) → 1.05、f3=36.5 (遅) → 0.95
+  //   スコア下限は scoreHorse 末尾の Math.max(score, 1e-6) で保護される
   const f3 = v(features.last3F, NEUTRAL.last3F);
   score *= 1.0 + 0.05 * (NEUTRAL.last3F - f3);
 

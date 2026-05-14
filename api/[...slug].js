@@ -3,8 +3,6 @@
 // 全 API を 1 つの Catch-all Route で集約。/api/foo は slug=['foo'] で届く。
 // ロジックは lib/* に集約済みなので、ここでは routing のみ。
 
-const url_mod = require("url");
-
 const { buildStatus }       = require("../lib/status");
 const { fetchAllWeather }   = require("../lib/weather");
 const { fetchNews }         = require("../lib/news");
@@ -22,10 +20,10 @@ module.exports = async (req, res) => {
   // Vercel は req.query.slug に [foo, bar] のように配列を渡す
   let slug = req.query?.slug;
   if (Array.isArray(slug)) slug = slug.join("/");
-  // フォールバック: req.url から取り出し
+  // フォールバック: req.url から取り出し (WHATWG URL API)
   if (!slug && req.url) {
-    const p = url_mod.parse(req.url, true).pathname || "";
-    slug = p.replace(/^\/api\/?/, "");
+    const u = new URL(req.url, "http://localhost");
+    slug = (u.pathname || "").replace(/^\/api\/?/, "");
   }
   const path = "/" + (slug || "");
 
@@ -47,7 +45,12 @@ module.exports = async (req, res) => {
     if (path === "/conclusion") return ok(res, buildConclusion(readLatestRace()));
     if (path === "/conclusion-manual" && req.method === "POST") {
       const { buildManualConclusion } = require("../lib/manual_race");
-      const payload = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
+      let payload;
+      try {
+        payload = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
+      } catch (e) {
+        return bad(res, 400, { ok: false, error: "リクエスト本文の JSON が不正です: " + (e?.message || e) });
+      }
       return ok(res, buildManualConclusion(payload));
     }
     if (path === "/races") {
@@ -94,7 +97,12 @@ module.exports = async (req, res) => {
     }
     if (path === "/finalize" && req.method === "POST") {
       const { finalizeBatchAsync } = require("../lib/finalize");
-      const payload = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
+      let payload;
+      try {
+        payload = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
+      } catch (e) {
+        return bad(res, 400, { ok: false, error: "リクエスト本文の JSON が不正です: " + (e?.message || e) });
+      }
       const bets = Array.isArray(payload.bets) ? payload.bets : [];
       const updates = await finalizeBatchAsync(bets);
       return ok(res, { ok: true, count: updates.length, updates });

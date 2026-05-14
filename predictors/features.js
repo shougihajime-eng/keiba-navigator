@@ -25,6 +25,12 @@ function num(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+// 馬番として有効か (1-30 の整数。30 はサファイヤS等大頭数対応の上限)
+function isValidHorseNumber(v) {
+  const n = num(v);
+  return n !== null && Number.isInteger(n) && n >= 1 && n <= 30;
+}
+
 function extractFeatures(horse) {
   return {
     // 現データから直接取れる
@@ -64,4 +70,4 @@ function dataCompleteness(features) {
   return { present, total: fields.length, ratio: present / fields.length };
 }
 
-module.exports = { extractFeatures, dataCompleteness, parseAge, parseSex, num };
+module.exports = { extractFeatures, dataCompleteness, parseAge, parseSex, num, isValidHorseNumber };

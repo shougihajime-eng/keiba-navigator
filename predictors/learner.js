@@ -46,8 +46,11 @@
   function levelMeta(lv) { return LEVELS[Math.max(0, Math.min(LEVELS.length - 1, lv - 1))]; }
 
   function nextLevelTarget(currentLv) {
-    const next = LEVELS[currentLv]; // 配列は 0-index, currentLv は 1始まり
-    return next || null;
+    // currentLv は 1 始まり / LEVELS は 0-index
+    // 例: currentLv=1 → LEVELS[1]=Lv2, currentLv=5 → undefined → null (= 最高到達)
+    if (!Number.isFinite(currentLv) || currentLv < 1) return LEVELS[1] || null;
+    if (currentLv >= LEVELS.length) return null;
+    return LEVELS[currentLv] || null;
   }
 
   // ─── 統計計算 (dummy 起源は除外) ──────────────────────────
@@ -155,13 +158,22 @@
       slot.hits    += b.result.won ? 1 : 0;
       slot.spent   += b.amount || 0;
       slot.ret     += b.result.won ? (b.result.payout || 0) : 0;
-      slot.evSum   += Number.isFinite(Number(b.ev)) ? Number(b.ev) : 1.0;
+      // ev が NaN/null の bet は evSum に含めない (補助値 1.0 を入れていた旧設計は
+      // expectedRate と actualRate の比率を歪めていた)。
+      const evNum = Number(b.ev);
+      if (Number.isFinite(evNum)) {
+        slot.evSum += evNum;
+        slot.evCount = (slot.evCount || 0) + 1;
+      }
     }
     const out = {};
     for (const g of GRADES) {
       const s = byGrade[g];
-      const expectedRate = s.samples ? s.evSum / s.samples : null;            // 予想 EV 平均
-      const actualRate   = s.spent   ? s.ret / s.spent : null;                // 実績回収率
+      const evCount = s.evCount || 0;
+      // 予想 EV 平均 (ev が記録された bet 数で割る)
+      const expectedRate = evCount ? s.evSum / evCount : null;
+      // 実績回収率
+      const actualRate   = s.spent   ? s.ret / s.spent : null;
       const rawRatio     = (expectedRate && expectedRate > 0 && actualRate != null) ? actualRate / expectedRate : null;
       const eff = rawRatio != null
         ? (s.samples * rawRatio + SHRINKAGE_K * 1.0) / (s.samples + SHRINKAGE_K)
