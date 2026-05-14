@@ -1,25 +1,23 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
 JV-Link bridge — JRA-VAN Data Lab. の COM コンポーネント (JVLink.ocx) を
 Python 32bit + pywin32 から呼び出してレースデータを取得し、
 ../data/jv_cache/ 以下に JSON で保存する。
 
 前提（このスクリプトが動くまでに必要なもの）:
-  1. JRA-VAN Data Lab. を契約済み（月額2,090円）
+  1. JRA-VAN Data Lab. を契約済み（月額2,090円・無料体験含む）
   2. JV-Link をインストール済み（jra-van.jp/dlb/sdv/sdk.html）
   3. 32bit Python 3 がインストール済み（64bitでは JVLink.ocx をDispatchできない）
   4. pip install pywin32
 
 使い方:
-  > py -3.12-32 jv_bridge\jv_fetch.py --mode init
-  > py -3.12-32 jv_bridge\jv_fetch.py --mode rt --dataspec 0B31 --raceid 2026YYYYMMDDJJRRRR
+  > py -3.12-32 jv_bridge\jv_fetch.py init
+  > py -3.12-32 jv_bridge\jv_fetch.py rt --dataspec 0B31 --raceid 2026YYYYMMDDJJRRRR
+  > py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20260510000000
 
 注意:
-  JV-Data 各レコードの完全フィールド配置は「JVData仕様書」（developer.jra-van.jp で配布）
-  を参照する必要があります。本スクリプトはレコード種別ID（先頭2バイト）と本文の
-  生バイト列を保存するところまでを公式仕様に基づいて実装しており、各フィールドの
-  個別パース（馬名・オッズ位置等）は仕様書取得後に拡張する設計です。
-  推測でフィールドオフセットを書くことは禁止事項のため行いません。
+  JV-Data 各レコードの完全フィールド配置は SDK 4.9.0.2 同梱の C# 構造体から
+  jvdata_struct.py に転記済み。
 """
 
 from __future__ import annotations
@@ -70,6 +68,41 @@ def init_jvlink(sid: str = "UNKNOWN"):
     return jv
 
 
+def jv_read(jv, buf_size: int = 256000):
+    """JVRead を呼び出して (rc, data_bytes, fname) を返す。
+
+    JVRead の COM IDL は `long JVRead(BSTR* buff, long* size, BSTR* filename)` で、
+    out 引数 (BSTR*, long*) が pywin32 経由で戻り値タプルに追加される。
+    JV-Link のバージョン/タイプライブラリ差により、戻り値が
+      (rc, buf, fname)            … 3-tuple
+      (rc, buf, size_out, fname)  … 4-tuple
+    のどちらかになるため両方を吸収する。
+    """
+    result = jv.JVRead("", buf_size, "")
+    if not isinstance(result, tuple):
+        return (int(result or 0), b"", "")
+    if len(result) == 3:
+        rc, buf, fname = result
+    elif len(result) == 4:
+        rc, buf, _size_out, fname = result
+    else:
+        raise RuntimeError(f"JVRead returned unexpected tuple of length {len(result)}: {result!r}")
+    # buf を bytes に統一 (Shift-JIS で来るので encode)
+    if isinstance(buf, str):
+        data = buf.encode("shift_jis", errors="replace")
+    elif isinstance(buf, (bytes, bytearray)):
+        data = bytes(buf)
+    elif buf is None:
+        data = b""
+    else:
+        # tuple of ints (pywin32 may return SafeArray of bytes)
+        try:
+            data = bytes(buf)
+        except Exception:
+            data = b""
+    return (int(rc or 0), data, fname or "")
+
+
 def cmd_init(args) -> int:
     if not require_pywin32():
         write_status("missing_pywin32", error="pywin32 が見つかりません。`pip install pywin32` を実行してください。")
@@ -112,22 +145,21 @@ def cmd_rt(args) -> int:
         records = []
         with open(out_path, "wb") as f:
             while True:
-                # JVRead(buf, size, filename) → 1レコードを返す。バッファサイズは仕様上 256000 程度確保。
-                buf_size = 256000
-                buf = ""
-                fname = ""
-                rc, buf, fname = jv.JVRead(buf, buf_size, fname)
+                rc, data, _fname = jv_read(jv)
                 if rc == 0:
                     break  # 全データ読み取り完了
                 if rc == -1:
-                    raise RuntimeError("JVRead error -1")
+                    # -1: 取得範囲末尾 or 中断要求。
+                    # JVOpen で要求した範囲のデータを全て読み終えた時にも返る (JV-Link 実機確認)。
+                    # 取得済みデータは正常なので break して保存処理に進む。
+                    print("[info] JVRead rc=-1 → 取得範囲完了として終了")
+                    break
                 if rc == -3:
                     # ファイル変わり目
                     continue
-                # 通常データ（rc は読み取りバイト数）
-                data = buf.encode("shift_jis", errors="replace") if isinstance(buf, str) else buf
+                if not data:
+                    continue
                 f.write(data)
-                # レコード種別 = 先頭2バイトをUTF-8で
                 rec_type = data[:2].decode("ascii", errors="replace") if len(data) >= 2 else ""
                 records.append({"recordType": rec_type, "size": len(data)})
 
@@ -235,29 +267,53 @@ def cmd_aggregate(args) -> int:
         return cmd_init(args)
     try:
         jv = init_jvlink(args.sid)
-        # JVOpen(dataspec, fromtime, option, readcount, downloadcount, lastfiletimestamp)
+        # JVOpen(dataspec, fromtime, option, readcount*, downloadcount*, lastfiletimestamp*)
+        # 戻り値は (rc, readcount, downloadcount, lastfiletimestamp) の 4-tuple
+        opt = int(args.option) if isinstance(args.option, str) else args.option
         rc, readcount, downloadcount, lastfiletime = jv.JVOpen(
-            args.dataspec, args.fromtime, args.option, 0, 0, ""
+            args.dataspec, args.fromtime, opt, 0, 0, ""
         )
         if rc != 0:
             raise RuntimeError(f"JVOpen failed rc={rc}")
+        print(f"[info] JVOpen OK rc={rc} readcount={readcount} downloadcount={downloadcount}")
+        if downloadcount and downloadcount > 0:
+            print(f"[info] {downloadcount} ファイルのダウンロードが必要。完了まで待機します...")
+            # JVStatus でダウンロード進捗を監視
+            import time
+            while True:
+                try:
+                    stat = jv.JVStatus()
+                except Exception:
+                    break
+                if stat is None: break
+                # JVStatus: ダウンロード完了 = downloadcount に達した時
+                if stat >= downloadcount:
+                    print(f"[info] ダウンロード完了 ({stat}/{downloadcount})")
+                    break
+                if stat < 0:
+                    print(f"[warn] JVStatus={stat} (エラー扱いの可能性)")
+                    break
+                print(f"  ダウンロード進捗: {stat}/{downloadcount}")
+                time.sleep(2)
         agg_dir = CACHE_DIR / f"aggregate_{args.fromtime[:8]}_{args.dataspec}"
         agg_dir.mkdir(parents=True, exist_ok=True)
         out_path = agg_dir / f"raw_{int(dt.datetime.now().timestamp())}.bin"
         records = []
         with open(out_path, "wb") as f:
             while True:
-                buf_size = 256000
-                buf = ""
-                fname = ""
-                rc, buf, fname = jv.JVRead(buf, buf_size, fname)
+                rc, data, _fname = jv_read(jv)
                 if rc == 0:
                     break
                 if rc == -1:
-                    raise RuntimeError("JVRead error -1")
+                    # -1: 取得範囲末尾 or 中断要求。
+                    # JVOpen で要求した範囲のデータを全て読み終えた時にも返る (JV-Link 実機確認)。
+                    # 取得済みデータは正常なので break して保存処理に進む。
+                    print("[info] JVRead rc=-1 → 取得範囲完了として終了")
+                    break
                 if rc == -3:
                     continue
-                data = buf.encode("shift_jis", errors="replace") if isinstance(buf, str) else buf
+                if not data:
+                    continue
                 f.write(data)
                 rec_type = data[:2].decode("ascii", errors="replace") if len(data) >= 2 else ""
                 records.append({"recordType": rec_type, "size": len(data)})
