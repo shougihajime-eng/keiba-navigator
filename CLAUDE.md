@@ -150,12 +150,14 @@
 
 ### 🔜 次の一歩 (0 円フェーズ → 月額フェーズ の順)
 
-**フェーズ A (0 円)** — ✅ ほぼ完了:
+**フェーズ A (0 円)** — ✅ **完走**:
 1. ✅ JRA-VAN 開発者登録 (無料) — 完了 (`oneone` / 2026-05-15)
 2. ✅ SDK ダウンロード — `JVDTLABSDK4902.zip` を取得済み
 3. ✅ 仕様書転記 — C# 構造体から RA/SE/O1/HR 全 offset を `jvdata_struct.py` に転記済み
-4. 🔜 **32bit Python 3.12 をインストール** (`SETUP.txt` [A-3] 参照) → `py -3.12-32 -m pip install pywin32 pytest`
-5. 🔜 `py -3.12-32 -m pytest jv_bridge/tests -q` で全テスト緑を確認 (サンプルバイナリ無しでも合成テストは緑)
+4. ✅ **32bit Python 3.12.4 インストール** (`C:\Users\shoug\AppData\Local\Programs\Python\Python312-32\python.exe`)
+5. ✅ pytest 9.0.3 + pywin32 311 をインストール
+6. ✅ **pytest: 64 passed / 6 skipped / 0 failed** (skip 6 件は JV-Link 実バイナリ依存・月額契約後に自動緑化)
+   → **🚦 月額契約 GO サイン点灯**
 
 **フェーズ B (月額 2,090 円)**:
 6. **Supabase に新スキーマ反映** (`db/schema.sql` を SQL Editor で再実行)
