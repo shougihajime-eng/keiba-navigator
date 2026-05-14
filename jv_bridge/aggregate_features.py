@@ -155,14 +155,27 @@ class StatsBucket:
 
 # ── 4. 横断集計 ─────────────────────────────────────────────
 
+def _course_short(race: Dict[str, Any]) -> str:
+    """course 文字列から場名 2 文字を抜き出す。
+    'East京芝1600' のような形式の先頭 2 文字 (= '東京' / '中山' 等) を返す。
+    """
+    c = race.get("course") or ""
+    if not c:
+        return ""
+    return c[:2]
+
+
 def aggregate(races: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """races 配列を全部読んで、各種勝率を集計する。"""
+    """races 配列を全部読んで、各種勝率・複勝率を集計する。"""
     jockey: Dict[str, StatsBucket] = defaultdict(StatsBucket)
     trainer: Dict[str, StatsBucket] = defaultdict(StatsBucket)
     jockey_course: Dict[Tuple[str, str], StatsBucket] = defaultdict(StatsBucket)
     jockey_distance: Dict[Tuple[str, int], StatsBucket] = defaultdict(StatsBucket)
     jockey_surface: Dict[Tuple[str, str], StatsBucket] = defaultdict(StatsBucket)
     jockey_going: Dict[Tuple[str, str], StatsBucket] = defaultdict(StatsBucket)
+    jockey_in_three: Dict[str, StatsBucket] = defaultdict(StatsBucket)     # 騎手の複勝率
+    trainer_in_three: Dict[str, StatsBucket] = defaultdict(StatsBucket)    # 調教師の複勝率
+    popularity_band: Dict[str, StatsBucket] = defaultdict(StatsBucket)     # 人気区分別
     horse_career: Dict[str, Dict[str, Any]] = {}
 
     n_races_with_result = 0
@@ -175,12 +188,14 @@ def aggregate(races: List[Dict[str, Any]]) -> Dict[str, Any]:
         if not result:
             continue
         won_map = winners_of(result)
+        in3_map = in_three_of(result)
         if not won_map:
             continue
         n_races_with_result += 1
 
-        course = (race.get("course") or "")[:2]      # 場名 2 文字 (東京/中山 等)
+        course = _course_short(race)
         distance = race.get("distance")
+        # build_race_json が出す surface ('芝'/'ダート'/'障害') を優先、無ければ legacy key
         surface = race.get("surface") or race.get("course_surface")
         going = race.get("going")
 
@@ -189,22 +204,31 @@ def aggregate(races: List[Dict[str, Any]]) -> Dict[str, Any]:
             if not isinstance(num, int):
                 continue
             won = bool(won_map.get(num, False))
+            in3 = bool(in3_map.get(num, False))
             j = h.get("jockey")
             tr = h.get("trainer")
             nm = h.get("name")
+            pop = h.get("popularity")
 
             if j:
                 jockey[j].add(won)
+                jockey_in_three[j].add(in3)
                 if course:    jockey_course[(j, course)].add(won)
                 if isinstance(distance, int): jockey_distance[(j, distance)].add(won)
                 if surface:   jockey_surface[(j, surface)].add(won)
                 if going:     jockey_going[(j, going)].add(won)
             if tr:
                 trainer[tr].add(won)
+                trainer_in_three[tr].add(in3)
+            if isinstance(pop, int):
+                band = _popularity_band(pop)
+                if band:
+                    popularity_band[band].add(won)
             if nm:
                 hc = horse_career.setdefault(nm, {"starts": 0, "wins": 0, "in_three": 0})
                 hc["starts"] += 1
                 if won: hc["wins"] += 1
+                if in3: hc["in_three"] += 1
 
     return {
         "_meta": {
@@ -213,6 +237,7 @@ def aggregate(races: List[Dict[str, Any]]) -> Dict[str, Any]:
             "uniqueJockeys":     len(jockey),
             "uniqueTrainers":    len(trainer),
             "uniqueHorses":      len(horse_career),
+            "popularityBands":   sorted(popularity_band.keys()),
             "generatedAt":       dt.datetime.now(dt.timezone.utc).isoformat(),
         },
         "jockey": jockey,
@@ -221,8 +246,20 @@ def aggregate(races: List[Dict[str, Any]]) -> Dict[str, Any]:
         "jockey_distance": jockey_distance,
         "jockey_surface": jockey_surface,
         "jockey_going": jockey_going,
+        "jockey_in_three": jockey_in_three,
+        "trainer_in_three": trainer_in_three,
+        "popularity_band": popularity_band,
         "horse_career": horse_career,
     }
+
+
+def _popularity_band(p: int) -> str:
+    if p == 1: return "fav1"
+    if p == 2: return "fav2"
+    if p == 3: return "fav3"
+    if p <= 5: return "fav4-5"
+    if p <= 9: return "mid6-9"
+    return "long10+"
 
 
 # ── 5. 集計結果から features.json を組み立てる ───────────────
@@ -234,6 +271,7 @@ def build_features_json(races: List[Dict[str, Any]], stats: Dict[str, Any]) -> D
         jockeyWinRate, trainerWinRate, courseWinRate, distanceWinRate,
         surfaceWinRate, goingWinRate, weightChange, daysFromLastRace,
         last3F, bestTime, pedigreeSurfaceAff, trainingScore
+    複勝率: jockeyInThreeRate, trainerInThreeRate
     """
     out: Dict[str, Dict[str, Dict[str, Any]]] = {}
     jockey = stats["jockey"]
@@ -242,6 +280,8 @@ def build_features_json(races: List[Dict[str, Any]], stats: Dict[str, Any]) -> D
     jockey_distance = stats["jockey_distance"]
     jockey_surface = stats["jockey_surface"]
     jockey_going = stats["jockey_going"]
+    jockey_in_three = stats.get("jockey_in_three", {})
+    trainer_in_three = stats.get("trainer_in_three", {})
 
     for race in races:
         race_id = race.get("race_id") or race.get("raceId")
@@ -263,8 +303,13 @@ def build_features_json(races: List[Dict[str, Any]], stats: Dict[str, Any]) -> D
             feat: Dict[str, Any] = {}
             if j and j in jockey:
                 feat["jockeyWinRate"] = round(jockey[j].rate(), 4)
+            if j and j in jockey_in_three:
+                # 複勝のベースラインは 0.30 (3着以内に入る確率の概算)
+                feat["jockeyInThreeRate"] = round(jockey_in_three[j].rate(baseline=0.30), 4)
             if tr and tr in trainer:
                 feat["trainerWinRate"] = round(trainer[tr].rate(), 4)
+            if tr and tr in trainer_in_three:
+                feat["trainerInThreeRate"] = round(trainer_in_three[tr].rate(baseline=0.30), 4)
             if j and course and (j, course) in jockey_course:
                 feat["courseWinRate"] = round(jockey_course[(j, course)].rate(), 4)
             if j and isinstance(distance, int) and (j, distance) in jockey_distance:

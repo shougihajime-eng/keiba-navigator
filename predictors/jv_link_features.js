@@ -24,8 +24,10 @@ function augmentWithJvFeatures(race) {
   if (!all) return race;
 
   const raceId = race.race_id || race.raceId;
-  const featTable = (raceId && all[raceId]) || all["__default__"] || null;
-  if (!featTable) return race;
+  // _meta は集計メタデータなので race id として扱わない
+  const candidate = raceId && raceId !== "_meta" ? all[raceId] : null;
+  const featTable = candidate || all["__default__"] || null;
+  if (!featTable || typeof featTable !== "object") return race;
 
   return {
     ...race,

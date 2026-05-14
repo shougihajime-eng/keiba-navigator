@@ -91,18 +91,66 @@ SE_FIELDS: List[Field] = [
 # ─── O1 レコード (単勝・複勝・枠連オッズ) ─────────────────
 # 単勝オッズは馬番ごとに繰り返し領域として並ぶため、固定 offset ではなく
 # 「N 頭分のループ」として parse する必要がある。
-# 後でこのモジュール内に parse_o1(buf) のような専用関数を追加する想定。
+# parse.py 側の parse_loop / parse_win_odds_element と連携する。
 O1_FIELDS: List[Field] = [
     Field("record_id",  0, 2, F_ascii, "always 'O1'"),
-    # TODO: 単勝・複勝・枠連の繰り返し領域は専用パーサに切り出す
+    # ヘッダ部の offset は仕様書転記時に埋める:
+    # Field("year",        ?, 4, F_ascii),
+    # Field("month_day",   ?, 4, F_ascii),
+    # Field("jyo_code",    ?, 2, F_ascii),
+    # Field("kai_ji",      ?, 2, F_ascii),
+    # Field("nichi_ji",    ?, 2, F_ascii),
+    # Field("race_num",    ?, 2, F_ascii),
+    # Field("horse_count", ?, 2, F_int, "出走頭数 (繰り返し要素数)"),
+    # Field("anno_kbn",    ?, 1, F_ascii),
 ]
+
+# O1 単勝・複勝オッズ繰り返し領域の仕様 (仕様書転記時に offset / element_len を埋める):
+#   element_len: 1 馬分の長さ (= 馬番2 + オッズ4 + 人気2 + ... )
+#   offset:      ヘッダ末尾から始まる繰り返し領域の開始位置
+#   count_field: 繰り返し回数を持つフィールド名 (出走頭数)
+O1_WIN_LOOP = {
+    "offset_field": None,        # TODO: 仕様書転記後にヘッダ長を埋める
+    "element_len":  8,           # 馬番2 + オッズ4 + 人気2 (構造は確定)
+    "count_field":  "horse_count",
+    "element_parser": "parse_win_odds_element",
+}
 
 
 # ─── HR レコード (払戻) ────────────────────────────────────
+# 払戻は券種ごとに繰り返し領域。HR_PAYOUT_LAYOUT で「どこから何件あるか」を表現。
+# 仕様書転記時に offset を埋め、is_completed["HR"] = True にする。
 HR_FIELDS: List[Field] = [
     Field("record_id",  0, 2, F_ascii, "always 'HR'"),
-    # TODO: 単勝/複勝/馬連/ワイド/三連複/三連単 等の繰り返し領域
+    # Field("year",       ?, 4, F_ascii),
+    # Field("month_day",  ?, 4, F_ascii),
+    # Field("jyo_code",   ?, 2, F_ascii),
+    # Field("kai_ji",     ?, 2, F_ascii),
+    # Field("nichi_ji",   ?, 2, F_ascii),
+    # Field("race_num",   ?, 2, F_ascii),
+    # Field("horse_count_actual", ?, 2, F_int, "確定出走頭数"),
+    # Field("horse_count_remain", ?, 2, F_int, "残出走頭数 (除外考慮)"),
+    # 着順情報 (1〜5着 までの馬番) と払戻が以下のループに続く
 ]
+
+# HR 払戻の繰り返し領域の構造表。
+#
+# ★重要: 各券種の (count, key_len, amount_len, pop_len) の正確な値は仕様書 (JRA-VAN SDK) を
+# 見て埋めること。下のテンプレートは「単勝 (key_len=2 = 馬番1個・amount は数値桁・pop=2桁)」
+# のように構造的に確実な部分だけ初期値として置いている。それ以外 (馬連・ワイド・三連単) は
+# None で残し、仕様書転記後に埋める設計。
+# build_result_json.parse_hr_payouts は None / 未設定の券種を「空配列」として安全に扱う。
+HR_PAYOUT_LAYOUT = {
+    "tan":     {"count": 3, "key_len": 2, "amount_len": 9,  "pop_len": 2},
+    "fuku":    {"count": 5, "key_len": 2, "amount_len": 9,  "pop_len": 2},
+    # 以下は仕様書転記時に確定する。暫定でテストには使わない。
+    "wakuren": None,
+    "uren":    None,
+    "wide":    None,
+    "utan":    None,
+    "fuku3":   None,
+    "tan3":    None,
+}
 
 
 # ─── レコード種別 ID → フィールド定義 の登録簿 ──────────

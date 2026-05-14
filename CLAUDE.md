@@ -7,6 +7,27 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🛡️ 入金前の事前準備を一気に完成** (2026-05-15):
+  - **io_helpers** に `to_signed_int` (符号付き馬体重差) / `decode_track_code` (芝/ダ/障) /
+    `decode_going/weather/sex` / `is_data_missing` (Z 埋め判定) を追加
+  - **parse.py** に汎用 `parse_loop()` + `parse_win_odds_element()` を追加
+    (O1 単勝オッズの馬番ループを仕様書なしでも構造的に処理可能)
+  - **jvdata_struct.py** の O1 ヘッダ/O1_WIN_LOOP/HR_PAYOUT_LAYOUT を整理
+    (確実な部分=tan/fuku は count/key_len 埋め込み、不確定な部分=馬連/三連単などは None)
+  - **build_result_json.py** を完全実装: `parse_payout_block` / `parse_hr_payouts` (offset 表→dict) /
+    `_shape_payouts` (finalize.js が読む形に整形) を追加。`build()` は payouts 既存形でも
+    raw bytes + offset 形でも受け付ける2way 設計
+  - **build_race_json.py**: バグ修正 (track_surface_label という未定義キー参照を解消し、
+    track_code 経由で芝/ダを取り出すように)・surface を JSON に乗せる
+  - **aggregate_features.py**: 「in_three (3着以内)」「人気区分」集計を追加 (今まで bug で未集計だった)。
+    `jockey_in_three` / `trainer_in_three` / `popularity_band` を新規。features.json に
+    `jockeyInThreeRate` / `trainerInThreeRate` を出力。これで複勝の期待値計算が正確になる
+  - **jv_link_features.js**: `_meta` キーを race id として誤マッチする可能性を排除
+  - **テストを 4 ファイル追加** (`test_io_helpers.py` / `test_build_result_json.py` /
+    `test_parse_loop.py` / `test_end_to_end_synthetic.py`) — 仕様書転記前でも全部走る合成テスト。
+    `0306` → `3-6` / `00060301` → `6-3-1` のような券種パースを E2E で検証
+  - **SETUP.txt** を全面改訂: **「無料の開発者登録だけで完結する [A-1〜A-5]」と「月額契約が必要な [B-1〜B-6]」を明確に分離**。
+    A-5 まで終われば 1 円も払わずに「あとは月額契約するだけ」状態が作れる
 - **🛠️ 設計問題 C〜G を一括修正** (JV課金前の地盤固め):
   - **C**: `db/schema.sql` に `keiba.race_results` テーブル追加 / `lib/finalize.js` を
     Supabase 優先・ファイルフォールバックに書き換え → **本番Vercelからも結果照合可**
@@ -79,14 +100,24 @@
 ### 🟡 進行中
 - なし
 
-### 🔜 次の一歩
-1. **Supabase に新スキーマを反映**: `db/schema.sql` を SQL Editor で再実行 (集計テーブル 5 つが作られる)
-2. **JRA-VAN 開発者登録 (無料)** → SDK ダウンロード → `jv_bridge/fixtures/` にサンプル binary を配置
-3. **仕様書 PDF の表を見て** `jvdata_struct.py` の RA/SE フィールド (offset/length) を埋め、`RECORD_COMPLETED["RA"]=True` に
-4. **Python 32bit + pywin32 を導入** (テスト実行と JV-Link 接続の前提)
-5. `python -m pytest jv_bridge/tests -q` が緑になったら **課金 GO サイン**
-6. **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」が来るか確認
-7. **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
+### 🔜 次の一歩 (0 円フェーズ → 月額フェーズ の順)
+
+**フェーズ A (0 円・ここを完走しないと月額に進まない)**:
+1. **JRA-VAN 開発者登録** (https://developer.jra-van.jp/ で無料登録)
+2. **SDK ダウンロード** (https://jra-van.jp/dlb/sdv/sdk.html) → 仕様書 PDF と SampleData/*.bin が手に入る
+3. **32bit Python 3.12 を入れる** → `py -3.12-32 -m pip install pywin32 pytest`
+4. **仕様書を Claude に見せる** → `jvdata_struct.py` の RA/SE/HR の offset 表を 30 分〜1 時間で転記
+5. **SampleData を `jv_bridge/fixtures/<RID>/sample_<RID>.bin` に配置**
+6. `py -3.12-32 -m pytest jv_bridge/tests -q` が **全て passed** になったら **月額契約 GO サイン**
+
+**フェーズ B (月額 2,090 円)**:
+7. **Supabase に新スキーマ反映** (`db/schema.sql` を SQL Editor で再実行 — 集計テーブル 5 つ追加)
+8. **JRA-VAN Data Lab. 契約** (https://jra-van.jp/dlb/) → 利用キー発行
+9. **JV-Link 本体インストール** (SDK 同梱の JVLink_v4_xx.exe)
+10. `py -3.12-32 jv_bridge\jv_fetch.py init` で接続テスト
+11. `py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20140101000000` で 10 年分取得
+12. **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」を確認
+13. **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
 
 ---
 

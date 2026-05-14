@@ -178,3 +178,75 @@ def test_main_empty_cache_writes_empty_features(tmp_path, monkeypatch):
     assert feats_path.exists()
     data = json.loads(feats_path.read_text(encoding="utf-8"))
     assert data.get("_meta", {}).get("empty") is True
+
+
+# ── 追加 (in_three / popularity_band) ───────────────────────
+
+def test_aggregate_in_three_is_collected(tmp_path, monkeypatch):
+    """3 着以内も集計され、jockey_in_three / horse_career.in_three が増える。"""
+    cache = tmp_path / "jv_cache"
+    races_dir = cache / "races"
+    results_dir = cache / "results"
+    races_dir.mkdir(parents=True)
+    results_dir.mkdir(parents=True)
+
+    for i in range(3):
+        rid = f"R{i:02d}"
+        race = _mk_race(rid, [
+            {"number": 1, "name": f"horse_{i}_1", "jockey": "ルメール", "trainer": "国枝"},
+            {"number": 2, "name": f"horse_{i}_2", "jockey": "武豊",   "trainer": "藤原"},
+            {"number": 3, "name": f"horse_{i}_3", "jockey": "川田",   "trainer": "矢作"},
+            {"number": 4, "name": f"horse_{i}_4", "jockey": "戸崎",   "trainer": "鹿戸"},
+        ])
+        (races_dir / f"{rid}.json").write_text(json.dumps(race, ensure_ascii=False), encoding="utf-8")
+        result = _mk_result(rid, [
+            {"rank": 1, "number": 1}, {"rank": 2, "number": 2},
+            {"rank": 3, "number": 3}, {"rank": 4, "number": 4},
+        ])
+        (results_dir / f"{rid}.json").write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+
+    monkeypatch.setattr(agg, "CACHE_DIR", cache)
+    monkeypatch.setattr(agg, "RACES_DIR", races_dir)
+    monkeypatch.setattr(agg, "RESULTS_DIR", results_dir)
+
+    races = agg.load_all_races()
+    stats = agg.aggregate(races)
+    # 4 番目は 3 着外なので in_three は False。それ以外は True。
+    assert stats["jockey_in_three"]["ルメール"].wins == 3
+    assert stats["jockey_in_three"]["戸崎"].wins == 0
+
+
+def test_popularity_band_classification():
+    assert agg._popularity_band(1) == "fav1"
+    assert agg._popularity_band(2) == "fav2"
+    assert agg._popularity_band(3) == "fav3"
+    assert agg._popularity_band(5) == "fav4-5"
+    assert agg._popularity_band(9) == "mid6-9"
+    assert agg._popularity_band(18) == "long10+"
+
+
+def test_features_json_includes_in_three_rate(tmp_path, monkeypatch):
+    """build_features_json の出力に jockeyInThreeRate / trainerInThreeRate が乗る。"""
+    cache = tmp_path / "jv_cache"
+    races_dir = cache / "races"
+    results_dir = cache / "results"
+    races_dir.mkdir(parents=True)
+    results_dir.mkdir(parents=True)
+
+    race = _mk_race("R01", [
+        {"number": 1, "name": "Hayate", "jockey": "ルメール", "trainer": "国枝"},
+    ])
+    (races_dir / "R01.json").write_text(json.dumps(race, ensure_ascii=False), encoding="utf-8")
+    (results_dir / "R01.json").write_text(json.dumps(
+        _mk_result("R01", [{"rank": 1, "number": 1}]), ensure_ascii=False), encoding="utf-8")
+
+    monkeypatch.setattr(agg, "CACHE_DIR", cache)
+    monkeypatch.setattr(agg, "RACES_DIR", races_dir)
+    monkeypatch.setattr(agg, "RESULTS_DIR", results_dir)
+
+    races = agg.load_all_races()
+    stats = agg.aggregate(races)
+    feats = agg.build_features_json(races, stats)
+    h1 = feats["R01"]["1"]
+    assert "jockeyInThreeRate" in h1
+    assert "trainerInThreeRate" in h1

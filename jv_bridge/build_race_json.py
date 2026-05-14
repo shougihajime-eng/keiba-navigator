@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from . import io_helpers as io
+
 
 OUT_DIR = Path(__file__).resolve().parent.parent / "data" / "jv_cache" / "races"
 
@@ -23,6 +25,9 @@ JYO_NAMES = {
 SEX_LABELS    = {"1": "牡", "2": "牝", "3": "セ"}
 GOING_LABELS  = {"1": "良", "2": "稍重", "3": "重", "4": "不良"}
 WEATHER_LABELS = {"1": "晴", "2": "曇", "3": "雨", "4": "小雨", "5": "雪", "6": "小雪"}
+
+# 芝/ダート → 文字短縮 (UI 表示用)
+SURFACE_SHORT = {"芝": "芝", "ダート": "ダ", "障害": "障"}
 
 
 def _build_race_id(ra: Dict[str, Any]) -> Optional[str]:
@@ -44,18 +49,29 @@ def _sex_age(se: Dict[str, Any]) -> Optional[str]:
     return f"{label}{age}"
 
 
-def _course_label(ra: Dict[str, Any]) -> Optional[str]:
-    """場名 + 芝/ダ + 距離 e.g. '東京芝1600'。
-    track_code の対応は仕様書転記後に拡張する。
+def _surface_from_ra(ra: Dict[str, Any]) -> Optional[str]:
+    """RA レコードから芝/ダ/障の文字列を返す。
+    track_code を見て io_helpers.decode_track_code で判定する。
     """
+    code = ra.get("track_code")
+    if code:
+        result = io.decode_track_code(str(code))
+        return result.get("surface")
+    return None
+
+
+def _course_label(ra: Dict[str, Any]) -> Optional[str]:
+    """場名 + 芝/ダ + 距離 e.g. '東京芝1600'。"""
     jyo = JYO_NAMES.get(str(ra.get("jyo_code") or "").strip())
     if not jyo:
         return None
-    # track_code (芝/ダ/障) は仕様書転記後に厳密化する
-    surface = ra.get("track_surface_label")
+    surface = _surface_from_ra(ra)
+    surface_short = SURFACE_SHORT.get(surface) if surface else None
     distance = ra.get("distance")
-    if surface and distance:
-        return f"{jyo}{surface}{distance}"
+    if surface_short and distance:
+        return f"{jyo}{surface_short}{distance}"
+    if distance:
+        return f"{jyo}{distance}"
     return jyo
 
 
@@ -81,10 +97,12 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
             "win_odds":    odds_table.get(str(num)) if num is not None else None,
         })
 
+    surface = _surface_from_ra(ra)
     return {
         "race_id":       _build_race_id(ra),
         "race_name":     ra.get("race_name"),
         "course":        _course_label(ra),
+        "surface":       surface,
         "distance":      ra.get("distance"),
         "going":         GOING_LABELS.get(str(ra.get("going") or "").strip()),
         "weather":       WEATHER_LABELS.get(str(ra.get("weather") or "").strip()),
