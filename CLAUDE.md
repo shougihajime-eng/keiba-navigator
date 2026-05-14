@@ -160,7 +160,10 @@
    → **🚦 月額契約 GO サイン点灯**
 
 **フェーズ B (月額 2,090 円)**:
-6. **Supabase に新スキーマ反映** (`db/schema.sql` を SQL Editor で再実行)
+6. ✅ **Supabase スキーマ反映完了** (2026-05-15・Management API 経由で `db/schema.sql` を直接実行)
+   - keiba スキーマに 9 テーブル: bets / race_results / jockey_stats / trainer_stats /
+     horse_career / course_distance_stats / aggregate_meta / learner_state / user_settings
+   - race_results の RLS read ポリシーが `using (true)` で anon 読み取り可
 7. **JRA-VAN Data Lab. 契約** (https://jra-van.jp/dlb/) → 利用キー発行
 8. **JV-Link 本体インストール** (SDK 同梱の JVLink_v4_xx.exe)
 9. `py -3.12-32 jv_bridge\jv_fetch.py init` で接続テスト
