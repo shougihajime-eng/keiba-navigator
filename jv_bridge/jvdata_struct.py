@@ -254,6 +254,40 @@ HR_PAYOUT_LAYOUT = {
 }
 
 
+# ─── TK レコード (特別登録馬) 21657 バイト ────────────────
+# SDK JV_TK_TOKUUMA より転記。レース前の登録馬一覧 (最大 300 頭/レース)。
+# ヘッダ部分のみ Field 定義。300 頭の TOKUUMA_INFO ループは TK_TOKUUMA_LOOP 経由で parse。
+TK_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'TK'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("year",       11, 4,  F_ascii),
+    Field("month_day",  15, 4,  F_ascii),
+    Field("jyo_code",   19, 2,  F_ascii),
+    Field("kai_ji",     21, 2,  F_ascii),
+    Field("nichi_ji",   23, 2,  F_ascii),
+    Field("race_num",   25, 2,  F_ascii),
+    # RACE_INFO の主要部分のみ抽出 (offset は RA と同じ)
+    Field("race_name",  32, 60, F_sjis,  "競走名本題"),
+    Field("race_name_short", 572, 20, F_sjis, "競走名略称10字"),
+    Field("grade_code", 614, 1,  F_ascii),
+    Field("distance",   636, 4,  F_int,   "距離"),
+    Field("track_code", 640, 2,  F_ascii),
+    Field("course_kbn", 642, 2,  F_ascii),
+    Field("handi_date", 644, 8,  F_ascii, "ハンデ発表日"),
+    Field("toroku_tosu",652, 3,  F_int,   "登録頭数 (TOKUUMA_INFO ループ回数の上限)"),
+]
+
+# TK の繰り返し領域: 300 頭分の TOKUUMA_INFO (70 バイト × 300 = 21000 バイト)
+# offset = 656 - 1 = 655 (0-origin), element_len = 70
+TK_TOKUUMA_LOOP = {
+    "offset":      655,
+    "element_len": 70,
+    "max_count":   300,
+    "count_field": "toroku_tosu",
+}
+
+
 # ─── JG レコード (除外馬・出走取消馬) 80 バイト ────────────
 # SDK JV_JG_JOGAIBA より転記。明日のレース前に「除外された馬」のリスト。
 JG_FIELDS: List[Field] = [
@@ -281,6 +315,7 @@ RECORD_REGISTRY: Dict[str, List[Field]] = {
     "O1": O1_FIELDS,
     "HR": HR_FIELDS,
     "JG": JG_FIELDS,
+    "TK": TK_FIELDS,
 }
 
 
@@ -291,7 +326,39 @@ RECORD_COMPLETED: Dict[str, bool] = {
     "O1": True,
     "HR": True,
     "JG": True,
+    "TK": True,
 }
+
+
+# TOKUUMA_INFO (TK レコードの繰り返し要素・1頭分 70 バイト)
+# parse.py の parse_loop で利用される。
+TOKUUMA_INFO_FIELDS: List[Field] = [
+    Field("num",                0, 3,  F_int,   "連番"),
+    Field("ketto_num",          3, 10, F_ascii, "血統登録番号"),
+    Field("horse_name",        13, 36, F_sjis,  "馬名"),
+    Field("uma_kigo",          49, 2,  F_ascii),
+    Field("sex_code",          51, 1,  F_ascii, "1牡/2牝/3セ"),
+    Field("tozai_code",        52, 1,  F_ascii, "調教師東西所属"),
+    Field("chokyosi_code",     53, 5,  F_ascii),
+    Field("trainer_name",      58, 8,  F_sjis,  "調教師名略称8字"),
+    Field("burden_kg",         66, 3,  F_dec1,  "斤量"),
+    Field("koryu",             69, 1,  F_ascii, "交流区分"),
+]
+
+
+def parse_tokuuma_element(elem: bytes) -> Dict[str, Any]:
+    """TOKUUMA_INFO 1 要素 (70 バイト) を dict に。空馬番なら None を返す。"""
+    from . import io_helpers as io
+    if not elem or len(elem) < 13:
+        return None
+    out = {}
+    for f in TOKUUMA_INFO_FIELDS:
+        chunk = io.slice_field(elem, f.offset, f.length)
+        out[f.name] = f.convert(chunk) if chunk else None
+    # num が無効・空なら未登録枠とみなして None
+    if not out.get("num"):
+        return None
+    return out
 
 
 def known_records() -> List[str]:
