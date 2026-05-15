@@ -7,6 +7,19 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🔧 build_all.py 新規 + 解析パイプライン完成 (2026-05-16 朝)** — JV-Link raw.bin → races/results JSON の glue を実装:
+  - `jv_bridge/build_all.py`: aggregate ディレクトリの raw.bin をスキャンし、parse → RA/SE/O1/HR 別グループ化 → build_race_json.merge() / build_result_json.from_se_list() でフロント互換 JSON に変換
+  - race_id は 16 桁 (年4+月日4+場2+回2+日次2+R2)
+  - 実行: `py -3.12-32 jv_bridge\build_all.py` → races/<id>.json 自動書き出し
+  - 5/17 (日) の障害レース 36 件分 (新潟新潟) を `data/jv_cache/races/2026051704010601.json` 〜 で生成済
+  - 現状の制約: dataspec=RACE/option=1 で取得した bin には主に JG (障害) + RA メタしか含まれず、SE (出走馬) や HR (払戻) は別パスで取得が必要 (TOKU/UMA や rt 系の 0B14 等を別途叩く流れ)
+  - aggregate_features.py 実行成功: 36 レース解析・features.json 生成済 (騎手/調教師/馬は 0 件・SE 取得後に自動で埋まる構造)
+- **🏆 JV-Link COM 接続 完全成立 (2026-05-16 朝)** — Data Lab. 本契約後の初回 JVInit 成功。
+  - 詰まりの原因: `HKCU\Software\Classes\CLSID\{...91DE-0050BFAF8DDD}` に古い試用版インストール由来の LocalServer32 上書き登録が残っており、ProgID `JVDTLab.JVLink` が DCOM 経由の `JVLinkAgent.exe` に強制ルーティング → 本契約後の DLL 直接読み込みパスを塞いでいた
+  - 復旧: HKCU 側 3 キー (CLSID 91DE / ProgID 2 個) を `reg delete` で除去 (バックアップ済: `C:\Users\shoug\AppData\Local\Temp\jvlink_hkcu_backup\*.reg`)。HKCR は HKLM 側の InprocServer32 (CLSID 916F-...3BF / `C:\WINDOWS\SysWow64\JVDTLAB\JVDTLab.dll`) に解決されるようになった
+  - 検証: `py -3.12-32 jv_bridge\jv_fetch.py init` → `[OK] JVInit 成功`
+  - 補足: `jv_fetch.py rt --raceid 202605160401050100` は rc=-114 (発走前で RT データ未生成・正常な拒否反応)。RT データは発走 1〜2 時間前から取得可能
+  - 前提作業: JV-Link 設定.exe で「状態を取得する」を 1 回手動クリックして本契約モードへ移行 (これだけは Windows のフォアグラウンドロックでバックグラウンドからクリックできず手動必須)
 - **🌍 「世界一の競馬アプリ」へ全面磨き上げ (2026-05-15 夕)** — ユーザ離席中の自走で 5 波の機能投入:
   - **Wave 1**: 4 ステップのオンボーディング ツアー (光るスポット枠) / 🎙 音声で 1 頭追加 (Web Speech API ja-JP + 漢数字/かな数字パーサ) / 🔊 結論カードを読み上げ (Web Speech Synthesis) / 用語ツールチップ (`data-gloss` 23 語: EV/Kelly/単複連単/calibration/edge/stake/minev 等)
   - **Wave 2**: 🧠 AI 思考プロセス可視化 (6 ステップ縦タイムライン + 計算式の展開) / 📤 シェアボタン (テキスト) / `lib/reasoning.js` の純関数化 + smoke 12 ケース追加
@@ -173,7 +186,7 @@
 - 既存: Supabase keiba スキーマ、AI 育成レベル ★1-5、GitHub + Vercel 公開、catch-all集約
 
 ### 🟡 進行中
-- なし (アプリは Wave 5 まで仕上げ済・あとは本人の物理アクション待ち)
+- なし (JV-Link 接続成功・アプリは Wave 5 まで仕上げ済)
 
 ### 🔜 次の一歩 (0 円フェーズ → 月額フェーズ の順)
 
@@ -186,16 +199,14 @@
 6. ✅ **pytest: 64 passed / 6 skipped / 0 failed** (skip 6 件は JV-Link 実バイナリ依存・月額契約後に自動緑化)
    → **🚦 月額契約 GO サイン点灯**
 
-**フェーズ B (月額 2,090 円)** — ✅ **契約完了 (2026-05-15)**:
+**フェーズ B (月額 2,090 円)** — ✅ **接続完了 (2026-05-16)**:
 6. ✅ **Supabase スキーマ反映完了** (2026-05-15・Management API 経由で `db/schema.sql` を直接実行)
 7. ✅ **JRA-VAN Data Lab. 契約完了** (2026-05-15・利用キー `3UJC-46WW-7VV1-T7RX-4` 取得済)
-8. 🟡 **JV-Link 本体の COM 登録** (本人作業) ← **次にやる**
-   - 帰宅後 `C:\Users\shoug\競馬\JV-Link登録 (帰宅後にダブルクリック).bat` をダブルクリック
-   - UAC で「はい」→ COM 登録 → JV-Link 設定画面が自動で開く → 利用キー貼り付け
-9. `py -3.12-32 jv_bridge\jv_fetch.py init` で接続テスト
-10. `py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20140101000000` で 10 年分取得
-11. **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」を確認
-12. **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
+8. ✅ **JV-Link COM 接続成功** (2026-05-16・HKCU の古い CLSID 上書きを除去 + JV-Link 設定で「状態を取得する」を 1 回手動クリックして本契約モード移行)
+9. ✅ `py -3.12-32 jv_bridge\jv_fetch.py init` → `[OK] JVInit 成功` 確認済
+10. 🔜 **過去 10 年分の蓄積データ取得**: `py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20140101000000`
+11. 🔜 **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」を確認
+12. 🔜 **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
 
 ---
 
