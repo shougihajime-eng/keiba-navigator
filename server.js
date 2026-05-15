@@ -57,7 +57,11 @@ async function serve(req, res) {
     if (p === "/api/conclusion") {
       return jsonRes(res, 200, buildConclusion(readLatestRace()));
     }
-    if (p === "/api/conclusion-manual" && req.method === "POST") {
+    if (p === "/api/conclusion-manual") {
+      if (req.method !== "POST") {
+        res.writeHead(405, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "Allow": "POST" });
+        return res.end(JSON.stringify({ ok: false, error: "Method Not Allowed. Allow: POST" }));
+      }
       const { buildManualConclusion } = require("./lib/manual_race");
       let body = "";
       for await (const chunk of req) body += chunk;
@@ -155,7 +159,11 @@ async function serve(req, res) {
       }
       return jsonRes(res, 200, { ok: true, available: listResults() });
     }
-    if (p === "/api/finalize" && req.method === "POST") {
+    if (p === "/api/finalize") {
+      if (req.method !== "POST") {
+        res.writeHead(405, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "Allow": "POST" });
+        return res.end(JSON.stringify({ ok: false, error: "Method Not Allowed. Allow: POST" }));
+      }
       const { finalizeBatchAsync } = require("./lib/finalize");
       let body = "";
       for await (const chunk of req) body += chunk;

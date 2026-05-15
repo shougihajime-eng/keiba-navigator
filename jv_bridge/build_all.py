@@ -43,8 +43,9 @@ RACE_KEY_FIELDS = ("year", "month_day", "jyo_code", "kai_ji", "nichi_ji", "race_
 
 
 def _race_id_of(rec: Dict[str, Any]) -> Optional[str]:
-    """RA/SE/O1/HR 共通の race ID (16 桁) を組み立てる。
-    年(4)+月日(4)+場(2)+回(2)+日次(2)+R(2)。
+    """RA/SE/O1/HR 共通の race ID (18 桁) を組み立てる。
+    年(4)+月日(4)+場(2)+回(2)+日次(2)+R(2)+末尾"00"。
+    フロント (lib/race_id.js: JRA_18DIGIT) と完全一致させるため末尾 00 を付与する。
     """
     parts = []
     for k in RACE_KEY_FIELDS:
@@ -52,14 +53,17 @@ def _race_id_of(rec: Dict[str, Any]) -> Optional[str]:
         if v in (None, "", " "):
             return None
         parts.append(str(v).strip())
-    rid = "".join(parts)
-    if len(rid) != 16 or not rid.isdigit():
+    base = "".join(parts)
+    if len(base) != 16 or not base.isdigit():
         return None
-    return rid
+    return base + "00"
 
 
 def _collect_raw_files(raw_dir: Optional[Path]) -> List[Path]:
-    """対象 .bin ファイルを集める。aggregate_*_<SPEC> 全種類。"""
+    """対象 .bin ファイルを集める。
+    - aggregate_*/<SPEC>/raw_*.bin  (cmd_aggregate の出力)
+    - CACHE_DIR 直下の raw_*.bin   (cmd_rt の出力。発走前後の RT 系・0B14/0B15/0B11/0B12 等)
+    """
     out: List[Path] = []
     if raw_dir is not None:
         out.extend(sorted(raw_dir.glob("raw_*.bin")))
@@ -67,6 +71,8 @@ def _collect_raw_files(raw_dir: Optional[Path]) -> List[Path]:
         for sub in sorted(CACHE_DIR.glob("aggregate_*")):
             if sub.is_dir():
                 out.extend(sorted(sub.glob("raw_*.bin")))
+        # cmd_rt が CACHE_DIR 直下に書く raw_<dataspec>_<raceid>_<ts>.bin を拾う
+        out.extend(sorted(CACHE_DIR.glob("raw_*.bin")))
     return out
 
 

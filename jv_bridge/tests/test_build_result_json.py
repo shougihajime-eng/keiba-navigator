@@ -68,7 +68,7 @@ def test_parse_payout_block_out_of_range():
 def test_build_from_already_parsed_payouts():
     """payouts が既に dict 形式で来た場合: そのまま透過。"""
     hr = {
-        "race_id_18digit": "2026050305020111",
+        "race_id_18digit": "202605030502011100",
         "_status": "ok",
         "payouts": {
             "tan": {"winner": 6, "amount": 1800},
@@ -80,7 +80,7 @@ def test_build_from_already_parsed_payouts():
         ],
     }
     out = br.build(hr, ra={"race_name": "テストS"})
-    assert out["race_id"] == "2026050305020111"
+    assert out["race_id"] == "202605030502011100"
     assert out["race_name"] == "テストS"
     # 単勝払戻が 1 着馬に attach されている
     assert out["results"][0]["tan_payout"] == 1800
@@ -101,7 +101,7 @@ def test_build_from_raw_bytes_with_offsets():
     buf = tan_block + b"\x00" * 200
 
     hr = {
-        "race_id_18digit": "2026050305020111",
+        "race_id_18digit": "202605030502011100",
         "_raw": buf,
         "_payout_offsets": {"tan": 0},  # 単勝だけパースする
         "results": [{"rank": 1, "number": 6, "name": "Hayate"}],
@@ -126,4 +126,4 @@ def test_build_race_id_from_ra_fallback():
     }
     out = br.build(hr, ra=ra)
     assert out is not None
-    assert out["race_id"] == "2026050305020111"
+    assert out["race_id"] == "202605030502011100"

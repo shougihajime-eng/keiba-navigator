@@ -235,13 +235,17 @@ def build(hr: Dict[str, Any],
     if not hr:
         return None
 
-    # race_id の決定
+    # race_id の決定 (lib/race_id.js JRA_18DIGIT と完全一致させる)
     race_id = hr.get("race_id_18digit") or hr.get("race_id")
+    if race_id and len(str(race_id)) == 16 and str(race_id).isdigit():
+        race_id = str(race_id) + "00"
     if not race_id and ra is not None:
         parts = [str(ra.get(k) or "") for k in
                  ("year", "month_day", "jyo_code", "kai_ji", "nichi_ji", "race_num")]
         if all(parts):
-            race_id = "".join(parts)
+            base = "".join(parts)
+            if len(base) == 16 and base.isdigit():
+                race_id = base + "00"
     if not race_id:
         return None
 
@@ -286,7 +290,9 @@ def from_se_list(ra: Dict[str, Any],
         parts = [str(ra.get(k) or "") for k in
                  ("year","month_day","jyo_code","kai_ji","nichi_ji","race_num")]
         if all(parts):
-            race_id = "".join(parts)
+            base = "".join(parts)
+            if len(base) == 16 and base.isdigit():
+                race_id = base + "00"   # 18 桁化 (lib/race_id.js JRA_18DIGIT と一致)
     if not race_id:
         return None
 

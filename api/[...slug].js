@@ -13,6 +13,13 @@ const { clearCache }        = require("../lib/fetch");
 
 function ok(res, body)  { res.setHeader("Cache-Control", "no-store"); res.status(200).json(body); }
 function bad(res, code, body) { res.setHeader("Cache-Control", "no-store"); res.status(code).json(body); }
+function methodNotAllowed(res, allow) {
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Allow", allow);
+  res.status(405).json({ ok: false, error: `Method Not Allowed. Allow: ${allow}` });
+}
+// `?key=a&key=b` の二重指定攻撃を防ぐ。配列が来たら 1 件目だけ採用
+function firstQuery(v) { return Array.isArray(v) ? v[0] : v; }
 
 module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -43,7 +50,8 @@ module.exports = async (req, res) => {
       return ok(res, { ok: true, race });
     }
     if (path === "/conclusion") return ok(res, buildConclusion(readLatestRace()));
-    if (path === "/conclusion-manual" && req.method === "POST") {
+    if (path === "/conclusion-manual") {
+      if (req.method !== "POST") return methodNotAllowed(res, "POST");
       const { buildManualConclusion } = require("../lib/manual_race");
       let payload;
       try {
@@ -131,15 +139,16 @@ module.exports = async (req, res) => {
     }
     if (path === "/result") {
       const { readResultAsync, listResults } = require("../lib/finalize");
-      const raceId = req.query?.raceId;
+      const raceId = firstQuery(req.query?.raceId);
       if (raceId) {
-        const r = await readResultAsync(raceId);
+        const r = await readResultAsync(String(raceId));
         if (!r) return bad(res, 404, { ok: false, reason: "結果データなし(JV-Link接続後に取得)" });
         return ok(res, { ok: true, result: r });
       }
       return ok(res, { ok: true, available: listResults() });
     }
-    if (path === "/finalize" && req.method === "POST") {
+    if (path === "/finalize") {
+      if (req.method !== "POST") return methodNotAllowed(res, "POST");
       const { finalizeBatchAsync } = require("../lib/finalize");
       let payload;
       try {
@@ -153,9 +162,9 @@ module.exports = async (req, res) => {
     }
     if (path === "/g1-history") {
       const { readG1, listG1 } = require("../lib/g1_history");
-      const id = req.query?.id;
+      const id = firstQuery(req.query?.id);
       if (id) {
-        const r = readG1(id);
+        const r = readG1(String(id));
         if (!r) return bad(res, 404, { ok: false, reason: "G1履歴データなし(JV-Link接続後に集計)" });
         return ok(res, { ok: true, history: r });
       }

@@ -31,14 +31,18 @@ SURFACE_SHORT = {"芝": "芝", "ダート": "ダ", "障害": "障"}
 
 
 def _build_race_id(ra: Dict[str, Any]) -> Optional[str]:
-    """JRA 18 桁レース ID = 年(4) + 月日(4) + 場(2) + 回(2) + 日次(2) + R(2)"""
+    """JRA 18 桁レース ID = 年(4) + 月日(4) + 場(2) + 回(2) + 日次(2) + R(2) + サフィックス"00"
+    フロント (lib/race_id.js: JRA_18DIGIT) と完全一致させるため末尾 00 を付与する。"""
     parts = []
     for k in ("year", "month_day", "jyo_code", "kai_ji", "nichi_ji", "race_num"):
         v = ra.get(k)
         if v in (None, ""):
             return None
         parts.append(str(v))
-    return "".join(parts)
+    base = "".join(parts)
+    if len(base) != 16 or not base.isdigit():
+        return None
+    return base + "00"
 
 
 def _sex_age(se: Dict[str, Any]) -> Optional[str]:

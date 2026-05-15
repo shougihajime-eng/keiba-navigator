@@ -147,8 +147,9 @@ def test_synthetic_e2e_pipeline_to_features_json(tmp_path, monkeypatch):
     feats_path = cache / "features.json"
 
     # 5 レース全部で「ルメール+国枝」が 1 着・「武豊+藤原」が 4 着
+    # race_id は本番の 18 桁形式 (lib/race_id.js JRA_18DIGIT 互換)
     for i in range(5):
-        rid = f"2026050305020{i+1:03d}"
+        rid = f"2026050305020{i+1:03d}00"
         race = {
             "race_id": rid,
             "race_name": f"テスト{i+1}R",
@@ -197,7 +198,7 @@ def test_synthetic_e2e_pipeline_to_features_json(tmp_path, monkeypatch):
 
     data = json.loads(feats_path.read_text(encoding="utf-8"))
     # ルメールは 5/5 勝 (大サンプル相当ではないが縮約後でも武豊より高い)
-    race_id = "2026050305020001"
+    race_id = "202605030502000100"
     assert race_id in data
     h1 = data[race_id]["1"]   # ルメール+国枝
     h2 = data[race_id]["2"]   # 武豊+藤原
