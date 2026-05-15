@@ -254,12 +254,33 @@ HR_PAYOUT_LAYOUT = {
 }
 
 
+# ─── JG レコード (除外馬・出走取消馬) 80 バイト ────────────
+# SDK JV_JG_JOGAIBA より転記。明日のレース前に「除外された馬」のリスト。
+JG_FIELDS: List[Field] = [
+    Field("record_id",     0, 2,  F_ascii, "'JG'"),
+    Field("data_kbn",      2, 1,  F_ascii),
+    Field("make_date",     3, 8,  F_ascii),
+    Field("year",         11, 4,  F_ascii),
+    Field("month_day",    15, 4,  F_ascii),
+    Field("jyo_code",     19, 2,  F_ascii),
+    Field("kai_ji",       21, 2,  F_ascii),
+    Field("nichi_ji",     23, 2,  F_ascii),
+    Field("race_num",     25, 2,  F_ascii),
+    Field("ketto_num",    27, 10, F_ascii, "血統登録番号"),
+    Field("horse_name",   37, 36, F_sjis,  "馬名"),
+    Field("tohyo_jun",    73, 3,  F_int,   "出馬投票受付順番"),
+    Field("shusso_kbn",   76, 1,  F_ascii, "出走区分"),
+    Field("jogai_jotai",  77, 1,  F_ascii, "除外状態区分"),
+]
+
+
 # ─── レコード種別 ID → フィールド定義 の登録簿 ──────────
 RECORD_REGISTRY: Dict[str, List[Field]] = {
     "RA": RA_FIELDS,
     "SE": SE_FIELDS,
     "O1": O1_FIELDS,
     "HR": HR_FIELDS,
+    "JG": JG_FIELDS,
 }
 
 
@@ -269,6 +290,7 @@ RECORD_COMPLETED: Dict[str, bool] = {
     "SE": True,
     "O1": True,
     "HR": True,
+    "JG": True,
 }
 
 

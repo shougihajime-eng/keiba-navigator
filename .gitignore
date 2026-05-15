@@ -31,4 +31,10 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# JRA-VAN SDK 同梱ドキュメント (利用規約上、公開しない)
+_jvdata_spec.*
+_jvlink_spec.*
+_sdk_*.pdf
+_sdk_*.txt
+
 .vercel
