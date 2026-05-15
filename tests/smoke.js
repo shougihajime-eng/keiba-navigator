@@ -311,5 +311,61 @@ test("fmtEv: null は --", () => assert.strictEqual(reasoning.fmtEv(null), "--")
 test("fmtPct: 0.456 → 45.6%", () => assert.strictEqual(reasoning.fmtPct(0.456), "45.6%"));
 test("fmtOdds: 3.2 → 3.2倍", () => assert.strictEqual(reasoning.fmtOdds(3.2), "3.2倍"));
 
+console.log("\n=== ocr.parseToLines ===");
+const ocr = require("../lib/ocr");
+test("空文字は []", () => {
+  assert.deepStrictEqual(ocr.parseToLines(""), []);
+  assert.deepStrictEqual(ocr.parseToLines(null), []);
+});
+test("「1 ディープ 3.2」は 1 行抽出", () => {
+  const lines = ocr.parseToLines("1 ディープ 3.2");
+  assert.strictEqual(lines.length, 1);
+  assert.ok(lines[0].includes("ディープ"));
+  assert.ok(lines[0].includes("3.2"));
+  assert.ok(lines[0].startsWith("1"));
+});
+test("複数行 (3 頭) を 3 行に", () => {
+  const raw = "1 ディープ 3.2 1人気\n2 オルフェ 5.5 2人気\n3 キタサン 8.0";
+  const lines = ocr.parseToLines(raw);
+  assert.strictEqual(lines.length, 3);
+});
+test("ノイズ行(数字なし・カナ少ない)は除外", () => {
+  const raw = "コーナー\n1 ディープ 3.2\n--\n3 キタサン 8.0";
+  const lines = ocr.parseToLines(raw);
+  assert.strictEqual(lines.length, 2);
+});
+test("「番人気」を popularity として拾う", () => {
+  const lines = ocr.parseToLines("3 ハジメ 60.5 6番人気");
+  assert.ok(lines[0].endsWith(" 6"), `line=${lines[0]}`);
+});
+test("馬番 > 30 は無視", () => {
+  // 99 という大きな整数だけのケース: 馬番として拾わない
+  const lines = ocr.parseToLines("99 ばかうま 3.2");
+  // 99 は umaban に入らないが、3.2 と name はある → 採用される
+  assert.strictEqual(lines.length, 1);
+  // 馬番は採用されていない: 先頭が umaban の番号ではない
+  assert.ok(!lines[0].startsWith("99 "));
+});
+
+console.log("\n=== help / KNHelp ===");
+// help.js は IIFE で window がないと走らない部分があるが、
+// FAQ 配列の妥当性チェックは内部状態として確認できる
+// ファイル単体読み込みで構文エラーがないことだけ確認
+test("help.js は構文エラーなく読み込める", () => {
+  const fs = require("fs");
+  const code = fs.readFileSync("lib/help.js", "utf8");
+  new Function(code);  // SyntaxError があればここで throw
+});
+
+console.log("\n=== onboarding / animate / share_image / whatif / achievements 構文 ===");
+test("onboarding.js 構文 OK", () => { new Function(require("fs").readFileSync("lib/onboarding.js", "utf8")); });
+test("animate.js 構文 OK",     () => { new Function(require("fs").readFileSync("lib/animate.js", "utf8")); });
+test("share_image.js 構文 OK", () => { new Function(require("fs").readFileSync("lib/share_image.js", "utf8")); });
+test("whatif.js 構文 OK",      () => { new Function(require("fs").readFileSync("lib/whatif.js", "utf8")); });
+test("achievements.js 構文 OK",() => { new Function(require("fs").readFileSync("lib/achievements.js", "utf8")); });
+test("daily_brief.js 構文 OK", () => { new Function(require("fs").readFileSync("lib/daily_brief.js", "utf8")); });
+test("ai_voice.js 構文 OK",    () => { new Function(require("fs").readFileSync("lib/ai_voice.js", "utf8")); });
+test("glossary.js 構文 OK",    () => { new Function(require("fs").readFileSync("lib/glossary.js", "utf8")); });
+
 console.log(`\n=== 合計: ${passed} 通過 / ${failed} 失敗 ===`);
 process.exit(failed > 0 ? 1 : 0);

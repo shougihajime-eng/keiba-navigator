@@ -56,6 +56,8 @@
   <script src="lib/animate.js" defer></script>
   <script src="lib/achievements.js" defer></script>
   <script src="lib/share_image.js" defer></script>
+  <script src="lib/help.js" defer></script>
+  <script src="lib/ocr.js" defer></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -140,6 +142,7 @@
           </p>
           <div class="mi-quickbar">
             <button id="mi-voice"  type="button" class="mi-quickbtn mi-quickbtn-accent" hidden>🎙 声で1頭追加</button>
+            <button id="mi-ocr"    type="button" class="mi-quickbtn mi-quickbtn-accent">📷 写真から読み取り</button>
             <button id="mi-paste"  type="button" class="mi-quickbtn">📋 クリップボードから貼り付け</button>
             <button id="mi-sample" type="button" class="mi-quickbtn">📝 サンプルを入れる</button>
             <button id="mi-demo"   type="button" class="mi-quickbtn mi-quickbtn-emph">🎲 サンプルで即判定</button>
@@ -654,6 +657,12 @@
         <h2 class="sc-title">🏅 達成バッジ <span id="badges-count" class="text-ink-mute text-xs"></span></h2>
         <p class="settings-hint">アプリを使い込むと自動でバッジが解放されます。記録・的中・連勝などのマイルストーン用。</p>
         <div id="badges-grid" class="badges-grid"></div>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">❓ ヘルプ・よくある質問</h2>
+        <p class="settings-hint">気になる項目をタップで開けます。使い方・用語・トラブル解決までこの中で完結。</p>
+        <div id="faq-list" class="faq-list"></div>
       </section>
 
       <section class="simple-card sc-info">
