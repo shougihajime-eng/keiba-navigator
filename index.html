@@ -44,6 +44,7 @@
   <script src="config.js"></script>
   <script src="storage.js"></script>
   <script src="predictors/learner.js"></script>
+  <script src="predictors/rankings.js"></script>
   <script src="lib/csv_import.js"></script>
   <script src="lib/kelly.js"></script>
   <script src="lib/glossary.js" defer></script>
@@ -176,6 +177,47 @@
           <p class="mi-note" id="mi-note">⚠ 結果(着順)は確定後に「記録」タブから手動で当たり／外れを入力してください。</p>
         </div>
       </details>
+
+      <!-- 🎰 WIN5 予想カード -->
+      <section id="card-win5" class="win5-card" hidden>
+        <div class="w5-head">
+          <h2 class="w5-title">🎰 WIN5 予想</h2>
+          <span id="win5-note" class="w5-note"></span>
+        </div>
+        <p class="w5-hint">日曜限定 5 レースの本命をまとめて表示。AI 補正後の期待値 (EV) 順。</p>
+        <ol id="win5-list" class="w5-list"></ol>
+      </section>
+
+      <!-- 📰 競馬ニュース -->
+      <section id="card-news" class="news-card" hidden>
+        <div class="news-head">
+          <h2 class="news-title">📰 競馬ニュース</h2>
+        </div>
+        <ul id="news-list" class="news-list"></ul>
+      </section>
+
+      <!-- 🏆 ベスト10 ランキング (厩舎・騎手・注目馬) -->
+      <section id="card-rankings" class="rankings-card" hidden>
+        <div class="rk-head">
+          <h2 class="rk-title">🏆 注目ランキング</h2>
+          <span id="rk-sample-count" class="rk-sample">--</span>
+        </div>
+        <p class="rk-hint">過去の記録から「いま調子のいい厩舎・騎手・馬」のベスト10を自動算出。<b>↑</b> は上昇中、<b>↓</b> は下降中の意味。データが増えるほど精度が上がります。</p>
+        <div class="rk-tabs" role="tablist">
+          <button type="button" class="rk-tab is-active" data-rk-tab="trainers" role="tab">🏛 厩舎</button>
+          <button type="button" class="rk-tab" data-rk-tab="jockeys" role="tab">🏇 騎手</button>
+          <button type="button" class="rk-tab" data-rk-tab="horses" role="tab">🐎 注目馬</button>
+        </div>
+        <div class="rk-body">
+          <ol id="rk-list-trainers" class="rk-list is-active" data-rk-pane="trainers"></ol>
+          <ol id="rk-list-jockeys"  class="rk-list" data-rk-pane="jockeys"></ol>
+          <ol id="rk-list-horses"   class="rk-list" data-rk-pane="horses"></ol>
+        </div>
+        <p id="rk-empty-msg" class="rk-empty" hidden>
+          まだランキングを作るためのデータが足りません (各カテゴリ最低 3 戦の記録が必要)。<br>
+          手動入力モードで何度かレースを記録すると自動で表示されます。
+        </p>
+      </section>
 
       <!-- 🏁 保存した手動レースの横断ランキング -->
       <section id="card-saved-races" class="saved-races" hidden>

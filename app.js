@@ -1292,6 +1292,199 @@ function renderSavedRacesList() {
   });
 }
 
+// ─── 🏆 ベスト10 ランキング (厩舎・騎手・注目馬) ────────────
+let _rk_features_cache = null;
+async function loadFeaturesJson() {
+  if (_rk_features_cache !== null) return _rk_features_cache;
+  try {
+    const res = await fetch("./data/jv_cache/features.json", { cache: "no-cache" });
+    if (!res.ok) { _rk_features_cache = {}; return {}; }
+    _rk_features_cache = await res.json();
+    return _rk_features_cache;
+  } catch {
+    _rk_features_cache = {};
+    return {};
+  }
+}
+
+function rkRateLabel(rate) {
+  if (!Number.isFinite(rate)) return "—";
+  return `${(rate * 100).toFixed(1)}%`;
+}
+
+function rkRow(e, i) {
+  if (!window.Rankings) return "";
+  const badge = window.Rankings.formatBadge(e, i);
+  const trendIc = window.Rankings.trendIcon(e.trend);
+  const trendCls = window.Rankings.trendClass(e.trend);
+  const recoveryText = (e.recovery != null && Number.isFinite(e.recovery))
+    ? `回収 ${(e.recovery * 100).toFixed(0)}%`
+    : "";
+  return `
+    <li class="rk-row d-${Math.min(5, i + 1)}">
+      <span class="rk-badge ${i < 3 ? 'rk-badge-medal' : ''}">${badge}</span>
+      <span class="rk-name">${escapeHtml(e.key)}</span>
+      <span class="rk-rate">${rkRateLabel(e.lifetimeRate)}</span>
+      <span class="rk-trend ${trendCls}" title="調子 ${e.trend?.toFixed(2) || '—'}">${trendIc}</span>
+      <span class="rk-stats">${e.samples}戦 ${e.hits}的中 ${recoveryText}</span>
+    </li>
+  `;
+}
+
+function rkRowFallback(rank, msg) {
+  return `<li class="rk-row rk-row-empty"><span class="rk-badge">${rank}</span><span class="rk-name">${msg}</span></li>`;
+}
+
+async function renderRankings() {
+  const card = document.getElementById("card-rankings");
+  if (!card || !window.Rankings) return;
+  const store = loadStore();
+  const bets = Array.isArray(store.bets) ? store.bets : [];
+  const features = await loadFeaturesJson();
+  const result = window.Rankings.compute(bets, features);
+
+  const sampleEl = document.getElementById("rk-sample-count");
+  if (sampleEl) sampleEl.textContent = `記録 ${result.sampleCount} 件`;
+
+  const renderList = (paneId, list, emptyHint) => {
+    const ol = document.getElementById(paneId);
+    if (!ol) return;
+    if (!list.length) {
+      ol.innerHTML = rkRowFallback("--", emptyHint);
+      return;
+    }
+    ol.innerHTML = list.map(rkRow).join("");
+  };
+
+  renderList("rk-list-trainers", result.trainers, "厩舎データ収集中 (3戦以上で表示)");
+  renderList("rk-list-jockeys",  result.jockeys,  "騎手データ収集中 (3戦以上で表示)");
+  renderList("rk-list-horses",   result.horses,   "注目馬データ収集中 (2戦以上で表示)");
+
+  // データが 1 件もない or 全リスト空 → empty message
+  const anyData = result.trainers.length + result.jockeys.length + result.horses.length;
+  const emptyMsg = document.getElementById("rk-empty-msg");
+  if (emptyMsg) emptyMsg.hidden = anyData > 0;
+  // カード自体は常に表示 (空でも「育てる対象」として見せる)
+  card.hidden = false;
+
+  // タブ切り替え
+  card.querySelectorAll(".rk-tab").forEach(btn => {
+    if (btn.dataset.rkBound) return;
+    btn.dataset.rkBound = "1";
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.rkTab;
+      card.querySelectorAll(".rk-tab").forEach(b => b.classList.toggle("is-active", b === btn));
+      card.querySelectorAll(".rk-list").forEach(ol => {
+        ol.classList.toggle("is-active", ol.dataset.rkPane === tab);
+      });
+    });
+  });
+}
+
+// ─── 📰 競馬ニュースカード ──────────────────────────────
+async function renderNewsCard() {
+  const card = document.getElementById("card-news");
+  if (!card) return;
+  const list = document.getElementById("news-list");
+  if (!list) return;
+  list.innerHTML = '<li class="news-loading">📰 競馬ニュースを取得中…</li>';
+
+  let items = [];
+  try {
+    if (window.News && typeof window.News.fetchLatest === "function") {
+      items = await window.News.fetchLatest();
+    } else {
+      const res = await fetch("/api/news", { cache: "no-cache" });
+      if (res.ok) {
+        const data = await res.json();
+        items = Array.isArray(data) ? data : (data.items || []);
+      }
+    }
+  } catch (e) {
+    console.warn("news fetch failed", e);
+  }
+
+  if (!items.length) {
+    list.innerHTML = '<li class="news-empty">ニュースが取得できませんでした。少し後に再読み込みしてください。</li>';
+    card.hidden = false;
+    return;
+  }
+
+  const top = items.slice(0, 6);
+  list.innerHTML = top.map(n => {
+    const title = escapeHtml(n.title || n.headline || "");
+    const url   = n.url || n.link || "#";
+    const src   = escapeHtml(n.source || n.publisher || "");
+    const time  = formatNewsTime(n.publishedAt || n.pubDate || n.date || "");
+    return `<li class="news-row">
+      <a class="news-link" href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>
+      <span class="news-meta">${src}${time ? " · " + time : ""}</span>
+    </li>`;
+  }).join("");
+  card.hidden = false;
+}
+
+function formatNewsTime(iso) {
+  if (!iso) return "";
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return "";
+  const min = Math.max(0, (Date.now() - t) / 60000);
+  if (min < 60) return `${Math.floor(min)}分前`;
+  if (min < 60 * 24) return `${Math.floor(min / 60)}時間前`;
+  return `${Math.floor(min / (60 * 24))}日前`;
+}
+
+// ─── 🎰 WIN5 予想カード ──────────────────────────────────
+async function renderWin5Card() {
+  const card = document.getElementById("card-win5");
+  if (!card) return;
+  const list = document.getElementById("win5-list");
+  const note = document.getElementById("win5-note");
+  if (!list) return;
+
+  // WIN5 対象レースは「日曜の限定 5 レース」。JRA-VAN から取れるまでは
+  // 既存の保存済レースから直近の日曜 5 件を WIN5 候補として扱う。
+  const saved = loadSavedRaces();
+  const today = new Date();
+  const dow = today.getDay();
+  // 日曜なら今日、それ以外なら次の日曜まで何日かを表示
+  const dayLabel = dow === 0 ? "今日 (日曜)"
+    : dow === 6 ? "明日 (日曜)"
+    : `次の日曜 (あと ${(7 - dow) % 7} 日)`;
+
+  // 全保存レースから「日曜判定」のものに絞る
+  const sundayRaces = saved.filter(r => {
+    const t = new Date(r.createdAt || 0);
+    return t.getDay() === 0;
+  });
+
+  let candidates = sundayRaces.length >= 5 ? sundayRaces.slice(0, 5) : saved.slice(0, 5);
+
+  if (!candidates.length) {
+    list.innerHTML = `<li class="w5-empty">WIN5 対象レースのデータ取得待ち。<br>JV-Link から日曜開催 5 レース分の出走情報が届いたら自動で予想が並びます。</li>`;
+    if (note) note.textContent = `予定: ${dayLabel}`;
+    card.hidden = false;
+    return;
+  }
+
+  const rows = candidates.slice(0, 5).map((r, i) => {
+    const top = r.conclusion?.picks?.[0];
+    const horse = top ? `${top.number || "?"} ${top.name || ""}` : "予想未確定";
+    const evPct = top && Number.isFinite(top.ev)
+      ? `EV ${((top.ev - 1) * 100).toFixed(0)}%`
+      : "—";
+    return `<li class="w5-row">
+      <span class="w5-leg">第${i + 1}R</span>
+      <span class="w5-race">${escapeHtml(r.raceName || r.conclusion?.raceName || "レース" + (i + 1))}</span>
+      <span class="w5-horse">本命: ${escapeHtml(horse)}</span>
+      <span class="w5-ev">${evPct}</span>
+    </li>`;
+  }).join("");
+  list.innerHTML = rows;
+  if (note) note.textContent = `${dayLabel} の WIN5 候補 (保存済レースから自動抽出)`;
+  card.hidden = false;
+}
+
 function loadSavedRace(id) {
   const arr = loadSavedRaces();
   const r = arr.find(x => x.id === id);
@@ -3500,6 +3693,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { renderRecords();  } catch (e) { console.warn(e); }
   try { renderAiTrack();  } catch (e) { console.warn(e); }
   try { renderSavedRacesList(); } catch (e) { console.warn(e); }
+  try { renderRankings(); } catch (e) { console.warn(e); }
+  try { renderNewsCard(); } catch (e) { console.warn(e); }
+  try { renderWin5Card(); } catch (e) { console.warn(e); }
   try { updateRecordTabBadge(); } catch (e) { console.warn(e); }
   try { updateHeroQuestion(); } catch (e) { console.warn(e); }
   try { refreshNotifyUi(); } catch (e) { console.warn(e); }
