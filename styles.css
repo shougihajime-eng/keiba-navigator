@@ -3310,3 +3310,241 @@ button:active:not(:disabled),
   padding: 1px 6px; border-radius: 4px;
   color: var(--acc-buy-2);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   🎚 What-If Simulator (もしも、条件が変わったら?)
+   ═══════════════════════════════════════════════════════════ */
+.whatif-card {
+  background: linear-gradient(180deg, rgba(59,130,246,0.06), rgba(168,85,247,0.04));
+  border: 1px solid rgba(59,130,246,0.22);
+  border-radius: var(--r-lg);
+  padding: 18px 18px 14px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+.whatif-card::before {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(59,130,246,0.6), rgba(52,211,153,0.6), transparent);
+}
+.whatif-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.whatif-head .sc-title { margin: 0; }
+.wi-reset {
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  border-radius: var(--r-pill);
+  padding: 5px 11px; font-size: 11.5px; cursor: pointer;
+  font-weight: 600;
+  transition: all 150ms ease;
+}
+.wi-reset:hover { color: var(--ink-1); border-color: var(--ink-3); }
+.whatif-hint {
+  font-size: 12px; color: var(--ink-3);
+  margin-bottom: 14px; line-height: 1.6;
+}
+.whatif-target {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--line-1);
+}
+.wi-target-num {
+  font-size: 32px; font-weight: 900; letter-spacing: -0.02em;
+  color: var(--acc-info-2);
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(59,130,246,0.35);
+  font-variant-numeric: tabular-nums;
+}
+.wi-target-name {
+  font-size: 16px; font-weight: 700; color: var(--ink-1);
+}
+.whatif-sliders { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.wi-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 60px;
+  align-items: center; gap: 10px;
+}
+.wi-label {
+  font-size: 12px; font-weight: 600; color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+.wi-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: linear-gradient(90deg, rgba(239,68,68,0.5), rgba(245,158,11,0.5), rgba(16,185,129,0.5));
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+}
+.wi-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--ink-1);
+  border: 2px solid var(--acc-info);
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  transition: transform 100ms ease;
+}
+.wi-slider::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.15); }
+.wi-slider::-moz-range-thumb {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--ink-1);
+  border: 2px solid var(--acc-info);
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.wi-out {
+  font-size: 12.5px; font-weight: 700;
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.whatif-result { margin-top: 14px; }
+.wi-ev-meter {
+  position: relative;
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.wi-ev-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--acc-danger), var(--acc-warn), var(--acc-buy));
+  border-radius: 999px;
+  transition: width 200ms cubic-bezier(.2,.7,.2,1);
+}
+.wi-ev-line {
+  position: absolute; top: -2px; bottom: -2px;
+  width: 2px; background: rgba(255,255,255,0.45);
+  pointer-events: none;
+}
+.wi-ev-line-100 { left: 50%; }     /* EV 1.0 ≈ 50% (meter は 0〜2.0 を 0〜100% にマップ) */
+.wi-stats {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px; margin-bottom: 10px;
+}
+.wi-stat {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-sm);
+  padding: 8px 10px; text-align: center;
+}
+.wi-stat-label {
+  font-size: 10.5px; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+.wi-stat-val {
+  font-size: 16px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-1);
+}
+.wi-ev-s { color: var(--acc-buy-2);   }
+.wi-ev-a { color: var(--acc-buy);     }
+.wi-ev-b { color: var(--acc-warn-2);  }
+.wi-ev-c { color: var(--acc-warn);    }
+.wi-ev-d { color: var(--acc-danger-2);}
+.wi-ev-zero { color: var(--ink-4); }
+.wi-msg {
+  font-size: 13px; color: var(--ink-2);
+  text-align: center; line-height: 1.6;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🌅 Daily Brief (今日の概要カード — home top)
+   ═══════════════════════════════════════════════════════════ */
+.daily-brief {
+  background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(168,85,247,0.06));
+  border: 1px solid rgba(245,158,11,0.20);
+  border-radius: var(--r-lg);
+  padding: 14px 16px 12px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-card);
+  animation: knObIn var(--t-mid) var(--ease-out);
+}
+.db-row1 {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 8px; margin-bottom: 10px;
+}
+.db-greet { display: flex; align-items: baseline; gap: 8px; }
+.db-emoji { font-size: 22px; line-height: 1; }
+.db-text {
+  font-size: 15.5px; font-weight: 700;
+  color: var(--ink-1); letter-spacing: 0.005em;
+}
+.db-date {
+  font-size: 12px; color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.db-weekend {
+  background: var(--acc-warn-soft);
+  color: var(--acc-warn-2);
+  border: 1px solid var(--acc-warn-line);
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+.db-row2 {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line-1);
+  border-bottom: 1px solid var(--line-1);
+  margin-bottom: 10px;
+}
+.db-cell { text-align: center; }
+.db-key  {
+  font-size: 10.5px; color: var(--ink-4);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+.db-val  {
+  font-size: 16px; font-weight: 800;
+  color: var(--ink-1);
+  letter-spacing: 0.04em;
+  margin-bottom: 1px;
+}
+.db-recovery-up    { color: var(--acc-buy-2); }
+.db-recovery-down  { color: var(--acc-danger-2); }
+.db-recovery-pending { color: var(--ink-3); }
+.db-sub  { font-size: 11px; color: var(--ink-4); }
+.db-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.db-chip {
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  border-radius: var(--r-pill);
+  padding: 6px 12px; font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.db-chip:hover {
+  background: var(--acc-info-soft);
+  border-color: var(--acc-info-line);
+  color: var(--acc-info-2);
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Flash highlight (数値変更時の一瞬光らせる演出)
+   ═══════════════════════════════════════════════════════════ */
+.kn-flash {
+  animation: knFlash 700ms cubic-bezier(.2,.7,.2,1);
+}
+@keyframes knFlash {
+  0%   { filter: brightness(1.6); text-shadow: 0 0 24px currentColor; }
+  100% { filter: brightness(1.0); text-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kn-flash, .wi-ev-fill { animation: none !important; transition: none !important; }
+}

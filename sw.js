@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v4";  // オンボーディング/音声入力/読み上げ/用語ツールチップ 追加
+const CACHE_VERSION = "keiba-nav-v5";  // Wave3: What-If シミュレータ / 朝の概要 / 数字アニメ / AI 思考プロセス
 const PRECACHE = [
   "/",
   "/index.html",

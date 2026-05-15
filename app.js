@@ -659,11 +659,18 @@ function renderBigVerdict(c) {
 function renderPickCard(c) {
   const card = $("#card-pick");
   if (!c?.ok || !c.picks?.length) {
-    card.hidden = true; return;
+    card.hidden = true;
+    try { window.KNWhatIf?.setPick(null); } catch {}
+    return;
   }
   const top = c.picks[0];
   card.hidden = false;
-  $("#pick-num").textContent  = top.number;
+  const pickNumEl = $("#pick-num");
+  const oldNum = pickNumEl?.textContent;
+  pickNumEl.textContent  = top.number;
+  if (oldNum !== String(top.number)) {
+    try { window.KNAnim?.flashHighlight(pickNumEl); } catch {}
+  }
   $("#pick-name").textContent = top.name || "(馬名未取得)";
 
   // 理由は最大3行(短く) + 学習補正の適用
@@ -697,6 +704,9 @@ function renderPickCard(c) {
   // Kelly基準の推奨金額 (補正後 prob を使う)
   renderStakeSuggestion(c, top, calRatio);
 
+  // 🎚 What-If シミュレータに pick を伝える
+  try { window.KNWhatIf?.setPick(top); } catch {}
+
   // 仮データ時は記録ボタン無効化(「仮データで買い推奨しない」「未取得を取得済みのように扱わない」原則)
   const isDummy = !!(c?.raceMeta?.isDummy)
     || (typeof c?.raceMeta?.source === "string" && /DUMMY|TEST|テスト|ダミー|SYNTHETIC/i.test(c.raceMeta.source));
@@ -723,8 +733,18 @@ function renderStakeSuggestion(c, top, calRatio) {
   });
   wrap.hidden = false;
   if (out.stake > 0) {
-    amtEl.textContent = `¥${out.stake.toLocaleString("ja-JP")}`;
     amtEl.className = "ps-amount ps-amount-positive";
+    // 数値カウントアップで「いくらに?」を視覚的に伝える
+    if (window.KNAnim?.animateNumber) {
+      const cur = Number((amtEl.textContent || "0").replace(/[^\d-]/g, "")) || 0;
+      window.KNAnim.animateNumber(amtEl, cur, out.stake, {
+        duration: 600,
+        prefix: "¥",
+        format: (n) => Math.round(n).toLocaleString("ja-JP"),
+      });
+    } else {
+      amtEl.textContent = `¥${out.stake.toLocaleString("ja-JP")}`;
+    }
     reasonEl.textContent = `${out.reason} (期待値 ${fmtEvPct(out.ev)})`;
   } else {
     amtEl.textContent = "¥0";
