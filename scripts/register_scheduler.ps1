@@ -1,11 +1,12 @@
-# Windows タスクスケジューラに「土曜・日曜 朝 8:30 に明日のレースを取る.bat を実行」を登録する。
+# Windows タスクスケジューラに「土曜・日曜の朝〜夕方の 4 タイミングで
+# race_day_pipeline を自動実行」する設定を登録する。
 #
 # 使い方:
 #   PowerShell を管理者権限で開いて、次を実行:
 #     powershell -ExecutionPolicy Bypass -File scripts\register_scheduler.ps1
 #
 # 解除する場合:
-#   Unregister-ScheduledTask -TaskName "KeibaNavigator-FetchTomorrow" -Confirm:$false
+#   Get-ScheduledTask -TaskName "KeibaNavigator-*" | Unregister-ScheduledTask -Confirm:$false
 
 $ErrorActionPreference = "Stop"
 
@@ -17,45 +18,58 @@ if (-not (Test-Path $BatchFile)) {
     exit 1
 }
 
-$TaskName = "KeibaNavigator-FetchTomorrow"
-$TaskDesc = "土曜・日曜の朝 8:30 に明日のレースのオッズを自動取得 (KEIBA NAVIGATOR)"
-
-# 既存タスクを削除 (再登録のため)
-$existing = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-if ($existing) {
-    Write-Host "既存タスクを削除します: $TaskName"
-    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+# 旧 (単一時刻) タスクが残っていたら削除
+$old = Get-ScheduledTask -TaskName "KeibaNavigator-FetchTomorrow" -ErrorAction SilentlyContinue
+if ($old) {
+    Write-Host "旧タスク KeibaNavigator-FetchTomorrow を削除"
+    Unregister-ScheduledTask -TaskName "KeibaNavigator-FetchTomorrow" -Confirm:$false
 }
 
-# トリガー: 土曜・日曜の 8:30
-$Trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday, Sunday -At 8:30AM
+# 4 タイミング (土日とも各時刻に走る)
+$slots = @(
+    @{ Name = "KeibaNavigator-Morning";   Time = "08:30"; Desc = "朝の出走表 + RT" },
+    @{ Name = "KeibaNavigator-Pre";       Time = "11:00"; Desc = "直前オッズ" },
+    @{ Name = "KeibaNavigator-Afternoon"; Time = "13:30"; Desc = "発走後オッズ更新" },
+    @{ Name = "KeibaNavigator-Evening";   Time = "16:00"; Desc = "確定オッズ + 払戻" }
+)
 
-# アクション: バッチファイルを実行
-$Action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c `"$BatchFile`""
+foreach ($slot in $slots) {
+    $taskName = $slot.Name
+    $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+    if ($existing) {
+        Write-Host "既存タスクを削除: $taskName"
+        Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
+    }
 
-# 設定: ノートPC でバッテリー駆動でも実行、終了したらタスクを残す
-$Settings = New-ScheduledTaskSettingsSet `
-    -StartWhenAvailable `
-    -DontStopOnIdleEnd `
-    -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries
+    $Trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday, Sunday -At $slot.Time
+    # 引数 --no-pause で BAT 末尾の pause を抑止 (自動実行のため)
+    $Action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c `"$BatchFile`" --no-pause"
+    $Settings = New-ScheduledTaskSettingsSet `
+        -StartWhenAvailable `
+        -DontStopOnIdleEnd `
+        -AllowStartIfOnBatteries `
+        -DontStopIfGoingOnBatteries `
+        -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
-# 現在のユーザー権限で登録 (管理者権限不要)
-Register-ScheduledTask `
-    -TaskName $TaskName `
-    -Description $TaskDesc `
-    -Trigger $Trigger `
-    -Action $Action `
-    -Settings $Settings `
-    -User $env:USERNAME | Out-Null
+    Register-ScheduledTask `
+        -TaskName $taskName `
+        -Description ("KEIBA NAVIGATOR " + $slot.Desc + " (毎週土日 " + $slot.Time + ")") `
+        -Trigger $Trigger `
+        -Action $Action `
+        -Settings $Settings `
+        -User $env:USERNAME | Out-Null
+
+    Write-Host "[OK] 登録: $taskName  土日 $($slot.Time)  -  $($slot.Desc)"
+}
 
 Write-Host ""
-Write-Host "[OK] タスクを登録しました: $TaskName"
-Write-Host "  実行タイミング: 毎週土曜・日曜 8:30"
-Write-Host "  実行内容: $BatchFile"
+Write-Host "================================================="
+Write-Host "全 4 タスクを登録しました。今後は土日に自動で:"
+Write-Host "  08:30  朝の出走表取得"
+Write-Host "  11:00  直前オッズ"
+Write-Host "  13:30  発走後オッズ更新"
+Write-Host "  16:00  確定オッズ + 払戻"
+Write-Host "が走り、data/jv_cache/ に最新データが溜まります。"
 Write-Host ""
-Write-Host "確認するには:"
-Write-Host "  Get-ScheduledTask -TaskName '$TaskName'"
-Write-Host ""
-Write-Host "解除するには:"
-Write-Host "  Unregister-ScheduledTask -TaskName '$TaskName' -Confirm:`$false"
+Write-Host "確認: Get-ScheduledTask -TaskName 'KeibaNavigator-*'"
+Write-Host "解除: Get-ScheduledTask -TaskName 'KeibaNavigator-*' | Unregister-ScheduledTask -Confirm:`$false"
