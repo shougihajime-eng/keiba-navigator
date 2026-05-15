@@ -46,6 +46,10 @@
   <script src="predictors/learner.js"></script>
   <script src="lib/csv_import.js"></script>
   <script src="lib/kelly.js"></script>
+  <script src="lib/glossary.js" defer></script>
+  <script src="lib/voice_input.js" defer></script>
+  <script src="lib/ai_voice.js" defer></script>
+  <script src="lib/onboarding.js" defer></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -129,8 +133,10 @@
             形式: <code>馬番 馬名 オッズ 人気 前走着順</code>(順不同・空白／カンマ区切り)
           </p>
           <div class="mi-quickbar">
+            <button id="mi-voice"  type="button" class="mi-quickbtn mi-quickbtn-accent" hidden>🎙 声で1頭追加</button>
             <button id="mi-paste"  type="button" class="mi-quickbtn">📋 クリップボードから貼り付け</button>
             <button id="mi-sample" type="button" class="mi-quickbtn">📝 サンプルを入れる</button>
+            <button id="mi-demo"   type="button" class="mi-quickbtn mi-quickbtn-emph">🎲 サンプルで即判定</button>
             <button id="mi-clear"  type="button" class="mi-quickbtn mi-quickbtn-danger">🗑 入力を消す</button>
           </div>
           <textarea id="mi-textarea" rows="7" spellcheck="false" inputmode="text" autocapitalize="none" placeholder="1 ディープ 3.2 1 1
@@ -324,11 +330,11 @@
 
       <!-- もっと詳しく見る -->
       <details class="details-pro">
-        <summary class="pro-summary"><span class="pro-icon">📊</span><span class="pro-title">もっと詳しく見る — 期待値の数字</span><span class="caret">▾</span></summary>
+        <summary class="pro-summary"><span class="pro-icon">📊</span><span class="pro-title">もっと詳しく見る — <span data-gloss="ev">期待値</span>の数字</span><span class="caret">▾</span></summary>
         <div class="pro-body">
           <div class="pro-meta-grid">
             <div class="pro-meta"><div class="pro-meta-label">使用モデル</div><div id="pro-model" class="pro-meta-val">--</div></div>
-            <div class="pro-meta"><div class="pro-meta-label">信頼度</div><div id="pro-confidence" class="pro-meta-val">--</div></div>
+            <div class="pro-meta"><div class="pro-meta-label"><span data-gloss="confidence">信頼度</span></div><div id="pro-confidence" class="pro-meta-val">--</div></div>
             <div class="pro-meta"><div class="pro-meta-label">判定</div><div id="pro-verdict" class="pro-meta-val">--</div></div>
           </div>
           <h3 class="pro-h3">買い候補(オッズ的におトクな順)</h3>
@@ -609,6 +615,17 @@
           <input id="file-import" type="file" accept=".json,application/json" hidden>
         </label>
         <p id="storage-usage" class="settings-hint mt-2">保存容量: --</p>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">🎓 ガイド・読み上げ</h2>
+        <p class="settings-hint">初回ツアーの再表示、結論の音声読み上げの切り替え。</p>
+        <button id="btn-tour-restart"   class="btn-info-outline" type="button">🎓 初回ツアーをもう一度</button>
+        <button id="btn-aivoice-toggle" class="btn-info-outline" type="button">🔊 結論の自動読み上げ: OFF</button>
+        <p class="settings-hint mt-2 text-[11px]">
+          音声読み上げは Chrome / Edge / Safari で動作。<br>
+          初回タップ時にブラウザの音声許可が求められることがあります。
+        </p>
       </section>
 
       <section class="simple-card sc-info">

@@ -2907,3 +2907,291 @@ button:active:not(:disabled),
   .big-num.color-buy::after { animation: none; }
 }
 
+
+
+/* ═══════════════════════════════════════════════════════════
+   Onboarding tour / Voice input / AI voice / Glossary
+   (Wave 1+2+3 追加 — 2026-05-15)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── 手動入力エリアの新ボタン ─── */
+.mi-quickbtn-accent {
+  background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(59,130,246,0.18));
+  border-color: rgba(168,85,247,0.45);
+  color: #ddd6fe;
+}
+.mi-quickbtn-accent:hover { border-color: rgba(168,85,247,0.7); }
+.mi-quickbtn-emph {
+  background: linear-gradient(135deg, var(--acc-buy-soft), rgba(52,211,153,0.12));
+  border-color: var(--acc-buy-line);
+  color: var(--acc-buy-2);
+  font-weight: 700;
+}
+.mi-quickbtn-emph:hover { box-shadow: 0 0 24px rgba(16,185,129,0.28); }
+.toggle-on { background: var(--acc-buy-soft); border-color: var(--acc-buy-line); color: var(--acc-buy-2); }
+
+/* ═══════════════════════════════════════════════════════════
+   Onboarding tour
+   ═══════════════════════════════════════════════════════════ */
+.kn-ob-root {
+  position: fixed; inset: 0;
+  z-index: 9000;
+  pointer-events: auto;
+  animation: knObIn var(--t-slow) var(--ease-out);
+}
+@keyframes knObIn { from { opacity: 0; } to { opacity: 1; } }
+.kn-ob-leaving { animation: knObOut var(--t-mid) var(--ease) forwards; }
+@keyframes knObOut { to { opacity: 0; } }
+
+.kn-ob-backdrop {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, rgba(10,14,26,0.78), rgba(10,14,26,0.94));
+  backdrop-filter: blur(2px);
+}
+.kn-ob-spot {
+  position: absolute;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,0.06),
+    0 0 0 9999px rgba(10,14,26,0.78),
+    0 0 36px rgba(16,185,129,0.35);
+  border: 2px solid rgba(52,211,153,0.7);
+  transition: all var(--t-slow) var(--ease-out);
+  pointer-events: none;
+}
+.kn-ob-card {
+  position: absolute;
+  width: min(360px, calc(100vw - 24px));
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: 18px 18px 14px;
+  box-shadow: var(--shadow-pop);
+  color: var(--ink-1);
+  transition: top var(--t-slow) var(--ease-out), left var(--t-slow) var(--ease-out);
+}
+.kn-ob-progress { display: flex; gap: 6px; margin-bottom: 10px; }
+.kn-ob-dot {
+  width: 6px; height: 6px; border-radius: 999px;
+  background: rgba(255,255,255,0.14);
+  transition: all 200ms ease;
+}
+.kn-ob-dot.active { background: var(--acc-buy-2); width: 22px; }
+.kn-ob-dot.done   { background: var(--acc-buy); }
+.kn-ob-title {
+  font-size: 17px; font-weight: 800; letter-spacing: 0.005em;
+  margin-bottom: 8px; line-height: 1.4;
+}
+.kn-ob-body {
+  font-size: 13.5px; line-height: 1.7; color: var(--ink-2);
+  margin-bottom: 16px;
+}
+.kn-ob-actions {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.kn-ob-skip {
+  background: transparent; border: none; color: var(--ink-4);
+  font-size: 12px; cursor: pointer; padding: 6px 10px;
+}
+.kn-ob-skip:hover { color: var(--ink-2); }
+.kn-ob-next {
+  background: linear-gradient(135deg, var(--acc-buy), #059669);
+  color: white; font-weight: 700;
+  border: none; border-radius: var(--r-pill);
+  padding: 9px 18px; cursor: pointer;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(16,185,129,0.32);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.kn-ob-next:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(16,185,129,0.45); }
+.kn-ob-next:active { transform: translateY(0); }
+.kn-ob-close {
+  position: absolute; top: 8px; right: 8px;
+  background: transparent; border: none;
+  color: var(--ink-4); font-size: 18px; line-height: 1;
+  width: 28px; height: 28px; cursor: pointer; border-radius: 50%;
+  display: grid; place-items: center;
+}
+.kn-ob-close:hover { background: rgba(255,255,255,0.08); color: var(--ink-1); }
+
+/* ═══════════════════════════════════════════════════════════
+   Voice input
+   ═══════════════════════════════════════════════════════════ */
+.kn-vi-overlay {
+  position: fixed; inset: 0;
+  z-index: 9200;
+  background: rgba(10,14,26,0.86);
+  backdrop-filter: blur(8px);
+  display: grid; place-items: center;
+  animation: knObIn var(--t-mid) var(--ease-out);
+}
+.kn-vi-card {
+  position: relative;
+  width: min(420px, calc(100vw - 32px));
+  background: var(--surface-glass);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xl);
+  padding: 32px 24px 24px;
+  text-align: center;
+  box-shadow: var(--shadow-pop);
+}
+.kn-vi-mic {
+  position: relative;
+  width: 96px; height: 96px;
+  margin: 0 auto 18px;
+  display: grid; place-items: center;
+}
+.kn-vi-mic-icon {
+  position: relative;
+  font-size: 40px;
+  filter: drop-shadow(0 0 12px rgba(168,85,247,0.5));
+  z-index: 2;
+}
+.kn-vi-ring {
+  position: absolute; inset: 0;
+  border: 2px solid rgba(168,85,247,0.4);
+  border-radius: 50%;
+  opacity: 0;
+}
+.kn-vi-mic.listening .kn-vi-ring   { animation: knViPulse 1.6s ease-out infinite; }
+.kn-vi-mic.listening .kn-vi-ring-2 { animation: knViPulse 1.6s ease-out 0.6s infinite; }
+@keyframes knViPulse {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.kn-vi-title {
+  font-size: 17px; font-weight: 800; margin-bottom: 6px;
+}
+.kn-vi-hint  {
+  font-size: 12.5px; color: var(--ink-3);
+  margin-bottom: 14px; line-height: 1.6;
+}
+.kn-vi-transcript {
+  font-size: 13px; color: var(--ink-2);
+  background: rgba(255,255,255,0.04);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.kn-vi-parsed {
+  font-size: 14px; color: var(--ink-1);
+  background: var(--acc-buy-soft);
+  border: 1px solid var(--acc-buy-line);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-family: var(--font-mono, "SFMono-Regular", Menlo, monospace);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.kn-vi-actions {
+  display: flex; gap: 10px; justify-content: center;
+}
+.kn-vi-redo, .kn-vi-ok {
+  border: 1px solid var(--line-2);
+  background: var(--surface-2);
+  color: var(--ink-1);
+  border-radius: var(--r-pill);
+  padding: 9px 16px; cursor: pointer;
+  font-size: 13px; font-weight: 600;
+}
+.kn-vi-ok {
+  background: linear-gradient(135deg, var(--acc-buy), #059669);
+  border-color: var(--acc-buy);
+  color: white;
+  box-shadow: 0 6px 18px rgba(16,185,129,0.32);
+}
+.kn-vi-ok:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(16,185,129,0.45); }
+.kn-vi-redo:hover { border-color: var(--ink-3); }
+.kn-vi-close {
+  position: absolute; top: 12px; right: 12px;
+  background: transparent; border: none;
+  color: var(--ink-4); font-size: 22px; line-height: 1;
+  width: 32px; height: 32px; cursor: pointer; border-radius: 50%;
+  display: grid; place-items: center;
+}
+.kn-vi-close:hover { background: rgba(255,255,255,0.08); color: var(--ink-1); }
+
+/* ═══════════════════════════════════════════════════════════
+   AI Voice — speaker button on verdict card
+   ═══════════════════════════════════════════════════════════ */
+.kn-aiv-btn {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: rgba(255,255,255,0.05);
+  color: var(--ink-2);
+  font-size: 16px; cursor: pointer;
+  display: grid; place-items: center;
+  transition: all 200ms ease;
+  z-index: 3;
+}
+.kn-aiv-btn:hover {
+  border-color: var(--acc-info-line);
+  background: var(--acc-info-soft);
+  color: var(--acc-info-2);
+  transform: scale(1.05);
+}
+.kn-aiv-btn.speaking {
+  border-color: var(--acc-buy);
+  background: var(--acc-buy-soft);
+  color: var(--acc-buy-2);
+  animation: knAivPulse 1.2s ease-in-out infinite;
+}
+@keyframes knAivPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+  50%      { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+}
+#big-verdict { position: relative; }
+
+/* ═══════════════════════════════════════════════════════════
+   Glossary tooltip
+   ═══════════════════════════════════════════════════════════ */
+.kn-gloss-target {
+  border-bottom: 1px dashed rgba(255,255,255,0.30);
+  cursor: help;
+  display: inline-block;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+.kn-gloss-target:hover {
+  color: var(--acc-info-2);
+  border-bottom-color: var(--acc-info);
+}
+.kn-gloss-target:focus-visible {
+  outline: none;
+  border-bottom-color: var(--acc-info);
+  box-shadow: 0 1px 0 var(--acc-info);
+}
+
+.kn-gloss-pop {
+  display: none;
+  width: min(320px, calc(100vw - 24px));
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  padding: 14px 14px 12px;
+  box-shadow: var(--shadow-pop);
+  color: var(--ink-1);
+  font-size: 13px; line-height: 1.65;
+  animation: knObIn var(--t-fast) var(--ease-out);
+}
+.kn-gloss-title {
+  font-weight: 800; font-size: 14px;
+  color: var(--acc-info-2);
+  margin-bottom: 6px;
+  padding-right: 22px;
+}
+.kn-gloss-body { color: var(--ink-2); }
+.kn-gloss-close {
+  position: absolute; top: 6px; right: 6px;
+  background: transparent; border: none;
+  color: var(--ink-4); font-size: 16px;
+  width: 24px; height: 24px; cursor: pointer; border-radius: 50%;
+  display: grid; place-items: center;
+}
+.kn-gloss-close:hover { background: rgba(255,255,255,0.08); color: var(--ink-1); }

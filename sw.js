@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v3";  // app.js を network-first に変えたため bump
+const CACHE_VERSION = "keiba-nav-v4";  // オンボーディング/音声入力/読み上げ/用語ツールチップ 追加
 const PRECACHE = [
   "/",
   "/index.html",

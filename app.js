@@ -2767,6 +2767,27 @@ function setupEvents() {
       updateManualLivePreview("");
       miTa.focus();
     });
+
+    // 🎙 音声入力 (対応ブラウザのみボタンを表示)
+    const voiceBtn = $("#mi-voice");
+    if (voiceBtn && window.KNVoiceInput?.supported) {
+      voiceBtn.hidden = false;
+      voiceBtn.addEventListener("click", () => {
+        try { window.KNVoiceInput.start(); }
+        catch (e) { showToast("音声入力エラー: " + (e?.message || e), "err"); }
+      });
+    } else if (voiceBtn) {
+      // 非対応ブラウザは静かに隠したまま (Firefox など)
+      voiceBtn.hidden = true;
+    }
+
+    // 🎲 即判定: サンプルを入れて submitManual() まで一気通貫
+    $("#mi-demo")?.addEventListener("click", () => {
+      miTa.value = "1 ディープ 3.2 1 1\n2 オルフェ 5.5 2 3\n3 キタサン 8.0 3 2\n4 サトノ 12.0 4 5\n5 グランプリ 25.0 5 8\n6 ハジメ 60.0 6 10";
+      updateManualLivePreview(miTa.value);
+      try { submitManual(); }
+      catch (e) { showToast("デモ実行エラー: " + (e?.message || e), "err"); }
+    });
   }
 
   // 保存レースの全消去
@@ -2846,6 +2867,46 @@ function setupEvents() {
     location.reload();
   });
   $("#btn-reload").addEventListener("click", () => location.reload());
+
+  // 🎓 初回ツアーをもう一度
+  $("#btn-tour-restart")?.addEventListener("click", () => {
+    if (!window.KNOnboarding) {
+      showToast("ガイドモジュールがまだ読み込まれていません", "warn");
+      return;
+    }
+    window.KNOnboarding.reset();
+    window.KNOnboarding.start();
+  });
+
+  // 🔊 結論の自動読み上げ ON/OFF
+  const aivBtn = $("#btn-aivoice-toggle");
+  function updateAivLabel() {
+    if (!aivBtn) return;
+    const on = window.KNAiVoice?.isEnabled?.() ?? false;
+    aivBtn.textContent = "🔊 結論の自動読み上げ: " + (on ? "ON" : "OFF");
+    aivBtn.classList.toggle("toggle-on", !!on);
+  }
+  if (aivBtn) {
+    if (!window.KNAiVoice?.supported) {
+      aivBtn.disabled = true;
+      aivBtn.textContent = "🔊 このブラウザは音声読み上げに非対応";
+    } else {
+      updateAivLabel();
+      aivBtn.addEventListener("click", () => {
+        const cur = window.KNAiVoice.isEnabled();
+        window.KNAiVoice.setEnabled(!cur);
+        updateAivLabel();
+        if (!cur) {
+          // ON にした瞬間、現在の結論を読み上げて挙動を体験させる
+          try { window.KNAiVoice.speakVerdict(); } catch {}
+          showToast("🔊 自動読み上げをONにしました", "ok");
+        } else {
+          try { window.KNAiVoice.cancel(); } catch {}
+          showToast("🔊 自動読み上げをOFFにしました", "ok");
+        }
+      });
+    }
+  }
 
   // エクスポート
   $("#btn-export")?.addEventListener("click", () => {

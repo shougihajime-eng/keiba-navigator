@@ -157,5 +157,77 @@ test("空 horses は judgement_unavailable", () => {
   assert.strictEqual(conclusion.buildConclusion({horses:[]}).verdict, "judgement_unavailable");
 });
 
+console.log("\n=== voice_input parser ===");
+const voice = require("../lib/voice_input");
+test("純粋な数字 + 倍 + 番人気 のフルセット", () => {
+  const p = voice.parseSpoken("1番ディープ3.2倍1番人気前走1着");
+  assert.strictEqual(p.umaban, 1);
+  assert.strictEqual(p.odds, 3.2);
+  assert.strictEqual(p.popularity, 1);
+  assert.strictEqual(p.prevPos, 1);
+  assert.ok(p.name && p.name.includes("ディープ"), `name=${p.name}`);
+});
+test("空白区切り英数自然な発音 (Web Speech API 風)", () => {
+  const p = voice.parseSpoken("ディープインパクト 3.2倍 1番人気");
+  assert.strictEqual(p.odds, 3.2);
+  assert.strictEqual(p.popularity, 1);
+  assert.ok(p.name && p.name.includes("ディープインパクト"), `name=${p.name}`);
+});
+test("「3てん2倍」も 3.2 と解釈", () => {
+  const p = voice.parseSpoken("3番ハジメ 3てん2倍 6番人気");
+  assert.strictEqual(p.odds, 3.2);
+  assert.strictEqual(p.umaban, 3);
+  assert.strictEqual(p.popularity, 6);
+});
+test("「3点2倍」も 3.2 と解釈", () => {
+  const p = voice.parseSpoken("3点2倍");
+  assert.strictEqual(p.odds, 3.2);
+});
+test("漢数字 三 が 3 として解釈", () => {
+  assert.strictEqual(voice.kanaToNumber("三"), 3);
+});
+test("漢数字 十 が 10", () => {
+  assert.strictEqual(voice.kanaToNumber("十"), 10);
+});
+test("漢数字 十五 が 15", () => {
+  assert.strictEqual(voice.kanaToNumber("十五"), 15);
+});
+test("漢数字 二十三 が 23", () => {
+  assert.strictEqual(voice.kanaToNumber("二十三"), 23);
+});
+test("ひらがな いち が 1", () => {
+  assert.strictEqual(voice.kanaToNumber("いち"), 1);
+});
+test("buildLine: フル要素", () => {
+  const p = { umaban: 1, name: "ディープ", odds: 3.2, popularity: 1, prevPos: 1 };
+  assert.strictEqual(voice.buildLine(p), "1 ディープ 3.2 1 1");
+});
+test("buildLine: 部分要素でも OK", () => {
+  const p = { umaban: null, name: "ハジメ", odds: 60.0, popularity: 6, prevPos: null };
+  assert.strictEqual(voice.buildLine(p), "ハジメ 60.0 6");
+});
+test("buildLine: 名前だけは null (情報不足)", () => {
+  const p = { umaban: null, name: "ハジメ", odds: null, popularity: null, prevPos: null };
+  assert.strictEqual(voice.buildLine(p), null);
+});
+test("「○着」を前走として拾う", () => {
+  const p = voice.parseSpoken("ディープ 3.2倍 5着");
+  // 人気/前走どちらにも置ける曖昧な発話のため prevPos=5
+  assert.strictEqual(p.prevPos, 5);
+});
+test("オッズが整数 (10倍)", () => {
+  const p = voice.parseSpoken("ハジメ 60倍 6番人気");
+  assert.strictEqual(p.odds, 60);
+});
+test("空文字は null", () => {
+  assert.strictEqual(voice.parseSpoken(""), null);
+  assert.strictEqual(voice.parseSpoken(null), null);
+});
+test("カナだけは name のみ・buildLine は null", () => {
+  const p = voice.parseSpoken("オルフェーヴル");
+  assert.ok(p.name && p.name.includes("オルフェ"), `name=${p.name}`);
+  assert.strictEqual(voice.buildLine(p), null);
+});
+
 console.log(`\n=== 合計: ${passed} 通過 / ${failed} 失敗 ===`);
 process.exit(failed > 0 ? 1 : 0);
