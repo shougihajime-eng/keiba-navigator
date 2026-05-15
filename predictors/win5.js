@@ -122,13 +122,67 @@
     return "見送り (期待値マイナス)";
   }
 
+  // 3 戦略の組合せ計算 (堅/中/万)
+  //   K = 1: 各レース 1 頭 → 1 点 (¥200)
+  //   K = 2: 各レース 2 頭 → 32 点 (¥6,400)
+  //   K = 3: 各レース 3 頭 → 243 点 (¥48,600)
+  function computeStrategy(legs, topK) {
+    let probSum = 1;
+    let combo = 1;
+    const picksPerRace = legs.map(l => {
+      const picks = Array.isArray(l._allRanked) ? l._allRanked : [l.top, ...(l.alt || [])].filter(Boolean);
+      const k = Math.min(topK, picks.length);
+      if (k === 0) { probSum = 0; combo = 0; return null; }
+      const chosen = picks.slice(0, k);
+      const pSum = chosen.reduce((s, p) => s + safeProb(p.prob), 0);
+      probSum *= Math.min(1, pSum);
+      combo *= k;
+      return {
+        raceName: l.raceName,
+        picks: chosen,
+        groupProb: pSum,
+      };
+    });
+    const totalCost = combo * 200;
+    // 想定平均払戻 (経験則 800 万円)
+    const expectedPayout = 8_000_000;
+    const expectedReturn = probSum * expectedPayout;
+    const evRatio = totalCost > 0 ? expectedReturn / totalCost : 0;
+    return {
+      topK, combo, totalCost,
+      hitProb: probSum,
+      hitProbPct: (probSum * 100).toFixed(4) + "%",
+      expectedReturn,
+      evRatio,
+      picksPerRace,
+    };
+  }
+
   function compute(conclusions) {
     if (!Array.isArray(conclusions) || conclusions.length === 0) {
       return null;
     }
     // WIN5 は 5 レースだが、4 レースでも 3 レースでも一応計算する
     const arr = conclusions.slice(0, 5);
-    const legs = arr.map(buildLeg);
+    const legs = arr.map((c, idx) => {
+      const leg = buildLeg(c, idx);
+      // 全候補を prob 順で _allRanked にも入れる (3戦略計算用)
+      const picks = Array.isArray(c?.picks) ? c.picks : [];
+      const avoid = Array.isArray(c?.avoid) ? c.avoid : [];
+      const over  = Array.isArray(c?.overpopular) ? c.overpopular : [];
+      const under = Array.isArray(c?.undervalued) ? c.undervalued : [];
+      const all = [...picks, ...avoid, ...over, ...under];
+      const seen = new Set();
+      const dedup = [];
+      for (const h of all) {
+        if (!h || seen.has(h.number)) continue;
+        seen.add(h.number);
+        dedup.push(h);
+      }
+      dedup.sort((a, b) => (b.prob ?? 0) - (a.prob ?? 0));
+      leg._allRanked = dedup;
+      return leg;
+    });
 
     const probAllWin = combineProbs(legs, l => l.probTop);
     const probAllWinFormation = combineProbs(legs, l => l.probTop3);
@@ -137,6 +191,20 @@
     const ev = (fairPayout != null) ? (probAllWin * fairPayout) : null;
 
     const formation = buildFormation(legs);
+
+    // ★3 戦略 (堅/中/万) の計算
+    const strategies = legs.length === 5 ? {
+      safe: computeStrategy(legs, 1),
+      mid:  computeStrategy(legs, 2),
+      wide: computeStrategy(legs, 3),
+    } : null;
+    // 推奨戦略 (evRatio 最大のもの)
+    let recommended = null;
+    if (strategies) {
+      const arr = ["safe", "mid", "wide"];
+      arr.sort((a, b) => strategies[b].evRatio - strategies[a].evRatio);
+      recommended = arr[0];
+    }
 
     return {
       legs,
@@ -152,6 +220,8 @@
         ev: ev != null ? ev : 0,
       },
       formation,
+      strategies,
+      recommended,
       stake: {
         recommendedCost: formation.cost,
         narrative: buildStakeNarrative(ev || 0, probAllWin),

@@ -68,16 +68,60 @@ module.exports = async (req, res) => {
           raceId:   race.race_id   || null,
           course:   race.course    || null,
           venue:    race.venue     || null,
+          surface:  race.surface   || null,
+          distance: race.distance  || null,
+          startTime: race.race_start || race.start_time || null,
           isDummy:  !!race.is_dummy || /DUMMY|TEST|テスト|ダミー|SYNTHETIC/i.test(race.source || ""),
+          isG1:     c.raceMeta?.isG1 || false,
           verdict:  c.verdict,
+          verdictTitle: c.verdictTitle,
           topGrade: c.topGrade,
-          topPick: c.picks?.[0] ? { number: c.picks[0].number, name: c.picks[0].name, odds: c.picks[0].odds, ev: c.picks[0].ev, grade: c.picks[0].grade } : null,
+          topPick: c.picks?.[0] ? { number: c.picks[0].number, name: c.picks[0].name, odds: c.picks[0].odds, ev: c.picks[0].ev, grade: c.picks[0].grade, prob: c.picks[0].prob } : null,
+          second:  c.picks?.[1] ? { number: c.picks[1].number, name: c.picks[1].name, odds: c.picks[1].odds, ev: c.picks[1].ev, grade: c.picks[1].grade } : null,
+          third:   c.picks?.[2] ? { number: c.picks[2].number, name: c.picks[2].name, odds: c.picks[2].odds, ev: c.picks[2].ev, grade: c.picks[2].grade } : null,
           confidence: c.confidence,
           hasOverpop:  (c.overpopular || []).length > 0,
           hasUnderval: (c.undervalued || []).length > 0,
+          trackBiasNote: c.raceMeta?.trackBiasNote || null,
+          horseCount: Array.isArray(race.horses) ? race.horses.length : 0,
         };
       });
+      // 発走時刻順 (取得できれば) → race_id 順 の安定ソート
+      summaries.sort((a, b) => {
+        if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+        return String(a.raceId || "").localeCompare(String(b.raceId || ""));
+      });
       return ok(res, { ok: true, fetchedAt: new Date().toISOString(), raceCount: summaries.length, races: summaries });
+    }
+    if (path === "/win5") {
+      const { buildWin5, formatWin5 } = require("../lib/win5_engine");
+      const races = readAllRaces();
+      if (!races.length) {
+        return bad(res, 503, { ok: false, status: "unavailable", reason: "出走馬データ未取得" });
+      }
+      // 日曜の WIN5 対象は当日の指定 5 レース。データが揃わない時は
+      // 「先頭 5 レース」をフォールバックで使う
+      const sundayRaces = races.filter(r => {
+        const t = r.race_start || r.start_time;
+        if (!t) return false;
+        return new Date(t).getDay() === 0;
+      });
+      const candidates = (sundayRaces.length >= 5 ? sundayRaces : races).slice(0, 5);
+      const win5 = buildWin5(candidates);
+      return ok(res, { ok: true, ...formatWin5(win5), candidateRaceIds: candidates.map(r => r.race_id || null) });
+    }
+    if (path === "/news-annotated") {
+      const { annotateRaceWithNews } = require("../lib/news_sentiment");
+      const newsData = await fetchNews();
+      const race = readLatestRace();
+      if (!race) return bad(res, 503, { ok: false, reason: "レースデータ未取得" });
+      const annotated = annotateRaceWithNews(race, newsData?.items || []);
+      return ok(res, {
+        ok: true,
+        raceId: race.race_id || null,
+        annotated,
+        newsCount: (newsData?.items || []).length,
+      });
     }
     if (path === "/refresh") { clearCache(); return ok(res, { ok: true }); }
     if (path === "/venues") return ok(res, { ok: true, venues: loadVenues() });

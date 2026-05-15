@@ -407,6 +407,162 @@ test("achievements.js 構文 OK",() => { new Function(require("fs").readFileSync
 test("daily_brief.js 構文 OK", () => { new Function(require("fs").readFileSync("lib/daily_brief.js", "utf8")); });
 test("ai_voice.js 構文 OK",    () => { new Function(require("fs").readFileSync("lib/ai_voice.js", "utf8")); });
 test("glossary.js 構文 OK",    () => { new Function(require("fs").readFileSync("lib/glossary.js", "utf8")); });
+test("tactile.js 構文 OK",     () => { new Function(require("fs").readFileSync("lib/tactile.js", "utf8")); });
+test("sparkle.js 構文 OK",     () => { new Function(require("fs").readFileSync("lib/sparkle.js", "utf8")); });
+
+// ─── Wave9 追加モジュール ─────────────────────────────────
+console.log("\n=== Wave9: ensemble_v1 predictor ===");
+const ensemble = require("../predictors/ensemble_v1");
+test("ensemble_v1 が space 出力", () => assert.strictEqual(ensemble.name, "ensemble_v1"));
+test("ensemble.predict が空 race で null", () => assert.strictEqual(ensemble.predict({ horses: [] }), null));
+test("ensemble.predict で probs 合計 ≈ 1", () => {
+  const race = {
+    race_id: "test1", distance: 1600, course: "東京芝1600",
+    horses: [
+      { number: 1, name: "A", win_odds: 2.5, prev_finish: 1, weight: 56 },
+      { number: 2, name: "B", win_odds: 6.0, prev_finish: 3, weight: 55 },
+      { number: 3, name: "C", win_odds: 20.0, prev_finish: 8, weight: 54 },
+    ],
+  };
+  const p = ensemble.predict(race);
+  assert.ok(p, "prediction is null");
+  const sum = p.horses.reduce((a, h) => a + h.prob, 0);
+  assert.ok(Math.abs(sum - 1.0) < 1e-6, `sum=${sum}`);
+});
+test("ensemble.predict で 1着候補 = オッズ最小に近い", () => {
+  const race = {
+    race_id: "test2", distance: 1600,
+    horses: [
+      { number: 1, name: "A", win_odds: 1.8, prev_finish: 1, weight: 56 },
+      { number: 2, name: "B", win_odds: 50, prev_finish: 10, weight: 56 },
+      { number: 3, name: "C", win_odds: 30, prev_finish: 6, weight: 56 },
+    ],
+  };
+  const p = ensemble.predict(race);
+  const top = p.horses.slice().sort((a, b) => b.prob - a.prob)[0];
+  assert.strictEqual(top.number, 1, `top=${top.number}`);
+});
+test("ensemble.predictPace で逃げ多→tempo>0", () => {
+  const pace = ensemble.predictPace({ horses: [
+    { number: 1, _jv: { runStyleId: 1 } },
+    { number: 2, _jv: { runStyleId: 1 } },
+    { number: 3, _jv: { runStyleId: 2 } },
+    { number: 4, _jv: { runStyleId: 4 } },
+  ] });
+  assert.ok(pace.tempo > 0, `tempo=${pace.tempo}`);
+});
+test("ensemble.predictPace で差し追い込み多→tempo<0", () => {
+  const pace = ensemble.predictPace({ horses: [
+    { number: 1, _jv: { runStyleId: 3 } },
+    { number: 2, _jv: { runStyleId: 3 } },
+    { number: 3, _jv: { runStyleId: 4 } },
+    { number: 4, _jv: { runStyleId: 4 } },
+    { number: 5, _jv: { runStyleId: 4 } },
+    { number: 6, _jv: { runStyleId: 2 } },
+  ] });
+  assert.ok(pace.tempo < 0, `tempo=${pace.tempo}`);
+});
+
+console.log("\n=== Wave9: track_bias ===");
+const trackBias = require("../lib/track_bias");
+test("track_bias の inferGoingId('良') == 0", () => assert.strictEqual(trackBias.inferGoingId("良"), 0));
+test("track_bias の inferGoingId('稍重') == 1", () => assert.strictEqual(trackBias.inferGoingId("稍重"), 1));
+test("track_bias の inferGoingId('重') == 2", () => assert.strictEqual(trackBias.inferGoingId("重"), 2));
+test("track_bias.getVenueBias('新潟') は外差し馬場", () => {
+  const v = trackBias.getVenueBias("新潟芝1600");
+  assert.ok(v.frontBias < 0, `frontBias=${v.frontBias}`);
+  assert.ok(v.railBias < 0, `railBias=${v.railBias}`);
+});
+test("track_bias.computeBiasAdjustment が finite", () => {
+  const race = { course: "東京芝1600", going: "良", weather: "晴" };
+  const horse = { number: 1, waku: 3, _jv: { runStyleId: 2 } };
+  const adj = trackBias.computeBiasAdjustment(race, horse);
+  assert.ok(Number.isFinite(adj.adjustment), `adj=${adj.adjustment}`);
+});
+test("track_bias.describeBias がフラット時に説明出す", () => {
+  const note = trackBias.describeBias({ course: "東京芝1600", going: "良", weather: "晴" });
+  assert.ok(typeof note === "string" && note.length > 0);
+});
+test("track_bias 重い馬場で内枠補正が正方向", () => {
+  const race = { course: "東京芝1600", going: "重", weather: "雨" };
+  const inner = trackBias.computeBiasAdjustment(race, { number: 1, waku: 1, _jv: { runStyleId: 2 } });
+  const outer = trackBias.computeBiasAdjustment(race, { number: 14, waku: 8, _jv: { runStyleId: 2 } });
+  assert.ok(inner.adjustment > outer.adjustment, `inner=${inner.adjustment} outer=${outer.adjustment}`);
+});
+
+console.log("\n=== Wave9: news_sentiment ===");
+const newsSentiment = require("../lib/news_sentiment");
+test("ポジ keyword で score 正", () => {
+  const c = newsSentiment.classifyHeadline("ディープ復活、好走で重賞制覇");
+  assert.ok(c.score > 0, `score=${c.score}`);
+});
+test("ネガ keyword で score 負", () => {
+  const c = newsSentiment.classifyHeadline("◯◯号は故障で回避");
+  assert.ok(c.score < 0, `score=${c.score}`);
+});
+test("無関係 keyword で score 0", () => {
+  const c = newsSentiment.classifyHeadline("天気予報は晴れ");
+  assert.strictEqual(c.score, 0);
+});
+test("annotateRaceWithNews が馬名マッチ", () => {
+  const race = { horses: [{ number: 5, name: "ディープインパクト", jockey: null, trainer: null }] };
+  const news = [{ title: "ディープインパクト 故障で回避", link: "x" }];
+  const out = newsSentiment.annotateRaceWithNews(race, news);
+  assert.ok(out.byHorseNumber[5], "no annotation");
+  assert.ok(out.byHorseNumber[5].score < 0, `score=${out.byHorseNumber[5].score}`);
+});
+test("badge が warn を返す (score<=-0.8)", () => {
+  const b = newsSentiment.badge({ score: -1.2 });
+  assert.strictEqual(b.type, "warn");
+});
+test("badge が good を返す (score>=0.8)", () => {
+  const b = newsSentiment.badge({ score: 1.1 });
+  assert.strictEqual(b.type, "good");
+});
+test("badge が null (中立)", () => assert.strictEqual(newsSentiment.badge({ score: 0.3 }), null));
+
+console.log("\n=== Wave9: win5_engine ===");
+const win5engine = require("../lib/win5_engine");
+test("buildWin5 が空配列で ok:false", () => {
+  const w = win5engine.buildWin5([]);
+  assert.strictEqual(w.ok, false);
+});
+test("buildWin5 が 5 レースで 3 戦略を出す", () => {
+  // 簡易な race を 5 つ作成
+  const makeRace = (idx) => ({
+    race_id: `test_${idx}`, race_name: `R${idx}`, distance: 1600,
+    horses: [
+      { number: 1, win_odds: 2.5, prev_finish: 1, weight: 56 },
+      { number: 2, win_odds: 5.0, prev_finish: 3, weight: 55 },
+      { number: 3, win_odds: 8.0, prev_finish: 5, weight: 56 },
+      { number: 4, win_odds: 15, prev_finish: 7, weight: 54 },
+    ],
+  });
+  const races = [makeRace(1), makeRace(2), makeRace(3), makeRace(4), makeRace(5)];
+  const w = win5engine.buildWin5(races);
+  assert.strictEqual(w.ok, true, `not ok: ${w.note}`);
+  assert.ok(w.strategies.safe.combo === 1, `safe=${w.strategies.safe.combo}`);
+  assert.ok(w.strategies.mid.combo === 32, `mid=${w.strategies.mid.combo}`);
+  assert.ok(w.strategies.wide.combo === 243, `wide=${w.strategies.wide.combo}`);
+});
+test("buildWin5 が推奨を返す", () => {
+  const makeRace = (idx) => ({
+    race_id: `t_${idx}`, race_name: `R${idx}`, distance: 1400,
+    horses: [
+      { number: 1, win_odds: 2.0, prev_finish: 1, weight: 56 },
+      { number: 2, win_odds: 4.0, prev_finish: 2, weight: 56 },
+      { number: 3, win_odds: 10, prev_finish: 6, weight: 56 },
+    ],
+  });
+  const races = [makeRace(1), makeRace(2), makeRace(3), makeRace(4), makeRace(5)];
+  const w = win5engine.buildWin5(races);
+  assert.ok(["safe", "mid", "wide"].includes(w.recommended), `recommended=${w.recommended}`);
+});
+
+console.log("\n=== Wave9: 構文チェック ===");
+test("all_races_view.js 構文 OK", () => { new Function(require("fs").readFileSync("lib/all_races_view.js", "utf8")); });
+test("roi_dashboard.js 構文 OK", () => { new Function(require("fs").readFileSync("lib/roi_dashboard.js", "utf8")); });
+test("ensemble_v1.js 構文 OK", () => { new Function(require("fs").readFileSync("predictors/ensemble_v1.js", "utf8")); });
 
 console.log(`\n=== 合計: ${passed} 通過 / ${failed} 失敗 ===`);
 process.exit(failed > 0 ? 1 : 0);

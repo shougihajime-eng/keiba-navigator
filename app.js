@@ -1918,15 +1918,18 @@ async function refreshWeather() {
   }
 }
 
-// ─── NEWS ──────────────────────────────────────────────────
+// ─── NEWS (詳細セクション・関連ニュース details 用) ────────
 async function refreshNews() {
   const r = await getJson("/api/news");
-  const ul = $("#news-list"); ul.innerHTML = "";
+  const ul = $("#news-list-detail");
+  if (!ul) return;  // Wave8 ニュースカードのみで動かす設定の場合
+  ul.innerHTML = "";
   if (!r.ok || !r.body?.items?.length) {
     ul.innerHTML = `<li class="pro-empty">取得失敗</li>`;
-    $("#news-count").textContent = ""; return;
+    const cnt = $("#news-count"); if (cnt) cnt.textContent = "";
+    return;
   }
-  $("#news-count").textContent = `(${r.body.items.length}件)`;
+  const cnt = $("#news-count"); if (cnt) cnt.textContent = `(${r.body.items.length}件)`;
   for (const item of r.body.items) {
     const li = document.createElement("li");
     li.className = "news-row";
@@ -2085,7 +2088,14 @@ async function refreshAll(opts = {}) {
   const original = labelEl.textContent;
   labelEl.textContent = "更新中…";
   try {
-    await Promise.all([refreshConnection(), refreshStatus(), refreshConclusion(), refreshRaces(), refreshWeather(), refreshNews(), refreshDetail()]);
+    await Promise.all([
+      refreshConnection(), refreshStatus(), refreshConclusion(),
+      refreshRaces(), refreshWeather(), refreshNews(), refreshDetail(),
+      // Wave8 カード (ランキング BEST10 / 競馬ニュース / WIN5) を更新ボタンで再描画
+      renderRankings().catch(e => console.warn("renderRankings", e)),
+      renderNewsCard().catch(e => console.warn("renderNewsCard", e)),
+      renderWin5Card().catch(e => console.warn("renderWin5Card", e)),
+    ]);
     // 結論データから自動保存(仮データはスキップ)
     autoSaveAirBet(_currentConclusion);
     // ホームのAI実績スナップショットを更新
