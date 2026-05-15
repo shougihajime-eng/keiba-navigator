@@ -50,6 +50,7 @@
   <script src="lib/voice_input.js" defer></script>
   <script src="lib/ai_voice.js" defer></script>
   <script src="lib/onboarding.js" defer></script>
+  <script src="lib/reasoning.js"></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -296,6 +297,19 @@
           <button id="btn-record-real" class="btn-rec btn-rec-real" type="button">💰 リアル馬券で記録</button>
         </div>
         <p id="pick-record-note" class="pick-record-note" hidden>仮データのため記録できません(実データ取得後に有効化されます)。</p>
+      </section>
+
+      <!-- 🧠 AIの考え方 (透明性: なぜこの結論に至ったかをステップ表示) -->
+      <section id="card-reasoning" class="reasoning-card" hidden>
+        <div class="reasoning-head">
+          <h2 class="sc-title">🧠 AI の考え方</h2>
+          <button id="btn-share-verdict" type="button" class="reasoning-share" hidden>📤 シェア</button>
+        </div>
+        <ol id="reasoning-steps" class="reasoning-steps"></ol>
+        <details class="reasoning-detail">
+          <summary>計算の中身を見る</summary>
+          <div id="reasoning-math" class="reasoning-math"></div>
+        </details>
       </section>
 
       <!-- 穴で面白い -->

@@ -3195,3 +3195,118 @@ button:active:not(:disabled),
   display: grid; place-items: center;
 }
 .kn-gloss-close:hover { background: rgba(255,255,255,0.08); color: var(--ink-1); }
+
+/* ═══════════════════════════════════════════════════════════
+   🧠 AI 思考プロセス パネル (透明性カード)
+   ═══════════════════════════════════════════════════════════ */
+.reasoning-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(168,85,247,0.06), rgba(59,130,246,0.04));
+  border: 1px solid rgba(168,85,247,0.22);
+  border-radius: var(--r-lg);
+  padding: 18px 18px 14px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.reasoning-card::before {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(168,85,247,0.6), rgba(59,130,246,0.6), transparent);
+}
+.reasoning-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 10px;
+}
+.reasoning-head .sc-title { margin: 0; }
+
+.reasoning-share {
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  border-radius: var(--r-pill);
+  padding: 6px 12px; font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.reasoning-share:hover {
+  border-color: var(--acc-info-line);
+  background: var(--acc-info-soft);
+  color: var(--acc-info-2);
+  transform: translateY(-1px);
+}
+
+.reasoning-steps {
+  list-style: none;
+  margin: 0; padding: 0;
+  counter-reset: rs;
+}
+.rs-item {
+  position: relative;
+  padding: 10px 0 10px 0;
+  border-left: 2px solid rgba(168,85,247,0.25);
+  padding-left: 14px;
+  margin-left: 6px;
+}
+.rs-item + .rs-item { border-top: 1px dashed rgba(255,255,255,0.06); }
+.rs-item::before {
+  content: "";
+  position: absolute; left: -6px; top: 14px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--acc-rare), var(--acc-info));
+  box-shadow: 0 0 0 3px var(--surface-0), 0 0 14px rgba(168,85,247,0.35);
+}
+.rs-title {
+  font-size: 13.5px; font-weight: 800;
+  color: var(--ink-1);
+  margin-bottom: 4px;
+  letter-spacing: 0.005em;
+}
+.rs-body {
+  font-size: 13px; color: var(--ink-2);
+  line-height: 1.7;
+}
+.rs-body b { color: var(--ink-1); font-weight: 700; }
+
+.reasoning-detail { margin-top: 14px; }
+.reasoning-detail summary {
+  cursor: pointer;
+  font-size: 12px; color: var(--ink-3);
+  user-select: none;
+  list-style: none;
+  padding: 6px 0;
+}
+.reasoning-detail summary::-webkit-details-marker { display: none; }
+.reasoning-detail summary::before {
+  content: "▸ ";
+  display: inline-block;
+  transition: transform 200ms ease;
+  margin-right: 2px;
+}
+.reasoning-detail[open] summary::before { transform: rotate(90deg); }
+.reasoning-detail summary:hover { color: var(--ink-2); }
+
+.reasoning-math {
+  background: rgba(0,0,0,0.22);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  font-family: var(--font-mono, "SFMono-Regular", Menlo, monospace);
+  line-height: 1.8;
+}
+.reasoning-math > div { display: flex; gap: 10px; }
+.reasoning-math .rm-k {
+  display: inline-block;
+  min-width: 110px;
+  color: var(--ink-4);
+  font-family: "Inter", "Noto Sans JP", sans-serif;
+  font-size: 11px;
+  text-transform: none;
+}
+.reasoning-math code {
+  font-family: var(--font-mono, "SFMono-Regular", Menlo, monospace);
+  background: rgba(255,255,255,0.05);
+  padding: 1px 6px; border-radius: 4px;
+  color: var(--acc-buy-2);
+}

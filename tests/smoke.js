@@ -229,5 +229,87 @@ test("カナだけは name のみ・buildLine は null", () => {
   assert.strictEqual(voice.buildLine(p), null);
 });
 
+console.log("\n=== reasoning (AI思考プロセス) ===");
+const reasoning = require("../lib/reasoning");
+test("explain: null は失敗ステップを返す", () => {
+  const r = reasoning.explain(null);
+  assert.ok(r.steps?.length >= 1);
+  assert.ok(r.steps[0].title.includes("判定できません"));
+});
+test("explain: 空 picks も失敗ステップ", () => {
+  const r = reasoning.explain({ ok: true, picks: [] });
+  assert.ok(r.steps?.length >= 1);
+});
+test("explain: 正常な conclusion は 6 ステップ", () => {
+  const c = {
+    ok: true, verdict: "go", verdictTitle: "狙えるレース",
+    verdictReason: "EV 1.45 とプラス幅大",
+    confidence: 0.45, confidenceLabel: "信頼度: 高",
+    predictor: { name: "heuristic", version: "1.0" },
+    picks: [{ number: 1, name: "ディープ", odds: 3.2, popularity: 1, prob: 0.45, ev: 1.44, grade: "S", role: "buy" }],
+    avoid: [],
+  };
+  const r = reasoning.explain(c);
+  assert.strictEqual(r.steps.length, 6);
+  assert.ok(r.share?.text?.includes("ディープ"));
+  assert.ok(r.share?.text?.includes("KEIBA NAVIGATOR"));
+});
+test("explain: calRatio が大きく違うと「上方修正」と書く", () => {
+  const c = {
+    ok: true, verdict: "go",
+    verdictReason: "",
+    confidence: 0.40, confidenceLabel: "中",
+    predictor: { name: "heuristic", version: "1.0" },
+    picks: [{ number: 5, name: "ハジメ", odds: 8, popularity: 4, prob: 0.18, ev: 1.44, grade: "A", role: "buy" }],
+    avoid: [],
+  };
+  const r = reasoning.explain(c, { calRatio: 1.3 });
+  const calibStep = r.steps.find(s => /補正/.test(s.title));
+  assert.ok(calibStep, "calibration step が無い");
+  assert.ok(/上方修正/.test(calibStep.body), `body=${calibStep.body}`);
+});
+test("explain: calRatio≈1 は「ほぼ一致」と書く", () => {
+  const c = {
+    ok: true, verdict: "go", verdictReason: "",
+    confidence: 0.40, confidenceLabel: "中",
+    predictor: { name: "h", version: "1" },
+    picks: [{ number: 1, name: "X", odds: 2, popularity: 1, prob: 0.6, ev: 1.2, grade: "B", role: "buy" }],
+    avoid: [],
+  };
+  const r = reasoning.explain(c, { calRatio: 1.02 });
+  const calibStep = r.steps.find(s => /補正/.test(s.title));
+  assert.ok(/ほぼ一致/.test(calibStep.body));
+});
+test("explain: calRatio 未指定は「自己校正は未発動」", () => {
+  const c = {
+    ok: true, verdict: "go", verdictReason: "",
+    confidence: 0.40, confidenceLabel: "中",
+    predictor: { name: "h", version: "1" },
+    picks: [{ number: 1, name: "X", odds: 2, popularity: 1, prob: 0.6, ev: 1.2, grade: "B", role: "buy" }],
+    avoid: [],
+  };
+  const r = reasoning.explain(c);
+  const calibStep = r.steps.find(s => /補正/.test(s.title));
+  assert.ok(/未発動/.test(calibStep.body));
+});
+test("explain: 人気薄+EVプラスで「穴目で美味しい」", () => {
+  const c = {
+    ok: true, verdict: "go", verdictReason: "",
+    confidence: 0.30, confidenceLabel: "中",
+    predictor: { name: "h", version: "1" },
+    picks: [{ number: 8, name: "ハジメ", odds: 25, popularity: 8, prob: 0.06, ev: 1.5, grade: "S", role: "buy" }],
+    avoid: [],
+  };
+  const r = reasoning.explain(c);
+  const finalStep = r.steps[r.steps.length - 1];
+  assert.ok(/穴目で美味しい/.test(finalStep.body), `body=${finalStep.body}`);
+});
+
+test("fmtEv: 1.20 → +20%", () => assert.strictEqual(reasoning.fmtEv(1.20), "+20%"));
+test("fmtEv: 0.70 → -30%", () => assert.strictEqual(reasoning.fmtEv(0.70), "-30%"));
+test("fmtEv: null は --", () => assert.strictEqual(reasoning.fmtEv(null), "--"));
+test("fmtPct: 0.456 → 45.6%", () => assert.strictEqual(reasoning.fmtPct(0.456), "45.6%"));
+test("fmtOdds: 3.2 → 3.2倍", () => assert.strictEqual(reasoning.fmtOdds(3.2), "3.2倍"));
+
 console.log(`\n=== 合計: ${passed} 通過 / ${failed} 失敗 ===`);
 process.exit(failed > 0 ? 1 : 0);

@@ -998,10 +998,80 @@ async function refreshConclusion() {
   _currentRaceMeta = c?.raceMeta || null;
   renderBigVerdict(c);
   renderPickCard(c);
+  renderReasoning(c);
   renderDangerCard(c);
   renderUnderCard(c);
   renderAdvice(c);
   renderProDetails(c);
+}
+
+// ─── 🧠 AI の考え方 (透明性パネル) ─────────────────────────
+function renderReasoning(c) {
+  const card = document.getElementById("card-reasoning");
+  const stepsEl = document.getElementById("reasoning-steps");
+  const mathEl  = document.getElementById("reasoning-math");
+  const shareBtn = document.getElementById("btn-share-verdict");
+  if (!card || !stepsEl) return;
+  if (!c?.ok || !c.picks?.length) { card.hidden = true; return; }
+
+  // calibration ratio を取得 (Learner.computeCalibration から再計算)
+  let calRatio = null;
+  try {
+    const top = c.picks[0];
+    if (top?.grade && window.Learner && typeof getCalibrationRatio === "function") {
+      calRatio = getCalibrationRatio(top.grade);
+    }
+  } catch {}
+
+  const exp = window.KNReasoning ? window.KNReasoning.explain(c, { calRatio }) : null;
+  if (!exp) { card.hidden = true; return; }
+
+  card.hidden = false;
+  // ステップ描画
+  stepsEl.innerHTML = exp.steps.map((s, i) => `
+    <li class="rs-item">
+      <div class="rs-title">${escapeHtml(s.title)}</div>
+      <div class="rs-body">${s.body}</div>
+    </li>
+  `).join("");
+
+  // 計算式
+  if (mathEl) mathEl.innerHTML = exp.math || "";
+
+  // シェアボタン
+  if (shareBtn) {
+    const share = exp.share;
+    const hasShare = !!(share && share.text);
+    shareBtn.hidden = !hasShare;
+    if (hasShare) {
+      shareBtn.onclick = async () => {
+        try {
+          if (navigator.share) {
+            await navigator.share({
+              title: share.title || "KEIBA NAVIGATOR",
+              text: share.text,
+            });
+            showToast("📤 共有しました", "ok");
+          } else if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(share.text);
+            showToast("📋 共有テキストをコピーしました", "ok");
+          } else {
+            // 最終フォールバック
+            const ta = document.createElement("textarea");
+            ta.value = share.text;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); showToast("📋 共有テキストをコピーしました", "ok"); }
+            finally { ta.remove(); }
+          }
+        } catch (e) {
+          if (e?.name !== "AbortError") {
+            showToast("共有失敗: " + (e?.message || e), "warn");
+          }
+        }
+      };
+    }
+  }
 }
 
 // ─── 保存済みレースの管理 (今日の横断ランキング) ──────────────
@@ -1183,6 +1253,7 @@ function loadSavedRace(id) {
   const nameEl = $("#mi-race-name"); if (nameEl) nameEl.value = r.raceName || "";
   renderBigVerdict(r.conclusion);
   renderPickCard(r.conclusion);
+  renderReasoning(r.conclusion);
   renderDangerCard(r.conclusion);
   renderUnderCard(r.conclusion);
   renderAdvice(r.conclusion);
@@ -1237,6 +1308,7 @@ async function submitManual() {
     _currentRaceMeta = c?.raceMeta || null;
     renderBigVerdict(c);
     renderPickCard(c);
+    renderReasoning(c);
     renderDangerCard(c);
     renderUnderCard(c);
     renderAdvice(c);
