@@ -1,35 +1,57 @@
 {
-  "name": "KEIBA NAVIGATOR",
+  "name": "KEIBA NAVIGATOR — 買わないAI",
   "short_name": "KEIBA NAV",
-  "description": "競馬の期待値判定アシスタント — 買わないAI",
-  "start_url": "/",
+  "description": "期待値判定アシスタント。長期で回収率100%超を目指す育つAI。",
+  "start_url": "/?utm_source=pwa",
   "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#0a0e1a",
-  "theme_color": "#0a0e1a",
+  "theme_color": "#10b981",
   "lang": "ja",
-  "categories": ["finance", "lifestyle", "utilities"],
+  "dir": "ltr",
+  "categories": ["finance", "lifestyle", "utilities", "sports"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "今日のベスト1を見る",
-      "short_name": "ベスト1",
-      "description": "保存済レースから補正後EVが最も高いレースを表示",
-      "url": "/?view=best1"
+      "name": "📝 手動でEVチェック",
+      "short_name": "EVチェック",
+      "description": "JV-Link 不要で今すぐ期待値を判定",
+      "url": "/?focus=manual",
+      "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
-      "name": "記録タブを開く",
+      "name": "🏆 今日のベスト1",
+      "short_name": "ベスト1",
+      "description": "保存済レースから補正後EVが最も高いレースを表示",
+      "url": "/?view=best1",
+      "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "📋 記録タブ",
       "short_name": "記録",
       "description": "馬券の記録と回収率を見る",
-      "url": "/?tab=record"
+      "url": "/?tab=record",
+      "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 460
+  }
 }

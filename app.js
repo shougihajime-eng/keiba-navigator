@@ -193,6 +193,22 @@ const _idle = (window.requestIdleCallback)
   ? (cb, opts) => window.requestIdleCallback(cb, opts || { timeout: 800 })
   : (cb) => setTimeout(cb, 1);
 
+// ─── Hero question を時間帯で動的化 (アプリが生きてる感) ───
+function updateHeroQuestion() {
+  const el = document.querySelector("#tab-home .hero-question");
+  if (!el) return;
+  const h = new Date().getHours();
+  const isWeekend = [0, 6].includes(new Date().getDay());
+  let text;
+  if (h < 6)       text = "🌙 夜更かしですね、明日の準備?";
+  else if (h < 11) text = isWeekend ? "☀ おはよう、今日のベスト1は?" : "☀ おはよう、明日に向けて検証?";
+  else if (h < 15) text = isWeekend ? "🏇 もうすぐ発走、最終チェック!" : "🍱 今日は買う? 見送る?";
+  else if (h < 18) text = isWeekend ? "🎯 結果を確認しよう" : "今日は買う? 見送る?";
+  else if (h < 22) text = "🌆 振り返りタイム — AI は育ってる?";
+  else             text = "🌙 1 日お疲れ様 — 今日の判断は?";
+  el.textContent = text;
+}
+
 // ─── 記録タブの「結果待ち N件」バッジ更新 ─────────────────
 function updateRecordTabBadge() {
   const badge = document.getElementById("bt-record-badge");
@@ -472,11 +488,17 @@ function confLabelHuman(score) {
 }
 
 function buildSimpleReason(c) {
-  if (!c) return "出走馬データがまだありません。「更新」を押してください。";
-  if (c.verdict === "fetch_failed") return "サーバーまたはネットワークに接続できませんでした。少し時間を置いて「更新」を押してください。";
+  if (!c) return "出走馬データがまだありません。「📝 手動でEVチェック」に馬を入れるか、上の「更新」を押してください。";
+  if (c.verdict === "fetch_failed") return "📡 サーバーまたはネットワークに接続できませんでした。電波/Wi-Fi を確認して「更新」を押してください。";
   if (!c.ok) {
-    if (c.verdict === "judgement_unavailable") return "出走馬のデータがまだありません。JRA-VAN接続後に判定できます。";
-    return c.reason || "判定できません。";
+    if (c.verdict === "judgement_unavailable") {
+      // 手動入力モードで picks が空ならフォーマットを疑う
+      if (_manualMode) {
+        return "📝 入力が認識できませんでした。1行=1馬で、「馬番 馬名 オッズ 人気 前走着順」の形式で入れてください。「📝 サンプルを入れる」ボタンが下にあります。";
+      }
+      return "出走馬のデータがまだありません。JRA-VAN接続後に判定できます。それまでは下の「📝 手動でEVチェック」が使えます。";
+    }
+    return c.reason || "判定できません。入力を見直すか、もう一度試してください。";
   }
   const lines = [];
   if (c.verdict === "pass")          lines.push("人気馬が売れすぎていて、買う価値が薄いです。");
@@ -488,11 +510,14 @@ function buildSimpleReason(c) {
 }
 
 function buildAdvice(c) {
-  if (c?.verdict === "fetch_failed") return "通信が回復したら、もう一度「更新」を押してください。";
-  if (!c || !c.ok) return "「更新」を押すと、その時点のデータで判定します。";
-  if (c.verdict === "pass")    return "このレースは無理に買わず、次のレースを探すのがおすすめです。";
-  if (c.verdict === "neutral") return "気になるなら少額だけ。当たれば嬉しい程度に考えましょう。";
-  if (c.verdict === "go")      return "オッズの歪みが大きめ。少しだけ強気にいけそうです。";
+  if (c?.verdict === "fetch_failed") return "💡 ネットの回復を待って「↻ 更新」を押してください。もしくは下の「📝 手動でEVチェック」を使えば、サーバ無しでも判定できます。";
+  if (!c || !c.ok) {
+    if (_manualMode) return "💡 入力欄に馬の情報を 1 行ずつ入れて「📈 期待値を判定」を押してください。サンプル入力ボタンもあります。";
+    return "💡 上の「📝 手動でEVチェック」を開いて、馬を入力すると無料でその場で判定できます。";
+  }
+  if (c.verdict === "pass")    return "💡 このレースは無理に買わず、次のレースを探すのがおすすめです。";
+  if (c.verdict === "neutral") return "💡 気になるなら少額だけ。当たれば嬉しい程度に考えましょう。";
+  if (c.verdict === "go")      return "💡 オッズの歪みが大きめ。少しだけ強気にいけそうです。";
   return "";
 }
 
@@ -2080,7 +2105,7 @@ function onBetActionClick(ev) {
     showToast("結果を取り消しました");
   }
   saveStore(store);
-  try { renderRecords(); renderAiTrack(); } catch {}
+  try { renderRecords(); renderAiTrack(); updateRecordTabBadge(); } catch {}
 }
 
 function renderCompare(allBets) {
@@ -3168,6 +3193,7 @@ function applyUrlParams() {
     const sp = new URLSearchParams(location.search);
     const tab = sp.get("tab");
     const view = sp.get("view");
+    const focus = sp.get("focus");
     if (tab && ["home", "record", "settings"].includes(tab)) {
       switchTab(tab);
     }
@@ -3176,6 +3202,15 @@ function applyUrlParams() {
       setTimeout(() => {
         const card = $("#card-saved-races");
         if (card && card.scrollIntoView) card.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+    // PWA shortcut: 手動入力に直接フォーカス
+    if (focus === "manual") {
+      setTimeout(() => {
+        const sec = $("#manual-input-section");
+        if (sec && !sec.open) sec.open = true;
+        const ta = $("#mi-textarea");
+        if (ta) { ta.focus(); ta.scrollIntoView({ behavior: "smooth", block: "center" }); }
       }, 300);
     }
   } catch {}
@@ -3233,6 +3268,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { renderAiTrack();  } catch (e) { console.warn(e); }
   try { renderSavedRacesList(); } catch (e) { console.warn(e); }
   try { updateRecordTabBadge(); } catch (e) { console.warn(e); }
+  try { updateHeroQuestion(); } catch (e) { console.warn(e); }
   try { refreshNotifyUi(); } catch (e) { console.warn(e); }
   try { maybeShowA2HSBanner(); } catch (e) { console.warn(e); }
   try { applyUrlParams(); } catch (e) { console.warn(e); }

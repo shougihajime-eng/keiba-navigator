@@ -99,12 +99,26 @@ body {
 }
 .tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 
-/* キーボードフォーカスを綺麗に */
+/* キーボードフォーカスを綺麗に (柔らかい glow リング) */
 :focus-visible {
-  outline: 2px solid var(--acc-buy);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--acc-buy),
+    0 0 0 6px rgba(16,185,129,0.20),
+    0 0 18px rgba(16,185,129,0.35);
+  border-radius: 6px;
 }
+
+/* スクロールバーをスリムに (Webkit & Firefox) */
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.14);
+  border-radius: 999px;
+  transition: background 200ms;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
 button, input, select, textarea, label, a {
   -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
