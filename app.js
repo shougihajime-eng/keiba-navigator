@@ -2197,9 +2197,8 @@ function cumulativeSeries(bets) {
 
 function drawDualChart(canvas, airBets, realBets) {
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
+  const prep = prepHiDPI(canvas); if (!prep) return;
+  const { ctx, W, H } = prep;
   const sA = cumulativeSeries(airBets);
   const sR = cumulativeSeries(realBets);
   const all = [0, ...sA, ...sR];
