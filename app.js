@@ -2913,6 +2913,15 @@ function setupEvents() {
       }
     });
 
+    // 🎟 G1 デモレースで遊ぶ
+    $("#mi-demo-races")?.addEventListener("click", () => {
+      if (window.KNDemoRaces) {
+        window.KNDemoRaces.open();
+      } else {
+        showToast("デモレースモジュールがまだ読み込まれていません", "warn");
+      }
+    });
+
     // 🎲 即判定: サンプルを入れて submitManual() まで一気通貫
     $("#mi-demo")?.addEventListener("click", () => {
       miTa.value = "1 ディープ 3.2 1 1\n2 オルフェ 5.5 2 3\n3 キタサン 8.0 3 2\n4 サトノ 12.0 4 5\n5 グランプリ 25.0 5 8\n6 ハジメ 60.0 6 10";

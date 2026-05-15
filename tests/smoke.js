@@ -357,6 +357,47 @@ test("help.js は構文エラーなく読み込める", () => {
   new Function(code);  // SyntaxError があればここで throw
 });
 
+console.log("\n=== demo_races ===");
+const demoRaces = require("../lib/demo_races");
+test("DEMO_RACES は 5 件", () => assert.strictEqual(demoRaces.DEMO_RACES.length, 5));
+test("各レースに必須フィールドがある", () => {
+  for (const r of demoRaces.DEMO_RACES) {
+    assert.ok(r.id && r.name && r.course && Array.isArray(r.horses), `incomplete: ${r.id}`);
+    assert.ok(r.horses.length >= 4, `${r.id} has too few horses: ${r.horses.length}`);
+  }
+});
+test("各馬に必須フィールドがある", () => {
+  for (const r of demoRaces.DEMO_RACES) {
+    for (const h of r.horses) {
+      assert.ok(h.number > 0 && h.number <= 30, `${r.id}: bad umaban ${h.number}`);
+      assert.ok(h.name && h.name.length > 0, `${r.id}: no name`);
+      assert.ok(h.odds > 0, `${r.id} ${h.name}: bad odds ${h.odds}`);
+      assert.ok(h.popularity > 0 && h.popularity <= 30, `${r.id} ${h.name}: bad popularity ${h.popularity}`);
+    }
+  }
+});
+test("toTextarea: 行数 == 頭数", () => {
+  const r = demoRaces.DEMO_RACES[0];
+  const lines = demoRaces.toTextarea(r).split("\n");
+  assert.strictEqual(lines.length, r.horses.length);
+});
+test("toTextarea: フォーマット = '馬番 馬名 オッズ 人気 前走'", () => {
+  const r = demoRaces.DEMO_RACES[0];
+  const first = demoRaces.toTextarea(r).split("\n")[0];
+  const parts = first.split(" ");
+  assert.strictEqual(parts.length, 5);
+  assert.ok(/^\d+$/.test(parts[0]), `umaban not int: ${parts[0]}`);
+  assert.ok(/^\d+\.\d+$/.test(parts[2]), `odds not decimal: ${parts[2]}`);
+});
+test("toTextarea で出力された行が manual_race.parseLine と互換", () => {
+  const r = demoRaces.DEMO_RACES[0];
+  const line = demoRaces.toTextarea(r).split("\n")[0];
+  const parsed = manual.parseLine(line);
+  assert.ok(parsed && parsed.number != null, `couldn't parse umaban from: ${line}`);
+  assert.ok(parsed.name === r.horses[0].name, `name mismatch: ${parsed.name} vs ${r.horses[0].name}`);
+  assert.ok(parsed.win_odds === r.horses[0].odds, `odds mismatch: ${parsed.win_odds} vs ${r.horses[0].odds}`);
+});
+
 console.log("\n=== onboarding / animate / share_image / whatif / achievements 構文 ===");
 test("onboarding.js 構文 OK", () => { new Function(require("fs").readFileSync("lib/onboarding.js", "utf8")); });
 test("animate.js 構文 OK",     () => { new Function(require("fs").readFileSync("lib/animate.js", "utf8")); });

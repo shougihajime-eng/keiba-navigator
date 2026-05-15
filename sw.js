@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v8";  // Wave6: ヘルプ FAQ + 写真 OCR + テスト 72 ケース
+const CACHE_VERSION = "keiba-nav-v9";  // Wave7: G1デモレース + バッチ強化 + ワンクリック志向の最終仕上げ
 const PRECACHE = [
   "/",
   "/index.html",
