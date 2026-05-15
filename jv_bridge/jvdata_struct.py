@@ -288,6 +288,79 @@ TK_TOKUUMA_LOOP = {
 }
 
 
+# ─── HC レコード (ハロンタイム速報・坂路調教) 60 バイト ────
+# SDK JV_HC_HANRO より転記。馬体重ではなく「坂路調教でのハロンタイム」。
+HC_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'HC'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("tresen_kbn", 11, 1,  F_ascii, "トレセン区分 1美浦/2栗東"),
+    Field("chokyo_date",12, 8,  F_ascii, "調教年月日 YYYYMMDD"),
+    Field("chokyo_time",20, 4,  F_ascii, "調教時刻 HHMM"),
+    Field("ketto_num",  24, 10, F_ascii, "血統登録番号"),
+    Field("haron_4",    34, 4,  F_dec1,  "4ハロンタイム合計"),
+    Field("lap_4",      38, 3,  F_dec1,  "ラップ800-600m"),
+    Field("haron_3",    41, 4,  F_dec1,  "3ハロンタイム合計"),
+    Field("lap_3",      45, 3,  F_dec1,  "ラップ600-400m"),
+    Field("haron_2",    48, 4,  F_dec1,  "2ハロンタイム合計"),
+    Field("lap_2",      52, 3,  F_dec1,  "ラップ400-200m"),
+    Field("lap_1",      55, 3,  F_dec1,  "ラップ200-0m"),
+]
+
+
+# ─── WC レコード (ウッドチップ調教) 105 バイト ────────────
+# SDK JV_WC_WOOD より転記。最長 2000m 〜 各ハロンのタイム。
+WC_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'WC'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("tresen_kbn", 11, 1,  F_ascii),
+    Field("chokyo_date",12, 8,  F_ascii),
+    Field("chokyo_time",20, 4,  F_ascii),
+    Field("ketto_num",  24, 10, F_ascii),
+    Field("course",     34, 1,  F_ascii, "コース"),
+    Field("baba_around",35, 1,  F_ascii, "馬場周り"),
+    Field("haron_10",   37, 4,  F_dec1,  "10ハロンタイム"),
+    Field("lap_10",     41, 3,  F_dec1),
+    Field("haron_9",    44, 4,  F_dec1),
+    Field("lap_9",      48, 3,  F_dec1),
+    Field("haron_8",    51, 4,  F_dec1),
+    Field("lap_8",      55, 3,  F_dec1),
+    Field("haron_7",    58, 4,  F_dec1),
+    Field("lap_7",      62, 3,  F_dec1),
+    Field("haron_6",    65, 4,  F_dec1),
+    Field("lap_6",      69, 3,  F_dec1),
+    Field("haron_5",    72, 4,  F_dec1),
+    Field("lap_5",      76, 3,  F_dec1),
+    Field("haron_4",    79, 4,  F_dec1),
+]
+
+
+# ─── YS レコード (年間スケジュール・重賞日程) 382 バイト ──
+# SDK JV_YS_SCHEDULE より転記。各日に最大 3 つの重賞 (JYUSYO_INFO×3) を持つ。
+# ヘッダ部分のみ。重賞情報の繰り返し領域は YS_JYUSYO_LOOP で対応。
+YS_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'YS'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    # RACE_ID2 (14 バイト・raceNum 無し)
+    Field("year",       11, 4,  F_ascii),
+    Field("month_day",  15, 4,  F_ascii),
+    Field("jyo_code",   19, 2,  F_ascii),
+    Field("kai_ji",     21, 2,  F_ascii),
+    Field("nichi_ji",   23, 2,  F_ascii),
+    Field("youbi_code", 25, 1,  F_ascii, "曜日コード"),
+]
+
+# YS の繰り返し領域: 3 つの重賞案内 (JYUSYO_INFO × 3 / 各 118 バイト)
+# offset = 27 - 1 = 26
+YS_JYUSYO_LOOP = {
+    "offset":      26,
+    "element_len": 118,
+    "max_count":   3,
+}
+
+
 # ─── JG レコード (除外馬・出走取消馬) 80 バイト ────────────
 # SDK JV_JG_JOGAIBA より転記。明日のレース前に「除外された馬」のリスト。
 JG_FIELDS: List[Field] = [
@@ -316,6 +389,9 @@ RECORD_REGISTRY: Dict[str, List[Field]] = {
     "HR": HR_FIELDS,
     "JG": JG_FIELDS,
     "TK": TK_FIELDS,
+    "HC": HC_FIELDS,
+    "WC": WC_FIELDS,
+    "YS": YS_FIELDS,
 }
 
 
@@ -327,6 +403,9 @@ RECORD_COMPLETED: Dict[str, bool] = {
     "HR": True,
     "JG": True,
     "TK": True,
+    "HC": True,
+    "WC": True,
+    "YS": True,
 }
 
 

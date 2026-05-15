@@ -2165,3 +2165,333 @@ a:hover { text-decoration-color: var(--acc-buy-2); }
 .aff-pnl { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink-1); }
 .aff-row.aff-good .aff-pnl { color: var(--acc-buy-2); }
 .aff-row.aff-bad  .aff-pnl { color: var(--acc-danger-2); }
+
+/* ═══════════════════════════════════════════════════════════
+   ★ 信頼度スターメーター (ヒーロー結論カード内)
+   一瞬で「自信あり／普通／見送り」が分かる視覚言語
+   ═══════════════════════════════════════════════════════════ */
+.bv-stars-wrap {
+  margin-top: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex; flex-direction: column; gap: 8px;
+  --star-color:  rgba(255,255,255,0.18);
+  --star-glow:   transparent;
+  --star-shadow: transparent;
+}
+.bv-stars {
+  display: flex; gap: 6px;
+  font-size: 30px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  user-select: none;
+}
+.bv-star {
+  color: rgba(255,255,255,0.14);
+  display: inline-block;
+  transition: color 280ms var(--ease-out), text-shadow 280ms var(--ease-out);
+  transform-origin: center;
+  will-change: transform, color;
+}
+.bv-star.lit {
+  color: var(--star-color);
+  text-shadow: 0 0 14px var(--star-glow), 0 1px 0 var(--star-shadow);
+  animation: starPop 540ms var(--ease-out) backwards;
+}
+.bv-star.lit[data-i="0"] { animation-delay: 60ms; }
+.bv-star.lit[data-i="1"] { animation-delay: 140ms; }
+.bv-star.lit[data-i="2"] { animation-delay: 220ms; }
+.bv-star.lit[data-i="3"] { animation-delay: 300ms; }
+.bv-star.lit[data-i="4"] { animation-delay: 380ms; }
+@keyframes starPop {
+  0%   { opacity: 0; transform: scale(0.5) rotate(-14deg); filter: blur(2px); }
+  55%  { transform: scale(1.22) rotate(4deg);              filter: blur(0); }
+  100% { opacity: 1; transform: scale(1)    rotate(0); }
+}
+.bv-stars-meta {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3);
+}
+.bv-stars-label {
+  font-weight: 900; font-size: var(--fs-lg);
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+.bv-stars-ev {
+  font-weight: 900; font-size: var(--fs-xl);
+  color: var(--star-color);
+  text-shadow: 0 0 12px var(--star-glow);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* レベル別の色テーマ (5 ★ から 1 ★ まで) */
+.bv-stars-wrap.lv-5 {
+  --star-color: #fde68a; --star-glow: rgba(251,191,36,0.65); --star-shadow: rgba(120,75,0,0.5);
+  background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(0,0,0,0.30));
+  border-color: rgba(251,191,36,0.42);
+}
+.bv-stars-wrap.lv-4 {
+  --star-color: #6ee7b7; --star-glow: rgba(16,185,129,0.55); --star-shadow: rgba(0,60,40,0.5);
+  background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(0,0,0,0.28));
+  border-color: rgba(16,185,129,0.42);
+}
+.bv-stars-wrap.lv-3 {
+  --star-color: #fcd34d; --star-glow: rgba(245,158,11,0.45); --star-shadow: rgba(80,40,0,0.4);
+  background: linear-gradient(135deg, rgba(245,158,11,0.14), rgba(0,0,0,0.26));
+  border-color: rgba(245,158,11,0.38);
+}
+.bv-stars-wrap.lv-2 {
+  --star-color: #fda4af; --star-glow: rgba(244,63,94,0.45); --star-shadow: rgba(80,0,20,0.4);
+  background: linear-gradient(135deg, rgba(244,63,94,0.13), rgba(0,0,0,0.26));
+  border-color: rgba(244,63,94,0.38);
+}
+.bv-stars-wrap.lv-1 {
+  --star-color: #fca5a5; --star-glow: rgba(239,68,68,0.45); --star-shadow: rgba(60,0,0,0.4);
+  background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(0,0,0,0.26));
+  border-color: rgba(239,68,68,0.34);
+}
+.bv-stars-wrap.lv-0 {
+  --star-color: rgba(255,255,255,0.40); --star-glow: transparent; --star-shadow: transparent;
+}
+
+/* 超自信あり (5 ★) には sparkle と shimmer */
+.bv-stars-wrap.lv-5::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 0%, transparent 38%, rgba(255,235,180,0.18) 50%, transparent 62%, transparent 100%);
+  background-size: 200% 100%; background-position: -100% 0;
+  animation: shimmer 2.8s ease-in-out 0.6s infinite;
+  pointer-events: none; border-radius: var(--r-md);
+}
+.bv-stars-wrap { position: relative; overflow: hidden; }
+@keyframes shimmer {
+  0%   { background-position: -100% 0; }
+  60%  { background-position: 110% 0; }
+  100% { background-position: 110% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bv-star, .bv-star.lit { animation: none !important; }
+  .bv-stars-wrap.lv-5::before { animation: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   保存レース ダッシュボード — 一覧から「狙えるか」を一瞬で
+   ═══════════════════════════════════════════════════════════ */
+/* ベスト1 を「ヒーローカード」に格上げ */
+.sr-best {
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  background:
+    radial-gradient(120% 130% at 100% 0%, rgba(251,191,36,0.18), transparent 55%),
+    linear-gradient(140deg, rgba(120,53,15,0.40), rgba(20,26,41,0.65));
+  border: 1px solid rgba(251,191,36,0.5);
+  box-shadow: 0 0 28px rgba(251,191,36,0.20), inset 0 1px 0 rgba(255,255,255,0.05);
+  position: relative;
+  overflow: visible;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+.sr-best::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 0%, transparent 38%, rgba(253,224,71,0.12) 50%, transparent 62%, transparent 100%);
+  background-size: 200% 100%; background-position: -100% 0;
+  animation: shimmer 3.4s ease-in-out 0.5s infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.sr-best > * { position: relative; z-index: 1; }
+
+.sr-best-head {
+  display: flex; align-items: center; gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+.sr-best-head .sr-mini-stars { font-size: 20px; }
+.sr-best .sr-name {
+  font-size: var(--fs-xl); font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.005em;
+}
+
+/* 通常行も少しリッチに */
+.sr-row {
+  padding: var(--sp-3);
+  background: rgba(0,0,0,0.24);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-md);
+  gap: var(--sp-3);
+  min-height: 60px;
+  transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background 160ms var(--ease-out), box-shadow 200ms var(--ease-out);
+}
+.sr-row:hover {
+  border-color: var(--acc-info-line);
+  background: rgba(0,0,0,0.34);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.32);
+}
+.sr-row:active { transform: scale(0.985); }
+.sr-row .sr-name { font-size: var(--fs-md); font-weight: 800; color: var(--ink-1); }
+
+/* ミニ星バー (通常行に表示) */
+.sr-mini-stars {
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+}
+.sr-mini-star-lit { color: var(--star-mini-color, var(--acc-warn-2)); text-shadow: 0 0 8px var(--star-mini-glow, transparent); }
+.sr-mini-star-off { color: rgba(255,255,255,0.13); }
+.sr-mini-stars.lv-5 { --star-mini-color: var(--acc-gold-2);   --star-mini-glow: rgba(251,191,36,0.55); }
+.sr-mini-stars.lv-4 { --star-mini-color: var(--acc-buy-2);    --star-mini-glow: rgba(16,185,129,0.45); }
+.sr-mini-stars.lv-3 { --star-mini-color: var(--acc-warn-2);   --star-mini-glow: rgba(245,158,11,0.40); }
+.sr-mini-stars.lv-2 { --star-mini-color: #fda4af;             --star-mini-glow: rgba(244,63,94,0.40); }
+.sr-mini-stars.lv-1 { --star-mini-color: #fca5a5;             --star-mini-glow: rgba(239,68,68,0.35); }
+.sr-mini-stars.lv-0 { --star-mini-color: rgba(255,255,255,0.32); }
+
+/* Verdict pill (狙える/普通/見送り) */
+.sr-pill {
+  display: inline-flex; align-items: center;
+  font-size: 10.5px; font-weight: 900;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+.sr-pill.v-go      { background: var(--acc-buy-soft);    color: var(--acc-buy-2);    border: 1px solid var(--acc-buy-line); }
+.sr-pill.v-neutral { background: var(--acc-warn-soft);   color: var(--acc-warn-2);   border: 1px solid var(--acc-warn-line); }
+.sr-pill.v-pass    { background: var(--acc-danger-soft); color: var(--acc-danger-2); border: 1px solid var(--acc-danger-line); }
+
+/* Best1 のピック行 (馬番 + 馬名 + 推奨金額) */
+.sr-best-pick {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3);
+  background: rgba(0,0,0,0.28);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.sr-best-num {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+  color: #042820;
+  font-weight: 900;
+  font-size: 28px;
+  display: grid; place-items: center;
+  letter-spacing: -0.02em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 16px rgba(16,185,129,0.35);
+}
+.sr-best-info { min-width: 0; }
+.sr-best-horse {
+  font-weight: 800; color: #fff; font-size: var(--fs-md);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sr-best-meta {
+  font-size: 11px; color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+.sr-best-stake {
+  font-weight: 900;
+  font-size: var(--fs-lg);
+  color: var(--acc-gold-2);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 10px rgba(251,191,36,0.4);
+  white-space: nowrap;
+}
+.sr-best-stake.zero { color: var(--ink-4); text-shadow: none; }
+.sr-best-actions {
+  display: flex; gap: 8px;
+  margin-top: var(--sp-3);
+}
+.sr-best-actions .sr-load,
+.sr-best-actions .sr-del {
+  padding: 8px 14px;
+  font-size: var(--fs-sm);
+}
+.sr-best-actions .sr-load {
+  flex: 1;
+  background: linear-gradient(180deg, var(--acc-info-2), var(--acc-info));
+  color: #fff;
+  border: none;
+  font-weight: 800;
+}
+.sr-best-actions .sr-del { width: auto; border-radius: var(--r-md); padding: 8px 12px; }
+
+/* バッジを ★ 形に進化 */
+.sr-badge {
+  background: linear-gradient(180deg, #fde047 0%, #f59e0b 100%);
+  color: #4a2200;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  box-shadow: 0 6px 18px rgba(251,191,36,0.50), inset 0 1px 0 rgba(255,255,255,0.55);
+  display: inline-block;
+  align-self: flex-start;
+  margin-bottom: var(--sp-2);
+  position: static;
+  top: auto; left: auto;
+}
+
+@media (max-width: 480px) {
+  .sr-best-pick { grid-template-columns: 48px 1fr auto; gap: 10px; padding: 10px; }
+  .sr-best-num { width: 48px; height: 48px; font-size: 22px; border-radius: 12px; }
+  .sr-best-horse { font-size: var(--fs-base); }
+  .sr-best-stake { font-size: var(--fs-md); }
+  .bv-stars { font-size: 26px; gap: 4px; }
+  .bv-stars-label { font-size: var(--fs-base); }
+  .bv-stars-ev { font-size: var(--fs-lg); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   スケルトン・ローディング (shimmer)
+   ═══════════════════════════════════════════════════════════ */
+.skeleton {
+  position: relative;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 100%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s linear infinite;
+  border-radius: var(--r-sm);
+  color: transparent !important;
+  pointer-events: none;
+}
+@keyframes skeletonShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* カード出現アニメ (stagger) */
+.fade-up {
+  animation: fadeUp 540ms var(--ease-out) backwards;
+}
+.fade-up.d-1 { animation-delay: 40ms; }
+.fade-up.d-2 { animation-delay: 100ms; }
+.fade-up.d-3 { animation-delay: 160ms; }
+.fade-up.d-4 { animation-delay: 220ms; }
+.fade-up.d-5 { animation-delay: 280ms; }
+@keyframes fadeUp {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ボタン押下スプリング (Apple っぽい弾力感) */
+button:active:not(:disabled),
+.btn-refresh:active,
+.mi-submit:active,
+.btn-rec:active,
+.sr-load:active,
+.bt-btn:active {
+  transform: scale(0.96);
+  transition: transform 90ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, .fade-up, .sr-best::after { animation: none !important; }
+  button:active:not(:disabled) { transform: none; }
+}

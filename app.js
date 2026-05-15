@@ -133,7 +133,19 @@ function storageUsagePct() {
 }
 
 // ─── 共通ユーティリティ ─────────────────────────────────────
-async function getJson(url) {
+// SWR 風のメモリキャッシュ。同 URL を短時間で再要求した場合に即返す。
+// refresh ボタン押下時は bustApiCache() で全消去 → 必ず最新を取りに行く。
+const _apiCache = new Map();              // url -> { ts, result }
+const API_FRESH_TTL = 15_000;             // 15秒以内は即返答 (タブ切替で再要求しても瞬時)
+function bustApiCache() { _apiCache.clear(); }
+
+async function getJson(url, opts = {}) {
+  const now = Date.now();
+  const useCache = opts.cache !== false;
+  const cached = _apiCache.get(url);
+  if (useCache && cached && (now - cached.ts) < API_FRESH_TTL) {
+    return cached.result;
+  }
   try {
     const r = await fetch(url, { cache: "no-store" });
     let body = null;
@@ -145,10 +157,63 @@ async function getJson(url) {
     } else if (r.status >= 500 && r.status < 600) {
       try { showToast("⚠ サーバーエラー (" + r.status + ")。時間を置いて再試行してください", "warn"); } catch {}
     }
-    return { ok: r.ok, status: r.status, body };
+    const result = { ok: r.ok, status: r.status, body };
+    if (r.ok && useCache) _apiCache.set(url, { ts: now, result });
+    return result;
   } catch (e) {
+    // ネット断時は古いキャッシュにフォールバック (体感の継続性)
+    if (cached) return cached.result;
     return { ok: false, status: 0, body: { error: String(e.message || e) } };
   }
+}
+
+// ─── 重い描画の遅延化 (画面に入ったら描く・タブ切替を超軽量に保つ) ──
+const _whenVisibleObs = (typeof IntersectionObserver !== "undefined")
+  ? new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const fn = e.target.__renderWhenVisible;
+        if (typeof fn === "function") {
+          _whenVisibleObs.unobserve(e.target);
+          try { fn(); } catch {}
+          delete e.target.__renderWhenVisible;
+        }
+      }
+    }, { rootMargin: "120px" })
+  : null;
+function renderWhenVisible(el, fn) {
+  if (!el) { try { fn(); } catch {} return; }
+  if (!_whenVisibleObs) { try { fn(); } catch {} return; }
+  el.__renderWhenVisible = fn;
+  _whenVisibleObs.observe(el);
+}
+
+// ─── アイドル時にぶら下げる (タップ即反応 → 重い処理は後回し) ───
+const _idle = (window.requestIdleCallback)
+  ? (cb, opts) => window.requestIdleCallback(cb, opts || { timeout: 800 })
+  : (cb) => setTimeout(cb, 1);
+
+// ─── HiDPI 対応のキャンバス準備 (Retina でクッキリ描画) ──────
+// 全 chart 関数の冒頭で呼ぶ。初回に論理サイズを退避し、devicePixelRatio で
+// スケールアップした内部バッファを用意。論理座標で描けばボケない。
+function prepHiDPI(canvas) {
+  if (!canvas) return null;
+  const dpr = window.devicePixelRatio || 1;
+  if (!canvas._logW) {
+    canvas._logW = canvas.width  || canvas.clientWidth  || 600;
+    canvas._logH = canvas.height || canvas.clientHeight || 180;
+  }
+  if (canvas._dpr !== dpr) {
+    canvas._dpr = dpr;
+    canvas.width  = Math.round(canvas._logW * dpr);
+    canvas.height = Math.round(canvas._logH * dpr);
+    canvas.style.width  = canvas._logW + "px";
+    canvas.style.height = canvas._logH + "px";
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, canvas._logW, canvas._logH);
+  return { ctx, W: canvas._logW, H: canvas._logH, dpr };
 }
 
 function fmtDateTime(iso) {
@@ -252,11 +317,67 @@ function getCalibrationRatio(grade) {
   } catch { return null; }
 }
 
+// ─── 信頼度スターレベル (1-5) を結論から導出 ──────────────────
+// 「超自信あり (5)」「強め (4)」「普通 (3)」「危険ゾーン (2)」「見送り (1)」「データなし (0)」
+// 補正後 EV / verdict / 信頼度 / グレード を総合判定
+function computeStarLevel(c) {
+  if (!c?.ok) return { level: 0, label: "データ待ち", icon: "⚪" };
+  const top = c.picks?.[0];
+  const calRatio = top ? getCalibrationRatio(top.grade) : null;
+  const calEv = top ? (calRatio ? top.ev * calRatio : top.ev) : null;
+  const conf  = c.confidence ?? 0.20;
+  const grade = top?.grade;
+
+  // 見送り系
+  if (c.verdict === "pass") {
+    if (c.overpopular?.length) return { level: 2, label: "危険ゾーン", icon: "⚠️" };
+    return { level: 1, label: "見送り推奨", icon: "❌" };
+  }
+  // neutral
+  if (c.verdict === "neutral") {
+    return { level: 3, label: "少額ならあり", icon: "💡" };
+  }
+  // go
+  if (c.verdict === "go") {
+    if ((calEv ?? 0) >= 1.30 && grade === "S" && conf >= 0.30) {
+      return { level: 5, label: "超自信あり", icon: "🔥" };
+    }
+    if ((calEv ?? 0) >= 1.15 && conf >= 0.25) {
+      return { level: 4, label: "強めの買い", icon: "🎯" };
+    }
+    return { level: 3, label: "狙える", icon: "🟢" };
+  }
+  return { level: 0, label: "判定中", icon: "⚪" };
+}
+
+// ─── 数字のカウントアップ (Apple っぽい ease-out 3 次) ─────────
+function animateNumber(el, from, to, opts = {}) {
+  if (!el) return;
+  if (!Number.isFinite(from)) from = 0;
+  if (!Number.isFinite(to))   { el.textContent = "--"; return; }
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fmt = opts.format || (v => v.toFixed(0));
+  if (reduce) { el.textContent = fmt(to); return; }
+  const dur = opts.duration || 600;
+  const start = performance.now();
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const step = (now) => {
+    const p = Math.min(1, (now - start) / dur);
+    const v = from + (to - from) * ease(p);
+    el.textContent = fmt(v);
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 // ─── 結論カード ────────────────────────────────────────────
+let _lastBvEv = 0;     // count-up の起点 (前回のEV%)
 function renderBigVerdict(c) {
   const el = $("#big-verdict");
   el.className = "big-verdict v-" + (c?.verdict || "loading");
-  $("#bv-icon").textContent  = verdictToIcon(c?.verdict);
+
+  const stars = computeStarLevel(c);
+  $("#bv-icon").textContent  = stars.icon;
   $("#bv-title").textContent = verdictToHuman(c?.verdict);
   $("#bv-reason").textContent = buildSimpleReason(c);
 
@@ -269,6 +390,43 @@ function renderBigVerdict(c) {
     gEl.className = "bv-grade grade-" + grade;
   } else {
     gEl.hidden = true;
+  }
+
+  // ★ 星評価メーター (世界一の「一瞬で理解」UI)
+  const sw = $("#bv-stars-wrap");
+  const sLabel = $("#bv-stars-label");
+  const sEv    = $("#bv-stars-ev");
+  if (sw && stars.level >= 1) {
+    sw.hidden = false;
+    sw.className = "bv-stars-wrap lv-" + stars.level;
+    sLabel.textContent = stars.label;
+    // 各星に lit クラスを付与 → CSS が stagger で順番に発火
+    const all = sw.querySelectorAll(".bv-star");
+    all.forEach((s, i) => {
+      // 再描画でアニメをリスタート
+      s.classList.remove("lit");
+      // reflow を強制してアニメ再生
+      void s.offsetWidth;
+      if (i < stars.level) s.classList.add("lit");
+    });
+    // 補正後 EV をカウントアップで表示
+    const top = c?.picks?.[0];
+    const calRatio = top ? getCalibrationRatio(top.grade) : null;
+    const calEv = top ? (calRatio ? top.ev * calRatio : top.ev) : null;
+    if (Number.isFinite(calEv)) {
+      const toPct = (calEv - 1) * 100;
+      animateNumber(sEv, _lastBvEv, toPct, {
+        duration: 720,
+        format: v => (v >= 0 ? "+" : "") + v.toFixed(0) + "%",
+      });
+      _lastBvEv = toPct;
+    } else {
+      sEv.textContent = stars.label === "見送り推奨" || stars.label === "危険ゾーン" ? "推奨なし" : "--";
+      _lastBvEv = 0;
+    }
+  } else if (sw) {
+    sw.hidden = true;
+    _lastBvEv = 0;
   }
 
   // 仮データバナー
@@ -469,9 +627,8 @@ function renderAiTrack() {
 
 function drawMiniChart(canvas, bets) {
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
+  const prep = prepHiDPI(canvas); if (!prep) return;
+  const { ctx, W, H } = prep;
   const confirmed = bets.filter(b => b.result?.won === true || b.result?.won === false)
     .sort((a, b) => (a.result.finishedAt || a.ts).localeCompare(b.result.finishedAt || b.ts));
   if (confirmed.length === 0) {
@@ -664,6 +821,37 @@ function calibratedTopEv(c) {
   return r ? Number(top.ev) * r : Number(top.ev);
 }
 
+// ─── ミニ星バー (保存レースの行に表示) ─────────────────────
+function miniStarsHtml(level) {
+  const lit = Math.max(0, Math.min(5, level | 0));
+  let html = `<span class="sr-mini-stars lv-${lit}" aria-label="信頼度${lit}/5">`;
+  for (let i = 0; i < 5; i++) {
+    html += i < lit
+      ? `<span class="sr-mini-star-lit">★</span>`
+      : `<span class="sr-mini-star-off">☆</span>`;
+  }
+  html += `</span>`;
+  return html;
+}
+
+// 推奨金額を計算 (Kelly + 補正済 prob)
+function suggestedStakeForRow(c) {
+  if (!window.Kelly || !c?.ok || !c.picks?.length) return null;
+  const top = c.picks[0];
+  const store = loadStore();
+  const calRatio = getCalibrationRatio(top.grade);
+  const prob = (calRatio && top.prob) ? top.prob * Math.min(1, calRatio) : top.prob;
+  try {
+    const k = window.Kelly.suggestStake({
+      prob, odds: top.odds,
+      bankroll: store.funds?.daily || null,
+      perRaceCap: store.funds?.perRace || null,
+      confidence: c.confidence,
+    });
+    return k.stake;
+  } catch { return null; }
+}
+
 function renderSavedRacesList() {
   const card = $("#card-saved-races");
   const list = $("#saved-races-list");
@@ -681,31 +869,66 @@ function renderSavedRacesList() {
     const r = ranked[i];
     const top = r.conclusion?.picks?.[0];
     const calEv = r.calEv;
-    const li = document.createElement("li");
-    li.className = "sr-row" + (i === 0 ? " sr-best" : "");
-    li.dataset.id = r.id;
+    const stars = computeStarLevel(r.conclusion);
+    const grade = top?.grade || "--";
+    const verdict = r.conclusion?.verdict || "loading";
+    const verdictText = r.conclusion?.verdictTitle || verdictToHuman(verdict);
     const evPctText = (calEv != null && Number.isFinite(calEv))
       ? `${(calEv-1)*100 >= 0 ? "+" : ""}${((calEv-1)*100).toFixed(0)}%` : "--";
-    const grade = top?.grade || "--";
-    const verdict = r.conclusion?.verdictTitle || verdictToHuman(r.conclusion?.verdict);
-    li.innerHTML = `
-      ${i === 0 ? '<div class="sr-badge">🏆 今日のベスト1</div>' : ""}
-      <div class="sr-main">
-        <div class="sr-name">${escapeHtml(r.raceName || "(レース名なし)")}</div>
-        <div class="sr-meta">
-          <span class="sr-grade sr-grade-${grade}">${grade}</span>
-          <span class="sr-ev">補正後EV ${evPctText}</span>
-          <span class="sr-verdict">${escapeHtml(verdict || "判定")}</span>
+
+    const li = document.createElement("li");
+    li.className = "sr-row fade-up d-" + Math.min(5, i + 1) + (i === 0 ? " sr-best" : "");
+    li.dataset.id = r.id;
+
+    if (i === 0 && top) {
+      // 🏆 ベスト1: ヒーローカード (馬番+馬名+推奨金額を一目で)
+      const stake = suggestedStakeForRow(r.conclusion);
+      const stakeText = (stake != null && stake > 0)
+        ? `¥${stake.toLocaleString("ja-JP")}`
+        : "見送り";
+      const stakeClass = (stake != null && stake > 0) ? "sr-best-stake" : "sr-best-stake zero";
+      li.innerHTML = `
+        <span class="sr-badge">🏆 今日のベスト1</span>
+        <div class="sr-best-head">
+          ${miniStarsHtml(stars.level)}
+          <div class="sr-name" style="flex:1; min-width:0;">${escapeHtml(r.raceName || "(レース名なし)")}</div>
+          <span class="sr-pill v-${verdict}">${escapeHtml(stars.label)}</span>
         </div>
-      </div>
-      <div class="sr-actions">
-        <button class="sr-load" data-id="${r.id}" type="button">表示</button>
-        <button class="sr-del"  data-id="${r.id}" type="button" aria-label="削除">×</button>
-      </div>
-    `;
+        <div class="sr-best-pick">
+          <div class="sr-best-num">${escapeHtml(String(top.number ?? "--"))}</div>
+          <div class="sr-best-info">
+            <div class="sr-best-horse">${escapeHtml(top.name || "(馬名未取得)")}</div>
+            <div class="sr-best-meta">補正後EV <b>${evPctText}</b> · ${fmtOdds(top.odds)}倍 · ${top.popularity != null ? top.popularity + "番人気" : "人気--"} · <span class="sr-grade sr-grade-${grade}">${grade}</span></div>
+          </div>
+          <div class="${stakeClass}">${stakeText}</div>
+        </div>
+        <div class="sr-best-actions">
+          <button class="sr-load" data-id="${r.id}" type="button">▶ このレースを表示</button>
+          <button class="sr-del"  data-id="${r.id}" type="button" aria-label="削除">🗑</button>
+        </div>
+      `;
+    } else {
+      // 通常行: コンパクトに 星 + レース名 + EV + verdict pill
+      li.innerHTML = `
+        ${miniStarsHtml(stars.level)}
+        <div class="sr-main">
+          <div class="sr-name">${escapeHtml(r.raceName || "(レース名なし)")}</div>
+          <div class="sr-meta">
+            <span class="sr-grade sr-grade-${grade}">${grade}</span>
+            <span class="sr-ev">EV ${evPctText}</span>
+            ${top ? `<span class="sr-verdict">${escapeHtml(top.number)}番 ${escapeHtml((top.name||"").slice(0,8))}</span>` : ""}
+          </div>
+        </div>
+        <span class="sr-pill v-${verdict}">${escapeHtml(stars.label)}</span>
+        <div class="sr-actions">
+          <button class="sr-del" data-id="${r.id}" type="button" aria-label="削除">×</button>
+        </div>
+      `;
+    }
     list.appendChild(li);
   }
-  // 行クリックで「表示」、× で削除
+
+  // クリックハンドラ (× は削除・行全体は読み込み)
   list.querySelectorAll(".sr-load").forEach(btn => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -716,6 +939,7 @@ function renderSavedRacesList() {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const id = btn.dataset.id;
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(8);
       const arr = loadSavedRaces().filter(r => r.id !== id);
       saveSavedRaces(arr);
       renderSavedRacesList();
@@ -761,6 +985,18 @@ async function submitManual() {
   }
   const btn = $("#mi-submit");
   if (btn) { btn.disabled = true; btn.classList.add("loading"); }
+  // 楽観 UI: 即座に「判定中」状態へ → API待ちのストレスを消す
+  try {
+    const bv = $("#big-verdict");
+    if (bv) bv.className = "big-verdict v-loading";
+    const t = $("#bv-title");    if (t) t.textContent = "判定中…";
+    const r = $("#bv-reason");   if (r) r.textContent = "あなたの入力で AI が期待値を計算しています。";
+    const icon = $("#bv-icon");  if (icon) icon.textContent = "⏳";
+    const gEl = $("#bv-grade");  if (gEl) gEl.hidden = true;
+    const sw  = $("#bv-stars-wrap"); if (sw) sw.hidden = true;
+    if (bv && bv.scrollIntoView) bv.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch {}
+  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(10);
   try {
     const res = await fetch("/api/conclusion-manual", {
       method:  "POST",
@@ -1031,6 +1267,7 @@ async function refreshAll() {
   }
   isRefreshing = true;
   _lastRefreshAt = Date.now();
+  bustApiCache();   // ↻ ボタンは常に最新を取りに行く (SWR キャッシュ無効化)
   const btn = $("#btn-refresh");
   btn.classList.add("loading"); btn.disabled = true;
   const labelEl = btn.querySelector(".label");
@@ -1050,13 +1287,22 @@ async function refreshAll() {
   }
 }
 
-// ─── タブ切替 ──────────────────────────────────────────────
+// ─── タブ切替 (即時 + 重い処理はアイドル時に) ───────────────────
 function switchTab(name) {
+  // 1) 即時に表示切替 (重い描画は後回しにして体感 0ms)
   for (const pane of $$(".tab-pane")) pane.hidden = (pane.id !== `tab-${name}`);
   for (const b of $$(".bt-btn")) b.classList.toggle("active", b.dataset.tab === name);
-  if (name === "record")   { renderRecords(); autoFinalizePending().catch(() => {}); }
-  if (name === "settings") renderSettings();
+  // 触覚フィードバック (対応端末のみ)
+  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(6);
   window.scrollTo(0, 0);
+  // 2) 重い再描画はアイドルで (ボタン押下 → 切替が即反応するように)
+  if (name === "record") {
+    _idle(() => { try { renderRecords(); } catch {} });
+    _idle(() => { autoFinalizePending().catch(() => {}); });
+  }
+  if (name === "settings") {
+    _idle(() => { try { renderSettings(); } catch {} });
+  }
 }
 
 // 保留中bets を /api/finalize に POST して結果データがあれば確定する
@@ -1242,9 +1488,9 @@ function renderCharts(bets) {
     .filter(b => b.result?.won === true || b.result?.won === false)
     .sort((a, b) => (a.result?.finishedAt || a.ts).localeCompare(b.result?.finishedAt || b.ts));
   const canvas = $("#chart-pnl");
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
+  const prep = prepHiDPI(canvas);
+  if (!prep) return;
+  const { ctx, W, H } = prep;
 
   if (confirmed.length === 0) {
     ctx.fillStyle = "#64748b";
@@ -1458,10 +1704,12 @@ function renderKellySim(allBets) {
   const bankroll = store.funds?.daily   || null;
   const perRace  = store.funds?.perRace || null;
   if (!window.Kelly || !bankroll) {
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#64748b"; ctx.font = "13px Inter, sans-serif";
-    ctx.fillText("1日予算が未設定です。設定タブで予算を入れると比較できます。", 16, canvas.height / 2);
+    const prep = prepHiDPI(canvas);
+    if (prep) {
+      const { ctx, W, H } = prep;
+      ctx.fillStyle = "#64748b"; ctx.font = "13px Inter, sans-serif";
+      ctx.fillText("1日予算が未設定です。設定タブで予算を入れると比較できます。", 16, H / 2);
+    }
     summary.textContent = "1日予算が未設定";
     summary.className = "kelly-sim-summary";
     return;
@@ -1546,9 +1794,8 @@ function simulateKelly(allBets, bankroll, perRaceCap) {
 }
 
 function drawKellySimChart(canvas, sim) {
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
+  const prep = prepHiDPI(canvas); if (!prep) return;
+  const { ctx, W, H } = prep;
   if (!sim.samples) {
     ctx.fillStyle = "#64748b"; ctx.font = "14px Inter, sans-serif";
     ctx.fillText("確定済みの記録がありません", 16, H / 2);
@@ -1670,9 +1917,8 @@ function renderBacktest(allBets) {
 function drawBacktestChart(canvas, allBets) {
   if (!canvas || !window.Learner?.backtest) return;
   const result = window.Learner.backtest(allBets || []);
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
+  const prep = prepHiDPI(canvas); if (!prep) return;
+  const { ctx, W, H } = prep;
   if (!result.raw.length) {
     ctx.fillStyle = "#64748b";
     ctx.font = "12px Inter, sans-serif";
@@ -1767,9 +2013,8 @@ function monthlyPnL(bets) {
 
 function drawMonthlyChart(canvas, airBets, realBets) {
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
+  const prep = prepHiDPI(canvas); if (!prep) return;
+  const { ctx, W, H } = prep;
   const mA = monthlyPnL(airBets);
   const mR = monthlyPnL(realBets);
   const months = [...new Set([...mA.keys(), ...mR.keys()])].sort();
@@ -1843,9 +2088,8 @@ function rollingHitSeries(bets, window = 20) {
 
 function drawRollingHitChart(canvas, airBets, realBets) {
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
+  const prep = prepHiDPI(canvas); if (!prep) return;
+  const { ctx, W, H } = prep;
   const sA = rollingHitSeries(airBets);
   const sR = rollingHitSeries(realBets);
   if (sA.length === 0 && sR.length === 0) {
