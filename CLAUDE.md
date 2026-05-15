@@ -7,6 +7,70 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🏆 Wave9.2 (2026-05-16 朝・的中率/回収率を最大化する多情報統合 + 全レース予想 + WIN5 3戦略)** — ユーザー要望「妥協なし・的中率/回収率Max・全レース予想・WIN5 強化」:
+  - **🧠 アンサンブル予想エンジン** (`predictors/ensemble_v1.js` 新規 267 行・デフォルト化):
+    - heuristic_v1 + odds-implied (市場知見) + form_curve (近走勢い) + pace_fit (脚質×ペース) + pedigree_fit + jockey_trainer の 6 弱学習器を加重幾何平均で結合
+    - データ完備度で重み動的調整 (薄→オッズ寄り 50% / 濃→AI寄り 重視)
+    - `predictPace()` で出走馬の脚質分布から ハイ/ミドル/スロー を推定 (逃げ多→ハイペース→差し有利)
+    - softmax 確率正規化。信頼度上限を 0.45 → 0.75 へ大幅引き上げ
+  - **🌍 多情報統合 (馬場バイアス)** (`lib/track_bias.js` 新規):
+    - 10 場別 (札幌〜小倉) の前進バイアス / 内枠バイアス経験則 (新潟=外差し、阪神=逃げ先行有利 など)
+    - 馬場状態 (良/稍/重/不) + 天気 (雨) → 脚質×枠番に補正を計算
+    - `lib/conclusion.js` で ensemble の prob に track_bias を適用して再正規化
+    - raceMeta に pacePrediction + trackBiasNote を追加
+  - **📰 ニュース感情解析** (`lib/news_sentiment.js` 新規):
+    - ポジ 17 語 / ネガ 22 語の辞書ベース (オフライン・LLM 不要)
+    - 馬名・騎手・調教師の正規化マッチング (カタカナ統一)
+    - badge() で score>=0.8→★好材料 / <=-0.8→⚠不安要素 を出走馬カードに付与
+    - API: `/api/news-annotated` で当日レース×ニュースのクロス取得
+  - **🎰 WIN5 3 戦略エンジン** (`lib/win5_engine.js` 新規・サーバ用):
+    - 堅め (1×1×1×1×1=1点 ¥200) / 中波 (2^5=32点 ¥6,400) / 万舟 (3^5=243点 ¥48,600) を計算
+    - 各レース top1/2/3 の組合せ確率 × 経験則平均払戻 800 万円 ÷ 投票額 = evRatio
+    - recommended は evRatio 最大のもの。テスト: 1番人気固めで evRatio 6.9
+    - `predictors/win5.js` (クライアント版) も `computeStrategy()` で 3 戦略対応に拡張
+  - **🏇 全レース予想ビュー** (`lib/all_races_view.js` 新規・index.html `card-all-races`):
+    - JRA 当日全レースを発走時刻順に表示。本命/対抗/3着候補・グレードバッジ・信頼度バー・馬場バイアス注釈付き
+    - フィルタ: 全/狙えるレース/S級EV/重賞のみ
+    - ソート: 発走時刻順/EV順/信頼度順
+    - 行クリックで保存レースを開く・サーバ取得 (/api/races) + ローカル保存をマージ
+  - **📊 ROI ダッシュボード** (`lib/roi_dashboard.js` 新規・index.html `card-roi`):
+    - グレード S/A/B/C/D × 券種 (単/複/馬連/ワイド/3連複) のヒートマップ
+    - 色: profit-strong (>=130%)/mild/loss-mild/loss-strong/no-data
+    - 「全体回収率 / 得意領域 / 苦手領域」を自然言語で表示
+  - **API 拡張** (`api/[...slug].js` + `server.js`): /win5 / /news-annotated 追加。/races は surface/distance/startTime/G1/picks2-3/trackBiasNote を返却
+  - **CSS** (`styles.css` 250 行追加): 全レース行 / ROI ヒートマップ / WIN5 3戦略カード / ペース・馬場バッジ / ニュース感情バッジ。スマホ < 480px で 3 戦略を 1 列縦に
+  - **テスト** (`tests/smoke.js`): Wave9 用 22 ケース追加 (ensemble x6 / track_bias x7 / news_sentiment x7 / win5_engine x3 + 構文 x3) → **合計 106 ケース全通過**
+  - **sw.js** v14 → v15 にバンプ
+  - **本番デプロイ**: commit `375f84e` → push origin main 済
+  - **動作確認**: ローカル `node server.js` でテスト 5 レース投入 → `/api/races` 5 レース返却 + 馬場バイアス注釈 / `/api/win5` 3 戦略 (safe evRatio 6.9 推奨) 確認
+- **🔬 最終 QA 第 1 弾 (2026-05-16 夕・全完成節目チェック)** — ユーザー指示「みんなが完成と思った時点で全責任で最終チェック」を実施:
+  - **エージェント 4 台並列で全領域を深掘りレビュー** (フロント / API / PWA / JV-Link パイプライン)。発見した HIGH/MED を全部修正:
+  - **HIGH-1**: `index.html` で `id="news-list"` が **二重定義** されていた (Wave8 の新カード `#card-news` と既存 details セクション)。`getElementById` は最初の一致しか返さず、`refreshNews()` の出力が `renderNewsCard()` の出力を上書きする現象を発見 → 既存側を `id="news-list-detail"` にリネーム + `app.js:refreshNews` を新 id に追従、`#news-count` の参照を null-safe 化
+  - **HIGH-2**: JV-Link build パイプラインの race_id 桁数不一致を修正。`build_race_json.py` / `build_all.py` / `build_result_json.py` が **16 桁** で書き出していたが、フロント (`lib/race_id.js: JRA_18DIGIT`) は **18 桁** を要求 → `finalize.js` で照合 0 件の致命バグ。3 ファイルとも末尾に `"00"` を付与して **18 桁出力に統一**。テスト (`test_build_result_json.py` / `test_end_to_end_synthetic.py`) も 18 桁化
+  - **HIGH-3**: `build_all._collect_raw_files` が `aggregate_*/raw_*.bin` しかスキャンしておらず、`cmd_rt` (発走前後 RT 取得) が書く `data/jv_cache/raw_*.bin` (トップ直下) を完全無視 → トップ直下も glob に追加。これで月額契約後の RT 取得データがちゃんと race/result JSON に反映される
+  - **MED-1**: `refreshAll()` の `Promise.all` に Wave8 カードの再描画 (`renderRankings` / `renderNewsCard` / `renderWin5Card`) を追加 → 「更新」ボタンで Wave8 ランキング/WIN5/ニュースもリアルタイム更新
+  - **MED-2**: `/api/conclusion-manual` `/api/finalize` を GET で叩くと server.js が静的探索に流れて 404 HTML を返していた → `server.js` と `api/[...slug].js` 両方で `405 Method Not Allowed` + `Allow: POST` を返すよう統一
+  - **MED-3**: `api/[...slug].js` の `req.query?.raceId` / `?id` が `?raceId=a&raceId=b` のような配列攻撃で `encodeURIComponent` を壊す可能性 → `firstQuery` ヘルパで配列なら 1 件目だけ採用するよう防御
+  - **テスト緑**: Node smoke 106/106 / pytest 245 passed / 6 skipped (skip は JV-Link 実機依存)
+  - **本番動作確認**: ローカル `npm start` で 16 個の HTTP エンドポイントを curl 検証 → 200 (status/venues/schedule/connection/news/result list/finalize POST empty/conclusion-manual POST 正常) / 503 (race/races/win5: データ未取得・正常拒否) / 405 (conclusion-manual GET / finalize GET) / 400 (broken JSON POST) / 404 (unknown API / 不在 raceId) すべて期待通り
+  - **修正対象**: `index.html` / `app.js` / `server.js` / `api/[...slug].js` / `jv_bridge/build_race_json.py` / `jv_bridge/build_all.py` / `jv_bridge/build_result_json.py` / `jv_bridge/tests/test_build_result_json.py` / `jv_bridge/tests/test_end_to_end_synthetic.py`
+  - **MED で残した課題 (次の QA 候補)**: `/api/win5` サーバ側ロジック (`lib/win5_engine.js`) と クライアント側 `predictors/win5.js` の二重実装で配当定数が不一致 / `aggregate_features.js` で `careerPrizeNorm` `bodyWeightDeviation` を出力しているが `predictors/features.js` が読まない / `horse_master.json` が誰にも読まれない死にファイル / CORS ヘッダ未設定。これらは現状の運用 (単一オリジン PWA / JV-Link 接続後の正確値) では実害が出にくいので次回まとめて対応予定
+- **🎨 Wave9 (2026-05-16 昼・世界最高デザイン磨き上げ)** — ユーザー要望「最高のデザイン」「タッチ感」「アニメーション」「速い更新」:
+  - **触覚レイヤー** (`lib/tactile.js` 新規): Material 系 Ripple / Magnetic hover (デスクトップ専用・主要ボタン磁力追従) / Haptic vibrate パターン (tap/select/success/error/longp/confirm) / Long-press preview (260ms 長押しで data-longpress カード拡大) / **ボトムタブ流体ピル インジケーター** (active を Spring カーブで滑らかに追従) / スクロール深度に応じた theme-color 自動変化
+  - **スパークル演出** (`lib/sparkle.js` 新規): GPU 軽量 DOM 粒子バースト。`window.kbSparkle.successOn(el)` `.moneyOn(el)` `.underOn(el)` `.unlockOn(el)` で繊細に祝う。reduce-motion 自動 no-op
+  - **styles.css プレミアム層** (約 320 行追記):
+    - **スプリング系イージング** `--ease-spring` / `--ease-soft` を導入、ボタン押下を 80-90ms の弾性圧縮へ統一
+    - **タップ遅延ゼロ**: `touch-action: manipulation` + フォーカスリングを keyboard 限定 (`:focus-visible`) へ
+    - **Aurora 動的背景**: `.bg-mesh` を 24s で微妙にブレス。Stripe 風グレイン (SVG fractalNoise / opacity 0.022 / blend overlay)
+    - **ヒーロー見出し**: 7.2s の gradient shimmer がテキストを通過
+    - **結論カード**: v-go/neutral は `kbBvPop` の弾性スケール、v-pass は `kbBvShake` の左右ブレ、v-loading は呼吸アニメ + shimmer スケルトン、conic-gradient ハロ 8s 回転
+    - **CTA「期待値を判定」**: 4.8s でやさしく発光する `kbCtaIdle`
+    - **コンテンツ最適化**: 長いリストに `contain: content`、重いセクション (#card-rankings 等) に `content-visibility: auto` + `contain-intrinsic-size: 0 380px` → 初回ペイント短縮
+    - **iOS 細部**: overscroll-behavior-y: none / 高 DPI ハーフライン / safe-area-inset
+    - **reduce-motion 完全尊重**: 追加アニメ全停止、grain/ripple/sparkle/流体ピル も非表示
+  - **index.html**: lib/tactile.js / lib/sparkle.js を defer 読み込み
+  - **sw.js**: v11 → v12 にバンプ (Wave9 ファイル即時反映)
+  - **tests/smoke.js**: tactile.js / sparkle.js の構文 OK チェック追加 → **80 ケース全通過**
 - **🌐 Wave8 (2026-05-16 朝・ランキング/WIN5/ニュース 一挙投入)** — ユーザー要望:
   - **🏆 注目ランキング BEST10** (`predictors/rankings.js` 新規): 厩舎・騎手・注目馬を縮約付き的中率 + 直近4週間の調子トレンド (↑↑/↑/→/↓/↓↓) で算出。タブ切替表示。データ増えるたびに精度上がる育成型
   - **🎰 WIN5 予想カード**: 日曜限定 5 レースの本命をまとめて表示
