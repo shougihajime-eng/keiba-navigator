@@ -1072,9 +1072,11 @@ function renderReasoning(c) {
               text: share.text,
             });
             showToast("📤 共有しました", "ok");
+            try { window.KNAchievements?.unlock("share_done"); } catch {}
           } else if (navigator.clipboard?.writeText) {
             await navigator.clipboard.writeText(share.text);
             showToast("📋 共有テキストをコピーしました", "ok");
+            try { window.KNAchievements?.unlock("share_done"); } catch {}
           } else {
             // 最終フォールバック
             const ta = document.createElement("textarea");
@@ -1083,6 +1085,7 @@ function renderReasoning(c) {
             ta.select();
             try { document.execCommand("copy"); showToast("📋 共有テキストをコピーしました", "ok"); }
             finally { ta.remove(); }
+            try { window.KNAchievements?.unlock("share_done"); } catch {}
           }
         } catch (e) {
           if (e?.name !== "AbortError") {
@@ -2968,6 +2971,37 @@ function setupEvents() {
     }
     window.KNOnboarding.reset();
     window.KNOnboarding.start();
+  });
+
+  // 🏅 バッジ一覧の描画 (設定タブ)
+  function renderBadges() {
+    const grid = $("#badges-grid");
+    const countEl = $("#badges-count");
+    if (!grid || !window.KNAchievements) return;
+    const list = window.KNAchievements.getAll();
+    const unlocked = list.filter(b => b.unlockedAt).length;
+    if (countEl) countEl.textContent = `${unlocked} / ${list.length} 取得`;
+    grid.innerHTML = list.map(b => `
+      <div class="badge ${b.unlockedAt ? "badge-on" : "badge-off"}" title="${escapeHtml(b.body)}">
+        <div class="badge-emoji">${b.emoji}</div>
+        <div class="badge-title">${escapeHtml(b.title)}</div>
+        <div class="badge-sub">${b.unlockedAt ? "取得済" : "未取得"}</div>
+      </div>
+    `).join("");
+  }
+  // 設定タブを開いた時に描画(visibilityで遅延描画)
+  const settingsTab = document.getElementById("tab-settings");
+  if (settingsTab && window.IntersectionObserver) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting && !settingsTab.hidden) renderBadges();
+      }
+    }, { threshold: 0.05 });
+    io.observe(settingsTab);
+  }
+  // タブ切替時にも描画
+  document.querySelector('.bt-btn[data-tab="settings"]')?.addEventListener("click", () => {
+    setTimeout(renderBadges, 50);
   });
 
   // 🔊 結論の自動読み上げ ON/OFF

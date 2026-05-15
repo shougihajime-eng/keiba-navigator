@@ -54,6 +54,7 @@
   <script src="lib/whatif.js" defer></script>
   <script src="lib/daily_brief.js" defer></script>
   <script src="lib/animate.js" defer></script>
+  <script src="lib/achievements.js" defer></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -643,6 +644,12 @@
           音声読み上げは Chrome / Edge / Safari で動作。<br>
           初回タップ時にブラウザの音声許可が求められることがあります。
         </p>
+      </section>
+
+      <section class="simple-card sc-info">
+        <h2 class="sc-title">🏅 達成バッジ <span id="badges-count" class="text-ink-mute text-xs"></span></h2>
+        <p class="settings-hint">アプリを使い込むと自動でバッジが解放されます。記録・的中・連勝などのマイルストーン用。</p>
+        <div id="badges-grid" class="badges-grid"></div>
       </section>
 
       <section class="simple-card sc-info">
