@@ -54,6 +54,12 @@
   <!-- ─── トースト通知 (保存・更新完了) ─── -->
   <div id="toast" class="toast" hidden></div>
 
+  <!-- ─── プルツーリフレッシュ インジケータ ─── -->
+  <div id="ptr-indicator" class="ptr-indicator" aria-hidden="true">↓</div>
+
+  <!-- ─── コンフェッティ (大勝利時) ─── -->
+  <canvas id="confetti" class="confetti-canvas" aria-hidden="true"></canvas>
+
   <!-- ─── iOS ホーム画面追加バナー (Safari & 非standalone のみ表示) ─── -->
   <div id="a2hs-banner" class="a2hs-banner" hidden>
     <div class="a2hs-icon">📲</div>
@@ -428,7 +434,10 @@
         <!-- 可視化: 累計収支ライン + グレード分布 -->
         <div id="rec-charts" class="rec-charts" hidden>
           <h3 class="pro-h3">累計収支(確定済のみ)</h3>
-          <canvas id="chart-pnl" class="rec-chart" width="640" height="180"></canvas>
+          <div class="chart-wrap">
+            <canvas id="chart-pnl" class="rec-chart" width="640" height="180"></canvas>
+            <div id="tip-pnl" class="chart-tooltip"></div>
+          </div>
           <h3 class="pro-h3">グレード分布</h3>
           <div id="grade-dist" class="grade-dist"></div>
         </div>

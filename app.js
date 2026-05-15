@@ -193,6 +193,168 @@ const _idle = (window.requestIdleCallback)
   ? (cb, opts) => window.requestIdleCallback(cb, opts || { timeout: 800 })
   : (cb) => setTimeout(cb, 1);
 
+// ─── プルツーリフレッシュ (スマホ用・引っ張ったら更新) ─────
+function setupPullToRefresh() {
+  const indicator = document.getElementById("ptr-indicator");
+  if (!indicator) return;
+  let startY = 0, currentY = 0, pulling = false;
+  const THRESH = 80; // この px 引いたら発火
+  const MAX = 130;
+  const onTouchStart = (e) => {
+    if (window.scrollY > 2) return;        // 画面上端でのみ反応
+    if (e.touches.length !== 1) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+  };
+  const onTouchMove = (e) => {
+    if (!pulling) return;
+    currentY = e.touches[0].clientY;
+    const delta = currentY - startY;
+    if (delta < 0) { reset(); return; }
+    if (delta > 8) e.preventDefault?.();
+    const pulled = Math.min(MAX, delta);
+    const ratio = Math.min(1, pulled / THRESH);
+    indicator.classList.add("visible");
+    indicator.style.transform = `translateX(-50%) translateY(${pulled - 60}px) rotate(${ratio * 180}deg)`;
+    indicator.textContent = ratio >= 1 ? "↑" : "↓";
+  };
+  const onTouchEnd = () => {
+    if (!pulling) return;
+    const delta = currentY - startY;
+    if (delta >= THRESH) {
+      indicator.classList.add("spinning");
+      indicator.textContent = "↻";
+      // 連打防止と整合させるため refreshAll を呼ぶ
+      if (typeof refreshAll === "function" && !isRefreshing) {
+        try { if (_manualMode) clearManualMode(); } catch {}
+        refreshAll().finally(() => reset());
+      } else {
+        reset();
+      }
+    } else {
+      reset();
+    }
+    pulling = false;
+  };
+  const reset = () => {
+    pulling = false;
+    indicator.classList.remove("visible", "spinning");
+    indicator.style.transform = "";
+    indicator.textContent = "↓";
+  };
+  document.addEventListener("touchstart", onTouchStart, { passive: true });
+  document.addEventListener("touchmove",  onTouchMove,  { passive: false });
+  document.addEventListener("touchend",   onTouchEnd,   { passive: true });
+  document.addEventListener("touchcancel", reset,        { passive: true });
+}
+
+// ─── コンフェッティ (大勝利時の演出・軽量自作) ─────────────
+function fireConfetti(intensity = 1) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) return;
+  const cv = document.getElementById("confetti");
+  if (!cv) return;
+  const ctx = cv.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  cv.width  = window.innerWidth  * dpr;
+  cv.height = window.innerHeight * dpr;
+  cv.style.width  = window.innerWidth  + "px";
+  cv.style.height = window.innerHeight + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const COUNT = Math.round(120 * intensity);
+  const colors = ["#fbbf24", "#34d399", "#60a5fa", "#f472b6", "#a78bfa", "#fde68a"];
+  const W = window.innerWidth, H = window.innerHeight;
+  const parts = [];
+  for (let i = 0; i < COUNT; i++) {
+    parts.push({
+      x: W / 2 + (Math.random() - 0.5) * 80,
+      y: H * 0.42,
+      vx: (Math.random() - 0.5) * 14,
+      vy: -8 - Math.random() * 6,
+      g: 0.35 + Math.random() * 0.15,
+      r: 4 + Math.random() * 5,
+      a: 1,
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.3,
+      c: colors[i % colors.length],
+    });
+  }
+  const start = performance.now();
+  const DURATION = 2200;
+  function frame(now) {
+    const t = now - start;
+    ctx.clearRect(0, 0, W, H);
+    for (const p of parts) {
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.a = Math.max(0, 1 - (t / DURATION));
+      ctx.save();
+      ctx.globalAlpha = p.a;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r * 1.6);
+      ctx.restore();
+    }
+    if (t < DURATION) requestAnimationFrame(frame);
+    else ctx.clearRect(0, 0, W, H);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ─── チャートのツールチップ (タップ/ホバー時に値を表示) ───────
+// canvas._tipData = { points: [{x, y, profit, bet, idx}], W, H, padX }
+function attachChartTooltip(canvas, tipEl) {
+  if (!canvas || !tipEl || canvas._tipBound) return;
+  canvas._tipBound = true;
+  const findNearest = (xLogical) => {
+    const data = canvas._tipData;
+    if (!data || !data.points?.length) return null;
+    let nearest = data.points[0], bestD = Math.abs(data.points[0].x - xLogical);
+    for (let i = 1; i < data.points.length; i++) {
+      const d = Math.abs(data.points[i].x - xLogical);
+      if (d < bestD) { bestD = d; nearest = data.points[i]; }
+    }
+    return nearest;
+  };
+  const showAt = (clientX) => {
+    const data = canvas._tipData;
+    if (!data) return;
+    const rect = canvas.getBoundingClientRect();
+    const cssW = rect.width || data.W;
+    const xLogical = ((clientX - rect.left) / cssW) * data.W;
+    const p = findNearest(xLogical);
+    if (!p) return;
+    const cssX = (p.x / data.W) * cssW;
+    const cssY = (p.y / data.H) * (rect.height || data.H);
+    const bet = p.bet;
+    const dt = bet?.result?.finishedAt || bet?.ts;
+    const d = dt ? new Date(dt) : null;
+    const dateStr = d ? `${d.getMonth()+1}/${d.getDate()}` : "--";
+    const sign = p.profit >= 0 ? "+" : "";
+    const profitClass = p.profit >= 0 ? "ct-val" : "ct-val neg";
+    tipEl.innerHTML = `
+      <div><span class="ct-key">${p.idx + 1}件目</span> <span class="${profitClass}">${sign}${Math.round(p.profit).toLocaleString("ja-JP")}円</span></div>
+      <div><span class="ct-key">${dateStr}</span> <span style="color:#cbd5e1">${escapeHtml((bet?.raceName || "").slice(0, 18))}</span></div>
+    `;
+    tipEl.style.left = cssX + "px";
+    tipEl.style.top  = cssY + "px";
+    tipEl.classList.add("show");
+  };
+  const hide = () => tipEl.classList.remove("show");
+  canvas.addEventListener("mousemove", e => showAt(e.clientX));
+  canvas.addEventListener("mouseleave", hide);
+  canvas.addEventListener("touchstart", e => {
+    if (e.touches.length) showAt(e.touches[0].clientX);
+  }, { passive: true });
+  canvas.addEventListener("touchmove", e => {
+    if (e.touches.length) showAt(e.touches[0].clientX);
+  }, { passive: true });
+  canvas.addEventListener("touchend", () => setTimeout(hide, 1200));
+}
+
 // ─── HiDPI 対応のキャンバス準備 (Retina でクッキリ描画) ──────
 // 全 chart 関数の冒頭で呼ぶ。初回に論理サイズを退避し、devicePixelRatio で
 // スケールアップした内部バッファを用意。論理座標で描けばボケない。
@@ -1367,15 +1529,24 @@ async function refreshAll() {
   }
 }
 
-// ─── タブ切替 (即時 + 重い処理はアイドル時に) ───────────────────
+// ─── タブ切替 (View Transitions API + 即時表示 + 重い処理はアイドル時に) ──
 function switchTab(name) {
-  // 1) 即時に表示切替 (重い描画は後回しにして体感 0ms)
-  for (const pane of $$(".tab-pane")) pane.hidden = (pane.id !== `tab-${name}`);
-  for (const b of $$(".bt-btn")) b.classList.toggle("active", b.dataset.tab === name);
-  // 触覚フィードバック (対応端末のみ)
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(6);
-  window.scrollTo(0, 0);
-  // 2) 重い再描画はアイドルで (ボタン押下 → 切替が即反応するように)
+  const apply = () => {
+    for (const pane of $$(".tab-pane")) {
+      pane.hidden = (pane.id !== `tab-${name}`);
+      pane.style.viewTransitionName = (pane.id === `tab-${name}`) ? "tabpane" : "";
+    }
+    for (const b of $$(".bt-btn")) b.classList.toggle("active", b.dataset.tab === name);
+    window.scrollTo(0, 0);
+  };
+  // 対応ブラウザは映画的なクロスフェード
+  if (document.startViewTransition) {
+    document.startViewTransition(apply);
+  } else {
+    apply();
+  }
+  // 重い再描画はアイドルで
   if (name === "record") {
     _idle(() => { try { renderRecords(); } catch {} });
     _idle(() => { autoFinalizePending().catch(() => {}); });
@@ -1550,12 +1721,121 @@ function calcStats(bets) {
   };
 }
 
+// 直近の連勝/連敗を計算 (確定済のみ・時系列順)
+function computeStreak(bets) {
+  const confirmed = bets
+    .filter(b => b.result?.won === true || b.result?.won === false)
+    .sort((a, b) => (a.result?.finishedAt || a.ts).localeCompare(b.result?.finishedAt || b.ts));
+  if (confirmed.length === 0) return { len: 0, kind: "none" };
+  const last = confirmed[confirmed.length - 1].result.won;
+  let n = 1;
+  for (let i = confirmed.length - 2; i >= 0; i--) {
+    if (confirmed[i].result.won === last) n++; else break;
+  }
+  return { len: n, kind: last ? "win" : "loss" };
+}
+
+// 最大利益・最大損失の馬券を抽出 (確定済のみ)
+function findBestWorstBets(bets) {
+  const confirmed = bets.filter(b => b.result?.won === true || b.result?.won === false);
+  if (confirmed.length === 0) return { best: null, worst: null };
+  const withProfit = confirmed.map(b => ({
+    bet: b,
+    profit: (b.result.won ? (b.result.payout || 0) : 0) - (b.amount || 0),
+  }));
+  withProfit.sort((a, b) => b.profit - a.profit);
+  return { best: withProfit[0], worst: withProfit[withProfit.length - 1] };
+}
+
+// 直近の数字を覚えておいてカウントアップさせるための辞書
+const _lastStats = { rec: { count: 0, hit: 0, rec: 0, pnl: 0 } };
+
 function renderBetStats(bets) {
   const s = calcStats(bets);
-  $("#rec-count").textContent    = s.count;
-  $("#rec-hit").textContent      = s.hitRate != null ? `${(s.hitRate*100).toFixed(0)}%` : "結果待ち";
-  $("#rec-recovery").textContent = s.recovery != null ? `${(s.recovery*100).toFixed(0)}%` : "結果待ち";
-  $("#rec-pnl").textContent      = s.confirmedCount ? fmtYen(s.pnl) : "結果待ち";
+  const cEl = $("#rec-count"), hEl = $("#rec-hit"), rEl = $("#rec-recovery"), pEl = $("#rec-pnl");
+
+  // 件数: カウントアップ
+  animateNumber(cEl, _lastStats.rec.count, s.count, { format: v => Math.round(v).toString() });
+  _lastStats.rec.count = s.count;
+
+  // 的中率
+  if (s.hitRate != null) {
+    const toPct = s.hitRate * 100;
+    animateNumber(hEl, _lastStats.rec.hit, toPct, { format: v => v.toFixed(0) + "%" });
+    _lastStats.rec.hit = toPct;
+  } else { hEl.textContent = "結果待ち"; _lastStats.rec.hit = 0; }
+
+  // 回収率: 100% 超なら緑、未満なら赤
+  if (s.recovery != null) {
+    const toPct = s.recovery * 100;
+    animateNumber(rEl, _lastStats.rec.rec, toPct, { format: v => v.toFixed(0) + "%" });
+    _lastStats.rec.rec = toPct;
+    rEl.className = "rec-stat-val " + (s.recovery >= 1.0 ? "pos" : s.confirmedCount >= 10 ? "neg" : "warn");
+  } else { rEl.textContent = "結果待ち"; rEl.className = "rec-stat-val"; _lastStats.rec.rec = 0; }
+
+  // 収支
+  if (s.confirmedCount) {
+    animateNumber(pEl, _lastStats.rec.pnl, s.pnl, {
+      format: v => (v >= 0 ? "+" : "") + Math.round(v).toLocaleString("ja-JP") + "円",
+    });
+    _lastStats.rec.pnl = s.pnl;
+    pEl.className = "rec-stat-val " + (s.pnl > 0 ? "pos" : s.pnl < 0 ? "neg" : "");
+  } else { pEl.textContent = "結果待ち"; pEl.className = "rec-stat-val"; _lastStats.rec.pnl = 0; }
+
+  // 連勝/連敗バッジ + ベスト/ワースト馬券
+  renderStreakAndHilo(bets);
+}
+
+function renderStreakAndHilo(bets) {
+  // 連勝バッジ
+  const streak = computeStreak(bets);
+  const titleHost = document.querySelector("#tab-record .hero-question");
+  if (titleHost) {
+    let badge = titleHost.querySelector(".rec-streak");
+    if (streak.len >= 2) {
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "rec-streak";
+        titleHost.appendChild(badge);
+      }
+      badge.className = "rec-streak" + (streak.kind === "loss" ? " cold" : "");
+      badge.textContent = streak.kind === "win" ? `🔥 ${streak.len}連勝中` : `🥶 ${streak.len}連敗中`;
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+
+  // ベスト/ワースト馬券をリスト直前に表示
+  const recPane = $("#rec-list-pane");
+  if (!recPane) return;
+  let hilo = recPane.querySelector(".rec-hilo-grid");
+  const { best, worst } = findBestWorstBets(bets);
+  if (!best && !worst) {
+    if (hilo) hilo.remove();
+    return;
+  }
+  if (!hilo) {
+    hilo = document.createElement("div");
+    hilo.className = "rec-hilo-grid";
+    // stats grid の直後に挿入
+    const grid = recPane.querySelector(".rec-stats-grid");
+    if (grid && grid.parentNode) grid.parentNode.insertBefore(hilo, grid.nextSibling);
+  }
+  const cell = (kind, b) => {
+    if (!b) return `<div class="rec-hilo-card ${kind}"><div class="rec-hilo-title">${kind === "best" ? "🏆 ベスト馬券" : "💧 ワースト馬券"}</div><div class="rec-hilo-meta">該当なし</div></div>`;
+    const profit = b.profit;
+    const dt = new Date(b.bet.ts);
+    const dateStr = `${dt.getMonth()+1}/${dt.getDate()}`;
+    return `
+      <div class="rec-hilo-card ${kind}">
+        <div class="rec-hilo-title">${kind === "best" ? "🏆 ベスト馬券" : "💧 ワースト馬券"}</div>
+        <div class="rec-hilo-race">${escapeHtml(b.bet.raceName || "(レース名なし)")}</div>
+        <div class="rec-hilo-amt">${profit >= 0 ? "+" : ""}${profit.toLocaleString("ja-JP")}円</div>
+        <div class="rec-hilo-meta">${dateStr} · ${escapeHtml(b.bet.target || "")} · ${b.bet.type === "real" ? "💰" : "🧪"}</div>
+      </div>
+    `;
+  };
+  hilo.innerHTML = cell("best", best) + cell("worst", worst);
 }
 
 function renderCharts(bets) {
@@ -1630,6 +1910,13 @@ function renderCharts(bets) {
   ctx.fillStyle = "#64748b";
   ctx.font = "11px Inter, sans-serif";
   ctx.fillText(`${confirmed.length}件 確定済`, padX, H - 6);
+
+  // ツールチップ用にデータ点を canvas 自身に紐付け (一度だけハンドラ登録)
+  canvas._tipData = {
+    points: series.map((v, i) => ({ x: xAt(i), y: yAt(v), profit: v, bet: confirmed[i], idx: i })),
+    W, H, padX,
+  };
+  attachChartTooltip(canvas, $("#tip-pnl"));
 
   // ─── グレード分布バー ────────────────────────────────
   const dist = $("#grade-dist");
@@ -1731,6 +2018,13 @@ function onBetActionClick(ev) {
     bet.result = { won: true,  payout: Math.round(payout), finishedAt: new Date().toISOString() };
     bet.profit = (bet.result.payout || 0) - (bet.amount || 0);
     showToast("✓ 当たりとして確定しました");
+    // 大勝利 (払戻が賭け金の 3 倍以上) ならコンフェッティ + 強い触覚
+    if (bet.amount > 0 && bet.result.payout >= bet.amount * 3) {
+      try { fireConfetti(Math.min(2, bet.result.payout / bet.amount / 4)); } catch {}
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([20, 60, 20, 60, 30]);
+    } else {
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(15);
+    }
   } else if (act === "lose") {
     if (!confirm("この馬券を「外れ」として確定します。よろしいですか?")) return;
     bet.result = { won: false, payout: 0, finishedAt: new Date().toISOString() };
@@ -2867,6 +3161,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { refreshNotifyUi(); } catch (e) { console.warn(e); }
   try { maybeShowA2HSBanner(); } catch (e) { console.warn(e); }
   try { applyUrlParams(); } catch (e) { console.warn(e); }
+  try { setupPullToRefresh(); } catch (e) { console.warn(e); }
   registerServiceWorker();
   // SW が ready になってから朝の通知判定
   if ("serviceWorker" in navigator) {

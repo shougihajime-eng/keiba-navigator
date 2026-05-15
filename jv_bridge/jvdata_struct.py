@@ -288,6 +288,266 @@ TK_TOKUUMA_LOOP = {
 }
 
 
+# ─── BR レコード (生産者マスタ) 545 バイト ────────────────
+BR_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'BR'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("breeder_code",11, 8, F_ascii),
+    Field("breeder_name_co", 19, 72, F_sjis, "生産者法人格付き名"),
+    Field("breeder_name",91, 72, F_sjis,  "生産者名"),
+    Field("name_kana", 163, 72, F_ascii),
+    Field("address",   403, 20, F_sjis,  "住所"),
+]
+
+
+# ─── BN レコード (馬主マスタ) 477 バイト ──────────────────
+BN_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'BN'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("banusi_code",11, 6, F_ascii),
+    Field("banusi_name_co",17, 64, F_sjis),
+    Field("banusi_name",81, 64, F_sjis,  "馬主名"),
+    Field("name_kana", 145, 50, F_ascii),
+    Field("fukusyoku",295, 60, F_sjis,  "服色標示"),
+]
+
+
+# ─── HN レコード (繁殖馬マスタ) 251 バイト ────────────────
+HN_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'HN'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("hansyoku_num",11, 10, F_ascii),
+    Field("ketto_num",  29, 10, F_ascii),
+    Field("del_kubun",  39, 1,  F_ascii),
+    Field("horse_name", 40, 36, F_sjis),
+    Field("name_kana",  76, 40, F_ascii),
+    Field("birth_year",196, 4, F_ascii),
+    Field("sex_code", 200, 1,  F_ascii),
+    Field("keiro",    202, 2,  F_ascii),
+    Field("hansyoku_f_num", 229, 10, F_ascii, "父繁殖番号"),
+    Field("hansyoku_m_num", 239, 10, F_ascii, "母繁殖番号"),
+]
+
+
+# ─── SK レコード (産駒マスタ) 208 バイト ──────────────────
+SK_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'SK'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("ketto_num",  11, 10, F_ascii),
+    Field("birth_date", 21, 8,  F_ascii),
+    Field("sex_code",   29, 1,  F_ascii),
+    Field("keiro",      31, 2,  F_ascii),
+    Field("breeder_code",38, 8, F_ascii),
+]
+
+
+# ─── HS レコード (競走馬市場取引価格) 200 バイト ──────────
+HS_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'HS'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("ketto_num",  11, 10, F_ascii),
+    Field("hansyoku_f_num", 21, 10, F_ascii),
+    Field("hansyoku_m_num", 31, 10, F_ascii),
+    Field("birth_year", 41, 4,  F_ascii),
+    Field("sale_code", 45, 6, F_ascii),
+    Field("sale_host_name", 51, 40, F_sjis),
+    Field("sale_name", 91, 80, F_sjis,  "市場の名称"),
+    Field("from_date",171, 8, F_ascii,  "開催期間 開始日"),
+    Field("to_date",  179, 8, F_ascii,  "開催期間 終了日"),
+    Field("barei",    187, 1, F_ascii,  "取引時年齢"),
+    Field("price",    188, 10, F_int,    "取引価格 (百円)"),
+]
+
+
+# ─── HY レコード (馬名意味由来) 123 バイト ────────────────
+HY_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'HY'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("ketto_num",  11, 10, F_ascii),
+    Field("horse_name", 21, 36, F_sjis),
+    Field("origin",     57, 64, F_sjis,  "馬名の意味由来"),
+]
+
+
+# ─── JC レコード (騎手変更) 161 バイト ────────────────────
+JC_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'JC'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("year",       11, 4,  F_ascii),
+    Field("month_day",  15, 4,  F_ascii),
+    Field("jyo_code",   19, 2,  F_ascii),
+    Field("kai_ji",     21, 2,  F_ascii),
+    Field("nichi_ji",   23, 2,  F_ascii),
+    Field("race_num",   25, 2,  F_ascii),
+    Field("happyo_time",27, 8,  F_ascii),
+    Field("horse_num",  35, 2,  F_int),
+    Field("horse_name", 37, 36, F_sjis),
+]
+
+
+# ─── TC レコード (発走時刻変更) 45 バイト ──────────────────
+TC_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'TC'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("year",       11, 4,  F_ascii),
+    Field("month_day",  15, 4,  F_ascii),
+    Field("jyo_code",   19, 2,  F_ascii),
+    Field("kai_ji",     21, 2,  F_ascii),
+    Field("nichi_ji",   23, 2,  F_ascii),
+    Field("race_num",   25, 2,  F_ascii),
+    Field("happyo_time",27, 8,  F_ascii),
+    Field("hassou_time_after", 35, 4, F_ascii, "変更後の発走時刻"),
+    Field("hassou_time_before",39, 4, F_ascii, "変更前の発走時刻"),
+]
+
+
+# ─── CC レコード (コース変更) 50 バイト ───────────────────
+CC_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'CC'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("year",       11, 4,  F_ascii),
+    Field("month_day",  15, 4,  F_ascii),
+    Field("jyo_code",   19, 2,  F_ascii),
+    Field("kai_ji",     21, 2,  F_ascii),
+    Field("nichi_ji",   23, 2,  F_ascii),
+    Field("race_num",   25, 2,  F_ascii),
+    Field("happyo_time",27, 8,  F_ascii),
+    Field("distance_after", 35, 4, F_int),
+    Field("track_after",    39, 2, F_ascii),
+    Field("distance_before",41, 4, F_int),
+    Field("track_before",   45, 2, F_ascii),
+    Field("jiyu_code",      47, 1, F_ascii, "事由コード"),
+]
+
+
+# ─── DM レコード (データマイニング・タイム予想) 303 バイト ───
+DM_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'DM'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("year",       11, 4,  F_ascii),
+    Field("month_day",  15, 4,  F_ascii),
+    Field("jyo_code",   19, 2,  F_ascii),
+    Field("kai_ji",     21, 2,  F_ascii),
+    Field("nichi_ji",   23, 2,  F_ascii),
+    Field("race_num",   25, 2,  F_ascii),
+    Field("make_hm",    27, 4,  F_ascii, "作成時刻"),
+]
+
+
+# ─── BT レコード (系統情報) 6889 バイト ───────────────────
+BT_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'BT'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("hansyoku_num",11, 10, F_ascii),
+    Field("keito_id",   21, 30, F_ascii),
+    Field("keito_name", 51, 36, F_sjis,  "系統名"),
+]
+
+
+# ─── CS レコード (コース情報) 6829 バイト ─────────────────
+CS_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'CS'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("jyo_code",   11, 2,  F_ascii),
+    Field("distance",   13, 4,  F_int),
+    Field("track_code", 17, 2,  F_ascii),
+    Field("kaishu_date",19, 8,  F_ascii, "改修年月日"),
+]
+
+
+# ─── KS レコード (騎手マスタ) 4173 バイト ─────────────────
+KS_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'KS'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("kisyu_code", 11, 5,  F_ascii),
+    Field("del_kubun",  16, 1,  F_ascii),
+    Field("issue_date", 17, 8,  F_ascii),
+    Field("del_date",   25, 8,  F_ascii),
+    Field("birth_date", 33, 8,  F_ascii),
+    Field("jockey_name",41, 34, F_sjis,  "騎手名"),
+    Field("name_kana",  109, 30, F_ascii),
+    Field("name_short", 139, 8,  F_sjis,  "騎手名略称8字"),
+    Field("name_eng",   147, 80, F_ascii),
+    Field("sex_code",   227, 1,  F_ascii),
+    Field("sikaku",     228, 1,  F_ascii),
+    Field("minarai",    229, 1,  F_ascii),
+    Field("tozai",      230, 1,  F_ascii),
+    Field("chokyosi_code", 251, 5, F_ascii),
+    Field("chokyosi_short",256, 8, F_sjis),
+]
+
+
+# ─── CH レコード (調教師マスタ) 3862 バイト ───────────────
+CH_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'CH'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("chokyosi_code", 11, 5, F_ascii),
+    Field("del_kubun",  16, 1,  F_ascii),
+    Field("issue_date", 17, 8,  F_ascii),
+    Field("del_date",   25, 8,  F_ascii),
+    Field("birth_date", 33, 8,  F_ascii),
+    Field("trainer_name",41, 34, F_sjis,  "調教師名"),
+    Field("name_kana",  75, 30, F_ascii),
+    Field("name_short", 105, 8, F_sjis,  "調教師名略称8字"),
+    Field("name_eng",   113, 80, F_ascii),
+    Field("sex_code",   193, 1, F_ascii),
+    Field("tozai",      194, 1, F_ascii),
+]
+
+
+# ─── AV レコード (出走取消・競走除外) 78 バイト ────────────
+AV_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'AV'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("year",       11, 4,  F_ascii),
+    Field("month_day",  15, 4,  F_ascii),
+    Field("jyo_code",   19, 2,  F_ascii),
+    Field("kai_ji",     21, 2,  F_ascii),
+    Field("nichi_ji",   23, 2,  F_ascii),
+    Field("race_num",   25, 2,  F_ascii),
+    Field("happyo_time",27, 8,  F_ascii),
+    Field("horse_num",  35, 2,  F_int,   "馬番"),
+    Field("horse_name", 37, 36, F_sjis,  "馬名"),
+    Field("jiyu_kubun", 73, 3,  F_ascii, "事由区分"),
+]
+
+
+# ─── RC レコード (レコードタイム) 501 バイト ──────────────
+RC_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'RC'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("rec_info_kbn",11, 1, F_ascii),
+    Field("year",       12, 4,  F_ascii),
+    Field("month_day",  16, 4,  F_ascii),
+    Field("jyo_code",   20, 2,  F_ascii),
+    Field("kai_ji",     22, 2,  F_ascii),
+    Field("nichi_ji",   24, 2,  F_ascii),
+    Field("race_num",   26, 2,  F_ascii),
+    Field("toku_num",   28, 4,  F_ascii),
+    Field("race_name",  32, 60, F_sjis),
+    Field("grade_code", 92, 1,  F_ascii),
+    Field("distance",   95, 4,  F_int),
+    Field("track_code", 99, 2,  F_ascii),
+    Field("rec_time",  102, 4,  F_ascii, "レコードタイム"),
+]
+
+
 # ─── UM レコード (馬データ) 1609 バイト ───────────────────
 # SDK JV_UM_UMA より転記。主要フィールドのみ。
 UM_FIELDS: List[Field] = [
@@ -519,6 +779,22 @@ RECORD_REGISTRY: Dict[str, List[Field]] = {
     "WE": WE_FIELDS,
     "YS": YS_FIELDS,
     "UM": UM_FIELDS,
+    "KS": KS_FIELDS,
+    "CH": CH_FIELDS,
+    "AV": AV_FIELDS,
+    "RC": RC_FIELDS,
+    "BR": BR_FIELDS,
+    "BN": BN_FIELDS,
+    "HN": HN_FIELDS,
+    "SK": SK_FIELDS,
+    "HS": HS_FIELDS,
+    "HY": HY_FIELDS,
+    "JC": JC_FIELDS,
+    "TC": TC_FIELDS,
+    "CC": CC_FIELDS,
+    "DM": DM_FIELDS,
+    "BT": BT_FIELDS,
+    "CS": CS_FIELDS,
 }
 
 
@@ -541,6 +817,22 @@ RECORD_COMPLETED: Dict[str, bool] = {
     "WE": True,
     "YS": True,
     "UM": True,
+    "KS": True,
+    "CH": True,
+    "AV": True,
+    "RC": True,
+    "BR": True,
+    "BN": True,
+    "HN": True,
+    "SK": True,
+    "HS": True,
+    "HY": True,
+    "JC": True,
+    "TC": True,
+    "CC": True,
+    "DM": True,
+    "BT": True,
+    "CS": True,
 }
 
 
