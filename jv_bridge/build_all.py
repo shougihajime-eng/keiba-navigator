@@ -59,13 +59,14 @@ def _race_id_of(rec: Dict[str, Any]) -> Optional[str]:
 
 
 def _collect_raw_files(raw_dir: Optional[Path]) -> List[Path]:
-    """対象 .bin ファイルを集める。"""
+    """対象 .bin ファイルを集める。aggregate_*_<SPEC> 全種類。"""
     out: List[Path] = []
     if raw_dir is not None:
         out.extend(sorted(raw_dir.glob("raw_*.bin")))
     else:
-        for sub in sorted(CACHE_DIR.glob("aggregate_*_RACE")):
-            out.extend(sorted(sub.glob("raw_*.bin")))
+        for sub in sorted(CACHE_DIR.glob("aggregate_*")):
+            if sub.is_dir():
+                out.extend(sorted(sub.glob("raw_*.bin")))
     return out
 
 
@@ -85,9 +86,9 @@ def parse_all(raw_paths: List[Path]) -> List[Dict[str, Any]]:
 
 
 def group_by_race(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    """race_id → {ra, se_list, o1, hr} に振り分け。
+    """race_id → {ra, se_list, o1, hr, dm_list, tk_list} に振り分け。
 
-    SE は同一 race に複数頭の出走情報があるためリスト。
+    SE/DM は同一 race に複数頭の繰り返しがあるためリスト。
     O1 / HR は通常 1 race に 1 件。
     """
     out: Dict[str, Dict[str, Any]] = {}
@@ -95,7 +96,10 @@ def group_by_race(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
         rid_full = _race_id_of(r)
         if not rid_full:
             continue
-        slot = out.setdefault(rid_full, {"ra": None, "se_list": [], "o1": None, "hr": None})
+        slot = out.setdefault(rid_full, {
+            "ra": None, "se_list": [], "o1": None, "hr": None,
+            "dm_list": [], "tk_list": [],
+        })
         rec_type = r.get("_record_id")
         if rec_type == "RA":
             slot["ra"] = r
@@ -105,6 +109,33 @@ def group_by_race(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
             slot["o1"] = r
         elif rec_type == "HR":
             slot["hr"] = r
+        elif rec_type == "DM":
+            slot["dm_list"].append(r)
+        elif rec_type == "TK":
+            slot["tk_list"].append(r)
+    return out
+
+
+def index_horse_master(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """HN レコード群 → ketto_num → 馬データ dict のインデックス。"""
+    out: Dict[str, Dict[str, Any]] = {}
+    for r in records:
+        if r.get("_record_id") != "HN":
+            continue
+        k = r.get("ketto_num") or ""
+        k = k.strip() if isinstance(k, str) else ""
+        if not k:
+            continue
+        out[k] = {
+            "ketto_num":    k,
+            "horse_name":   (r.get("horse_name") or "").strip(),
+            "name_kana":    (r.get("name_kana") or "").strip(),
+            "birth_year":   r.get("birth_year"),
+            "sex_code":     r.get("sex_code"),
+            "keiro":        r.get("keiro"),
+            "father_num":   r.get("hansyoku_f_num"),
+            "mother_num":   r.get("hansyoku_m_num"),
+        }
     return out
 
 
@@ -178,11 +209,25 @@ def main():
     groups = group_by_race(records)
     print(f"[info] race 単位グルーピング: {len(groups)} race", flush=True)
 
+    horse_master = index_horse_master(records)
+    print(f"[info] HN 馬マスタ: {len(horse_master)} 頭", flush=True)
+    if horse_master:
+        hm_path = CACHE_DIR / "horse_master.json"
+        hm_path.write_text(json.dumps(horse_master, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"[OK] horse_master.json 書き出し ({hm_path.stat().st_size} bytes)", flush=True)
+
     nr = build_races(groups)
     print(f"[OK] races/ に {nr} 件書き出し", flush=True)
 
     nres = build_results(groups)
     print(f"[OK] results/ に {nres} 件書き出し", flush=True)
+
+    # 種別別の race 数を表示
+    has_dm = sum(1 for g in groups.values() if g.get("dm_list"))
+    has_tk = sum(1 for g in groups.values() if g.get("tk_list"))
+    has_se = sum(1 for g in groups.values() if g.get("se_list"))
+    has_hr = sum(1 for g in groups.values() if g.get("hr"))
+    print(f"[info] race ごとの付随データ: DM(AI予想)={has_dm} TK(特別登録)={has_tk} SE(出走馬)={has_se} HR(払戻)={has_hr}", flush=True)
 
     return 0
 

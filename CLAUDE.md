@@ -7,6 +7,16 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🌐 Wave8 (2026-05-16 朝・ランキング/WIN5/ニュース 一挙投入)** — ユーザー要望:
+  - **🏆 注目ランキング BEST10** (`predictors/rankings.js` 新規): 厩舎・騎手・注目馬を縮約付き的中率 + 直近4週間の調子トレンド (↑↑/↑/→/↓/↓↓) で算出。タブ切替表示。データ増えるたびに精度上がる育成型
+  - **🎰 WIN5 予想カード**: 日曜限定 5 レースの本命をまとめて表示
+  - **📰 競馬ニュースカード**: Google News RSS 経由で最新 6 件
+  - sw.js: v9 → v10 にバンプ
+- **🧬 JV-Link 追加 dataspec 取得 (2026-05-16 朝)** — RACE 以外の dataspec も検証:
+  - **BLDN** → HN (馬経歴) 183 件 / **HOYU** → HY (所有) 92 件 / **MING** → DM (AI 予想) 24 件 / **SNPN** → CK (産駒) 0 件 (CK は parser 未登録)
+  - **HOSE/COMM/UMA/0B12/RCOV/OTAH/PED は JVOpen 不可** (rc=-111 unsupported)
+  - **SE/HR は JV-Link aggregate モードでは取れない設計**を確認。RT モード (発走前後の `rt --dataspec 0B14`) で per-race 取得が正規ルート
+  - build_all.py を全 aggregate 種類対応に拡張 + HN → `horse_master.json` (177 頭) を書き出すように
 - **🔧 build_all.py 新規 + 解析パイプライン完成 (2026-05-16 朝)** — JV-Link raw.bin → races/results JSON の glue を実装:
   - `jv_bridge/build_all.py`: aggregate ディレクトリの raw.bin をスキャンし、parse → RA/SE/O1/HR 別グループ化 → build_race_json.merge() / build_result_json.from_se_list() でフロント互換 JSON に変換
   - race_id は 16 桁 (年4+月日4+場2+回2+日次2+R2)
