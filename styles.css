@@ -2868,3 +2868,42 @@ button:active:not(:disabled),
   box-shadow: none;
 }
 
+/* 背景メッシュをゆっくりドリフト (アプリが生きてる感) */
+.bg-mesh {
+  background-size: 110% 110%;
+  background-position: 50% 50%;
+  animation: meshDrift 28s ease-in-out infinite alternate;
+}
+@keyframes meshDrift {
+  0%   { background-position: 30% 20%; }
+  50%  { background-position: 70% 60%; }
+  100% { background-position: 40% 80%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-mesh { animation: none; }
+}
+
+/* S級ピックの馬番に sparkle (買い候補 #1 が S grade の時のみ) */
+.big-num.color-buy {
+  position: relative;
+  overflow: hidden;
+}
+.big-num.color-buy::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 0%, transparent 40%, rgba(255,255,255,0.45) 50%, transparent 60%, transparent 100%);
+  background-size: 200% 100%;
+  background-position: -100% 0;
+  animation: bigNumShimmer 4s ease-in-out 1s infinite;
+  pointer-events: none;
+}
+@keyframes bigNumShimmer {
+  0%   { background-position: -120% 0; opacity: 0; }
+  20%  { opacity: 1; }
+  60%  { background-position: 130% 0; opacity: 0; }
+  100% { background-position: 130% 0; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .big-num.color-buy::after { animation: none; }
+}
+
