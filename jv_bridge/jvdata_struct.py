@@ -667,6 +667,93 @@ O5_FIELDS = _make_odds_fields("O5")  # 3連複
 O6_FIELDS = _make_odds_fields("O6")  # 3連単
 
 
+# ─── オッズ繰り返し領域のループ定義 ───────────────────────
+# 各オッズレコードのヘッダ末尾 (offset=40 0-origin = 41 1-origin) から繰り返し開始
+# 要素長は SDK 仕様より
+ODDS_LOOPS = {
+    # O2 (馬連): 153 通り × 13 バイト (組番4 + オッズ6 + 人気3)
+    "O2": {"offset": 40, "element_len": 13, "max_count": 153, "type": "umaren"},
+    # O3 (ワイド): 153 通り × 17 バイト (組番4 + 最低5 + 最高5 + 人気3)
+    "O3": {"offset": 40, "element_len": 17, "max_count": 153, "type": "wide"},
+    # O4 (馬単): 306 通り × 13 バイト (組番4 + オッズ6 + 人気3)
+    "O4": {"offset": 40, "element_len": 13, "max_count": 306, "type": "umatan"},
+    # O5 (3連複): 816 通り × 15 バイト (組番6 + オッズ6 + 人気3)
+    "O5": {"offset": 40, "element_len": 15, "max_count": 816, "type": "sanren"},
+    # O6 (3連単): 4896 通り × 17 バイト (組番6 + オッズ7 + 人気4)
+    "O6": {"offset": 40, "element_len": 17, "max_count": 4896, "type": "sanrentan"},
+}
+
+
+def parse_odds_element(elem: bytes, kind: str) -> Dict[str, Any]:
+    """券種別に 1 要素 (組番 + オッズ + 人気) を dict に変換。
+
+    kind: 'umaren' | 'wide' | 'umatan' | 'sanren' | 'sanrentan'
+    返り値の key:
+      umaren / umatan: {key, odds, popularity}
+      wide:            {key, odds_low, odds_high, popularity}
+      sanren / sanrentan: {key, odds, popularity}
+    """
+    from . import io_helpers as io
+    if not elem:
+        return None
+
+    if kind == "umaren" and len(elem) >= 13:
+        kumi = io.decode_ascii(elem[0:4])
+        odds = io.decode_ascii(elem[4:10])
+        ninki = io.decode_ascii(elem[10:13])
+    elif kind == "wide" and len(elem) >= 17:
+        kumi = io.decode_ascii(elem[0:4])
+        low  = io.decode_ascii(elem[4:9])
+        high = io.decode_ascii(elem[9:14])
+        ninki = io.decode_ascii(elem[14:17])
+        if io.is_data_missing(low) and io.is_data_missing(high):
+            return None
+        return {
+            "key":       _format_kumi(kumi),
+            "odds_low":  io.to_decimal(low, 1) if not io.is_data_missing(low) else None,
+            "odds_high": io.to_decimal(high, 1) if not io.is_data_missing(high) else None,
+            "popularity": io.to_int(ninki),
+        }
+    elif kind == "umatan" and len(elem) >= 13:
+        kumi = io.decode_ascii(elem[0:4])
+        odds = io.decode_ascii(elem[4:10])
+        ninki = io.decode_ascii(elem[10:13])
+    elif kind == "sanren" and len(elem) >= 15:
+        kumi = io.decode_ascii(elem[0:6])
+        odds = io.decode_ascii(elem[6:12])
+        ninki = io.decode_ascii(elem[12:15])
+    elif kind == "sanrentan" and len(elem) >= 17:
+        kumi = io.decode_ascii(elem[0:6])
+        odds = io.decode_ascii(elem[6:13])
+        ninki = io.decode_ascii(elem[13:17])
+    else:
+        return None
+
+    if io.is_data_missing(odds):
+        return None
+    return {
+        "key":        _format_kumi(kumi),
+        "odds":       io.to_decimal(odds, 1),
+        "popularity": io.to_int(ninki),
+    }
+
+
+def _format_kumi(raw: str) -> str:
+    """組番文字列を '1-3' '1-3-6' '6-3-1' のような可読形式に変換。
+    馬連/ワイドは 4 桁 (2 桁 × 2)、3 連複/3 連単は 6 桁 (2 桁 × 3)。
+    """
+    if not raw or not raw.isdigit():
+        return raw or ""
+    if len(raw) % 2 != 0:
+        return raw
+    nums = []
+    for i in range(0, len(raw), 2):
+        n = int(raw[i:i+2])
+        if n > 0:
+            nums.append(str(n))
+    return "-".join(nums) if nums else ""
+
+
 # ─── HC レコード (ハロンタイム速報・坂路調教) 60 バイト ────
 # SDK JV_HC_HANRO より転記。馬体重ではなく「坂路調教でのハロンタイム」。
 HC_FIELDS: List[Field] = [
