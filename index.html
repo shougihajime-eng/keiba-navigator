@@ -128,6 +128,11 @@
             JRA公式の <a href="https://www.jra.go.jp/keiba/" target="_blank" rel="noopener">オッズ画面</a> を見ながら、各馬を 1 行ずつ入力してください。<br>
             形式: <code>馬番 馬名 オッズ 人気 前走着順</code>(順不同・空白／カンマ区切り)
           </p>
+          <div class="mi-quickbar">
+            <button id="mi-paste"  type="button" class="mi-quickbtn">📋 クリップボードから貼り付け</button>
+            <button id="mi-sample" type="button" class="mi-quickbtn">📝 サンプルを入れる</button>
+            <button id="mi-clear"  type="button" class="mi-quickbtn mi-quickbtn-danger">🗑 入力を消す</button>
+          </div>
           <textarea id="mi-textarea" rows="7" spellcheck="false" inputmode="text" autocapitalize="none" placeholder="1 ディープ 3.2 1 1
 2 オルフェ 5.5 2 3
 3 キタサン 8.0 3 2
@@ -696,7 +701,11 @@
   <!-- ═══════════ ボトムタブ ═══════════ -->
   <nav class="bottom-tabs" id="bottom-tabs">
     <button class="bt-btn active" data-tab="home"><span class="bt-icon">🏠</span><span class="bt-label">ホーム</span></button>
-    <button class="bt-btn" data-tab="record"><span class="bt-icon">📋</span><span class="bt-label">記録</span></button>
+    <button class="bt-btn" data-tab="record">
+      <span class="bt-icon">📋</span>
+      <span class="bt-label">記録</span>
+      <span id="bt-record-badge" class="bt-badge" hidden>0</span>
+    </button>
     <button class="bt-btn" data-tab="settings"><span class="bt-icon">💼</span><span class="bt-label">設定</span></button>
   </nav>
 

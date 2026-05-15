@@ -7,6 +7,22 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🚀 妥協なし総合拡張 (2026-05-15 朝)** — 「最高のものを作れ」指示で 1 ターン完走:
+  - **33 種類のレコードに対応** (RA/SE/O1-O6/HR/JG/TK/HC/WC/WH/WE/YS/UM/KS/CH/AV/RC/BR/BN/HN/SK/HS/HY/JC/TC/CC/DM/BT/CS)
+  - **O2-O6 オッズ繰り返し領域** の parse_odds_element + 5 券種対応 (馬連/ワイド/馬単/3連複/3連単)
+  - **TK の TOKUUMA_INFO ループ** (最大 300 頭/レース)
+  - **WH の BATAIJYU_INFO ループ** (1 頭 45 バイト × 18 頭)
+  - **build_race_json** に WH/UM/AV/JC/CC/TC 統合関数を追加 (apply_wh / apply_um / apply_av / apply_jc / apply_cc / apply_tc)
+  - **build_result_json.from_se_list** で HR が無くても SE の確定着順から結果データを組立
+  - **aggregate_features** に累計賞金 (careerPrizeJpy/Norm) と馬体重偏差 (bodyWeightDeviation) を追加
+  - **scripts/fetch_tomorrow.py** が 9 種類の dataspec (0B31/0B14/0B15/0B16/0B17/0B20/0B30/0B11/0B12) を順次取得
+  - **scripts/register_scheduler.ps1 + 自動実行を登録.bat** で土曜・日曜 8:30 自動実行登録
+  - **smoke test 追加**: 33 レコード × 5 観点 + 共通 2 = **pytest 245 通過 / 6 skipped**
+- **🏗️ JV-Link 接続成功 (2026-05-15)** — JRA-VAN 開発者向け試用機能で実データ取得実証:
+  - JVInit OK / JVOpen 6 ファイルダウンロード / JVRead 522 レコード取得
+  - jv_fetch.py: JVRead の戻り値タプル 3/4 両対応 + rc=-1 を正常終了として扱う改修
+  - dataspec='RACE' 'TOKU' 'SLOP' 'WOOD' 'YSCH' で JG/TK/HC/WC/YS の実データ流入確認
+  - 明日 5/16 のレース ID 37 件 (新潟/東京/京都) を `data/jv_cache/tomorrow_races.json` に保存
 - **📘 仕様書転記完了 (2026-05-15)** — JRA-VAN 開発者登録 (無料) → SDK Ver4.9.0.2 ダウンロード →
   C# 構造体 `JV-Data構造体/C#版/JVData_Struct.cs` から RA/SE/O1/HR の全 offset/length を
   Python 側 `jvdata_struct.py` に**正式転記**:

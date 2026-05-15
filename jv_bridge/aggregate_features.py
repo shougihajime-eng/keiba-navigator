@@ -322,8 +322,20 @@ def build_features_json(races: List[Dict[str, Any]], stats: Dict[str, Any]) -> D
             # weightChange (馬体重前走比)、daysFromLastRace は SE 個別フィールドから取れる
             if isinstance(h.get("weight_diff"), (int, float)):
                 feat["weightChange"] = h["weight_diff"]
-            # daysFromLastRace / last3F / bestTime / pedigreeSurfaceAff / trainingScore
-            # は仕様書転記後に SE / UM レコードから抽出する (現状未実装)
+
+            # UM (馬データ) 由来の特徴量: 累計賞金 (apply_um で merge 済の前提)
+            if isinstance(h.get("honsyo_heichi_ruikei"), (int, float)):
+                # 累計賞金は百円単位なので円に変換しつつ log で正規化
+                yen = int(h["honsyo_heichi_ruikei"]) * 100
+                feat["careerPrizeJpy"] = yen
+                # 1000万円を基準に 0..1 程度の特徴量化 (log scale)
+                import math
+                feat["careerPrizeNorm"] = round(min(1.5, math.log10(max(1, yen / 1e7) + 1) / 2), 4)
+
+            # body_weight は当日の馬体重 (450kg 中心の偏差として正規化)
+            if isinstance(h.get("body_weight"), (int, float)):
+                feat["bodyWeight"] = h["body_weight"]
+                feat["bodyWeightDeviation"] = round((h["body_weight"] - 450) / 50, 3)
 
             if feat:
                 per_horse[str(num)] = feat

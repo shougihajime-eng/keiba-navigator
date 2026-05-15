@@ -268,6 +268,77 @@ def build(hr: Dict[str, Any],
     }
 
 
+def from_se_list(ra: Dict[str, Any],
+                 se_list: List[Dict[str, Any]],
+                 hr: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    """SE レコード群から results 配列を組み立て、HR (オプション) で payouts を合体する。
+
+    SE の `kakutei_jyuni` (確定着順) と `time` (走破タイム) と `horse_num` `horse_name` から
+    results: [{rank, number, name, time}] を生成する。HR が無くても着順データが組める。
+
+    Returns:
+      lib/finalize.js 互換の results JSON dict。失敗時は None。
+    """
+    if not ra or not isinstance(se_list, list):
+        return None
+    race_id = None
+    if ra:
+        parts = [str(ra.get(k) or "") for k in
+                 ("year","month_day","jyo_code","kai_ji","nichi_ji","race_num")]
+        if all(parts):
+            race_id = "".join(parts)
+    if not race_id:
+        return None
+
+    # 着順順に並べる
+    results_raw = []
+    for se in se_list:
+        rank = se.get("kakutei_jyuni")
+        num  = se.get("horse_num")
+        if not isinstance(rank, int) or rank <= 0:
+            continue
+        if not isinstance(num, int) or num <= 0:
+            continue
+        results_raw.append({
+            "rank":   rank,
+            "number": num,
+            "name":   se.get("horse_name"),
+            "time":   se.get("time"),
+            "jockey": se.get("jockey_name"),
+            "popularity": se.get("popularity"),
+            "win_odds":   se.get("win_odds"),
+        })
+    results_raw.sort(key=lambda r: r["rank"])
+
+    # HR がある場合は payouts も組み立て
+    payouts: Dict[str, Any] = {}
+    if hr:
+        # HR が build() を通って payouts 既に整形済みならそれを使う。
+        # 生 dict (parse_hr_payouts の戻り値形式) なら _shape_payouts に渡す。
+        if hr.get("payouts"):
+            payouts = hr["payouts"]
+        elif isinstance(hr.get("_raw"), (bytes, bytearray)):
+            parsed = parse_hr_payouts(hr["_raw"])
+            payouts = _shape_payouts(parsed)
+
+    # 単勝払戻を 1 着馬に attach
+    tan_amount = (payouts.get("tan") or {}).get("amount") if isinstance(payouts.get("tan"), dict) else None
+    if tan_amount is not None:
+        for r in results_raw:
+            if r["rank"] == 1:
+                r["tan_payout"] = tan_amount
+                break
+
+    return {
+        "race_id":    race_id,
+        "race_name":  ra.get("race_name"),
+        "finishedAt": datetime.now(timezone.utc).isoformat(),
+        "results":    results_raw,
+        "payouts":    payouts,
+        "source":     "jv_link",
+    }
+
+
 def write(results_json: Dict[str, Any]) -> Optional[Path]:
     if not results_json or not results_json.get("race_id"):
         return None

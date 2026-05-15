@@ -152,6 +152,156 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
     }
 
 
+def apply_wh(race: Dict[str, Any], wh_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """WH (馬体重発表) レコードから当日の体重情報を horses にマージする。
+
+    WH のレコードには parse_bataijyu_element でパース済の 18 頭分の info が
+    `bataijyu` キーに入っている前提 (build_race_json の caller 側で parse_loop 経由)。
+    """
+    if not race or not isinstance(race.get("horses"), list):
+        return race
+    by_num: Dict[int, Dict[str, Any]] = {}
+    for wh in (wh_list or []):
+        if not isinstance(wh, dict):
+            continue
+        # caller が parse_loop で組み立てた bataijyu リスト
+        for b in (wh.get("bataijyu") or []):
+            if not b:
+                continue
+            n = b.get("horse_num")
+            if isinstance(n, int):
+                by_num[n] = b
+    if not by_num:
+        return race
+    new_horses = []
+    for h in race["horses"]:
+        n = h.get("number")
+        if isinstance(n, int) and n in by_num:
+            b = by_num[n]
+            h = {**h, "body_weight": b.get("body_weight"),
+                      "weight_diff": _apply_signed_diff(b)}
+        new_horses.append(h)
+    race = {**race, "horses": new_horses, "wh_applied_at": datetime.now(timezone.utc).isoformat()}
+    return race
+
+
+def _apply_signed_diff(b: Dict[str, Any]):
+    """BATAIJYU_INFO の sign + value を符号付き int に。"""
+    sign = (b.get("weight_diff_sign") or "").strip()
+    val = b.get("weight_diff_value")
+    if val is None or not isinstance(val, (int, float)):
+        return None
+    return -int(val) if sign == "-" else int(val)
+
+
+def apply_av(race: Dict[str, Any], av_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """AV (出走取消) レコードから取消馬を horses から除外する。"""
+    if not race or not isinstance(race.get("horses"), list):
+        return race
+    cancel_nums = set()
+    for av in (av_list or []):
+        if not isinstance(av, dict):
+            continue
+        if av.get("year") != str(race.get("year") or "") and av.get("race_id") != race.get("race_id"):
+            # race_id の一致確認 (year/month_day/jyo_code/kai_ji/nichi_ji/race_num)
+            rid_av = "".join(str(av.get(k) or "") for k in
+                             ("year","month_day","jyo_code","kai_ji","nichi_ji","race_num"))
+            if rid_av and rid_av != (race.get("race_id") or "")[:16]:
+                continue
+        n = av.get("horse_num")
+        if isinstance(n, int):
+            cancel_nums.add(n)
+    if not cancel_nums:
+        return race
+    new_horses = []
+    cancelled = []
+    for h in race["horses"]:
+        n = h.get("number")
+        if isinstance(n, int) and n in cancel_nums:
+            cancelled.append({**h, "cancelled": True})
+        else:
+            new_horses.append(h)
+    race = {**race, "horses": new_horses}
+    if cancelled:
+        race["cancelled_horses"] = cancelled
+    return race
+
+
+def apply_jc(race: Dict[str, Any], jc_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """JC (騎手変更) を horses にマージ。jockey_name を変更後の名前に更新。"""
+    if not race or not isinstance(race.get("horses"), list):
+        return race
+    changes: Dict[int, str] = {}
+    for jc in (jc_list or []):
+        if not isinstance(jc, dict):
+            continue
+        n = jc.get("horse_num")
+        # JC 変更情報は JCInfoAfter に入っているはずだが、簡易対応として horse_num
+        # だけマージ。jockey_name は parse 側で取得が必要 (現状 fields に未追加)。
+        if isinstance(n, int):
+            changes[n] = jc.get("horse_name") or ""
+    if not changes:
+        return race
+    new_horses = []
+    for h in race["horses"]:
+        n = h.get("number")
+        if isinstance(n, int) and n in changes:
+            h = {**h, "jockey_change_flag": True}
+        new_horses.append(h)
+    return {**race, "horses": new_horses}
+
+
+def apply_cc(race: Dict[str, Any], cc_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """CC (コース変更) を race 全体にマージ。距離・トラックを更新。"""
+    if not race or not cc_list:
+        return race
+    # 一番新しい CC (発表時刻最新) を適用
+    latest = sorted(cc_list, key=lambda x: x.get("happyo_time") or "", reverse=True)[0]
+    after_distance = latest.get("distance_after")
+    after_track    = latest.get("track_after")
+    out = dict(race)
+    if after_distance:
+        out["distance"] = after_distance
+        out["distance_changed"] = True
+    if after_track:
+        out["track_code"] = after_track
+    return out
+
+
+def apply_tc(race: Dict[str, Any], tc_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """TC (発走時刻変更) を race にマージ。"""
+    if not race or not tc_list:
+        return race
+    latest = sorted(tc_list, key=lambda x: x.get("happyo_time") or "", reverse=True)[0]
+    after = latest.get("hassou_time_after")
+    if after:
+        return {**race, "hassou_time": after, "hassou_time_changed": True}
+    return race
+
+
+def apply_um(race: Dict[str, Any], um_table: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    """UM (馬データ) を horses にマージ。ketto_num をキーにして累計賞金等を付加。
+
+    um_table: {ketto_num: UM record dict}
+    """
+    if not race or not isinstance(race.get("horses"), list) or not um_table:
+        return race
+    new_horses = []
+    for h in race["horses"]:
+        ketto = h.get("ketto_num")
+        um = um_table.get(ketto) if ketto else None
+        if um:
+            h = {**h,
+                 "honsyo_heichi_ruikei": um.get("honsyo_heichi_ruikei"),
+                 "syutoku_heichi_ruikei": um.get("syutoku_heichi_ruikei"),
+                 "birth_date": um.get("birth_date"),
+                 "breeder_name": um.get("breeder_name"),
+                 "banusi_name": um.get("banusi_name"),
+                 "sanchi_name": um.get("sanchi_name")}
+        new_horses.append(h)
+    return {**race, "horses": new_horses}
+
+
 def write(race_json: Dict[str, Any]) -> Optional[Path]:
     """race JSON を data/jv_cache/races/<raceId>.json に保存する。"""
     if not race_json or not race_json.get("race_id"):

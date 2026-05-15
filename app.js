@@ -193,6 +193,39 @@ const _idle = (window.requestIdleCallback)
   ? (cb, opts) => window.requestIdleCallback(cb, opts || { timeout: 800 })
   : (cb) => setTimeout(cb, 1);
 
+// ─── 記録タブの「結果待ち N件」バッジ更新 ─────────────────
+function updateRecordTabBadge() {
+  const badge = document.getElementById("bt-record-badge");
+  if (!badge) return;
+  try {
+    const store = loadStore();
+    const pending = (store.bets || []).filter(b =>
+      b.dataSource !== "dummy"
+      && !(b.result?.won === true || b.result?.won === false)
+    ).length;
+    if (pending > 0) {
+      badge.hidden = false;
+      badge.textContent = pending > 99 ? "99+" : String(pending);
+    } else {
+      badge.hidden = true;
+    }
+  } catch {}
+}
+
+// ─── ヘッダのスクロール時 micro-shift (Apple っぽい上品さ) ──
+function setupScrollPolish() {
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      document.body.classList.toggle("scrolled", window.scrollY > 8);
+      ticking = false;
+    });
+  };
+  document.addEventListener("scroll", onScroll, { passive: true });
+}
+
 // ─── プルツーリフレッシュ (スマホ用・引っ張ったら更新) ─────
 function setupPullToRefresh() {
   const indicator = document.getElementById("ptr-indicator");
@@ -1660,6 +1693,7 @@ function recordBet(kind /* 'air' | 'real' */) {
     // 記録タブ・ホームを即時リフレッシュ
     try { renderAiTrack(); } catch {}
     try { renderRecords(); } catch {}
+    try { updateRecordTabBadge(); } catch {}
   }
 }
 
@@ -2677,6 +2711,37 @@ function setupEvents() {
     miTa.addEventListener("input", updateLive);
     miTa.addEventListener("paste", () => setTimeout(updateLive, 50));
     updateManualLivePreview(miTa.value);
+
+    // 📋 クリップボードから貼り付け (Permissions API 経由・失敗時は execCommand fallback)
+    $("#mi-paste")?.addEventListener("click", async () => {
+      try {
+        const txt = await navigator.clipboard.readText();
+        if (!txt) { showToast("クリップボードが空です", "warn"); return; }
+        miTa.value = txt;
+        updateManualLivePreview(miTa.value);
+        showToast("📋 貼り付けました", "ok");
+        miTa.focus();
+      } catch (e) {
+        showToast("貼り付けに失敗しました。手動で⌘V / Ctrl+V を試してください", "warn");
+      }
+    });
+
+    // 📝 サンプル入力
+    $("#mi-sample")?.addEventListener("click", () => {
+      miTa.value = "1 ディープ 3.2 1 1\n2 オルフェ 5.5 2 3\n3 キタサン 8.0 3 2\n4 サトノ 12.0 4 5\n5 グランプリ 25.0 5 8\n6 ハジメ 60.0 6 10";
+      updateManualLivePreview(miTa.value);
+      showToast("📝 サンプルを入れました", "ok");
+      miTa.focus();
+    });
+
+    // 🗑 入力消去
+    $("#mi-clear")?.addEventListener("click", () => {
+      if (!miTa.value.trim()) return;
+      if (!confirm("入力を全部消します。よろしいですか?")) return;
+      miTa.value = "";
+      updateManualLivePreview("");
+      miTa.focus();
+    });
   }
 
   // 保存レースの全消去
@@ -3167,10 +3232,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { renderRecords();  } catch (e) { console.warn(e); }
   try { renderAiTrack();  } catch (e) { console.warn(e); }
   try { renderSavedRacesList(); } catch (e) { console.warn(e); }
+  try { updateRecordTabBadge(); } catch (e) { console.warn(e); }
   try { refreshNotifyUi(); } catch (e) { console.warn(e); }
   try { maybeShowA2HSBanner(); } catch (e) { console.warn(e); }
   try { applyUrlParams(); } catch (e) { console.warn(e); }
   try { setupPullToRefresh(); } catch (e) { console.warn(e); }
+  try { setupScrollPolish(); } catch (e) { console.warn(e); }
   registerServiceWorker();
   // SW が ready になってから朝の通知判定
   if ("serviceWorker" in navigator) {

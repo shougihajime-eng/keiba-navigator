@@ -171,14 +171,26 @@ button, input, select, textarea, label, a {
    接続状態バナー (常時表示・最上部)
    ═══════════════════════════════════════════════════════════ */
 .conn-banner {
-  display: flex; align-items: center; gap: var(--sp-3);
-  padding: 9px 14px;
-  font-size: var(--fs-sm); line-height: 1.4;
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 14px;                                /* 邪魔にならない高さ */
+  font-size: var(--fs-xs); line-height: 1.35;
   border-bottom: 1px solid var(--line-1);
   position: sticky; top: 0; z-index: 70;
   backdrop-filter: saturate(150%) blur(16px);
   -webkit-backdrop-filter: saturate(150%) blur(16px);
   letter-spacing: 0.005em;
+  transition: padding 240ms var(--ease-out), font-size 240ms var(--ease-out);
+}
+/* 接続済み・無料モードは「シングルライン・極薄」で邪魔にならない */
+.conn-banner.conn-connected,
+.conn-banner.conn-free {
+  padding: 3px 14px;
+}
+.conn-banner.conn-connected .conn-sub,
+.conn-banner.conn-free      .conn-sub { display: none; }
+.conn-banner.conn-connected .conn-title,
+.conn-banner.conn-free      .conn-title {
+  font-weight: 700; font-size: var(--fs-xs);
 }
 .conn-banner .conn-dot {
   width: 9px; height: 9px;
@@ -241,8 +253,22 @@ button, input, select, textarea, label, a {
 .conn-manual .conn-title { color: #ddd6fe; }
 .conn-manual .conn-sub   { color: rgba(237,233,254,0.78); }
 
-/* ヘッダーは接続バナーの下に来るので sticky 位置を調整 */
-header.sticky { top: 50px; }
+/* ヘッダーは接続バナーの下に来るので sticky 位置を調整 (接続/無料時は薄い) */
+header.sticky { top: 28px; }
+@media (min-width: 600px) { header.sticky { top: 30px; } }
+/* スクロール時に少し縮んで frosted 強く */
+header.sticky {
+  transition: padding 220ms var(--ease-out), background 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
+}
+body.scrolled header.sticky {
+  background: rgba(10, 14, 26, 0.94) !important;
+  backdrop-filter: saturate(180%) blur(28px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.32);
+}
+body.scrolled header.sticky > div:first-child {
+  padding-top: 7px; padding-bottom: 7px;
+}
 
 /* ─── 質問見出し (Hero question) ─── */
 .hero-question {
@@ -1211,6 +1237,27 @@ details[open] .caret { transform: rotate(180deg); }
 }
 .bt-icon { font-size: 22px; line-height: 1; transition: transform var(--t-mid) var(--ease-out); }
 .bt-label { letter-spacing: 0.06em; }
+.bt-btn { position: relative; }
+.bt-badge {
+  position: absolute;
+  top: 6px; right: calc(50% - 26px);
+  min-width: 16px; height: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f87171, #dc2626);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(220,38,38,0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+  animation: badgeIn 320ms var(--ease-out) backwards;
+}
+@keyframes badgeIn {
+  0%   { opacity: 0; transform: scale(0.3); }
+  60%  { transform: scale(1.18); }
+  100% { opacity: 1; transform: scale(1); }
+}
 
 /* ─── 記録タブ ─── */
 .tab-pane { min-height: calc(100vh - 200px); }
@@ -2550,6 +2597,28 @@ button:active:not(:disabled),
 @media (max-width: 480px) {
   .mi-live-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* 貼り付け / サンプル / 消去のクイックバー */
+.mi-quickbar {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 8px 0;
+}
+.mi-quickbtn {
+  flex: 1; min-width: 110px;
+  padding: 7px 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out), transform 140ms var(--ease-out);
+}
+.mi-quickbtn:hover { background: rgba(255,255,255,0.10); border-color: var(--line-3); }
+.mi-quickbtn:active { transform: scale(0.97); }
+.mi-quickbtn-danger { color: var(--acc-danger-2); border-color: var(--acc-danger-line); }
+.mi-quickbtn-danger:hover { background: var(--acc-danger-soft); }
 
 /* ═══════════════════════════════════════════════════════════
    ヒーロー統計 (記録タブ — 数字を「主役」に押し上げる)
