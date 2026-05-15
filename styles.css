@@ -3977,3 +3977,27 @@ button:active:not(:disabled),
   background: #f4f7fb; border-radius: 8px;
 }
 
+
+/* ─── 🎰 WIN5 サマリ拡張 ──────────────────────────────────── */
+.w5-summary{
+  margin-top: 10px; padding: 12px 14px;
+  background: linear-gradient(180deg, #fff 0%, #f0fbf5 100%);
+  border: 1px solid #b9e2cd; border-radius: 12px;
+}
+.w5-summary-row{
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 6px 0; border-bottom: 1px solid #e3f0e8; font-size: 13px;
+}
+.w5-summary-row:last-of-type{ border-bottom: none; }
+.w5-summary-label{ color: #4a8a6c; font-weight: 600; }
+.w5-summary-value{ color: #1a5535; font-weight: 700; }
+.w5-verdict{
+  margin-top: 10px; padding: 10px 12px;
+  text-align: center; font-weight: 800; font-size: 14px; border-radius: 10px;
+  background: #f4f4f4; color: #4a4a4a;
+}
+.w5-verdict[data-kind="strong"]{ background: linear-gradient(135deg, #ffe181, #f7c64a); color: #5a3f06; }
+.w5-verdict[data-kind="go"]{     background: #d4f4e0; color: #1a6e4c; }
+.w5-verdict[data-kind="wait"]{   background: #fff4d8; color: #856820; }
+.w5-verdict[data-kind="skip"]{   background: #f0e3e3; color: #883333; }
+.w5-alt{ color: #5a8870; font-size: 11px; font-weight: 500; }

@@ -45,6 +45,7 @@
   <script src="storage.js"></script>
   <script src="predictors/learner.js"></script>
   <script src="predictors/rankings.js"></script>
+  <script src="predictors/win5.js"></script>
   <script src="lib/csv_import.js"></script>
   <script src="lib/kelly.js"></script>
   <script src="lib/glossary.js" defer></script>
@@ -184,8 +185,27 @@
           <h2 class="w5-title">🎰 WIN5 予想</h2>
           <span id="win5-note" class="w5-note"></span>
         </div>
-        <p class="w5-hint">日曜限定 5 レースの本命をまとめて表示。AI 補正後の期待値 (EV) 順。</p>
+        <p class="w5-hint">日曜限定 5 レースの本命をまとめて表示。連勝確率と推奨買い目を AI が自動計算。</p>
         <ol id="win5-list" class="w5-list"></ol>
+        <div id="win5-summary" class="w5-summary" hidden>
+          <div class="w5-summary-row">
+            <span class="w5-summary-label">5連勝確率</span>
+            <span id="win5-prob" class="w5-summary-value">--</span>
+          </div>
+          <div class="w5-summary-row">
+            <span class="w5-summary-label">想定配当 (フェア)</span>
+            <span id="win5-payout" class="w5-summary-value">--</span>
+          </div>
+          <div class="w5-summary-row">
+            <span class="w5-summary-label">フォーメーション</span>
+            <span id="win5-formation" class="w5-summary-value">--</span>
+          </div>
+          <div class="w5-summary-row">
+            <span class="w5-summary-label">推奨購入</span>
+            <span id="win5-cost" class="w5-summary-value">--</span>
+          </div>
+          <div id="win5-verdict" class="w5-verdict">--</div>
+        </div>
       </section>
 
       <!-- 📰 競馬ニュース -->

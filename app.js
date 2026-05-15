@@ -1440,49 +1440,92 @@ async function renderWin5Card() {
   if (!card) return;
   const list = document.getElementById("win5-list");
   const note = document.getElementById("win5-note");
+  const summary = document.getElementById("win5-summary");
   if (!list) return;
 
-  // WIN5 対象レースは「日曜の限定 5 レース」。JRA-VAN から取れるまでは
-  // 既存の保存済レースから直近の日曜 5 件を WIN5 候補として扱う。
   const saved = loadSavedRaces();
   const today = new Date();
   const dow = today.getDay();
-  // 日曜なら今日、それ以外なら次の日曜まで何日かを表示
   const dayLabel = dow === 0 ? "今日 (日曜)"
     : dow === 6 ? "明日 (日曜)"
     : `次の日曜 (あと ${(7 - dow) % 7} 日)`;
 
-  // 全保存レースから「日曜判定」のものに絞る
+  // WIN5 候補: 日曜開催レース優先・無ければ最近の保存レース
   const sundayRaces = saved.filter(r => {
     const t = new Date(r.createdAt || 0);
     return t.getDay() === 0;
   });
-
-  let candidates = sundayRaces.length >= 5 ? sundayRaces.slice(0, 5) : saved.slice(0, 5);
+  const candidates = (sundayRaces.length >= 5 ? sundayRaces : saved).slice(0, 5);
 
   if (!candidates.length) {
-    list.innerHTML = `<li class="w5-empty">WIN5 対象レースのデータ取得待ち。<br>JV-Link から日曜開催 5 レース分の出走情報が届いたら自動で予想が並びます。</li>`;
+    list.innerHTML = `<li class="w5-empty">WIN5 対象レースのデータ取得待ち。<br>日曜開催 5 レース分の判定を保存すると自動で予想が並びます。<br>(手動入力モードで 5 レース判定 → 各レースを保存)</li>`;
     if (note) note.textContent = `予定: ${dayLabel}`;
+    if (summary) summary.hidden = true;
     card.hidden = false;
     return;
   }
 
+  // Win5 モジュールで本格計算
+  let win5 = null;
+  if (window.Win5) {
+    const conclusions = candidates.map(r => r.conclusion).filter(Boolean);
+    try { win5 = window.Win5.compute(conclusions); } catch (e) { console.warn("Win5 compute err", e); }
+  }
+
+  // レース別の行表示
   const rows = candidates.slice(0, 5).map((r, i) => {
-    const top = r.conclusion?.picks?.[0];
+    const leg = win5?.legs?.[i];
+    const top = leg?.top || r.conclusion?.picks?.[0];
     const horse = top ? `${top.number || "?"} ${top.name || ""}` : "予想未確定";
-    const evPct = top && Number.isFinite(top.ev)
-      ? `EV ${((top.ev - 1) * 100).toFixed(0)}%`
+    const probPct = leg && Number.isFinite(leg.probTop)
+      ? `${(leg.probTop * 100).toFixed(0)}%`
       : "—";
+    const altText = (leg?.alt?.length) ? `対抗: ${leg.alt.map(a => a.number).filter(Boolean).join(",")}` : "";
     return `<li class="w5-row">
       <span class="w5-leg">第${i + 1}R</span>
       <span class="w5-race">${escapeHtml(r.raceName || r.conclusion?.raceName || "レース" + (i + 1))}</span>
-      <span class="w5-horse">本命: ${escapeHtml(horse)}</span>
-      <span class="w5-ev">${evPct}</span>
+      <span class="w5-horse">${escapeHtml(horse)}${altText ? `<br><small class="w5-alt">${altText}</small>` : ""}</span>
+      <span class="w5-ev">${probPct}</span>
     </li>`;
   }).join("");
   list.innerHTML = rows;
-  if (note) note.textContent = `${dayLabel} の WIN5 候補 (保存済レースから自動抽出)`;
+  if (note) note.textContent = `${dayLabel} の WIN5 候補 (保存済 ${candidates.length} レースから)`;
+
+  // サマリ
+  if (summary && win5) {
+    summary.hidden = false;
+    const probEl = document.getElementById("win5-prob");
+    const payoutEl = document.getElementById("win5-payout");
+    const formEl = document.getElementById("win5-formation");
+    const costEl = document.getElementById("win5-cost");
+    const verdictEl = document.getElementById("win5-verdict");
+
+    if (probEl) probEl.textContent = `${win5.combined.probAllWinPct} (本命 5 連勝)`;
+    if (payoutEl) {
+      const fp = win5.combined.expectedPayoutFair;
+      payoutEl.textContent = fp ? `約 ${formatJPY(fp)} (理論値)` : "—";
+    }
+    if (formEl) formEl.textContent = `${win5.formation.cells}点 (${win5.formation.desc})`;
+    if (costEl) costEl.textContent = `${win5.formation.cost.toLocaleString("ja-JP")}円`;
+    if (verdictEl) {
+      verdictEl.textContent = win5.stake.narrative;
+      verdictEl.dataset.kind =
+        win5.stake.narrative.startsWith("強く") ? "strong"
+        : win5.stake.narrative.startsWith("狙う") ? "go"
+        : win5.stake.narrative.startsWith("様子") ? "wait"
+        : "skip";
+    }
+  } else if (summary) {
+    summary.hidden = true;
+  }
   card.hidden = false;
+}
+
+function formatJPY(n) {
+  if (n == null || !Number.isFinite(n)) return "—";
+  if (n >= 100000000) return `${(n / 100000000).toFixed(1)}億円`;
+  if (n >= 10000) return `${Math.round(n / 10000).toLocaleString("ja-JP")}万円`;
+  return `${Math.round(n).toLocaleString("ja-JP")}円`;
 }
 
 function loadSavedRace(id) {
