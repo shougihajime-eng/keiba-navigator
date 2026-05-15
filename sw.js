@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v11"; // Wave8.1: WIN5 本格予想ロジック (連勝確率/想定配当/フォーメーション)
+const CACHE_VERSION = "keiba-nav-v15"; // Wave9.2: アンサンブル予想 + 全レースビュー + ROI ダッシュボード + WIN5 3戦略 + 馬場バイアス + ニュース感情
 const PRECACHE = [
   "/",
   "/index.html",

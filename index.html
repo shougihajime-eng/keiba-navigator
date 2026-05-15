@@ -46,6 +46,8 @@
   <script src="predictors/learner.js"></script>
   <script src="predictors/rankings.js"></script>
   <script src="predictors/win5.js"></script>
+  <script src="lib/all_races_view.js"></script>
+  <script src="lib/roi_dashboard.js"></script>
   <script src="lib/csv_import.js"></script>
   <script src="lib/kelly.js"></script>
   <script src="lib/glossary.js" defer></script>
@@ -61,6 +63,8 @@
   <script src="lib/help.js" defer></script>
   <script src="lib/ocr.js" defer></script>
   <script src="lib/demo_races.js" defer></script>
+  <script src="lib/tactile.js" defer></script>
+  <script src="lib/sparkle.js" defer></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -111,6 +115,11 @@
     <div class="max-w-2xl mx-auto px-4 pb-2 text-[11px] text-ink-mute flex items-center gap-2">
       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
       <span>最終更新: <span id="last-updated">未取得</span></span>
+      <span class="ml-auto inline-flex items-center gap-1.5 text-[11px]">
+        <span id="freshness" class="freshness fresh-cold">未更新</span>
+        <span class="text-ink-dim opacity-60">·</span>
+        <span class="text-ink-dim">自動更新 30秒</span>
+      </span>
     </div>
   </header>
 
@@ -254,6 +263,42 @@
         <h2 class="sc-title">📋 今日のレース一覧 <span id="races-count" class="text-ink-mute text-xs ml-1"></span></h2>
         <p class="races-hint">グレード順・狙えるレースが上に来ます。タップしてもデータは追加では取りません。</p>
         <ul id="races-list" class="races-list"></ul>
+      </section>
+
+      <!-- 🏇 全レース予想ビュー (Wave9) - 当日の全レースを一覧表示・本命/対抗/3着候補 -->
+      <section id="card-all-races" class="all-races-card" hidden>
+        <div class="ar-head">
+          <h2 class="ar-title">🏇 全レース AI 予想</h2>
+          <span id="ar-count" class="ar-count">--</span>
+        </div>
+        <p class="ar-hint">JRA 当日全レースを発走順に並べた一覧。各レースの本命・対抗・3着候補と狙い度を一目で確認できます。タップで詳細表示。</p>
+        <div class="ar-filters" role="tablist">
+          <button type="button" class="ar-filter is-active" data-ar-filter="all">全て</button>
+          <button type="button" class="ar-filter" data-ar-filter="go">狙えるレース</button>
+          <button type="button" class="ar-filter" data-ar-filter="s-grade">S級EVのみ</button>
+          <button type="button" class="ar-filter" data-ar-filter="g1">重賞のみ</button>
+        </div>
+        <div class="ar-sort-wrap">
+          <label class="ar-sort-label">並び:</label>
+          <select id="ar-sort" class="ar-sort">
+            <option value="time">発走時刻順</option>
+            <option value="ev">期待値が高い順</option>
+            <option value="confidence">信頼度が高い順</option>
+          </select>
+        </div>
+        <ul id="all-races-list" class="ar-list"></ul>
+        <p id="ar-empty" class="ar-empty" hidden>条件に合うレースがありません。フィルタを調整してください。</p>
+      </section>
+
+      <!-- 📊 ROI ダッシュボード (Wave9) - 領域別 ROI 可視化 -->
+      <section id="card-roi" class="roi-card" hidden>
+        <div class="roi-head">
+          <h2 class="roi-title">📊 ROI ダッシュボード</h2>
+          <span id="roi-sample" class="roi-sample">--</span>
+        </div>
+        <p class="roi-hint">「グレード × 券種」別の回収率。緑=黒字、赤=赤字、灰=データ不足。AIが効いている領域 / 苦手な領域が一目で分かります。</p>
+        <div id="roi-grid" class="roi-grid"></div>
+        <p id="roi-narrative" class="roi-narrative"></p>
       </section>
 
       <!-- 結論カード -->

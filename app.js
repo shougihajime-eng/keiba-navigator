@@ -1515,9 +1515,158 @@ async function renderWin5Card() {
         : win5.stake.narrative.startsWith("様子") ? "wait"
         : "skip";
     }
+
+    // ★Wave9: 3 戦略 (堅/中/万) を summary 内に追記
+    let stratWrap = summary.querySelector(".w5-strategies");
+    if (!stratWrap) {
+      stratWrap = document.createElement("div");
+      stratWrap.className = "w5-strategies";
+      summary.appendChild(stratWrap);
+    }
+    if (win5.strategies && win5.recommended) {
+      const labels = { safe: "堅め (本命1点)", mid: "中波 (各2頭)", wide: "万舟 (各3頭)" };
+      stratWrap.innerHTML = ["safe", "mid", "wide"].map(k => {
+        const s = win5.strategies[k];
+        const isRec = k === win5.recommended;
+        const ev = s.evRatio ?? 0;
+        const evClass = ev >= 1.0 ? "ev-up" : "ev-down";
+        return `<div class="w5-strategy${isRec ? " is-recommended" : ""}">
+          <div class="w5-strategy-name">${labels[k]}</div>
+          <div class="w5-strategy-cost">¥${s.totalCost.toLocaleString("ja-JP")}</div>
+          <div class="w5-strategy-prob">確率 ${s.hitProbPct}</div>
+          <div class="w5-strategy-ev ${evClass}">期待値 ${ev.toFixed(2)}</div>
+          <div class="w5-strategy-prob">${s.combo}点</div>
+        </div>`;
+      }).join("");
+    } else {
+      stratWrap.innerHTML = "";
+    }
   } else if (summary) {
     summary.hidden = true;
   }
+  card.hidden = false;
+}
+
+// ─── Wave9: 全レース予想ビュー ──────────────────────────────
+let _allRacesState = { filter: "all", sort: "time", data: [] };
+async function renderAllRacesCard() {
+  const card = document.getElementById("card-all-races");
+  if (!card) return;
+  const listEl = document.getElementById("all-races-list");
+  const countEl = document.getElementById("ar-count");
+  const emptyEl = document.getElementById("ar-empty");
+  if (!listEl) return;
+
+  // 保存レースから組み立て (本番では /api/races からも取れる)
+  const saved = (typeof loadSavedRaces === "function" ? loadSavedRaces() : []) || [];
+  // サーバ取得 /api/races も試行 (失敗しても saved fallback)
+  let serverRaces = [];
+  try {
+    const r = await fetch("/api/races", { cache: "no-store" });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && j.ok && Array.isArray(j.races)) serverRaces = j.races;
+    }
+  } catch {}
+
+  // 統合: server を主、saved の中で server に無いものを補完
+  const byId = new Map();
+  for (const r of serverRaces) {
+    byId.set(r.raceId || r.race_id || r.raceName, r);
+  }
+  for (const s of saved) {
+    const c = s.conclusion;
+    if (!c) continue;
+    const id = c.raceMeta?.raceId || s.id;
+    if (byId.has(id)) continue;
+    const top = c.picks?.[0] || null;
+    byId.set(id, {
+      raceName: s.raceName || c.raceMeta?.raceName || null,
+      raceId: id,
+      course: c.raceMeta?.course || null,
+      surface: c.raceMeta?.surface || null,
+      distance: c.raceMeta?.distance || null,
+      startTime: s.createdAt || null,
+      isDummy: !!c.raceMeta?.isDummy,
+      isG1: !!c.raceMeta?.isG1,
+      verdict: c.verdict,
+      verdictTitle: c.verdictTitle,
+      topGrade: c.topGrade,
+      topPick: top ? { number: top.number, name: top.name, odds: top.odds, ev: top.ev, grade: top.grade, prob: top.prob } : null,
+      second: c.picks?.[1] || null,
+      third: c.picks?.[2] || null,
+      confidence: c.confidence,
+      hasOverpop: (c.overpopular || []).length > 0,
+      hasUnderval: (c.undervalued || []).length > 0,
+      trackBiasNote: c.raceMeta?.trackBiasNote || null,
+      horseCount: 0,
+    });
+  }
+  _allRacesState.data = Array.from(byId.values());
+
+  if (_allRacesState.data.length === 0) {
+    card.hidden = true;
+    return;
+  }
+
+  if (countEl) countEl.textContent = `${_allRacesState.data.length} レース`;
+
+  // フィルタ/ソートを反映
+  if (window.AllRacesView) {
+    const filtered = window.AllRacesView.filterAndSort(_allRacesState.data, _allRacesState.filter, _allRacesState.sort);
+    if (filtered.length === 0) {
+      listEl.innerHTML = "";
+      if (emptyEl) emptyEl.hidden = false;
+    } else {
+      listEl.innerHTML = filtered.map(window.AllRacesView.renderRow).join("");
+      if (emptyEl) emptyEl.hidden = true;
+    }
+    // 行クリックで保存レースを開く
+    listEl.querySelectorAll(".ar-row[data-race-id]").forEach(row => {
+      row.addEventListener("click", () => {
+        const id = row.dataset.raceId;
+        if (typeof loadSavedRace === "function" && id) loadSavedRace(id);
+      });
+    });
+  }
+  card.hidden = false;
+
+  // フィルタ・ソートのバインド (1 回のみ)
+  if (!card._wave9Bound) {
+    card._wave9Bound = true;
+    card.querySelectorAll(".ar-filter[data-ar-filter]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        card.querySelectorAll(".ar-filter").forEach(b => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        _allRacesState.filter = btn.dataset.arFilter || "all";
+        renderAllRacesCard();
+      });
+    });
+    const sortEl = document.getElementById("ar-sort");
+    if (sortEl) sortEl.addEventListener("change", () => {
+      _allRacesState.sort = sortEl.value;
+      renderAllRacesCard();
+    });
+  }
+}
+
+// ─── Wave9: ROI ダッシュボード ──────────────────────────
+function renderRoiCard() {
+  const card = document.getElementById("card-roi");
+  if (!card || !window.RoiDashboard) return;
+  const gridEl = document.getElementById("roi-grid");
+  const narrativeEl = document.getElementById("roi-narrative");
+  const sampleEl = document.getElementById("roi-sample");
+  if (!gridEl) return;
+  const bets = (typeof store !== "undefined" ? store.bets : null) || [];
+  const roi = window.RoiDashboard.compute(bets);
+  if (!roi || roi.totalSamples === 0) {
+    card.hidden = true;
+    return;
+  }
+  if (sampleEl) sampleEl.textContent = `${roi.totalSamples} 件 / 回収率 ${roi.totalROI != null ? Math.round(roi.totalROI*100)+"%" : "—"}`;
+  gridEl.innerHTML = window.RoiDashboard.render(roi);
+  if (narrativeEl) narrativeEl.textContent = roi.narrative || "";
   card.hidden = false;
 }
 
@@ -1915,13 +2064,16 @@ function autoSaveAirBet(c) {
 // ─── REFRESH ALL ───────────────────────────────────────────
 let isRefreshing = false;
 let _lastRefreshAt = 0;
-const REFRESH_COOLDOWN_MS = 5000; // 連打防止
-async function refreshAll() {
+const REFRESH_COOLDOWN_MS = 1500; // 連打防止 (短めに・更新したいときすぐ反応)
+async function refreshAll(opts = {}) {
   if (isRefreshing) return;
+  const silent = opts.silent === true;
   const sinceLast = Date.now() - _lastRefreshAt;
   if (sinceLast < REFRESH_COOLDOWN_MS) {
-    const remain = Math.ceil((REFRESH_COOLDOWN_MS - sinceLast) / 1000);
-    try { showToast("⏳ あと " + remain + " 秒お待ちください (連打防止)", "warn"); } catch {}
+    if (!silent) {
+      const remain = Math.ceil((REFRESH_COOLDOWN_MS - sinceLast) / 1000);
+      try { showToast("⏳ あと " + remain + " 秒…", "warn"); } catch {}
+    }
     return;
   }
   isRefreshing = true;
@@ -1942,8 +2094,62 @@ async function refreshAll() {
     labelEl.textContent = original;
     btn.classList.remove("loading"); btn.disabled = false;
     isRefreshing = false;
-    showToast("✓ 最新データを取得しました");
+    if (!silent) showToast("✓ 最新データを取得しました");
+    updateFreshnessIndicator();
   }
+}
+
+// ─── 自動更新システム ─────────────────────────────────────
+// 1) 30 秒ごとの定期更新 (アクティブタブのみ・サイレント)
+// 2) ブラウザに戻ったとき (visibilitychange visible)
+// 3) ネット復帰時 (online)
+// 4) ウィンドウフォーカス時 (focus・PWA から戻ったとき等)
+const AUTO_REFRESH_INTERVAL_MS = 30 * 1000;
+let _autoRefreshTimer = null;
+
+function startAutoRefresh() {
+  if (_autoRefreshTimer) return;
+  _autoRefreshTimer = setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    if (isRefreshing) return;
+    // バックグラウンドで黙って更新 (トーストもスピナーも出さない)
+    refreshAll({ silent: true }).catch(() => {});
+  }, AUTO_REFRESH_INTERVAL_MS);
+  // タブの可視化／オンライン／フォーカス時にも即更新
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      refreshAll({ silent: true }).catch(() => {});
+    }
+  });
+  window.addEventListener("online",  () => refreshAll({ silent: true }).catch(() => {}));
+  window.addEventListener("focus",   () => {
+    // 連打防止クールダウンを超えていれば更新 (focus は頻発するので silent)
+    if (Date.now() - _lastRefreshAt > 5000) {
+      refreshAll({ silent: true }).catch(() => {});
+    }
+  });
+}
+
+function updateFreshnessIndicator() {
+  // 最終更新からの経過時間を表示する小さなインジケータ
+  const el = document.getElementById("freshness");
+  if (!el) return;
+  const renderTick = () => {
+    const sec = Math.max(0, Math.floor((Date.now() - _lastRefreshAt) / 1000));
+    let text, cls;
+    if (_lastRefreshAt === 0) {
+      text = "未更新"; cls = "fresh-cold";
+    } else if (sec < 30)  { text = "ライブ";          cls = "fresh-live"; }
+    else if (sec < 60)    { text = sec + "秒前";     cls = "fresh-fresh"; }
+    else if (sec < 600)   { text = Math.floor(sec/60) + "分前"; cls = "fresh-warm"; }
+    else                  { text = Math.floor(sec/60) + "分前"; cls = "fresh-cold"; }
+    el.textContent = text;
+    el.className = "freshness " + cls;
+  };
+  renderTick();
+  // 既存タイマーがあればクリア
+  if (window._freshnessTimer) clearInterval(window._freshnessTimer);
+  window._freshnessTimer = setInterval(renderTick, 1000);
 }
 
 // ─── タブ切替 (View Transitions API + 即時表示 + 重い処理はアイドル時に) ──
@@ -3739,6 +3945,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { renderRankings(); } catch (e) { console.warn(e); }
   try { renderNewsCard(); } catch (e) { console.warn(e); }
   try { renderWin5Card(); } catch (e) { console.warn(e); }
+  try { renderAllRacesCard(); } catch (e) { console.warn(e); }
+  try { renderRoiCard(); } catch (e) { console.warn(e); }
   try { updateRecordTabBadge(); } catch (e) { console.warn(e); }
   try { updateHeroQuestion(); } catch (e) { console.warn(e); }
   try { refreshNotifyUi(); } catch (e) { console.warn(e); }
@@ -3746,6 +3954,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { applyUrlParams(); } catch (e) { console.warn(e); }
   try { setupPullToRefresh(); } catch (e) { console.warn(e); }
   try { setupScrollPolish(); } catch (e) { console.warn(e); }
+  try { startAutoRefresh(); updateFreshnessIndicator(); } catch (e) { console.warn(e); }
   registerServiceWorker();
   // SW が ready になってから朝の通知判定
   if ("serviceWorker" in navigator) {
