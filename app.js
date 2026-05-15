@@ -1948,7 +1948,16 @@ function renderBetList(bets) {
   const ul = $("#rec-list");
   ul.innerHTML = "";
   if (!bets.length) {
-    ul.innerHTML = `<li class="pro-empty">記録がありません</li>`;
+    ul.innerHTML = `
+      <li class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-title">まだ記録がありません</div>
+        <div class="empty-state-sub">
+          ホーム画面の「📝 手動でEVチェック」で判定 →
+          「🧪 エア馬券で記録」を押すと、ここに記録が残ります。
+        </div>
+        <button class="empty-state-cta" type="button" onclick="switchTab('home')">🏠 ホームへ戻る</button>
+      </li>`;
     return;
   }
   // 新しい順
