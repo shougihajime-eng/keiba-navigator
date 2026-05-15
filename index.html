@@ -55,6 +55,7 @@
   <script src="lib/daily_brief.js" defer></script>
   <script src="lib/animate.js" defer></script>
   <script src="lib/achievements.js" defer></script>
+  <script src="lib/share_image.js" defer></script>
 </head>
 <body class="bg-base text-ink font-sans min-h-screen antialiased">
 
@@ -307,7 +308,10 @@
       <section id="card-reasoning" class="reasoning-card" hidden>
         <div class="reasoning-head">
           <h2 class="sc-title">🧠 AI の考え方</h2>
-          <button id="btn-share-verdict" type="button" class="reasoning-share" hidden>📤 シェア</button>
+          <div class="reasoning-actions">
+            <button id="btn-share-image"   type="button" class="reasoning-share" hidden>📸 画像でシェア</button>
+            <button id="btn-share-verdict" type="button" class="reasoning-share" hidden>📤 テキストで</button>
+          </div>
         </div>
         <ol id="reasoning-steps" class="reasoning-steps"></ol>
         <details class="reasoning-detail">

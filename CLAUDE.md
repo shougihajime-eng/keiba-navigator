@@ -7,6 +7,17 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🌍 「世界一の競馬アプリ」へ全面磨き上げ (2026-05-15 夕)** — ユーザ離席中の自走で 5 波の機能投入:
+  - **Wave 1**: 4 ステップのオンボーディング ツアー (光るスポット枠) / 🎙 音声で 1 頭追加 (Web Speech API ja-JP + 漢数字/かな数字パーサ) / 🔊 結論カードを読み上げ (Web Speech Synthesis) / 用語ツールチップ (`data-gloss` 23 語: EV/Kelly/単複連単/calibration/edge/stake/minev 等)
+  - **Wave 2**: 🧠 AI 思考プロセス可視化 (6 ステップ縦タイムライン + 計算式の展開) / 📤 シェアボタン (テキスト) / `lib/reasoning.js` の純関数化 + smoke 12 ケース追加
+  - **Wave 3**: 🎚 「もしも、条件が変わったら?」What-If シミュレータ (オッズ・推定勝率スライダーで EV メーターがリアルタイム動く) / 🌅 朝の概要カード (時間帯あいさつ + 開催日バッジ + 育成 Lv. + 直近回収率 + クイックアクションチップ) / 数字アニメーション (`animateNumber` + `flashHighlight`)
+  - **Wave 4**: 🏅 達成バッジ 15 種 (`first_bet`/`hit_5_streak`/`profit_first`/`profit_10pct`/`tour_done`/`voice_used`/`share_done`/`level_5` 等) + 達成時の浮上バナー演出 / 📈 累積収支スパークライン (HiDPI / グラデ塗り)
+  - **Wave 5**: 📸 シェア画像ジェネレータ (1080×1080 PNG・Canvas で AI 判定カードを自動生成 + Web Share API でファイル付き or ダウンロード)
+  - **テスト**: `node tests/smoke.js` 29 → 57 ケース全通過 (音声パーサ 16 + reasoning 12)
+  - **新規ファイル**: `lib/onboarding.js` / `voice_input.js` / `ai_voice.js` / `glossary.js` / `reasoning.js` / `whatif.js` / `daily_brief.js` / `animate.js` / `achievements.js` / `share_image.js` (10 モジュール / 約 1,800 行)
+  - **CSS 追加**: 約 690 行 (各機能専用のコンポーネント + reduced-motion 対応)
+  - **sw.js**: v3 → v7 にバンプ (Service Worker のキャッシュ更新を 4 波ぶん明示)
+  - **JV-Link 登録の準備**: `JV-Link登録 (帰宅後にダブルクリック).bat` を同梱。利用キー `3UJC-46WW-7VV1-T7RX-4` は CLAUDE.md (グローバル本人用メモ) に保管済
 - **🚀 妥協なし総合拡張 (2026-05-15 朝)** — 「最高のものを作れ」指示で 1 ターン完走:
   - **33 種類のレコードに対応** (RA/SE/O1-O6/HR/JG/TK/HC/WC/WH/WE/YS/UM/KS/CH/AV/RC/BR/BN/HN/SK/HS/HY/JC/TC/CC/DM/BT/CS)
   - **O2-O6 オッズ繰り返し領域** の parse_odds_element + 5 券種対応 (馬連/ワイド/馬単/3連複/3連単)
@@ -162,7 +173,7 @@
 - 既存: Supabase keiba スキーマ、AI 育成レベル ★1-5、GitHub + Vercel 公開、catch-all集約
 
 ### 🟡 進行中
-- なし
+- なし (アプリは Wave 5 まで仕上げ済・あとは本人の物理アクション待ち)
 
 ### 🔜 次の一歩 (0 円フェーズ → 月額フェーズ の順)
 
@@ -175,13 +186,12 @@
 6. ✅ **pytest: 64 passed / 6 skipped / 0 failed** (skip 6 件は JV-Link 実バイナリ依存・月額契約後に自動緑化)
    → **🚦 月額契約 GO サイン点灯**
 
-**フェーズ B (月額 2,090 円)**:
+**フェーズ B (月額 2,090 円)** — ✅ **契約完了 (2026-05-15)**:
 6. ✅ **Supabase スキーマ反映完了** (2026-05-15・Management API 経由で `db/schema.sql` を直接実行)
-   - keiba スキーマに 9 テーブル: bets / race_results / jockey_stats / trainer_stats /
-     horse_career / course_distance_stats / aggregate_meta / learner_state / user_settings
-   - race_results の RLS read ポリシーが `using (true)` で anon 読み取り可
-7. **JRA-VAN Data Lab. 契約** (https://jra-van.jp/dlb/) → 利用キー発行
-8. **JV-Link 本体インストール** (SDK 同梱の JVLink_v4_xx.exe)
+7. ✅ **JRA-VAN Data Lab. 契約完了** (2026-05-15・利用キー `3UJC-46WW-7VV1-T7RX-4` 取得済)
+8. 🟡 **JV-Link 本体の COM 登録** (本人作業) ← **次にやる**
+   - 帰宅後 `C:\Users\shoug\競馬\JV-Link登録 (帰宅後にダブルクリック).bat` をダブルクリック
+   - UAC で「はい」→ COM 登録 → JV-Link 設定画面が自動で開く → 利用キー貼り付け
 9. `py -3.12-32 jv_bridge\jv_fetch.py init` で接続テスト
 10. `py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20140101000000` で 10 年分取得
 11. **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」を確認

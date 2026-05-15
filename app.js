@@ -1058,7 +1058,35 @@ function renderReasoning(c) {
   // 計算式
   if (mathEl) mathEl.innerHTML = exp.math || "";
 
-  // シェアボタン
+  // 📸 画像でシェア
+  const imgBtn = document.getElementById("btn-share-image");
+  if (imgBtn) {
+    const hasShareImg = !!(window.KNShareImage && c?.ok && c?.picks?.length);
+    imgBtn.hidden = !hasShareImg;
+    if (hasShareImg) {
+      imgBtn.onclick = async () => {
+        imgBtn.disabled = true;
+        const prev = imgBtn.textContent;
+        imgBtn.textContent = "📸 生成中…";
+        try {
+          const r = await window.KNShareImage.share(c);
+          if (r?.ok) {
+            showToast(r.downloaded ? "📸 画像を保存しました" : "📸 シェアしました", "ok");
+            try { window.KNAchievements?.unlock("share_done"); } catch {}
+          } else if (!r?.aborted) {
+            showToast("画像生成失敗: " + (r?.error || "unknown"), "warn");
+          }
+        } catch (e) {
+          showToast("画像生成エラー: " + (e?.message || e), "err");
+        } finally {
+          imgBtn.disabled = false;
+          imgBtn.textContent = prev;
+        }
+      };
+    }
+  }
+
+  // 📤 テキストでシェア
   if (shareBtn) {
     const share = exp.share;
     const hasShare = !!(share && share.text);

@@ -3219,6 +3219,7 @@ button:active:not(:disabled),
 }
 .reasoning-head .sc-title { margin: 0; }
 
+.reasoning-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .reasoning-share {
   background: var(--surface-2);
   border: 1px solid var(--line-2);
@@ -3227,7 +3228,9 @@ button:active:not(:disabled),
   padding: 6px 12px; font-size: 12px; font-weight: 600;
   cursor: pointer;
   transition: all 150ms ease;
+  white-space: nowrap;
 }
+.reasoning-share:disabled { opacity: 0.55; cursor: wait; }
 .reasoning-share:hover {
   border-color: var(--acc-info-line);
   background: var(--acc-info-soft);
