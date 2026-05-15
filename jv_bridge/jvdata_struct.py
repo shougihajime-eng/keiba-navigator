@@ -288,6 +288,125 @@ TK_TOKUUMA_LOOP = {
 }
 
 
+# ─── UM レコード (馬データ) 1609 バイト ───────────────────
+# SDK JV_UM_UMA より転記。主要フィールドのみ。
+UM_FIELDS: List[Field] = [
+    Field("record_id",   0, 2,  F_ascii, "'UM'"),
+    Field("data_kbn",    2, 1,  F_ascii),
+    Field("make_date",   3, 8,  F_ascii),
+    Field("ketto_num",  11, 10, F_ascii, "血統登録番号"),
+    Field("del_kubun",  21, 1,  F_ascii, "競走馬抹消区分"),
+    Field("reg_date",   22, 8,  F_ascii, "競走馬登録年月日"),
+    Field("del_date",   30, 8,  F_ascii, "競走馬抹消年月日"),
+    Field("birth_date", 38, 8,  F_ascii, "生年月日"),
+    Field("horse_name", 46, 36, F_sjis,  "馬名"),
+    Field("name_kana",  82, 36, F_ascii, "馬名半角カナ"),
+    Field("name_eng",  118, 60, F_ascii, "馬名欧字"),
+    Field("uma_kigo", 198, 2,  F_ascii),
+    Field("sex_code", 200, 1,  F_ascii),
+    Field("hinsyu",   201, 1,  F_ascii),
+    Field("keiro",    202, 2,  F_ascii),
+    Field("tozai",    848, 1,  F_ascii),
+    Field("chokyosi_code", 849, 5, F_ascii),
+    Field("trainer_name",  854, 8, F_sjis),
+    Field("breeder_name",  890, 72, F_sjis),
+    Field("sanchi_name",   962, 20, F_sjis),
+    Field("banusi_name",   988, 64, F_sjis),
+    Field("honsyo_heichi_ruikei", 1052, 9, F_int, "平地本賞金累計 (百円)"),
+    Field("syutoku_heichi_ruikei", 1088, 9, F_int, "平地収得賞金累計"),
+]
+
+
+# ─── WH レコード (馬体重発表) 847 バイト ─────────────────
+# SDK JV_WH_BATAIJYU より転記。
+# ヘッダ + 馬体重情報 BATAIJYU_INFO × 18 頭 (1 頭 45 バイト)
+WH_FIELDS: List[Field] = [
+    Field("record_id",  0, 2,  F_ascii, "'WH'"),
+    Field("data_kbn",   2, 1,  F_ascii),
+    Field("make_date",  3, 8,  F_ascii),
+    Field("year",      11, 4,  F_ascii),
+    Field("month_day", 15, 4,  F_ascii),
+    Field("jyo_code",  19, 2,  F_ascii),
+    Field("kai_ji",    21, 2,  F_ascii),
+    Field("nichi_ji",  23, 2,  F_ascii),
+    Field("race_num",  25, 2,  F_ascii),
+    Field("happyo_time", 27, 8, F_ascii, "発表月日時分 MDHM"),
+]
+
+# BATAIJYU_INFO 繰り返し領域: offset=35 (= 36 1-origin), element_len=45, max_count=18
+WH_BATAIJYU_LOOP = {"offset": 35, "element_len": 45, "max_count": 18}
+
+# BATAIJYU_INFO 1 頭分の構造 (45 バイト)
+BATAIJYU_INFO_FIELDS: List[Field] = [
+    Field("horse_num",        0, 2,  F_int,   "馬番"),
+    Field("horse_name",       2, 36, F_sjis,  "馬名"),
+    Field("body_weight",     38, 3,  F_int,   "馬体重 kg"),
+    Field("weight_diff_sign",41, 1,  F_ascii, "増減符号 + or -"),
+    Field("weight_diff_value",42, 3, F_int,   "増減差 絶対値"),
+]
+
+
+def parse_bataijyu_element(elem: bytes) -> Dict[str, Any]:
+    """馬体重情報 1 頭分 (45 バイト) を dict に。馬番 0 は未確定枠として None。"""
+    from . import io_helpers as io
+    if not elem or len(elem) < 45:
+        return None
+    out = {}
+    for f in BATAIJYU_INFO_FIELDS:
+        chunk = io.slice_field(elem, f.offset, f.length)
+        out[f.name] = f.convert(chunk) if chunk else None
+    if not out.get("horse_num"):
+        return None
+    return out
+
+
+# ─── WE レコード (天候・馬場状態変更) 42 バイト ───────────
+WE_FIELDS: List[Field] = [
+    Field("record_id",  0, 2,  F_ascii, "'WE'"),
+    Field("data_kbn",   2, 1,  F_ascii),
+    Field("make_date",  3, 8,  F_ascii),
+    Field("year",      11, 4,  F_ascii),
+    Field("month_day", 15, 4,  F_ascii),
+    Field("jyo_code",  19, 2,  F_ascii),
+    Field("kai_ji",    21, 2,  F_ascii),
+    Field("nichi_ji",  23, 2,  F_ascii),
+    Field("happyo_time", 25, 8, F_ascii, "発表月日時分"),
+    Field("henko_id",  33, 1,  F_ascii, "変更識別"),
+    Field("weather",   34, 1,  F_ascii, "現在の天候コード"),
+    Field("going_shiba",35, 1, F_ascii, "現在の芝馬場"),
+    Field("going_dirt",36, 1,  F_ascii, "現在のダート馬場"),
+    Field("weather_before",37, 1, F_ascii, "変更前の天候"),
+    Field("going_shiba_before",38, 1, F_ascii),
+    Field("going_dirt_before", 39, 1, F_ascii),
+]
+
+
+# ─── O2/O3/O4/O5/O6 オッズ系のヘッダ ──────────────────────
+# ヘッダは共通フォーマット (record_id + race_id + 発表時刻 + 登録/出走頭数 + 発売flag)
+def _make_odds_fields(record_id: str) -> List[Field]:
+    return [
+        Field("record_id",  0, 2,  F_ascii, f"'{record_id}'"),
+        Field("data_kbn",   2, 1,  F_ascii),
+        Field("make_date",  3, 8,  F_ascii),
+        Field("year",      11, 4,  F_ascii),
+        Field("month_day", 15, 4,  F_ascii),
+        Field("jyo_code",  19, 2,  F_ascii),
+        Field("kai_ji",    21, 2,  F_ascii),
+        Field("nichi_ji",  23, 2,  F_ascii),
+        Field("race_num",  25, 2,  F_ascii),
+        Field("happyo_time", 27, 8, F_ascii),
+        Field("toroku_tosu",35, 2,  F_int),
+        Field("horse_count",37, 2,  F_int, "出走頭数"),
+        Field("flag",      39, 1,  F_ascii, "発売フラグ"),
+    ]
+
+O2_FIELDS = _make_odds_fields("O2")  # 馬連
+O3_FIELDS = _make_odds_fields("O3")  # ワイド
+O4_FIELDS = _make_odds_fields("O4")  # 馬単
+O5_FIELDS = _make_odds_fields("O5")  # 3連複
+O6_FIELDS = _make_odds_fields("O6")  # 3連単
+
+
 # ─── HC レコード (ハロンタイム速報・坂路調教) 60 バイト ────
 # SDK JV_HC_HANRO より転記。馬体重ではなく「坂路調教でのハロンタイム」。
 HC_FIELDS: List[Field] = [
@@ -386,12 +505,20 @@ RECORD_REGISTRY: Dict[str, List[Field]] = {
     "RA": RA_FIELDS,
     "SE": SE_FIELDS,
     "O1": O1_FIELDS,
+    "O2": O2_FIELDS,
+    "O3": O3_FIELDS,
+    "O4": O4_FIELDS,
+    "O5": O5_FIELDS,
+    "O6": O6_FIELDS,
     "HR": HR_FIELDS,
     "JG": JG_FIELDS,
     "TK": TK_FIELDS,
     "HC": HC_FIELDS,
     "WC": WC_FIELDS,
+    "WH": WH_FIELDS,
+    "WE": WE_FIELDS,
     "YS": YS_FIELDS,
+    "UM": UM_FIELDS,
 }
 
 
@@ -400,12 +527,20 @@ RECORD_COMPLETED: Dict[str, bool] = {
     "RA": True,
     "SE": True,
     "O1": True,
+    "O2": True,
+    "O3": True,
+    "O4": True,
+    "O5": True,
+    "O6": True,
     "HR": True,
     "JG": True,
     "TK": True,
     "HC": True,
     "WC": True,
+    "WH": True,
+    "WE": True,
     "YS": True,
+    "UM": True,
 }
 
 

@@ -1048,6 +1048,86 @@ function clearManualMode() {
   refreshConnection();
 }
 
+// ─── 手動入力ライブプレビュー (入力中にリアルタイム認識) ─────
+// 1 行 1 馬・順不同・空白/カンマ区切り。馬番・オッズ・人気・前走を緩く拾い、
+// 「N頭認識・最低 X / 最高 Y / 平均 Z」を即時更新する。フォーマット違反行は警告。
+function updateManualLivePreview(text) {
+  const live = $("#mi-live");
+  if (!live) return;
+  const raw = (text || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (raw.length === 0) {
+    live.hidden = true;
+    return;
+  }
+  live.hidden = false;
+  const horses = [];
+  const warnings = [];
+  for (let idx = 0; idx < raw.length; idx++) {
+    const line = raw[idx];
+    // 数字を抽出 (整数 or 小数)
+    const nums = line.match(/[0-9]+(?:\.[0-9]+)?/g);
+    if (!nums || nums.length < 2) {
+      warnings.push(`行${idx+1}: 数字が足りません — 「馬番 オッズ」だけは必須`);
+      continue;
+    }
+    // 馬番 = 1〜30 の整数
+    // オッズ = 1.0 以上の数値 (整数オッズも許容)
+    // 人気 = 1〜30 の整数
+    // 前走着順 = 1〜30 の整数 (任意)
+    const horseNum = Math.round(Number(nums[0]));
+    if (!Number.isFinite(horseNum) || horseNum < 1 || horseNum > 30) {
+      warnings.push(`行${idx+1}: 馬番「${nums[0]}」が範囲外 (1〜30)`);
+      continue;
+    }
+    // オッズ: 馬番の次に来る "小数を含むもの" を優先・無ければ次の数字
+    let odds = null;
+    for (let i = 1; i < nums.length; i++) {
+      const n = Number(nums[i]);
+      if (n >= 1.0 && n <= 9999 && (String(nums[i]).includes(".") || (i === 1 && n >= 1.0))) {
+        odds = n; break;
+      }
+    }
+    if (odds == null) odds = Number(nums[1]);
+    if (!Number.isFinite(odds) || odds < 1.0) {
+      warnings.push(`行${idx+1}: オッズが読み取れません`);
+      continue;
+    }
+    horses.push({ num: horseNum, odds });
+  }
+  // 統計
+  $("#mi-live-count").textContent = `${horses.length}頭`;
+  if (horses.length === 0) {
+    $("#mi-live-min").textContent = "--";
+    $("#mi-live-max").textContent = "--";
+    $("#mi-live-avg").textContent = "--";
+  } else {
+    const oddsArr = horses.map(h => h.odds).sort((a, b) => a - b);
+    $("#mi-live-min").textContent = oddsArr[0].toFixed(1) + "倍";
+    $("#mi-live-max").textContent = oddsArr[oddsArr.length - 1].toFixed(1) + "倍";
+    const avg = oddsArr.reduce((a, b) => a + b, 0) / oddsArr.length;
+    $("#mi-live-avg").textContent = avg.toFixed(1) + "倍";
+  }
+  // 警告
+  const warnEl = $("#mi-live-warn");
+  if (warnings.length === 0) {
+    warnEl.hidden = true;
+    warnEl.textContent = "";
+  } else {
+    warnEl.hidden = false;
+    warnEl.innerHTML = warnings.slice(0, 3).map(w => `<div>⚠ ${escapeHtml(w)}</div>`).join("");
+    if (warnings.length > 3) {
+      warnEl.innerHTML += `<div class="mi-live-warn-more">…他 ${warnings.length - 3} 件</div>`;
+    }
+  }
+  // 馬番重複チェック
+  const nums = horses.map(h => h.num);
+  const dup = nums.find((n, i) => nums.indexOf(n) !== i);
+  if (dup != null) {
+    warnEl.hidden = false;
+    warnEl.innerHTML = `<div>⚠ 馬番 ${dup} が重複しています</div>` + warnEl.innerHTML;
+  }
+}
+
 // ─── AI が学んだこと (insight) ──────────────────────────────
 function renderAiInsight() {
   if (!window.Learner) return;
@@ -2281,9 +2361,20 @@ function setupEvents() {
   const miBtn = $("#mi-submit");
   if (miBtn) miBtn.addEventListener("click", () => submitManual());
   const miTa  = $("#mi-textarea");
-  if (miTa) miTa.addEventListener("keydown", (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") submitManual();
-  });
+  if (miTa) {
+    miTa.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") submitManual();
+    });
+    // ライブプレビュー (入力中にリアルタイム認識)
+    let _miLiveTimer = null;
+    const updateLive = () => {
+      clearTimeout(_miLiveTimer);
+      _miLiveTimer = setTimeout(() => updateManualLivePreview(miTa.value), 120);
+    };
+    miTa.addEventListener("input", updateLive);
+    miTa.addEventListener("paste", () => setTimeout(updateLive, 50));
+    updateManualLivePreview(miTa.value);
+  }
 
   // 保存レースの全消去
   const clrBtn = $("#btn-clear-saved");

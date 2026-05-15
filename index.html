@@ -131,6 +131,16 @@
 
 (任意) 騎手名・調教師名を末尾に追加すると相性分析も働きます:
 1 ディープ 3.2 1 1 ルメール 国枝"></textarea>
+          <!-- ライブプレビュー (入力中にリアルタイムで認識結果を表示) -->
+          <div id="mi-live" class="mi-live" hidden>
+            <div class="mi-live-grid">
+              <div class="mi-live-cell"><span class="mi-live-key">認識</span><span id="mi-live-count" class="mi-live-val">0頭</span></div>
+              <div class="mi-live-cell"><span class="mi-live-key">最低オッズ</span><span id="mi-live-min" class="mi-live-val">--</span></div>
+              <div class="mi-live-cell"><span class="mi-live-key">最高オッズ</span><span id="mi-live-max" class="mi-live-val">--</span></div>
+              <div class="mi-live-cell"><span class="mi-live-key">平均</span><span id="mi-live-avg" class="mi-live-val">--</span></div>
+            </div>
+            <div id="mi-live-warn" class="mi-live-warn" hidden></div>
+          </div>
           <div class="mi-actions">
             <input id="mi-race-name" placeholder="レース名 (任意)" class="mi-name-input" maxlength="60">
             <button id="mi-submit" type="button" class="mi-submit">📈 期待値を判定</button>
