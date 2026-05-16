@@ -36,11 +36,30 @@ LOG_DIR = ROOT / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# Windows のデフォルト cp932 では U+FFFD などを print() できず即落ちする。
+# サブプロセス出力に化け文字が混ざっても止まらないよう UTF-8 へ強制再構成する。
+for _stream_name in ("stdout", "stderr"):
+    _stream = getattr(sys, _stream_name, None)
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
 def log_line(msg: str) -> None:
     """ログ + コンソール出力。"""
     ts = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
-    print(line, flush=True)
+    # cp932 等の素朴な stdout で化け文字が来た場合に sys.exit させない最終ガード
+    try:
+        print(line, flush=True)
+    except UnicodeEncodeError:
+        try:
+            sys.stdout.write(line.encode("utf-8", "replace").decode("utf-8", "replace") + "\n")
+            sys.stdout.flush()
+        except Exception:
+            pass
     log_path = LOG_DIR / f"race_day_{dt.date.today().isoformat()}.log"
     try:
         with log_path.open("a", encoding="utf-8") as f:
