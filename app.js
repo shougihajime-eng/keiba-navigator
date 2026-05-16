@@ -1561,13 +1561,30 @@ async function renderAllRacesCard() {
   const saved = (typeof loadSavedRaces === "function" ? loadSavedRaces() : []) || [];
   // サーバ取得 /api/races も試行 (失敗しても saved fallback)
   let serverRaces = [];
+  let serverFetchOk = false;
+  let serverErrorMsg = null;
   try {
     const r = await fetch("/api/races", { cache: "no-store" });
     if (r.ok) {
       const j = await r.json();
-      if (j && j.ok && Array.isArray(j.races)) serverRaces = j.races;
+      if (j && j.ok && Array.isArray(j.races)) {
+        serverRaces = j.races;
+        serverFetchOk = true;
+      } else if (j && j.reason) {
+        serverErrorMsg = j.reason;  // 「JV-Link 接続設定後に表示されます」など
+      }
+    } else if (r.status === 503) {
+      // 出走馬データ未取得 (期待される状態)
+      try {
+        const j = await r.json();
+        serverErrorMsg = j?.reason || "実データは未取得 (JV-Link 接続後に表示)";
+      } catch { serverErrorMsg = "実データ未取得"; }
+    } else {
+      serverErrorMsg = `API エラー (HTTP ${r.status})`;
     }
-  } catch {}
+  } catch (e) {
+    serverErrorMsg = "サーバーに繋がりません (オフライン?)";
+  }
 
   // 統合: server を主、saved の中で server に無いものを補完
   const byId = new Map();
@@ -1605,18 +1622,38 @@ async function renderAllRacesCard() {
   _allRacesState.data = Array.from(byId.values());
 
   if (_allRacesState.data.length === 0) {
-    card.hidden = true;
+    // 保存レースも server レースも 0 のとき、API エラーがあれば表示
+    if (serverErrorMsg) {
+      card.hidden = false;
+      if (listEl) listEl.innerHTML = "";
+      if (emptyEl) {
+        emptyEl.hidden = false;
+        emptyEl.textContent = serverErrorMsg + " (手動でEVチェックで判定したレースが保存されると、ここに並びます)";
+      }
+      if (countEl) countEl.textContent = "0 レース";
+    } else {
+      card.hidden = true;
+    }
     return;
   }
 
-  if (countEl) countEl.textContent = `${_allRacesState.data.length} レース`;
+  if (countEl) {
+    const total = _allRacesState.data.length;
+    const fromServer = serverRaces.length;
+    countEl.textContent = serverFetchOk
+      ? `${total} レース (実データ ${fromServer} + 保存 ${total - fromServer})`
+      : `${total} レース (保存のみ)`;
+  }
 
   // フィルタ/ソートを反映
   if (window.AllRacesView) {
     const filtered = window.AllRacesView.filterAndSort(_allRacesState.data, _allRacesState.filter, _allRacesState.sort);
     if (filtered.length === 0) {
       listEl.innerHTML = "";
-      if (emptyEl) emptyEl.hidden = false;
+      if (emptyEl) {
+        emptyEl.hidden = false;
+        emptyEl.textContent = "選択中のフィルタに合うレースがありません。フィルタを「全て」に戻すと表示されます。";
+      }
     } else {
       listEl.innerHTML = filtered.map(window.AllRacesView.renderRow).join("");
       if (emptyEl) emptyEl.hidden = true;
@@ -2288,6 +2325,103 @@ function updateCountdownUi() {
   // 残り時間で色変化 (10 分以下で警告色)
   card.classList.toggle("rc-urgent", sec <= 600);
   card.classList.toggle("rc-imminent", sec <= 300);
+}
+
+// ─── 📋 推奨買い目まとめ (今日の合計サマリ) ──────────────
+function renderBetSummary() {
+  const card = document.getElementById("card-bet-summary");
+  if (!card) return;
+  const saved = (typeof loadSavedRaces === "function") ? loadSavedRaces() : [];
+
+  // 「狙う」判定の保存レースだけ集計
+  const buy = saved.filter(r => {
+    const v = r.conclusion?.verdict;
+    return v === "buy" || v === "go";
+  });
+
+  if (!buy.length) { card.hidden = true; return; }
+  card.hidden = false;
+
+  let stakeTotal = 0;
+  let evSum = 0;
+  let expReturn = 0;
+  let dreamPayout = 0;
+  const rows = [];
+
+  for (const r of buy) {
+    const top = r.conclusion?.picks?.[0];
+    if (!top) continue;
+    const stake = (typeof suggestedStakeForRow === "function" ? suggestedStakeForRow(r.conclusion) : null) || 0;
+    const odds = Number(top.odds) || 0;
+    const ev = Number(top.ev) || 0;
+    const prob = Number(top.prob) || 0;
+
+    stakeTotal += stake;
+    evSum += ev;
+    expReturn += stake * ev;
+    dreamPayout += stake * odds;
+
+    rows.push({
+      raceName: r.raceName || r.conclusion?.raceName || "保存レース",
+      horse: `${top.number || "?"}番 ${top.name || ""}`,
+      stake, ev, odds, prob,
+    });
+  }
+
+  // ソート: EV 高い順
+  rows.sort((a, b) => b.ev - a.ev);
+
+  const $val = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  $val("bs-count", `${rows.length} レース`);
+  $val("bs-stake-total", "¥" + stakeTotal.toLocaleString("ja-JP"));
+  $val("bs-return-expected", "¥" + Math.round(expReturn).toLocaleString("ja-JP"));
+  $val("bs-payout-max", "¥" + Math.round(dreamPayout).toLocaleString("ja-JP"));
+  const avgEv = rows.length ? evSum / rows.length : 0;
+  $val("bs-ev-avg", `${avgEv >= 1 ? "+" : ""}${((avgEv - 1) * 100).toFixed(0)}%`);
+
+  // リスト描画
+  const ol = document.getElementById("bs-list");
+  if (ol) {
+    ol.innerHTML = rows.map((r, i) => {
+      const sign = r.ev >= 1 ? "+" : "";
+      const evPct = ((r.ev - 1) * 100).toFixed(0);
+      return `<li class="bs-row">
+        <span class="bs-rank">${i + 1}</span>
+        <span class="bs-race">${escapeHtml(r.raceName)}</span>
+        <span class="bs-horse">${escapeHtml(r.horse)}</span>
+        <span class="bs-stake">¥${r.stake.toLocaleString("ja-JP")}</span>
+        <span class="bs-ev ${r.ev >= 1.1 ? 'bs-ev-strong' : ''}">${sign}${evPct}%</span>
+      </li>`;
+    }).join("");
+  }
+
+  // シェアボタン
+  const shareBtn = document.getElementById("bs-share-all");
+  if (shareBtn && !shareBtn.dataset.bound) {
+    shareBtn.dataset.bound = "1";
+    shareBtn.addEventListener("click", async () => {
+      const text = [
+        `🏇 KEIBA NAVIGATOR 今日の推奨買い目`,
+        ``,
+        ...rows.map((r, i) => {
+          const sign = r.ev >= 1 ? "+" : "";
+          return `${i + 1}. ${r.raceName} / ${r.horse} / ¥${r.stake.toLocaleString("ja-JP")} (EV${sign}${((r.ev - 1) * 100).toFixed(0)}%)`;
+        }),
+        ``,
+        `合計推奨: ¥${stakeTotal.toLocaleString("ja-JP")}`,
+        `想定リターン: ¥${Math.round(expReturn).toLocaleString("ja-JP")}`,
+        `(買わないAI / 期待値ベース判定)`,
+      ].join("\n");
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: "今日の推奨買い目", text });
+        } else {
+          await navigator.clipboard.writeText(text);
+          showToast("📋 クリップボードにコピーしました", "ok");
+        }
+      } catch {}
+    });
+  }
 }
 
 // ─── 🤖 AI モデル情報 (LightGBM メタ + predictor 一覧) ───
@@ -4214,6 +4348,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { renderRankings(); } catch (e) { console.warn(e); }
   try { renderNewsCard(); } catch (e) { console.warn(e); }
   try { renderWin5Card(); } catch (e) { console.warn(e); }
+  try { renderBetSummary(); } catch (e) { console.warn(e); }
   try { renderAllRacesCard(); } catch (e) { console.warn(e); }
   try { renderRoiCard(); } catch (e) { console.warn(e); }
   try { updateRecordTabBadge(); } catch (e) { console.warn(e); }

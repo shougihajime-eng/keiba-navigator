@@ -270,6 +270,37 @@
         </p>
       </section>
 
+      <!-- 📋 今日の推奨買い目まとめ (saved races の合計サマリ・1 タップシェア) -->
+      <section id="card-bet-summary" class="bet-summary" data-priority="secondary" hidden>
+        <div class="bs-head">
+          <h2 class="bs-title">📋 今日の推奨買い目まとめ</h2>
+          <span id="bs-count" class="bs-count">--</span>
+        </div>
+        <p class="bs-hint">保存したレースの中から AI が「狙う」と判定したものだけを集計。長押しで個別レースを開けます。</p>
+        <div class="bs-grid">
+          <div class="bs-cell">
+            <div class="bs-label">推奨合計</div>
+            <div id="bs-stake-total" class="bs-val bs-val-money">¥--</div>
+          </div>
+          <div class="bs-cell">
+            <div class="bs-label">想定リターン</div>
+            <div id="bs-return-expected" class="bs-val bs-val-money">¥--</div>
+          </div>
+          <div class="bs-cell">
+            <div class="bs-label">全部当たれば</div>
+            <div id="bs-payout-max" class="bs-val bs-val-money bs-val-dream">¥--</div>
+          </div>
+          <div class="bs-cell">
+            <div class="bs-label">期待値</div>
+            <div id="bs-ev-avg" class="bs-val">--</div>
+          </div>
+        </div>
+        <ol id="bs-list" class="bs-list"></ol>
+        <div class="bs-actions">
+          <button id="bs-share-all" type="button" class="bs-btn bs-btn-share">📤 全部まとめてシェア</button>
+        </div>
+      </section>
+
       <!-- 🏁 保存した手動レースの横断ランキング -->
       <section id="card-saved-races" class="saved-races" data-priority="secondary" hidden>
         <div class="sr-head">

@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v21"; // Wave13.3: AI モデル情報カード (LightGBM 訓練状況・重要度 top5)
+const CACHE_VERSION = "keiba-nav-v23"; // Wave13.4: 推奨買い目まとめカード (合計¥/想定/全部勝てば/EV平均/1タップシェア)
 const PRECACHE = [
   "/",
   "/index.html",
