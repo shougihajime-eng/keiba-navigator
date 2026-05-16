@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v20"; // Wave12.1: シェア4種 + DM(マイニング予想)をrace JSONに乗せる
+const CACHE_VERSION = "keiba-nav-v21"; // Wave13.3: AI モデル情報カード (LightGBM 訓練状況・重要度 top5)
 const PRECACHE = [
   "/",
   "/index.html",

@@ -5008,3 +5008,77 @@ button:focus-visible, summary:focus-visible{
 @media (prefers-reduced-motion: reduce) {
   .race-countdown.rc-imminent{ animation: none; }
 }
+
+/* ─── 🤖 AI モデル情報カード ──────────────────────────── */
+.model-info-body{
+  margin-top: 8px;
+}
+.mi-row{
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid rgba(100, 116, 139, 0.18);
+  font-size: 13px;
+}
+.mi-row:last-child{ border-bottom: none; }
+.mi-row.mi-imp-head{
+  border-bottom: 1px dashed rgba(100, 116, 139, 0.32);
+  padding-top: 12px; margin-top: 4px;
+}
+.mi-label{ flex: 0 0 100px; font-weight: 600; color: #94a3b8; font-size: 12px; }
+.mi-val{ flex: 1; font-weight: 700; color: #cbd5e1; }
+.mi-val.mi-engine{ color: #34d399; letter-spacing: 0.02em; font-family: SFMono-Regular, Menlo, monospace; }
+.mi-val.mi-num{ font-feature-settings: "tnum" 1; }
+.mi-row.mi-preds{ flex-wrap: wrap; gap: 6px; padding: 6px 0; }
+.mi-pred{
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 6px;
+  font-size: 11px; font-weight: 600;
+  background: rgba(100, 116, 139, 0.18); color: #cbd5e1;
+  font-family: SFMono-Regular, Menlo, monospace;
+}
+.mi-pred-active{
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.22), rgba(16, 185, 129, 0.18));
+  color: #34d399;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4);
+}
+.mi-badge{
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 9999px;
+  font-size: 11px; font-weight: 700;
+}
+.mi-badge-ok{ background: rgba(52, 211, 153, 0.20); color: #34d399; }
+.mi-badge-wait{ background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+
+.mi-imp-list{ list-style: none; padding: 0; margin: 6px 0 0; }
+.mi-imp-row{
+  display: grid;
+  grid-template-columns: 130px 1fr 40px;
+  gap: 8px; align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
+}
+.mi-imp-name{
+  font-family: SFMono-Regular, Menlo, monospace;
+  color: #cbd5e1; font-size: 11px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mi-imp-bar{
+  height: 8px; background: rgba(100, 116, 139, 0.20);
+  border-radius: 4px; overflow: hidden;
+}
+.mi-imp-fill{
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #34d399, #0891b2);
+  border-radius: 4px;
+  transition: width 600ms ease-out;
+}
+.mi-imp-val{
+  text-align: right; font-size: 11px;
+  font-feature-settings: "tnum" 1; color: #94a3b8;
+}
+.mi-hint-wait{
+  margin-top: 10px; padding: 10px;
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 8px;
+  font-size: 12px; color: #fbbf24;
+}

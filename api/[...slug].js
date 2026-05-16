@@ -147,6 +147,30 @@ module.exports = async (req, res) => {
       const { getConnectionStatus } = require("../lib/connection_status");
       return ok(res, getConnectionStatus());
     }
+    if (path === "/model-info") {
+      // LightGBM モデルメタ + 利用可能な predictor 一覧を返す (AI 比較カード用)
+      try {
+        const fs = require("fs");
+        const pth = require("path");
+        const metaPath = pth.join(__dirname, "..", "data", "jv_cache", "model_lgbm_meta.json");
+        let meta = null;
+        if (fs.existsSync(metaPath)) {
+          meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+        }
+        const { listPredictors } = require("../predictors");
+        const LgbmEval = require("../predictors/lightgbm_eval");
+        return ok(res, {
+          ok: true,
+          predictors: listPredictors(),
+          lightgbm: {
+            available: LgbmEval.isAvailable(),
+            meta,
+          },
+        });
+      } catch (e) {
+        return ok(res, { ok: false, error: e.message });
+      }
+    }
     if (path === "/result") {
       const { readResultAsync, listResults } = require("../lib/finalize");
       const raceId = firstQuery(req.query?.raceId);

@@ -2290,6 +2290,108 @@ function updateCountdownUi() {
   card.classList.toggle("rc-imminent", sec <= 300);
 }
 
+// ─── 🤖 AI モデル情報 (LightGBM メタ + predictor 一覧) ───
+async function renderModelInfo() {
+  const body = document.getElementById("model-info-body");
+  if (!body) return;
+  try {
+    const res = await fetch("/api/model-info", { cache: "no-cache" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "model-info unavailable");
+
+    const preds = data.predictors || [];
+    const lgbm = data.lightgbm || {};
+    const meta = lgbm.meta || {};
+    const isReady = lgbm.available;
+
+    let html = "";
+
+    // 現在のデフォルト predictor
+    const def = preds.find(p => p.key && p.name);
+    html += `<div class="mi-row">
+      <span class="mi-label">現在のエンジン</span>
+      <span class="mi-val mi-engine">ensemble_v3</span>
+    </div>`;
+
+    // 利用可能 predictor 一覧
+    html += `<div class="mi-row mi-preds">`;
+    for (const p of preds) {
+      const active = p.key === "ensemble_v3";
+      html += `<span class="mi-pred ${active ? 'mi-pred-active' : ''}">${escapeHtml(p.key)}</span>`;
+    }
+    html += `</div>`;
+
+    // LightGBM 状態
+    html += `<div class="mi-row">
+      <span class="mi-label">LightGBM</span>
+      <span class="mi-val">${isReady
+        ? '<span class="mi-badge mi-badge-ok">稼働中</span>'
+        : '<span class="mi-badge mi-badge-wait">データ蓄積中</span>'}</span>
+    </div>`;
+
+    // 訓練メトリクス
+    if (meta.metrics) {
+      const auc = meta.metrics.auc;
+      const logloss = meta.metrics.logloss;
+      html += `<div class="mi-row">
+        <span class="mi-label">AUC</span>
+        <span class="mi-val mi-num">${Number.isFinite(auc) ? auc.toFixed(3) : '—'}</span>
+      </div>`;
+      html += `<div class="mi-row">
+        <span class="mi-label">logloss</span>
+        <span class="mi-val mi-num">${Number.isFinite(logloss) ? logloss.toFixed(4) : '—'}</span>
+      </div>`;
+    }
+
+    // 学習サンプル数
+    if (meta.samples_total != null) {
+      html += `<div class="mi-row">
+        <span class="mi-label">学習サンプル</span>
+        <span class="mi-val">${meta.samples_total.toLocaleString("ja-JP")} 行 / ${(meta.races_total || 0)} レース</span>
+      </div>`;
+    }
+
+    // 最終訓練日時
+    if (meta.trained_at) {
+      const d = new Date(meta.trained_at);
+      html += `<div class="mi-row">
+        <span class="mi-label">最終訓練</span>
+        <span class="mi-val">${d.toLocaleString("ja-JP")}</span>
+      </div>`;
+    }
+
+    // 特徴量重要度 top-5
+    if (meta.feature_importance) {
+      const ent = Object.entries(meta.feature_importance)
+        .sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const max = ent[0] ? ent[0][1] : 1;
+      html += `<div class="mi-row mi-imp-head">
+        <span class="mi-label">重要度 Top 5</span>
+      </div>`;
+      html += `<ul class="mi-imp-list">`;
+      for (const [k, v] of ent) {
+        const pct = max > 0 ? (v / max * 100).toFixed(0) : 0;
+        html += `<li class="mi-imp-row">
+          <span class="mi-imp-name">${escapeHtml(k)}</span>
+          <span class="mi-imp-bar"><span class="mi-imp-fill" style="width:${pct}%"></span></span>
+          <span class="mi-imp-val">${v}</span>
+        </li>`;
+      }
+      html += `</ul>`;
+    }
+
+    // データ不足メッセージ
+    if (meta.state === "not_enough_data") {
+      html += `<p class="settings-hint mi-hint-wait">⚠ ${escapeHtml(meta.hint || 'データ蓄積中')}</p>`;
+    }
+
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = `<p class="settings-hint">⚠ モデル情報を取得できませんでした (${escapeHtml(e.message || '')})</p>`;
+  }
+}
+
 // ─── タブ切替 (View Transitions API + 即時表示 + 重い処理はアイドル時に) ──
 function switchTab(name) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(6);
@@ -4124,6 +4226,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { startAutoRefresh(); updateFreshnessIndicator(); } catch (e) { console.warn(e); }
   try { setupViewMode(); } catch (e) { console.warn(e); }
   try { setupRaceClock(); } catch (e) { console.warn(e); }
+  try { renderModelInfo(); } catch (e) { console.warn(e); }
   registerServiceWorker();
   // SW が ready になってから朝の通知判定
   if ("serviceWorker" in navigator) {

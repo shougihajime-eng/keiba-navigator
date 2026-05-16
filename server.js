@@ -56,6 +56,24 @@ async function serve(req, res) {
     if (p === "/api/status") {
       return jsonRes(res, 200, buildStatus());
     }
+    if (p === "/api/model-info") {
+      try {
+        const fs = require("fs");
+        const pth = require("path");
+        const metaPath = pth.join(__dirname, "data", "jv_cache", "model_lgbm_meta.json");
+        let meta = null;
+        if (fs.existsSync(metaPath)) meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+        const { listPredictors } = require("./predictors");
+        const LgbmEval = require("./predictors/lightgbm_eval");
+        return jsonRes(res, 200, {
+          ok: true,
+          predictors: listPredictors(),
+          lightgbm: { available: LgbmEval.isAvailable(), meta },
+        });
+      } catch (e) {
+        return jsonRes(res, 200, { ok: false, error: e.message });
+      }
+    }
     if (p === "/api/weather") {
       return jsonRes(res, 200, await fetchAllWeather());
     }
