@@ -26,6 +26,8 @@ data/jv_cache/*
 # 例外: 集計済特徴量 + 馬マスタも乗せる (rankings / UI から参照)
 !data/jv_cache/features.json
 !data/jv_cache/horse_master.json
+# 例外: 事前計算予想 (スマホ瞬時応答用・/api/races が最優先で読む)
+!data/jv_cache/predictions.json
 
 # Editor
 .vscode/

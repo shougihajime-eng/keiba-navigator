@@ -10,6 +10,7 @@ const { readLatestRace, readAllRaces } = require("../lib/jv_cache");
 const { buildConclusion }   = require("../lib/conclusion");
 const { loadVenues }        = require("../lib/venues");
 const { clearCache }        = require("../lib/fetch");
+const predCache             = require("../lib/predictions_cache");
 
 function ok(res, body)  { res.setHeader("Cache-Control", "no-store"); res.status(200).json(body); }
 function bad(res, code, body) { res.setHeader("Cache-Control", "no-store"); res.status(code).json(body); }
@@ -46,6 +47,20 @@ module.exports = async (req, res) => {
 
   try {
     if (path === "/status")     return ok(res, buildStatus());
+    if (path === "/learning-status") {
+      // AI が裏で何回学習したかを 1 タップで分かる形で返す (UI のホームに出す用)
+      const meta = predCache.predictionsMeta();
+      const learning = predCache.readLearningStatus() || {};
+      return ok(res, {
+        ok: true,
+        fetchedAt: new Date().toISOString(),
+        predictionsAvailable: !!meta,
+        predictionsFresh: predCache.isPredictionsFresh(),
+        predictionsMeta: meta,
+        lgbm: learning.lgbm || null,
+        features: learning.features || null,
+      });
+    }
     if (path === "/weather")    return ok(res, await fetchAllWeather());
     if (path === "/news") {
       const data = await fetchNews();
@@ -72,6 +87,59 @@ module.exports = async (req, res) => {
       return ok(res, buildManualConclusion(payload));
     }
     if (path === "/races") {
+      // ★Wave14: 事前計算 predictions.json があれば最優先 (Vercel ServerlessFunction 内も瞬時応答)
+      const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const tmrDate = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10).replace(/-/g, "");
+      const predMap = predCache.readPredictionsMap();
+      if (predMap && predCache.isPredictionsFresh()) {
+        const preComputed = Object.values(predMap).filter(r => {
+          const id = String(r.race_id || "");
+          if (id.length >= 8 && /^\d{8}/.test(id)) {
+            const d = id.slice(0, 8);
+            return d === todayStr || d === tmrDate;
+          }
+          return true;
+        });
+        if (preComputed.length > 0) {
+          const summaries = preComputed.map(r => ({
+            raceName: r.race_name || null,
+            raceId: r.race_id || null,
+            course: r.course || null,
+            venue: null,
+            surface: r.surface || null,
+            distance: r.distance || null,
+            startTime: r.start_time || null,
+            isDummy: false,
+            isG1: !!r.is_g1,
+            verdict: r.verdict,
+            verdictTitle: r.verdictTitle,
+            topGrade: r.topPick?.evGrade || null,
+            topPick: r.topPick,
+            second: r.second,
+            third: r.third,
+            confidence: r.confidence,
+            hasOverpop: !!r.hasOverpop,
+            hasUnderval: !!r.hasUnderval,
+            trackBiasNote: r.trackBiasNote,
+            horseCount: r.horse_count || 0,
+          }));
+          summaries.sort((a, b) => {
+            if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+            return String(a.raceId || "").localeCompare(String(b.raceId || ""));
+          });
+          return ok(res, {
+            ok: true,
+            fetchedAt: new Date().toISOString(),
+            source: "precomputed",
+            computedAt: predCache.predictionsMeta()?.fetchedAt,
+            learning: predCache.readLearningStatus(),
+            raceCount: summaries.length,
+            races: summaries,
+          });
+        }
+      }
+
+      // フォールバック: 事前計算ファイル無し or 古い → on-the-fly 計算
       const allRaces = readAllRaces();
       if (!allRaces.length) {
         return bad(res, 503, {
@@ -79,9 +147,6 @@ module.exports = async (req, res) => {
           reason: "出走馬データはまだ取得していません。JRA-VAN（有料）の接続設定後に表示されます。",
         });
       }
-      // ★Wave9-fix: 当日+翌日のレースのみに絞る (蓄積 10 年分があると全件処理で激遅)
-      const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      const tmrDate = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10).replace(/-/g, "");
       const filtered = allRaces.filter(r => {
         const id = String(r.race_id || "");
         if (id.length >= 8 && /^\d{8}/.test(id)) {

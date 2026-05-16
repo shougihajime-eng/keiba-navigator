@@ -221,6 +221,29 @@ def run_train_lightgbm() -> int:
     )
 
 
+# ─── ステップ 4.8: precompute_predictions.js (全レース予想を事前計算) ─────
+def run_precompute_predictions() -> int:
+    """Node.js で全レースの buildConclusion を 1 回回して
+    data/jv_cache/predictions.json に書き出す。
+    /api/races と /api/race はこのファイルを最優先で読む → スマホ開いた瞬間に応答。
+    Node が無い環境では skip (動かない場合は warn だけ)。
+    """
+    log_line("[step4.8] precompute_predictions.js (全レース予想を事前計算)")
+    node_exe = None
+    for cand in ("node", "node.exe"):
+        rc = subprocess.run(["where", cand], capture_output=True, text=True)
+        if rc.returncode == 0 and rc.stdout.strip():
+            node_exe = cand
+            break
+    if not node_exe:
+        log_line("  Node.js 未検出・事前計算をスキップ (apt install nodejs 推奨)")
+        return 0
+    return run_subprocess(
+        [node_exe, str(SCRIPTS / "precompute_predictions.js")],
+        "precompute_predictions", timeout=300,
+    )
+
+
 # ─── ステップ 5: git commit + push ──────────────────────────
 def git_commit_push() -> int:
     """訓練済モデル + 集計済特徴量を git に乗せて Vercel へ反映する。
@@ -258,6 +281,7 @@ def git_commit_push() -> int:
         "data/jv_cache/model_lgbm_meta.json",
         "data/jv_cache/features.json",
         "data/jv_cache/horse_master.json",
+        "data/jv_cache/predictions.json",  # ★Wave14: 事前計算予想 (スマホ瞬時応答用)
     ]
     add_args = ["git", "add"] + [t for t in targets if (ROOT / t).exists()]
     if len(add_args) == 2:
@@ -307,6 +331,8 @@ def main():
                     help="aggregate_features.py をスキップ")
     ap.add_argument("--skip-train", action="store_true",
                     help="LightGBM 訓練をスキップ")
+    ap.add_argument("--skip-precompute", action="store_true",
+                    help="全レース予想の事前計算 (Node) をスキップ")
     args = ap.parse_args()
 
     log_line("=== race_day_pipeline 開始 ===")
@@ -330,6 +356,10 @@ def main():
     if not getattr(args, "skip_train", False):
         rc = run_train_lightgbm()
         if rc != 0: overall |= 0x20
+    # ★Wave14: 全レース予想の事前計算 (スマホ瞬時応答用)
+    if not getattr(args, "skip_precompute", False):
+        rc = run_precompute_predictions()
+        if rc != 0: overall |= 0x40
     rc = git_commit_push()
     if rc != 0: overall |= 0x10
 

@@ -22,6 +22,7 @@ const { buildStatus }     = require("./lib/status");
 const { fetchAllWeather } = require("./lib/weather");
 const { fetchNews }       = require("./lib/news");
 const { readLatestRace, readAllRaces } = require("./lib/jv_cache");
+const predCache = require("./lib/predictions_cache");
 const { buildConclusion } = require("./lib/conclusion");
 const { loadVenues }      = require("./lib/venues");
 const { clearCache }      = require("./lib/fetch");
@@ -55,6 +56,19 @@ async function serve(req, res) {
 
     if (p === "/api/status") {
       return jsonRes(res, 200, buildStatus());
+    }
+    if (p === "/api/learning-status") {
+      const meta = predCache.predictionsMeta();
+      const learning = predCache.readLearningStatus() || {};
+      return jsonRes(res, 200, {
+        ok: true,
+        fetchedAt: new Date().toISOString(),
+        predictionsAvailable: !!meta,
+        predictionsFresh: predCache.isPredictionsFresh(),
+        predictionsMeta: meta,
+        lgbm: learning.lgbm || null,
+        features: learning.features || null,
+      });
     }
     if (p === "/api/model-info") {
       try {
@@ -108,6 +122,60 @@ async function serve(req, res) {
       }
     }
     if (p === "/api/races") {
+      // ★Wave14: 事前計算 predictions.json があれば 1ms 以内応答 (パイプラインで pre-compute 済)
+      const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const tmrDate = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10).replace(/-/g, "");
+      const predMap = predCache.readPredictionsMap();
+      if (predMap && predCache.isPredictionsFresh()) {
+        const preComputed = Object.values(predMap).filter(r => {
+          const id = String(r.race_id || "");
+          if (id.length >= 8 && /^\d{8}/.test(id)) {
+            const d = id.slice(0, 8);
+            return d === todayStr || d === tmrDate;
+          }
+          return true;
+        });
+        if (preComputed.length > 0) {
+          // pre-compute 形式 → /api/races の従来形式に整形
+          const summaries = preComputed.map(r => ({
+            raceName: r.race_name || null,
+            raceId: r.race_id || null,
+            course: r.course || null,
+            venue: null,
+            surface: r.surface || null,
+            distance: r.distance || null,
+            startTime: r.start_time || null,
+            isDummy: false,
+            isG1: !!r.is_g1,
+            verdict: r.verdict,
+            verdictTitle: r.verdictTitle,
+            topGrade: r.topPick?.evGrade || null,
+            topPick: r.topPick,
+            second: r.second,
+            third: r.third,
+            confidence: r.confidence,
+            hasOverpop: !!r.hasOverpop,
+            hasUnderval: !!r.hasUnderval,
+            trackBiasNote: r.trackBiasNote,
+            horseCount: r.horse_count || 0,
+          }));
+          summaries.sort((a, b) => {
+            if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+            return String(a.raceId || "").localeCompare(String(b.raceId || ""));
+          });
+          return jsonRes(res, 200, {
+            ok: true,
+            fetchedAt: new Date().toISOString(),
+            source: "precomputed",
+            computedAt: predCache.predictionsMeta()?.fetchedAt,
+            learning: predCache.readLearningStatus(),
+            raceCount: summaries.length,
+            races: summaries,
+          });
+        }
+      }
+
+      // フォールバック: 事前計算ファイル無し or 古い → 旧来の on-the-fly 計算
       const allRaces = readAllRaces();
       if (!allRaces.length) {
         return jsonRes(res, 503, {
@@ -115,9 +183,6 @@ async function serve(req, res) {
           reason: "出走馬データはまだ取得していません。JRA-VAN（有料）の接続設定後に表示されます。",
         });
       }
-      // ★Wave9-fix: 当日+翌日のレースのみに絞る (蓄積 10 年分があると全件処理で激遅)
-      const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      const tmrDate = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10).replace(/-/g, "");
       const filtered = allRaces.filter(r => {
         const id = String(r.race_id || "");
         if (id.length >= 8 && /^\d{8}/.test(id)) {
@@ -156,7 +221,14 @@ async function serve(req, res) {
         if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
         return String(a.raceId || "").localeCompare(String(b.raceId || ""));
       });
-      return jsonRes(res, 200, { ok: true, fetchedAt: new Date().toISOString(), raceCount: summaries.length, races: summaries });
+      return jsonRes(res, 200, {
+        ok: true,
+        fetchedAt: new Date().toISOString(),
+        source: "on-the-fly",
+        learning: predCache.readLearningStatus(),
+        raceCount: summaries.length,
+        races: summaries,
+      });
     }
     if (p === "/api/win5") {
       const { buildWin5, formatWin5 } = require("./lib/win5_engine");

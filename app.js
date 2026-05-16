@@ -4585,6 +4585,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { setupPullToRefresh(); } catch (e) { console.warn(e); }
   try { setupScrollPolish(); } catch (e) { console.warn(e); }
   try { startAutoRefresh(); updateFreshnessIndicator(); } catch (e) { console.warn(e); }
+  try { renderAiPulse(); } catch (e) { console.warn(e); }
   try { setupViewMode(); } catch (e) { console.warn(e); }
   try { setupRaceClock(); } catch (e) { console.warn(e); }
   try { renderModelInfo(); } catch (e) { console.warn(e); }
@@ -4601,3 +4602,72 @@ document.addEventListener("DOMContentLoaded", async () => {
     setTimeout(() => showToast("⚠ 保存データの一部が壊れていたため初期化しました(バックアップは保持)", "warn"), 800);
   }
 });
+
+// ─── 🧠 AI 常時学習中バッジ (Wave14) ─────────────────────────────
+// 裏で 4 回/日 LightGBM が再訓練 + 予想が事前計算されていることを示す
+async function renderAiPulse() {
+  const card = document.getElementById("ai-pulse");
+  if (!card) return;
+  let data;
+  try {
+    const res = await fetch("/api/learning-status", { cache: "no-store" });
+    data = await res.json();
+  } catch {
+    card.hidden = true;
+    return;
+  }
+  if (!data?.ok) { card.hidden = true; return; }
+
+  const aucEl = document.getElementById("ai-pulse-auc");
+  const subEl = document.getElementById("ai-pulse-sub");
+  const btnEl = document.getElementById("ai-pulse-detail");
+
+  // AUC バッジ
+  const auc = data.lgbm?.metrics?.auc;
+  if (Number.isFinite(auc)) {
+    aucEl.textContent = `AUC ${auc.toFixed(3)}`;
+    aucEl.hidden = false;
+  } else {
+    aucEl.hidden = true;
+  }
+
+  // サブテキスト: 最終学習 + 予想計算
+  const parts = [];
+  if (data.lgbm?.trained_at) {
+    const t = new Date(data.lgbm.trained_at);
+    parts.push(`AI が ${_humanAgo(t)} に学習完了`);
+  }
+  if (data.predictionsMeta?.fetchedAt) {
+    const t2 = new Date(data.predictionsMeta.fetchedAt);
+    parts.push(`予想 ${data.predictionsMeta.raceCount} レース ${_humanAgo(t2)} 更新`);
+  }
+  if (parts.length === 0) {
+    parts.push("予想を事前計算しています…");
+  }
+  subEl.textContent = parts.join(" / ");
+  card.hidden = false;
+
+  // 詳細ボタン → 設定タブの「AI モデル情報」へ
+  if (btnEl) {
+    btnEl.onclick = () => {
+      try {
+        switchTab?.("settings");
+        setTimeout(() => {
+          document.getElementById("card-model-info")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 240);
+      } catch {}
+    };
+  }
+}
+
+function _humanAgo(d) {
+  const ms = Date.now() - d.getTime();
+  const sec = Math.max(0, Math.round(ms / 1000));
+  if (sec < 60) return "たった今";
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min} 分前`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr} 時間前`;
+  const day = Math.round(hr / 24);
+  return `${day} 日前`;
+}
