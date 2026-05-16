@@ -270,6 +270,48 @@
         </p>
       </section>
 
+      <!-- 📊 AI 貢献度 (バックテスト: 実際 vs もし AI に従っていたら) -->
+      <section id="card-backtest" class="backtest-card" data-priority="secondary" hidden>
+        <div class="bt-head">
+          <h2 class="bt-title">📊 AI の貢献度</h2>
+          <span id="bt-samples" class="bt-samples">--</span>
+        </div>
+        <p class="bt-hint">過去の判定を「今の AI」で再評価。差分で「AI がどれだけ役立ったか」を見える化。</p>
+        <div class="bt-compare">
+          <div class="bt-side bt-side-orig">
+            <div class="bt-side-label">実際 (当時の判定)</div>
+            <div id="bt-orig-rec" class="bt-side-val">--</div>
+            <div class="bt-side-sub">回収率</div>
+          </div>
+          <div class="bt-arrow">→</div>
+          <div class="bt-side bt-side-hypo">
+            <div class="bt-side-label">今の AI で判定したら</div>
+            <div id="bt-hypo-rec" class="bt-side-val">--</div>
+            <div class="bt-side-sub">回収率</div>
+          </div>
+        </div>
+        <div id="bt-improvement" class="bt-improvement">--</div>
+        <div class="bt-deltas">
+          <div class="bt-delta">
+            <span class="bt-delta-num" id="bt-stay-buy">0</span>
+            <span class="bt-delta-label">買い→買い</span>
+          </div>
+          <div class="bt-delta bt-delta-flip">
+            <span class="bt-delta-num" id="bt-became-pass">0</span>
+            <span class="bt-delta-label">買い→見送り</span>
+          </div>
+          <div class="bt-delta bt-delta-flip">
+            <span class="bt-delta-num" id="bt-became-buy">0</span>
+            <span class="bt-delta-label">見送り→買い</span>
+          </div>
+          <div class="bt-delta">
+            <span class="bt-delta-num" id="bt-stay-pass">0</span>
+            <span class="bt-delta-label">見送り→見送り</span>
+          </div>
+        </div>
+        <p id="bt-insight" class="bt-insight"></p>
+      </section>
+
       <!-- 📋 今日の推奨買い目まとめ (saved races の合計サマリ・1 タップシェア) -->
       <section id="card-bet-summary" class="bet-summary" data-priority="secondary" hidden>
         <div class="bs-head">

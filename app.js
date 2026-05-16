@@ -2424,6 +2424,60 @@ function renderBetSummary() {
   }
 }
 
+// ─── 📊 AI 貢献度 バックテスト カード ────────────────
+function renderBacktestCard() {
+  const card = document.getElementById("card-backtest");
+  if (!card || !window.Backtest) return;
+  const store = loadStore();
+  const bets = Array.isArray(store?.bets) ? store.bets : [];
+  let bt;
+  try { bt = window.Backtest.run(bets); }
+  catch (e) { console.warn("backtest run failed", e); return; }
+  if (!bt || bt.error || (bt.evaluable || 0) < 3) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+
+  const $set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  $set("bt-samples", `${bt.evaluable} 件評価`);
+
+  const fmtRec = (r) => Number.isFinite(r) ? `${(r * 100).toFixed(0)}%` : "—";
+  $set("bt-orig-rec", fmtRec(bt.original && bt.original.spent
+    ? bt.original.returned / bt.original.spent : null));
+  $set("bt-hypo-rec", fmtRec(bt.hypothetical && bt.hypothetical.spent
+    ? bt.hypothetical.returned / bt.hypothetical.spent : null));
+
+  // 改善量
+  const impEl = document.getElementById("bt-improvement");
+  if (impEl) {
+    if (Number.isFinite(bt.improvement)) {
+      const pct = (bt.improvement * 100).toFixed(0);
+      const sign = bt.improvement >= 0 ? "+" : "";
+      impEl.textContent = `差分: ${sign}${pct}%`;
+      impEl.className = "bt-improvement " +
+        (bt.improvement > 0.03 ? "bt-imp-good" :
+         bt.improvement < -0.03 ? "bt-imp-bad" : "bt-imp-flat");
+    } else {
+      impEl.textContent = "差分: —";
+      impEl.className = "bt-improvement bt-imp-flat";
+    }
+  }
+
+  const d = bt.verdictDelta || {};
+  $set("bt-stay-buy",     String(d.stayBuy ?? 0));
+  $set("bt-stay-pass",    String(d.stayPass ?? 0));
+  $set("bt-became-pass",  String(d.becamePass ?? 0));
+  $set("bt-became-buy",   String(d.becameBuy ?? 0));
+
+  // インサイト (HTML を許容してるので escapeHtml はかけない)
+  const insightEl = document.getElementById("bt-insight");
+  if (insightEl) {
+    const text = (bt.insight || []).join(" ");
+    insightEl.innerHTML = text || "";
+  }
+}
+
 // ─── 🤖 AI モデル情報 (LightGBM メタ + predictor 一覧) ───
 async function renderModelInfo() {
   const body = document.getElementById("model-info-body");
@@ -4349,6 +4403,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { renderNewsCard(); } catch (e) { console.warn(e); }
   try { renderWin5Card(); } catch (e) { console.warn(e); }
   try { renderBetSummary(); } catch (e) { console.warn(e); }
+  try { renderBacktestCard(); } catch (e) { console.warn(e); }
   try { renderAllRacesCard(); } catch (e) { console.warn(e); }
   try { renderRoiCard(); } catch (e) { console.warn(e); }
   try { updateRecordTabBadge(); } catch (e) { console.warn(e); }

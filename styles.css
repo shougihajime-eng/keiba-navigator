@@ -5189,3 +5189,94 @@ button:focus-visible, summary:focus-visible{
   .bs-row{ grid-template-columns: 22px 1fr auto auto; font-size: 12px; }
   .bs-horse{ display: none; }
 }
+
+/* ─── 📊 バックテスト カード ──────────────────────────── */
+.backtest-card{
+  padding: 16px 16px 14px;
+  background: linear-gradient(135deg, #1c2438 0%, #141a29 100%);
+  border: 1px solid rgba(168, 85, 247, 0.32);
+  border-radius: 16px;
+  color: #f1f5f9;
+}
+.bt-head{ display:flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.bt-title{ font-size: 16px; font-weight: 800; color: #c4b5fd; }
+.bt-samples{
+  padding: 2px 8px; border-radius: 9999px;
+  background: rgba(168, 85, 247, 0.18);
+  color: #c4b5fd; font-size: 11px; font-weight: 700;
+}
+.bt-hint{ font-size: 12px; color: #94a3b8; margin: 4px 0 12px; line-height: 1.5; }
+.bt-compare{
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr;
+  gap: 8px; align-items: center;
+  margin: 8px 0 4px;
+}
+.bt-side{
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(100, 116, 139, 0.18);
+  border-radius: 10px;
+  text-align: center;
+}
+.bt-side-orig{ border-color: rgba(100, 116, 139, 0.28); }
+.bt-side-hypo{ border-color: rgba(168, 85, 247, 0.42); background: rgba(168, 85, 247, 0.08); }
+.bt-side-label{
+  font-size: 10.5px; color: #94a3b8; font-weight: 600;
+}
+.bt-side-val{
+  font-size: 26px; font-weight: 900;
+  font-feature-settings: "tnum" 1;
+  margin: 4px 0 0;
+  color: #f1f5f9;
+}
+.bt-side-hypo .bt-side-val{ color: #c4b5fd; }
+.bt-side-sub{ font-size: 10px; color: #64748b; margin-top: 2px; }
+.bt-arrow{
+  font-size: 22px; color: #64748b;
+  text-align: center; font-weight: 900;
+}
+.bt-improvement{
+  text-align: center;
+  margin: 10px 0 4px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 800; font-size: 14px;
+}
+.bt-imp-good{ background: rgba(52, 211, 153, 0.16); color: #34d399; }
+.bt-imp-bad{  background: rgba(239, 68, 68, 0.14); color: #f87171; }
+.bt-imp-flat{ background: rgba(100, 116, 139, 0.18); color: #94a3b8; }
+.bt-deltas{
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+.bt-delta{
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 4px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(100, 116, 139, 0.18);
+  border-radius: 8px;
+  text-align: center;
+}
+.bt-delta-flip{ border-color: rgba(245, 158, 11, 0.42); }
+.bt-delta-num{
+  font-size: 18px; font-weight: 900; color: #f1f5f9;
+  font-feature-settings: "tnum" 1;
+}
+.bt-delta-flip .bt-delta-num{ color: #fbbf24; }
+.bt-delta-label{
+  font-size: 10px; color: #94a3b8; margin-top: 2px;
+  font-weight: 600;
+}
+.bt-insight{
+  margin-top: 10px; padding: 10px 12px;
+  background: rgba(168, 85, 247, 0.08);
+  border-radius: 8px;
+  font-size: 12.5px; color: #cbd5e1; line-height: 1.55;
+}
+@media (max-width: 480px){
+  .bt-side-val{ font-size: 22px; }
+  .bt-deltas{ grid-template-columns: 1fr 1fr; }
+}
