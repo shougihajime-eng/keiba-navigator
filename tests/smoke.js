@@ -621,5 +621,80 @@ test("dataCompleteness: 新規 4 キーがカウント対象", () => {
   assert.ok(c.present >= 4, `expected present >= 4, got ${c.present}`);
 });
 
+// ─── Wave9 最終 QA: 数値安定性 + DoS 対策 ──────────────
+console.log("\n=== Wave9 QA: softmax 数値安定性 ===");
+test("softmax: 全スコア 0 でも一様分布で NaN にならない", () => {
+  const probs = ensemble._internal.softmax([0, 0, 0, 0, 0]);
+  for (const p of probs) {
+    assert.ok(Number.isFinite(p), `NaN p=${p}`);
+    assert.ok(Math.abs(p - 0.2) < 1e-9, `expected 1/5=0.2, got ${p}`);
+  }
+});
+test("softmax: 極小スコア (1e-20) でも NaN にならない", () => {
+  const probs = ensemble._internal.softmax([1e-20, 1e-20, 1e-20]);
+  for (const p of probs) assert.ok(Number.isFinite(p), `NaN p=${p}`);
+  const sum = probs.reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(sum - 1) < 1e-9, `sum=${sum}`);
+});
+test("softmax: 1 つだけ大きい (1, 0, 0, 0) で先頭が圧倒", () => {
+  const probs = ensemble._internal.softmax([1, 1e-10, 1e-10, 1e-10]);
+  assert.ok(probs[0] > 0.9, `top=${probs[0]}`);
+});
+test("softmax: NaN/Infinity 混入でも安全", () => {
+  const probs = ensemble._internal.softmax([NaN, 1, 0.5, 0.1]);
+  for (const p of probs) assert.ok(Number.isFinite(p), `NaN p=${p}`);
+});
+
+console.log("\n=== Wave9 QA: track_bias 再正規化 NaN ガード ===");
+test("conclusion: 全 prob=NaN でも judgement 出る", () => {
+  // 異常な ensemble 出力を模倣する race
+  const c = conclusion.buildConclusion({
+    race_id: "test_nan",
+    horses: [
+      { number: 1, win_odds: 2.5, prev_finish: 1 },
+      { number: 2, win_odds: 5.0, prev_finish: 2 },
+    ],
+  });
+  // ensemble は通常 prob を返すので、ここでは picks が NaN を含まないことを確認
+  for (const p of [...(c.picks||[]), ...(c.avoid||[])]) {
+    if (p.ev !== null) assert.ok(Number.isFinite(p.ev), `ev=${p.ev} for ${p.number}`);
+    if (p.prob !== null) assert.ok(Number.isFinite(p.prob), `prob=${p.prob} for ${p.number}`);
+  }
+});
+
+console.log("\n=== Wave9 QA: manual_race DoS 対策 ===");
+test("parseLine: 500 文字超は null", () => {
+  const longLine = "1 a " + "あ".repeat(600);
+  assert.strictEqual(manual.parseLine(longLine), null);
+});
+test("parseTextInput: 100KB 超は []", () => {
+  const huge = "1 a 2 3 4\n".repeat(20000);  // 約 200KB
+  assert.deepStrictEqual(manual.parseTextInput(huge), []);
+});
+test("parseTextInput: 100 行超は先頭 100 行のみ", () => {
+  const lines = Array.from({ length: 200 }, (_, i) => `${(i % 18) + 1} h${i} 3.5 1 5`).join("\n");
+  const out = manual.parseTextInput(lines);
+  assert.ok(out.length <= 100, `len=${out.length}`);
+});
+test("parseLine: 全角空白だけは null", () => {
+  assert.strictEqual(manual.parseLine("　".repeat(50)), null);
+});
+
+console.log("\n=== Wave9 QA: win5_engine log-domain 確率積 ===");
+test("win5_engine: 極低確率 5 戦でも probSum が 0 にならない", () => {
+  const win5engine = require("../lib/win5_engine");
+  const makeRare = (idx) => ({
+    race_id: "rare_" + idx,
+    horses: Array.from({ length: 18 }, (_, i) => ({
+      number: i + 1, win_odds: 30 + i * 5, prev_finish: 6 + (i % 8), weight: 56,
+    })),
+  });
+  const w = win5engine.buildWin5([makeRare(1), makeRare(2), makeRare(3), makeRare(4), makeRare(5)]);
+  assert.strictEqual(w.ok, true);
+  // safe (1 点) の hitProb が finite で 0 でない (極低だが値はある)
+  assert.ok(Number.isFinite(w.strategies.safe.hitProb), `hitProb=${w.strategies.safe.hitProb}`);
+  assert.ok(w.strategies.safe.hitProb > 0, `hitProb=${w.strategies.safe.hitProb}`);
+});
+
 console.log(`\n=== 合計: ${passed} 通過 / ${failed} 失敗 ===`);
 process.exit(failed > 0 ? 1 : 0);

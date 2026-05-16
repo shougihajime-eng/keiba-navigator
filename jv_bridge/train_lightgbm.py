@@ -25,11 +25,35 @@ train_lightgbm.py — LightGBM で「1着馬を予想する」モデルを訓練
 from __future__ import annotations
 
 import argparse
+import io
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+# Windows + pipe では sys.stdout.reconfigure() が silent fail することがあるため、
+# TextIOWrapper を二段構えで張り直して "—" "・" U+FFFD 等を確実に通す。
+# (これがないと em-dash が cp932 で落ちて訓練成功でも失敗判定される既知バグが出る)
+os.environ["PYTHONIOENCODING"] = "utf-8"
+for _attr in ("stdout", "stderr"):
+    _s = getattr(sys, _attr, None)
+    if _s is None:
+        continue
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+    # reconfigure が無効だった場合のフォールバック: buffer から再ラップ
+    try:
+        buf = getattr(_s, "buffer", None)
+        if buf is not None and getattr(_s, "encoding", "").lower() not in ("utf-8", "utf8"):
+            setattr(sys, _attr, io.TextIOWrapper(
+                buf, encoding="utf-8", errors="replace", line_buffering=True
+            ))
+    except Exception:
+        pass
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -248,7 +272,17 @@ def train(min_races: int, test_ratio: float) -> int:
                 "verbosity": -1,
             }
             booster = lgb.train(params, train_data, num_boost_round=100)
-            booster.save_model(str(MODEL_PATH))
+            # LightGBM Windows binary は非 ASCII path (例: 競馬) を扱えない (既知の制約)
+            # 一時パス (Temp) で save → shutil.copy で最終パスに移動する
+            import tempfile, shutil
+            with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as tf:
+                tmp_path = tf.name
+            try:
+                booster.save_model(tmp_path)
+                shutil.copy(tmp_path, str(MODEL_PATH))
+            finally:
+                try: os.unlink(tmp_path)
+                except Exception: pass
             # Node 側で評価できるよう JSON ダンプも保存
             try:
                 model_json = booster.dump_model()

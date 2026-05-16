@@ -143,20 +143,22 @@ def cmd_rt(args) -> int:
 
         out_path = CACHE_DIR / f"raw_{args.dataspec}_{args.raceid}_{int(dt.datetime.now().timestamp())}.bin"
         records = []
+        import time as _time
         with open(out_path, "wb") as f:
             while True:
                 rc, data, _fname = jv_read(jv)
                 if rc == 0:
-                    break  # 全データ読み取り完了
+                    break  # 全データ読み取り完了 (EOF)
                 if rc == -1:
-                    # -1: 取得範囲末尾 or 中断要求。
-                    # JVOpen で要求した範囲のデータを全て読み終えた時にも返る (JV-Link 実機確認)。
-                    # 取得済みデータは正常なので break して保存処理に進む。
-                    print("[info] JVRead rc=-1 → 取得範囲完了として終了")
-                    break
-                if rc == -3:
-                    # ファイル変わり目
+                    # ファイル切り替わり (続行・JV-Link 仕様書 p.56)
                     continue
+                if rc == -3:
+                    # ファイルダウンロード中。待機して再試行
+                    _time.sleep(0.5)
+                    continue
+                if rc < 0:
+                    print(f"[err] JVRead rc={rc}")
+                    break
                 if not data:
                     continue
                 f.write(data)
@@ -299,24 +301,43 @@ def cmd_aggregate(args) -> int:
         agg_dir.mkdir(parents=True, exist_ok=True)
         out_path = agg_dir / f"raw_{int(dt.datetime.now().timestamp())}.bin"
         records = []
+        import time as _time
+        file_switches = 0
+        wait_retries = 0
         with open(out_path, "wb") as f:
             while True:
                 rc, data, _fname = jv_read(jv)
                 if rc == 0:
+                    # 全ファイル読み込み終了 (EOF・正常完了)
                     break
                 if rc == -1:
-                    # -1: 取得範囲末尾 or 中断要求。
-                    # JVOpen で要求した範囲のデータを全て読み終えた時にも返る (JV-Link 実機確認)。
-                    # 取得済みデータは正常なので break して保存処理に進む。
-                    print("[info] JVRead rc=-1 → 取得範囲完了として終了")
-                    break
-                if rc == -3:
+                    # -1: ファイル切り替わり (JV-Link 仕様書 p.56)
+                    # → エラーではない。バッファは空。次のファイル読み出しに続行する。
+                    # ❌ 以前は break していたが、これだと 1 ファイル目で止まる重大バグだった
+                    file_switches += 1
                     continue
+                if rc == -3:
+                    # -3: ファイルダウンロード中。少し待って再試行
+                    wait_retries += 1
+                    if wait_retries > 600:  # 最大 10 分まで待機
+                        print("[warn] JVRead rc=-3 が 10 分続いた → 中断")
+                        break
+                    _time.sleep(1)
+                    continue
+                if rc < 0:
+                    # その他のエラー (-201/-202/-203/-402/-403/-502/-503 など)
+                    print(f"[err] JVRead rc={rc} → 中断")
+                    break
+                # rc > 0 = 読み込んだバイト数
                 if not data:
                     continue
                 f.write(data)
                 rec_type = data[:2].decode("ascii", errors="replace") if len(data) >= 2 else ""
                 records.append({"recordType": rec_type, "size": len(data)})
+                # 進捗ログ (10000 件ごと)
+                if len(records) % 10000 == 0:
+                    print(f"  [info] JVRead 進捗: {len(records)} records / file_switches={file_switches}", flush=True)
+        print(f"[info] file_switches={file_switches} 回 / wait_retries={wait_retries} 回")
 
         try: jv.JVClose()
         except Exception: pass

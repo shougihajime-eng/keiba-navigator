@@ -136,11 +136,32 @@ PowerShell でこのフォルダ（競馬\）に移動して：
 ----------------------------------------------------------------
 [B-4] 過去レースを一括取得（10年分）して features.json を作る
 ----------------------------------------------------------------
-    py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20140101000000
+    py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20140101000000 --option 1
+    py -3.12-32 jv_bridge\build_all.py
     py -3.12-32 jv_bridge\aggregate_features.py
 
 これで data\jv_cache\features.json が生成され、騎手・コース別勝率が
 AI 推定に効くようになります。
+
+注意:
+- 初回は数十分〜1 時間のダウンロード (数 GB)。Python 終了まで触らない
+- option=4 (セットアップ) の場合は最初に「スタートキット (CD/DVD-ROM) を
+  持っていますか?」のダイアログが出る → 持っていない側を選んで OK
+- 一度取得すると JV-Link 内部の "lastfiletimestamp" が更新され、
+  2 回目以降は差分だけになる (高速・数秒〜数十秒)
+- JVRead は内部で「ファイル切り替え」(rc=-1) を多数回返す。これは正常で、
+  ファイル数 × 100〜500 records 取れる (10 年で 100 万 records 程度)
+
+----------------------------------------------------------------
+[B-4.5] LightGBM で実データから AI 訓練 (オプション・高精度化)
+----------------------------------------------------------------
+    pip install lightgbm scikit-learn numpy
+    py -3.12-32 jv_bridge\train_lightgbm.py
+
+races/ + results/ の蓄積が 20 レース以上あれば、LightGBM が訓練を始め、
+data\jv_cache\model_lgbm.txt + model_lgbm_meta.json を出力します。
+predictors/ensemble_v3 が自動でモデルを検出して使うようになります。
+(/api/model-info で LightGBM が利用可能かを確認できる)
 
 ----------------------------------------------------------------
 [B-5] レースデータを取得する（例：単複オッズ）

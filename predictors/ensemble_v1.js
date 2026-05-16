@@ -208,11 +208,22 @@ function computeWeights(completeness) {
 // ─── ロジット → softmax ─────────────────────────────────
 function softmax(scores) {
   // log domain で安定化
-  const logs = scores.map(s => Math.log(Math.max(s, 1e-9)));
+  // 二重ガード: (1) Math.log の下限を 1e-12 に・(2) ログ値自体も -100 でクリップ
+  //   → 7 弱学習器が全部低スコアで log の合計が極端に落ちても NaN にならない
+  const logs = scores.map(s => {
+    const safe = Math.max(Number.isFinite(s) ? s : 0, 1e-12);
+    const l = Math.log(safe);
+    return Math.max(l, -100);
+  });
   const max = Math.max(...logs);
   const exps = logs.map(l => Math.exp(l - max));
   const sum = exps.reduce((a, b) => a + b, 0);
-  return exps.map(e => e / Math.max(sum, 1e-9));
+  if (!Number.isFinite(sum) || sum <= 0) {
+    // 全ゼロのとき: 一様分布で返す
+    const n = scores.length;
+    return scores.map(() => 1 / n);
+  }
+  return exps.map(e => e / sum);
 }
 
 // ─── メイン: predict ──────────────────────────────────────
