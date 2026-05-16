@@ -72,13 +72,26 @@ module.exports = async (req, res) => {
       return ok(res, buildManualConclusion(payload));
     }
     if (path === "/races") {
-      const races = readAllRaces();
-      if (!races.length) {
+      const allRaces = readAllRaces();
+      if (!allRaces.length) {
         return bad(res, 503, {
           ok: false, status: "unavailable", races: [],
           reason: "出走馬データはまだ取得していません。JRA-VAN（有料）の接続設定後に表示されます。",
         });
       }
+      // ★Wave9-fix: 当日+翌日のレースのみに絞る (蓄積 10 年分があると全件処理で激遅)
+      const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const tmrDate = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10).replace(/-/g, "");
+      const filtered = allRaces.filter(r => {
+        const id = String(r.race_id || "");
+        if (id.length >= 8 && /^\d{8}/.test(id)) {
+          const d = id.slice(0, 8);
+          return d === todayStr || d === tmrDate;
+        }
+        return true;  // 非 JRA 形式 (manual_ 等) は素通し
+      });
+      // 0 件なら直近 48 件 (3 開催場 × 12R × 2 日相当) を返す
+      const races = filtered.length > 0 ? filtered : allRaces.slice(-48);
       const summaries = races.map(race => {
         const c = buildConclusion(race);
         return {
@@ -113,10 +126,21 @@ module.exports = async (req, res) => {
     }
     if (path === "/win5") {
       const { buildWin5, formatWin5 } = require("../lib/win5_engine");
-      const races = readAllRaces();
-      if (!races.length) {
+      const allRaces = readAllRaces();
+      if (!allRaces.length) {
         return bad(res, 503, { ok: false, status: "unavailable", reason: "出走馬データ未取得" });
       }
+      // ★Wave9-fix: 当日+翌日のレースのみに絞る (蓄積 10 年分でハング防止)
+      const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const tmrDate = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10).replace(/-/g, "");
+      const races = allRaces.filter(r => {
+        const id = String(r.race_id || "");
+        if (id.length >= 8 && /^\d{8}/.test(id)) {
+          const d = id.slice(0, 8);
+          return d === todayStr || d === tmrDate;
+        }
+        return true;
+      });
       // 日曜の WIN5 対象は当日の指定 5 レース。データが揃わない時は
       // 「先頭 5 レース」をフォールバックで使う
       const sundayRaces = races.filter(r => {

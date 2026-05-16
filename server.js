@@ -108,13 +108,25 @@ async function serve(req, res) {
       }
     }
     if (p === "/api/races") {
-      const races = readAllRaces();
-      if (!races.length) {
+      const allRaces = readAllRaces();
+      if (!allRaces.length) {
         return jsonRes(res, 503, {
           ok: false, status: "unavailable", races: [],
           reason: "出走馬データはまだ取得していません。JRA-VAN（有料）の接続設定後に表示されます。",
         });
       }
+      // ★Wave9-fix: 当日+翌日のレースのみに絞る (蓄積 10 年分があると全件処理で激遅)
+      const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const tmrDate = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10).replace(/-/g, "");
+      const filtered = allRaces.filter(r => {
+        const id = String(r.race_id || "");
+        if (id.length >= 8 && /^\d{8}/.test(id)) {
+          const d = id.slice(0, 8);
+          return d === todayStr || d === tmrDate;
+        }
+        return true;
+      });
+      const races = filtered.length > 0 ? filtered : allRaces.slice(-48);
       const summaries = races.map(race => {
         const c = buildConclusion(race);
         return {
@@ -148,8 +160,19 @@ async function serve(req, res) {
     }
     if (p === "/api/win5") {
       const { buildWin5, formatWin5 } = require("./lib/win5_engine");
-      const races = readAllRaces();
-      if (!races.length) return jsonRes(res, 503, { ok: false, reason: "出走馬データ未取得" });
+      const allRaces = readAllRaces();
+      if (!allRaces.length) return jsonRes(res, 503, { ok: false, reason: "出走馬データ未取得" });
+      // ★Wave9-fix: 当日+翌日のレースのみに絞る (蓄積 10 年分でハング防止)
+      const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const tmrDate = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10).replace(/-/g, "");
+      const races = allRaces.filter(r => {
+        const id = String(r.race_id || "");
+        if (id.length >= 8 && /^\d{8}/.test(id)) {
+          const d = id.slice(0, 8);
+          return d === todayStr || d === tmrDate;
+        }
+        return true;
+      });
       const sundayRaces = races.filter(r => {
         const t = r.race_start || r.start_time;
         if (!t) return false;
