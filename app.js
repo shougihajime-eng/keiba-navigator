@@ -2210,6 +2210,86 @@ function setupViewMode() {
   }
 }
 
+// ─── レースクロック (T-10/T-5/T-0 自動再予想) ───────────
+let _rcCountdownTimer = null;
+function setupRaceClock() {
+  if (!window.RaceClock) return;
+  // 保存済みレースを登録
+  reloadRaceClockFromSavedRaces();
+  // 発走時刻接近イベントを購読
+  window.RaceClock.onTick(async (ev) => {
+    const name = ev.race?.raceName || ev.race?.conclusion?.raceName || ev.raceId;
+    const label = ev.label;
+    console.log(`[race_clock] ${name} ${label} 到達`);
+    // 1) UI 通知 (トースト)
+    try { showToast(`🏇 ${name} ${label} — 再予想を実行`, "ok"); } catch {}
+    // 2) RT データ再取得 (本番にあれば) + 結論を再計算
+    try {
+      await refreshAll({ silent: true });
+    } catch {}
+    // 3) ローカル通知 (NotifyV2 が有効なら)
+    if (window.NotifyV2 && window.NotifyV2.isEnabled("prerace_10min") &&
+        typeof Notification !== "undefined" && Notification.permission === "granted") {
+      const top = ev.race?.conclusion?.picks?.[0];
+      const body = top
+        ? `本命 ${top.number || "?"}番 ${top.name || ""} (${top.odds ?? "?"}倍 / 補正後 ${(((top.ev ?? 1) - 1) * 100).toFixed(0)}%)`
+        : "予想を更新しました";
+      const tag = `keiba-rc-${ev.raceId}-${ev.marker}`;
+      try {
+        const reg = navigator.serviceWorker ? await navigator.serviceWorker.ready : null;
+        if (reg?.showNotification) {
+          reg.showNotification(`🏇 ${name} ${label}`, { body, icon: "/icon.svg", badge: "/icon.svg", tag });
+        }
+      } catch {}
+    }
+  });
+  window.RaceClock.start();
+  // カウントダウン UI 表示更新 (1 秒ごと)
+  if (_rcCountdownTimer) clearInterval(_rcCountdownTimer);
+  _rcCountdownTimer = setInterval(updateCountdownUi, 1000);
+  updateCountdownUi();
+}
+
+function reloadRaceClockFromSavedRaces() {
+  if (!window.RaceClock) return;
+  window.RaceClock.reset();
+  const saved = (typeof loadSavedRaces === "function") ? loadSavedRaces() : [];
+  for (const r of saved) {
+    const startAt = r.startAt || r.start_at || r.conclusion?.startAt || r.conclusion?.raceMeta?.hassouTime;
+    if (!startAt) continue;
+    window.RaceClock.register({
+      id: r.id, raceId: r.id,
+      raceName: r.raceName || r.conclusion?.raceName,
+      startAt,
+      conclusion: r.conclusion,
+    });
+  }
+}
+
+function updateCountdownUi() {
+  const card = document.getElementById("race-countdown");
+  if (!card) return;
+  const next = window.RaceClock?.next();
+  if (!next || !next.startAt) { card.hidden = true; return; }
+  const sec = Math.max(0, Math.floor((next.startAt - Date.now()) / 1000));
+  // 6 時間以上先のレースは非表示 (今日のレースだけ表示)
+  if (sec > 6 * 60 * 60) { card.hidden = true; return; }
+  card.hidden = false;
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  const text = h > 0
+    ? `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`
+    : `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  const numEl = document.getElementById("rc-countdown");
+  if (numEl) numEl.textContent = text;
+  const nameEl = document.getElementById("rc-name");
+  if (nameEl) nameEl.textContent = next.name || next.raceId;
+  // 残り時間で色変化 (10 分以下で警告色)
+  card.classList.toggle("rc-urgent", sec <= 600);
+  card.classList.toggle("rc-imminent", sec <= 300);
+}
+
 // ─── タブ切替 (View Transitions API + 即時表示 + 重い処理はアイドル時に) ──
 function switchTab(name) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(6);
@@ -4043,6 +4123,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { setupScrollPolish(); } catch (e) { console.warn(e); }
   try { startAutoRefresh(); updateFreshnessIndicator(); } catch (e) { console.warn(e); }
   try { setupViewMode(); } catch (e) { console.warn(e); }
+  try { setupRaceClock(); } catch (e) { console.warn(e); }
   registerServiceWorker();
   // SW が ready になってから朝の通知判定
   if ("serviceWorker" in navigator) {

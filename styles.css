@@ -4943,3 +4943,68 @@ button:focus-visible, summary:focus-visible{
   line-height: 1.45;
 }
 .notify-type-label:hover .notify-type-name{ color: #34d399; }
+
+/* ─── 🕐 レースカウントダウン (Wave12) ──────────────── */
+.race-countdown{
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1c2438 0%, #141a29 100%);
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  color: #f1f5f9;
+  margin: 12px 0;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.10);
+  transition: border-color 320ms, box-shadow 320ms;
+}
+.rc-row{
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 12px; color: #94a3b8;
+}
+.rc-label{
+  font-weight: 700; letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+.rc-name{
+  font-size: 14px; font-weight: 700;
+  color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rc-clock{
+  margin-top: 6px;
+  display: flex; align-items: baseline; gap: 6px;
+}
+.rc-countdown-num{
+  font-size: 36px; font-weight: 900;
+  line-height: 1; letter-spacing: -0.02em;
+  font-feature-settings: "tnum" 1;
+  color: #f1f5f9;
+}
+.rc-countdown-suffix{
+  font-size: 12px; color: #94a3b8;
+}
+.rc-actions{
+  margin-top: 10px;
+  display: flex; gap: 12px; flex-wrap: wrap;
+  font-size: 11px; color: #94a3b8;
+}
+.rc-marker{
+  padding: 4px 8px;
+  background: rgba(100, 116, 139, 0.18);
+  border-radius: 6px;
+}
+.race-countdown.rc-urgent{
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.18);
+}
+.race-countdown.rc-urgent .rc-countdown-num{ color: #fbbf24; }
+.race-countdown.rc-imminent{
+  border-color: rgba(239, 68, 68, 0.62);
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.28);
+  animation: rcPulse 1.4s ease-in-out infinite;
+}
+.race-countdown.rc-imminent .rc-countdown-num{ color: #f87171; }
+@keyframes rcPulse {
+  0%, 100% { box-shadow: 0 4px 18px rgba(239, 68, 68, 0.28); }
+  50%      { box-shadow: 0 4px 24px rgba(239, 68, 68, 0.55); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .race-countdown.rc-imminent{ animation: none; }
+}

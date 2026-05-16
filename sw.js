@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v18"; // Wave11: 通知細分化 (朝/発走前/WIN5/結果 の 4 種類)
+const CACHE_VERSION = "keiba-nav-v19"; // Wave12: 発走10/5/0分前の自動再予想 + カウントダウン UI
 const PRECACHE = [
   "/",
   "/index.html",

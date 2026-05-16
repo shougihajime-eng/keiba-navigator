@@ -63,6 +63,7 @@
   <script src="lib/help.js" defer></script>
   <script src="lib/ocr.js" defer></script>
   <script src="lib/notify_v2.js" defer></script>
+  <script src="lib/race_clock.js" defer></script>
   <script src="lib/demo_races.js" defer></script>
   <script src="lib/tactile.js" defer></script>
   <script src="lib/sparkle.js" defer></script>
@@ -142,6 +143,22 @@
 
       <!-- 質問見出し -->
       <h1 class="hero-question">今日は買う？見送る？</h1>
+
+      <!-- 🕐 次のレース カウントダウン (発走 10/5 分前で再予想・通知) -->
+      <section id="race-countdown" class="race-countdown" hidden>
+        <div class="rc-row">
+          <span class="rc-label">次のレース</span>
+          <span id="rc-name" class="rc-name">--</span>
+        </div>
+        <div class="rc-clock">
+          <span id="rc-countdown" class="rc-countdown-num">--:--</span>
+          <span class="rc-countdown-suffix">後に発走</span>
+        </div>
+        <div class="rc-actions">
+          <span class="rc-marker" data-marker="t-10">▸ 10分前に再予想</span>
+          <span class="rc-marker" data-marker="t-5">▸ 5分前に最終予想</span>
+        </div>
+      </section>
 
       <!-- 📝 手動でEVチェック (無料路線・本命機能) -->
       <details class="manual-input" id="manual-input-section" open>
