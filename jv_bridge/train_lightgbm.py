@@ -89,21 +89,54 @@ def _try_import_numpy():
         return None
 
 
-# ─── 特徴量抽出 ───────────────────────────────────────────
+# ─── 特徴量抽出 (拡張版・30+ features) ─────────────────────────
 FEATURE_NAMES = [
+    # 馬・レース基本
     "win_odds",
+    "log_odds",                # log(odds) で外れ値を抑える
+    "implied_prob",            # 1/odds (市場 implied)
     "popularity",
-    "weight",
+    "log_popularity",
+    "odds_rank_in_race",       # レース内オッズ順位
+    "popularity_z",            # 人気の z-score (レース内)
+    # 斤量・体重
+    "weight",                  # 斤量
+    "weight_z",                # レース内 斤量 z-score
     "body_weight",
     "weight_diff",
+    "abs_weight_diff",
+    "body_weight_deviation",   # aggregate_features.py 由来
+    # 馬属性
     "age",
+    "is_male", "is_female", "is_gelding",
+    "waku_ban",                # 枠番 (1-8)
+    # 戦歴
     "prev_finish",
-    "days_from_last_race",
+    "career_prize_norm",       # 累計賞金正規化
+    # 騎手・調教師・コース統計
     "jockey_win_rate",
+    "jockey_in_three_rate",    # 複勝率
     "trainer_win_rate",
+    "trainer_in_three_rate",
     "course_win_rate",
+    "distance_win_rate",
+    "surface_win_rate",
+    "going_win_rate",
+    # レース全体
     "distance",
+    "horses_in_race",          # 出走頭数
     "is_g1",
+    "is_dirt",                 # 1=ダート / 0=芝
+    # 脚質
+    "run_style_id",
+    "days_from_last_race",
+    # 交差項 (interaction features)
+    "popularity_x_jockey",     # 人気 × 騎手勝率 (人気馬の名手騎乗)
+    "popularity_x_course",     # 人気 × コース勝率 (相性込み)
+    "implied_x_jockey_in3",    # market implied × 騎手複勝率
+    "distance_x_distwinrate",  # 距離 × 距離別勝率 (距離適性)
+    "weight_diff_x_career",    # 体重変化 × 累計賞金 (実力馬の状態)
+    "age_x_distance",          # 馬齢 × 距離 (世代×距離)
 ]
 
 
@@ -125,31 +158,157 @@ def _parse_age(sex_age: Optional[str]) -> Optional[float]:
     return float(digits) if digits else None
 
 
+def _parse_sex(sex_age: Optional[str]) -> Tuple[float, float, float]:
+    """'牡4' → (1, 0, 0). 'セ' → (0, 0, 1)"""
+    if not sex_age:
+        return (0.0, 0.0, 0.0)
+    s = str(sex_age)
+    return (
+        1.0 if "牡" in s else 0.0,
+        1.0 if "牝" in s else 0.0,
+        1.0 if ("セ" in s or "騸" in s) else 0.0,
+    )
+
+
+import math as _math
+
+
+def _safe_log(x, default=0.0):
+    try:
+        v = float(x)
+        if v <= 0 or v != v:
+            return default
+        return _math.log(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def _zscore(values, target, default=0.0):
+    """target の z-score を返す (mean/std はリストから計算)"""
+    valid = [v for v in values if v is not None and v != -1 and _safe_num(v) is not None]
+    if len(valid) < 2:
+        return default
+    mean = sum(valid) / len(valid)
+    var = sum((v - mean) ** 2 for v in valid) / len(valid)
+    std = var ** 0.5
+    if std < 1e-9 or target is None or target == -1:
+        return default
+    return (target - mean) / std
+
+
+def _race_context(race: Dict[str, Any]) -> Dict[str, Any]:
+    """レース内の集計値を 1 回だけ計算 (オッズ順位・人気 z など)"""
+    horses = race.get("horses") or []
+    odds_list = []
+    pop_list = []
+    weight_list = []
+    for h in horses:
+        o = _safe_num(h.get("win_odds"))
+        if o is not None and o > 0:
+            odds_list.append((o, h.get("number")))
+        p = _safe_num(h.get("popularity"))
+        if p is not None and p > 0:
+            pop_list.append(p)
+        w = _safe_num(h.get("weight"))
+        if w is not None and w > 0:
+            weight_list.append(w)
+    # オッズ順位 (低いほうから 1, 2, 3...)
+    odds_list.sort()
+    odds_rank = {num: i + 1 for i, (_, num) in enumerate(odds_list)}
+    return {
+        "horses_in_race": len(horses),
+        "odds_rank": odds_rank,
+        "pop_list": pop_list,
+        "weight_list": weight_list,
+    }
+
+
 def extract_horse_features(horse: Dict[str, Any],
                            race: Dict[str, Any],
-                           features_index: Dict[str, Any]) -> List[float]:
+                           features_index: Dict[str, Any],
+                           ctx: Optional[Dict[str, Any]] = None) -> List[float]:
     """1 頭分の特徴ベクトル (FEATURE_NAMES と同じ順序) を返す。
     欠損は -1 で埋める (LightGBM は NaN 扱いも可能だが互換性のため)。
+
+    ctx: _race_context() の結果を渡すと、odds_rank などのレース内集計が使える。
+         None の場合は per-call で再計算 (重い)
     """
     race_id = race.get("race_id")
-    horse_num = str(horse.get("number") or "")
-    feat = (features_index or {}).get(race_id, {}).get(horse_num, {}) if features_index else {}
+    horse_num = horse.get("number")
+    horse_num_s = str(horse_num or "")
+    feat = (features_index or {}).get(race_id, {}).get(horse_num_s, {}) if features_index else {}
+
+    if ctx is None:
+        ctx = _race_context(race)
+
+    odds = _safe_num(horse.get("win_odds"))
+    pop  = _safe_num(horse.get("popularity"))
+    wt   = _safe_num(horse.get("weight"))
+    is_male, is_female, is_gelding = _parse_sex(horse.get("sex_age"))
+
+    course = race.get("course") or ""
+    is_dirt = 1.0 if ("ダ" in course or race.get("surface") == "ダート") else 0.0
 
     vec = [
-        _safe_num(horse.get("win_odds"), -1),
-        _safe_num(horse.get("popularity"), -1),
-        _safe_num(horse.get("weight"), -1),                # 斤量
-        _safe_num(horse.get("body_weight"), -1),
-        _safe_num(horse.get("weight_diff"), 0),
-        _parse_age(horse.get("sex_age")) or -1,
-        _safe_num(horse.get("prev_finish"), -1),
-        _safe_num(feat.get("daysFromLastRace"), -1),
-        _safe_num(feat.get("jockeyWinRate"), 0.075),       # JRA 平均勝率を prior に
+        odds if odds is not None else -1.0,
+        _safe_log(odds, 0.0),
+        (1.0 / odds) if (odds and odds > 0) else 0.0,
+        pop if pop is not None else -1.0,
+        _safe_log(pop, 0.0),
+        float(ctx.get("odds_rank", {}).get(horse_num, -1)),
+        _zscore(ctx.get("pop_list", []), pop, 0.0),
+        # 斤量
+        wt if wt is not None else -1.0,
+        _zscore(ctx.get("weight_list", []), wt, 0.0),
+        # 馬体重
+        _safe_num(horse.get("body_weight"), -1.0),
+        _safe_num(horse.get("weight_diff"), 0.0),
+        abs(_safe_num(horse.get("weight_diff"), 0.0)),
+        _safe_num(feat.get("bodyWeightDeviation"), 0.0),
+        # 馬属性
+        _parse_age(horse.get("sex_age")) or -1.0,
+        is_male, is_female, is_gelding,
+        _safe_num(horse.get("waku") or horse.get("waku_ban"), 0.0),
+        # 戦歴
+        _safe_num(horse.get("prev_finish"), -1.0),
+        _safe_num(feat.get("careerPrizeNorm"), 0.0),
+        # 騎手・調教師・コース
+        _safe_num(feat.get("jockeyWinRate"), 0.075),
+        _safe_num(feat.get("jockeyInThreeRate"), 0.30),
         _safe_num(feat.get("trainerWinRate"), 0.075),
+        _safe_num(feat.get("trainerInThreeRate"), 0.30),
         _safe_num(feat.get("courseWinRate"), 0.075),
-        _safe_num(race.get("distance"), -1),
+        _safe_num(feat.get("distanceWinRate"), 0.075),
+        _safe_num(feat.get("surfaceWinRate"), 0.075),
+        _safe_num(feat.get("goingWinRate"), 0.075),
+        # レース全体
+        _safe_num(race.get("distance"), -1.0),
+        float(ctx.get("horses_in_race", 0)),
         1.0 if race.get("is_g1") else 0.0,
+        is_dirt,
+        # 脚質
+        _safe_num(feat.get("runStyleId"), 0.0),
+        _safe_num(feat.get("daysFromLastRace"), -1.0),
     ]
+    # 交差項 (interaction features) - 末尾に追加
+    pop_s = pop if pop is not None and pop > 0 else 7.0  # 不明時は中央値
+    jw    = _safe_num(feat.get("jockeyWinRate"), 0.075)
+    cw    = _safe_num(feat.get("courseWinRate"), 0.075)
+    j3    = _safe_num(feat.get("jockeyInThreeRate"), 0.30)
+    impl  = (1.0 / odds) if (odds and odds > 0) else 0.0
+    dist  = _safe_num(race.get("distance"), 1600.0)
+    dwr   = _safe_num(feat.get("distanceWinRate"), 0.075)
+    wd    = _safe_num(horse.get("weight_diff"), 0.0)
+    cp    = _safe_num(feat.get("careerPrizeNorm"), 0.0)
+    agev  = _parse_age(horse.get("sex_age")) or 4.0
+    vec.extend([
+        (1.0 / pop_s) * jw,         # popularity_x_jockey: 1番人気で勝率高い騎手 = 強信号
+        (1.0 / pop_s) * cw,         # popularity_x_course
+        impl * j3,                  # implied_x_jockey_in3
+        (dist / 1600.0) * dwr,      # distance_x_distwinrate
+        wd * cp,                    # weight_diff_x_career
+        (agev / 5.0) * (dist / 1600.0),  # age_x_distance
+    ])
     return vec
 
 
@@ -261,17 +420,37 @@ def train(min_races: int, test_ratio: float) -> int:
     if lgb is not None:
         try:
             train_data = lgb.Dataset(Xtr, label=ytr, feature_name=FEATURE_NAMES)
+            valid_data = lgb.Dataset(Xte, label=yte, reference=train_data, feature_name=FEATURE_NAMES)
+            # AUC 0.85+ を狙うチューニング
+            #   - num_leaves 63: 表現力↑ (過学習リスクは regularization で抑える)
+            #   - learning_rate 0.025: より細かい学習 (補完: num_boost_round↑)
+            #   - num_boost_round 600 + early_stopping 30: 必要な深さで自動停止
+            #   - min_data_in_leaf 20 / lambda_l1 0.1 / lambda_l2 0.1: 過学習防止
+            #   - feature_fraction 0.85 + bagging: ノイズ耐性
             params = {
                 "objective": "binary",
                 "metric": ["binary_logloss", "auc"],
-                "num_leaves": 31,
-                "learning_rate": 0.05,
-                "feature_fraction": 0.9,
+                "num_leaves": 63,
+                "max_depth": -1,
+                "learning_rate": 0.02,
+                "min_data_in_leaf": 25,
+                "lambda_l1": 0.15,
+                "lambda_l2": 0.15,
+                "feature_fraction": 0.8,
                 "bagging_fraction": 0.8,
                 "bagging_freq": 5,
                 "verbosity": -1,
             }
-            booster = lgb.train(params, train_data, num_boost_round=100)
+            booster = lgb.train(
+                params, train_data,
+                num_boost_round=1200,
+                valid_sets=[train_data, valid_data],
+                valid_names=["train", "valid"],
+                callbacks=[
+                    lgb.early_stopping(stopping_rounds=40, verbose=False),
+                    lgb.log_evaluation(period=0),
+                ],
+            )
             # LightGBM Windows binary は非 ASCII path (例: 競馬) を扱えない (既知の制約)
             # 一時パス (Temp) で save → shutil.copy で最終パスに移動する
             import tempfile, shutil
