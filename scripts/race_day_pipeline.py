@@ -69,11 +69,19 @@ def log_line(msg: str) -> None:
 
 
 def python_exe() -> str:
-    """32bit Python のフルパス。"""
+    """32bit Python のフルパス (JV-Link COM 用)。"""
     cand = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Python" / "Python312-32" / "python.exe"
     if cand.exists():
         return str(cand)
     return sys.executable  # フォールバック
+
+
+def python_exe_64() -> Optional[str]:
+    """64bit Python のフルパス (LightGBM 訓練用)。無ければ None。"""
+    cand = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Python" / "Python312-64" / "python.exe"
+    if cand.exists():
+        return str(cand)
+    return None
 
 
 def run_subprocess(args: List[str], label: str, timeout: int = 600) -> int:
@@ -200,6 +208,19 @@ def run_aggregate_features() -> int:
     )
 
 
+# ─── ステップ 4.5: train_lightgbm.py (LightGBM 訓練・64bit) ─────
+def run_train_lightgbm() -> int:
+    log_line("[step4.5] train_lightgbm.py (LightGBM モデル再訓練)")
+    py64 = python_exe_64()
+    if not py64:
+        log_line("  64bit Python 未検出・LightGBM 訓練をスキップ")
+        return 0
+    return run_subprocess(
+        [py64, str(JV_BRIDGE / "train_lightgbm.py"), "--min-races", "20"],
+        "train_lightgbm", timeout=900,
+    )
+
+
 # ─── ステップ 5: git commit + push ──────────────────────────
 def git_commit_push() -> int:
     log_line("[step5] git commit + push (races/results/features の変更)")
@@ -221,6 +242,8 @@ def main():
                     help="build_all.py をスキップ")
     ap.add_argument("--skip-features", action="store_true",
                     help="aggregate_features.py をスキップ")
+    ap.add_argument("--skip-train", action="store_true",
+                    help="LightGBM 訓練をスキップ")
     args = ap.parse_args()
 
     log_line("=== race_day_pipeline 開始 ===")
@@ -240,6 +263,10 @@ def main():
     if not args.skip_features:
         rc = run_aggregate_features()
         if rc != 0: overall |= 0x08
+    # LightGBM 訓練 (64bit Python があれば・データ少ない時はスキップ動作)
+    if not getattr(args, "skip_train", False):
+        rc = run_train_lightgbm()
+        if rc != 0: overall |= 0x20
     rc = git_commit_push()
     if rc != 0: overall |= 0x10
 
