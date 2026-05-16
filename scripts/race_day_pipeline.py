@@ -223,12 +223,75 @@ def run_train_lightgbm() -> int:
 
 # ─── ステップ 5: git commit + push ──────────────────────────
 def git_commit_push() -> int:
-    log_line("[step5] git commit + push (races/results/features の変更)")
-    # 注意: .gitignore で data/jv_cache/* は無視されているはずなので、
-    # ここで commit されるのは「他の場所で変更があった場合のみ」。
-    # 通常はこのステップで commit 対象は無く、何もしない。
-    rc1 = run_subprocess(["git", "status", "--short"], "git status", timeout=30)
-    return rc1
+    """訓練済モデル + 集計済特徴量を git に乗せて Vercel へ反映する。
+
+    .gitignore で以下のみ例外的に追跡:
+      data/jv_cache/model_lgbm.json
+      data/jv_cache/model_lgbm_meta.json
+      data/jv_cache/features.json
+      data/jv_cache/horse_master.json
+    """
+    log_line("[step5] git commit + push (モデル + 特徴量を本番反映)")
+
+    # まず差分があるか確認
+    try:
+        r = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8",
+            errors="replace", timeout=30,
+        )
+        if r.returncode != 0:
+            log_line(f"  git status 失敗 (rc={r.returncode})・スキップ")
+            return r.returncode
+        changes = [ln for ln in (r.stdout or "").splitlines() if ln.strip()]
+        if not changes:
+            log_line("  変更なし・commit/push スキップ")
+            return 0
+        log_line(f"  変更 {len(changes)} 件検出")
+    except Exception as e:
+        log_line(f"  git status 例外: {e}")
+        return -1
+
+    # 自動コミット対象を明示的に add (誤って秘匿ファイル等を巻き込まないよう)
+    targets = [
+        "data/jv_cache/model_lgbm.json",
+        "data/jv_cache/model_lgbm_meta.json",
+        "data/jv_cache/features.json",
+        "data/jv_cache/horse_master.json",
+    ]
+    add_args = ["git", "add"] + [t for t in targets if (ROOT / t).exists()]
+    if len(add_args) == 2:
+        log_line("  対象ファイルが存在せず・スキップ")
+        return 0
+    rc_add = run_subprocess(add_args, "git add", timeout=30)
+    if rc_add != 0:
+        return rc_add
+
+    # diff --cached --quiet → 差分があれば exit 1
+    diff = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=str(ROOT), timeout=30,
+    )
+    if diff.returncode == 0:
+        log_line("  staged 差分なし・commit/push スキップ")
+        return 0
+
+    ts = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
+    msg = f"chore(auto): race_day_pipeline 更新 ({ts})"
+    rc_commit = run_subprocess(
+        ["git", "commit", "-m", msg],
+        "git commit", timeout=60,
+    )
+    if rc_commit != 0:
+        return rc_commit
+
+    rc_push = run_subprocess(
+        ["git", "push", "origin", "main"],
+        "git push", timeout=120,
+    )
+    if rc_push == 0:
+        log_line("  ✓ Vercel への反映が始まりました (数十秒で本番更新)")
+    return rc_push
 
 
 # ─── オーケストレータ ──────────────────────────────────────

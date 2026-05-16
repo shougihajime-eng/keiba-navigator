@@ -20,6 +20,12 @@ Thumbs.db
 # JV-Link runtime cache (machine-local data)
 data/jv_cache/*
 !data/jv_cache/.gitkeep
+# 例外: 訓練済モデル + メタは Vercel デプロイに乗せる (推論で必要)
+!data/jv_cache/model_lgbm.json
+!data/jv_cache/model_lgbm_meta.json
+# 例外: 集計済特徴量 + 馬マスタも乗せる (rankings / UI から参照)
+!data/jv_cache/features.json
+!data/jv_cache/horse_master.json
 
 # Editor
 .vscode/
