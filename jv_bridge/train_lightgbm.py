@@ -249,6 +249,17 @@ def train(min_races: int, test_ratio: float) -> int:
             }
             booster = lgb.train(params, train_data, num_boost_round=100)
             booster.save_model(str(MODEL_PATH))
+            # Node 側で評価できるよう JSON ダンプも保存
+            try:
+                model_json = booster.dump_model()
+                json_path = MODEL_PATH.with_suffix(".json")
+                json_path.write_text(
+                    json.dumps(model_json, ensure_ascii=False),
+                    encoding="utf-8"
+                )
+                print(f"[info] JSON ダンプも保存: {json_path.name}", flush=True)
+            except Exception as e:
+                print(f"[warn] JSON ダンプ失敗: {e}", flush=True)
 
             preds = booster.predict(Xte)
             auc = _auc(yte, preds, np)
