@@ -130,6 +130,10 @@ FEATURE_NAMES = [
     # 脚質
     "run_style_id",
     "days_from_last_race",
+    # 馬の通算成績 (aggregate_features.py horse_career 由来)
+    "horse_starts",            # 通算出走数
+    "horse_win_rate",          # 通算勝率
+    "horse_in3_rate",          # 通算複勝率
     # 交差項 (interaction features)
     "popularity_x_jockey",     # 人気 × 騎手勝率 (人気馬の名手騎乗)
     "popularity_x_course",     # 人気 × コース勝率 (相性込み)
@@ -137,6 +141,7 @@ FEATURE_NAMES = [
     "distance_x_distwinrate",  # 距離 × 距離別勝率 (距離適性)
     "weight_diff_x_career",    # 体重変化 × 累計賞金 (実力馬の状態)
     "age_x_distance",          # 馬齢 × 距離 (世代×距離)
+    "horsewin_x_popularity",   # 通算勝率 × 人気 (実力馬の人気)
 ]
 
 
@@ -289,6 +294,10 @@ def extract_horse_features(horse: Dict[str, Any],
         # 脚質
         _safe_num(feat.get("runStyleId"), 0.0),
         _safe_num(feat.get("daysFromLastRace"), -1.0),
+        # 馬通算成績
+        _safe_num(feat.get("horseStarts"), 0.0),
+        _safe_num(feat.get("horseWinRate"), 0.10),    # JRA 平均勝率
+        _safe_num(feat.get("horseIn3Rate"), 0.30),    # JRA 平均複勝率
     ]
     # 交差項 (interaction features) - 末尾に追加
     pop_s = pop if pop is not None and pop > 0 else 7.0  # 不明時は中央値
@@ -301,6 +310,7 @@ def extract_horse_features(horse: Dict[str, Any],
     wd    = _safe_num(horse.get("weight_diff"), 0.0)
     cp    = _safe_num(feat.get("careerPrizeNorm"), 0.0)
     agev  = _parse_age(horse.get("sex_age")) or 4.0
+    hwr   = _safe_num(feat.get("horseWinRate"), 0.10)
     vec.extend([
         (1.0 / pop_s) * jw,         # popularity_x_jockey: 1番人気で勝率高い騎手 = 強信号
         (1.0 / pop_s) * cw,         # popularity_x_course
@@ -308,6 +318,7 @@ def extract_horse_features(horse: Dict[str, Any],
         (dist / 1600.0) * dwr,      # distance_x_distwinrate
         wd * cp,                    # weight_diff_x_career
         (agev / 5.0) * (dist / 1600.0),  # age_x_distance
+        hwr * (1.0 / pop_s),        # horsewin_x_popularity (実力馬の市場評価)
     ])
     return vec
 
@@ -395,12 +406,14 @@ def train(min_races: int, test_ratio: float) -> int:
     X_arr = np.array(X, dtype="float64")
     y_arr = np.array(y, dtype="int32")
 
-    # シャッフル + train/test split (race 単位で分けて look-ahead を防ぐ)
-    unique_races = sorted(set(race_ids))
-    rng = np.random.default_rng(42)
-    rng.shuffle(unique_races)
+    # 時系列分割: race_id は 18 桁 (YYYYMMDD...) なので昇順ソートで時系列順になる
+    # 最新 test_ratio (デフォルト 20%) を test に。
+    # ⚠ ランダムシャッフルだと train に「同じ馬の未来戦績」が漏れて AUC が異常に高くなる
+    #    (look-ahead bias)。時系列分割で公平な評価をする。
+    unique_races = sorted(set(race_ids))  # race_id 昇順 = 時系列昇順
     cut = max(1, int(len(unique_races) * (1.0 - test_ratio)))
-    train_races = set(unique_races[:cut])
+    train_races = set(unique_races[:cut])   # 過去 80%
+    # test は最新 20% (cut 以降)
     train_mask = np.array([rid in train_races for rid in race_ids])
     test_mask = ~train_mask
 

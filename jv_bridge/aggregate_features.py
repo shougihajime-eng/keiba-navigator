@@ -337,6 +337,16 @@ def build_features_json(races: List[Dict[str, Any]], stats: Dict[str, Any]) -> D
                 feat["bodyWeight"] = h["body_weight"]
                 feat["bodyWeightDeviation"] = round((h["body_weight"] - 450) / 50, 3)
 
+            # 馬の通算成績 (horse_career から)。馬名キーで集計済
+            nm = h.get("name")
+            if nm:
+                hc = stats.get("horse_career", {}).get(nm)
+                if hc:
+                    starts = max(hc.get("starts", 0), 1)
+                    feat["horseStarts"]    = hc.get("starts", 0)
+                    feat["horseWinRate"]   = round(hc.get("wins", 0) / starts, 4)
+                    feat["horseIn3Rate"]   = round(hc.get("in_three", 0) / starts, 4)
+
             if feat:
                 per_horse[str(num)] = feat
         if per_horse:
