@@ -133,6 +133,19 @@
   <main class="tab-pane" id="tab-home">
     <div class="max-w-2xl mx-auto px-4 py-5 space-y-4">
 
+      <!-- 🧠 AI 常時学習中バッジ (Wave14) -->
+      <section id="ai-pulse" class="ai-pulse" hidden>
+        <span class="ai-pulse-dot" aria-hidden="true"></span>
+        <div class="ai-pulse-text">
+          <div class="ai-pulse-title">
+            <span class="ai-pulse-lbl">AI 常時学習中</span>
+            <span id="ai-pulse-auc" class="ai-pulse-auc"></span>
+          </div>
+          <div id="ai-pulse-sub" class="ai-pulse-sub">予想を事前計算しています…</div>
+        </div>
+        <button id="ai-pulse-detail" class="ai-pulse-btn" type="button" aria-label="詳細">›</button>
+      </section>
+
       <!-- 仮データ警告 -->
       <section id="demo-banner" class="demo-banner" hidden>
         <span class="demo-icon">⚠️</span>
@@ -268,6 +281,35 @@
           まだランキングを作るためのデータが足りません (各カテゴリ最低 3 戦の記録が必要)。<br>
           手動入力モードで何度かレースを記録すると自動で表示されます。
         </p>
+      </section>
+
+      <!-- 📈 月次成績グラフ (回収率の長期推移) -->
+      <section id="card-monthly" class="monthly-card" data-priority="secondary" hidden>
+        <div class="mo-head">
+          <h2 class="mo-title">📈 月次成績</h2>
+          <span id="mo-period" class="mo-period">直近 12 ヶ月</span>
+        </div>
+        <p class="mo-hint">月ごとの回収率の推移。100% (緑のライン) を超えていれば長期で勝てている指標。</p>
+        <div class="mo-stats">
+          <div class="mo-stat">
+            <div class="mo-stat-label">最高月</div>
+            <div id="mo-best" class="mo-stat-val mo-stat-good">--</div>
+          </div>
+          <div class="mo-stat">
+            <div class="mo-stat-label">最悪月</div>
+            <div id="mo-worst" class="mo-stat-val mo-stat-bad">--</div>
+          </div>
+          <div class="mo-stat">
+            <div class="mo-stat-label">通算</div>
+            <div id="mo-overall" class="mo-stat-val">--</div>
+          </div>
+          <div class="mo-stat">
+            <div class="mo-stat-label">トレンド</div>
+            <div id="mo-trend" class="mo-stat-val">--</div>
+          </div>
+        </div>
+        <canvas id="mo-chart" class="mo-chart" width="600" height="160"></canvas>
+        <p id="mo-narrative" class="mo-narrative"></p>
       </section>
 
       <!-- 📊 AI 貢献度 (バックテスト: 実際 vs もし AI に従っていたら) -->

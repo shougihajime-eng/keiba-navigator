@@ -2424,6 +2424,176 @@ function renderBetSummary() {
   }
 }
 
+// ─── 📈 月次成績グラフ (回収率の長期推移) ───────────────
+function renderMonthlyCard() {
+  const card = document.getElementById("card-monthly");
+  if (!card) return;
+  const store = loadStore();
+  const bets = Array.isArray(store?.bets) ? store.bets : [];
+  // 確定済 + リアル馬券のみ集計
+  const real = bets.filter(b =>
+    b && !b.dummy && b.type !== "air" &&
+    (b.result?.won === true || b.result?.won === false)
+  );
+  if (real.length < 3) { card.hidden = true; return; }
+
+  // 月ごとに集計
+  const byMonth = new Map();
+  for (const b of real) {
+    const d = new Date(b.result?.finishedAt || b.createdAt || 0);
+    if (!Number.isFinite(d.getTime())) continue;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const slot = byMonth.get(key) || { key, label: `${d.getMonth() + 1}月`, year: d.getFullYear(), spent: 0, returned: 0, hits: 0, count: 0 };
+    slot.spent += b.amount || 0;
+    slot.count += 1;
+    if (b.result?.won) {
+      slot.returned += b.result?.payout || 0;
+      slot.hits += 1;
+    }
+    byMonth.set(key, slot);
+  }
+  // 直近 12 ヶ月分・キー昇順
+  const months = Array.from(byMonth.values())
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .slice(-12);
+  if (months.length < 2) { card.hidden = true; return; }
+  card.hidden = false;
+
+  // 回収率計算
+  for (const m of months) {
+    m.recovery = m.spent > 0 ? m.returned / m.spent : null;
+  }
+
+  // 統計
+  const valid = months.filter(m => m.recovery != null);
+  let best = null, worst = null;
+  for (const m of valid) {
+    if (!best || m.recovery > best.recovery) best = m;
+    if (!worst || m.recovery < worst.recovery) worst = m;
+  }
+  const totalSpent = valid.reduce((s, m) => s + m.spent, 0);
+  const totalReturned = valid.reduce((s, m) => s + m.returned, 0);
+  const overallRec = totalSpent > 0 ? totalReturned / totalSpent : null;
+
+  // トレンド (直近 3 ヶ月 vs それ以前の差)
+  let trendText = "—", trendCls = "mo-trend-flat";
+  if (valid.length >= 4) {
+    const recent = valid.slice(-3);
+    const earlier = valid.slice(0, -3);
+    const rRec = recent.reduce((s, m) => s + (m.recovery || 0), 0) / recent.length;
+    const ePerf = earlier.length > 0
+      ? earlier.reduce((s, m) => s + (m.recovery || 0), 0) / earlier.length
+      : rRec;
+    const diff = rRec - ePerf;
+    if (diff > 0.05) { trendText = "↑↑ 上昇"; trendCls = "mo-trend-up"; }
+    else if (diff > 0.02) { trendText = "↑ やや上昇"; trendCls = "mo-trend-up"; }
+    else if (diff < -0.05) { trendText = "↓↓ 下降"; trendCls = "mo-trend-down"; }
+    else if (diff < -0.02) { trendText = "↓ やや下降"; trendCls = "mo-trend-down"; }
+    else { trendText = "→ 横ばい"; trendCls = "mo-trend-flat"; }
+  }
+
+  // 表示
+  const $set = (id, v, cls) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = v;
+    if (cls) el.className = "mo-stat-val " + cls;
+  };
+  $set("mo-best", best ? `${best.label} ${(best.recovery * 100).toFixed(0)}%` : "—", "mo-stat-val mo-stat-good");
+  $set("mo-worst", worst ? `${worst.label} ${(worst.recovery * 100).toFixed(0)}%` : "—", "mo-stat-val mo-stat-bad");
+  $set("mo-overall", overallRec != null ? `${(overallRec * 100).toFixed(0)}%` : "—",
+       overallRec >= 1 ? "mo-stat-val mo-stat-good" : "mo-stat-val");
+  $set("mo-trend", trendText, "mo-stat-val " + trendCls);
+
+  // ナラティブ
+  const narEl = document.getElementById("mo-narrative");
+  if (narEl) {
+    const parts = [];
+    if (overallRec >= 1.05) parts.push(`<b>長期で勝てています</b> (通算 ${(overallRec * 100).toFixed(0)}%)。`);
+    else if (overallRec >= 0.95) parts.push(`収支は均衡 (通算 ${(overallRec * 100).toFixed(0)}%)。`);
+    else parts.push(`通算 ${(overallRec * 100).toFixed(0)}% — 期待値プラスの場面だけ狙う運用を継続。`);
+    if (trendText.startsWith("↑")) parts.push("最近の 3 ヶ月は調子が上向き。");
+    else if (trendText.startsWith("↓")) parts.push("最近の 3 ヶ月は調子を落としています。AI の信頼度を再確認しましょう。");
+    narEl.innerHTML = parts.join(" ");
+  }
+
+  // Canvas チャート
+  drawMonthlyChart(months);
+}
+
+function drawMonthlyChart(months) {
+  const canvas = document.getElementById("mo-chart");
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 600;
+  const cssH = canvas.clientHeight || 160;
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  const pad = { l: 40, r: 16, t: 16, b: 26 };
+  const plotW = cssW - pad.l - pad.r;
+  const plotH = cssH - pad.t - pad.b;
+
+  // Y 軸範囲: 0% 〜 max(150%, max+10%)
+  const recs = months.map(m => m.recovery).filter(v => v != null);
+  if (!recs.length) return;
+  const yMax = Math.max(1.5, ...recs) + 0.05;
+  const yMin = Math.min(0, Math.min(...recs) - 0.05);
+
+  // 100% ライン
+  const y100 = pad.t + plotH * (1 - (1.0 - yMin) / (yMax - yMin));
+  ctx.strokeStyle = "rgba(52, 211, 153, 0.55)";
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, y100);
+  ctx.lineTo(pad.l + plotW, y100);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(52, 211, 153, 0.85)";
+  ctx.font = "10px Inter, sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText("100%", pad.l - 4, y100 + 3);
+
+  // X 軸ラベル
+  ctx.fillStyle = "#94a3b8";
+  ctx.textAlign = "center";
+  const stepX = plotW / Math.max(1, months.length - 1);
+
+  // ライン + ポイント
+  ctx.strokeStyle = "#34d399";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  let prevPt = null;
+  months.forEach((m, i) => {
+    if (m.recovery == null) return;
+    const x = pad.l + i * stepX;
+    const y = pad.t + plotH * (1 - (m.recovery - yMin) / (yMax - yMin));
+    if (!prevPt) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+    prevPt = { x, y };
+  });
+  ctx.stroke();
+
+  // ポイント円 + ラベル
+  months.forEach((m, i) => {
+    if (m.recovery == null) return;
+    const x = pad.l + i * stepX;
+    const y = pad.t + plotH * (1 - (m.recovery - yMin) / (yMax - yMin));
+    const color = m.recovery >= 1 ? "#34d399" : (m.recovery >= 0.85 ? "#fbbf24" : "#f87171");
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    // 月ラベル (X 軸)
+    ctx.fillStyle = "#64748b";
+    ctx.fillText(m.label, x, cssH - 8);
+  });
+}
+
 // ─── 📊 AI 貢献度 バックテスト カード ────────────────
 function renderBacktestCard() {
   const card = document.getElementById("card-backtest");
@@ -4404,6 +4574,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { renderWin5Card(); } catch (e) { console.warn(e); }
   try { renderBetSummary(); } catch (e) { console.warn(e); }
   try { renderBacktestCard(); } catch (e) { console.warn(e); }
+  try { renderMonthlyCard(); } catch (e) { console.warn(e); }
   try { renderAllRacesCard(); } catch (e) { console.warn(e); }
   try { renderRoiCard(); } catch (e) { console.warn(e); }
   try { updateRecordTabBadge(); } catch (e) { console.warn(e); }
