@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v16"; // Wave10: シンプル表示モード (パッと見て分かる優先)
+const CACHE_VERSION = "keiba-nav-v17"; // Wave10.1: UI 細部磨き (ヒーロー化・余白リズム・44px タッチ・フォーカス)
 const PRECACHE = [
   "/",
   "/index.html",
