@@ -112,13 +112,16 @@
         <span class="icon">↻</span><span class="label">更新</span>
       </button>
     </div>
-    <div class="max-w-2xl mx-auto px-4 pb-2 text-[11px] text-ink-mute flex items-center gap-2">
+    <div class="max-w-2xl mx-auto px-4 pb-2 text-[11px] text-ink-mute flex items-center gap-2 flex-wrap">
       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
       <span>最終更新: <span id="last-updated">未取得</span></span>
       <span class="ml-auto inline-flex items-center gap-1.5 text-[11px]">
         <span id="freshness" class="freshness fresh-cold">未更新</span>
         <span class="text-ink-dim opacity-60">·</span>
-        <span class="text-ink-dim">自動更新 30秒</span>
+        <button id="view-mode-toggle" type="button" class="view-mode-toggle" aria-pressed="true" title="表示モード切替">
+          <span class="vm-icon" aria-hidden="true">👁</span>
+          <span class="vm-label">シンプル</span>
+        </button>
       </span>
     </div>
   </header>
@@ -189,7 +192,7 @@
       </details>
 
       <!-- 🎰 WIN5 予想カード -->
-      <section id="card-win5" class="win5-card" hidden>
+      <section id="card-win5" class="win5-card" data-priority="secondary" hidden>
         <div class="w5-head">
           <h2 class="w5-title">🎰 WIN5 予想</h2>
           <span id="win5-note" class="w5-note"></span>
@@ -218,7 +221,7 @@
       </section>
 
       <!-- 📰 競馬ニュース -->
-      <section id="card-news" class="news-card" hidden>
+      <section id="card-news" class="news-card" data-priority="secondary" hidden>
         <div class="news-head">
           <h2 class="news-title">📰 競馬ニュース</h2>
         </div>
@@ -226,7 +229,7 @@
       </section>
 
       <!-- 🏆 ベスト10 ランキング (厩舎・騎手・注目馬) -->
-      <section id="card-rankings" class="rankings-card" hidden>
+      <section id="card-rankings" class="rankings-card" data-priority="secondary" hidden>
         <div class="rk-head">
           <h2 class="rk-title">🏆 注目ランキング</h2>
           <span id="rk-sample-count" class="rk-sample">--</span>
@@ -249,7 +252,7 @@
       </section>
 
       <!-- 🏁 保存した手動レースの横断ランキング -->
-      <section id="card-saved-races" class="saved-races" hidden>
+      <section id="card-saved-races" class="saved-races" data-priority="secondary" hidden>
         <div class="sr-head">
           <h2 class="sr-title">🏁 保存したレース <span id="saved-races-count" class="sr-count">0件</span></h2>
           <button id="btn-clear-saved" type="button" class="sr-clear">🗑 全消去</button>
@@ -259,14 +262,14 @@
       </section>
 
       <!-- 全レース一覧 (複数取得時のみ表示) -->
-      <section id="card-races" class="simple-card sc-info" hidden>
+      <section id="card-races" class="simple-card sc-info" data-priority="secondary" hidden>
         <h2 class="sc-title">📋 今日のレース一覧 <span id="races-count" class="text-ink-mute text-xs ml-1"></span></h2>
         <p class="races-hint">グレード順・狙えるレースが上に来ます。タップしてもデータは追加では取りません。</p>
         <ul id="races-list" class="races-list"></ul>
       </section>
 
       <!-- 🏇 全レース予想ビュー (Wave9) - 当日の全レースを一覧表示・本命/対抗/3着候補 -->
-      <section id="card-all-races" class="all-races-card" hidden>
+      <section id="card-all-races" class="all-races-card" data-priority="secondary" hidden>
         <div class="ar-head">
           <h2 class="ar-title">🏇 全レース AI 予想</h2>
           <span id="ar-count" class="ar-count">--</span>
@@ -291,7 +294,7 @@
       </section>
 
       <!-- 📊 ROI ダッシュボード (Wave9) - 領域別 ROI 可視化 -->
-      <section id="card-roi" class="roi-card" hidden>
+      <section id="card-roi" class="roi-card" data-priority="secondary" hidden>
         <div class="roi-head">
           <h2 class="roi-title">📊 ROI ダッシュボード</h2>
           <span id="roi-sample" class="roi-sample">--</span>
@@ -366,7 +369,7 @@
       </section>
 
       <!-- AI実績スナップショット -->
-      <section id="card-ai-track" class="ai-track">
+      <section id="card-ai-track" class="ai-track" data-priority="secondary">
         <div class="ai-track-head">
           <span class="ai-track-title">📊 このAIは信頼できる?</span>
           <span id="ai-period-label" class="ai-track-period">直近1週間</span>
@@ -417,7 +420,7 @@
       </section>
 
       <!-- 🧠 AIの考え方 (透明性: なぜこの結論に至ったかをステップ表示) -->
-      <section id="card-reasoning" class="reasoning-card" hidden>
+      <section id="card-reasoning" class="reasoning-card" data-priority="secondary" hidden>
         <div class="reasoning-head">
           <h2 class="sc-title">🧠 AI の考え方</h2>
           <div class="reasoning-actions">
@@ -433,7 +436,7 @@
       </section>
 
       <!-- 穴で面白い -->
-      <section id="card-underval" class="simple-card sc-under" hidden>
+      <section id="card-underval" class="simple-card sc-under" data-priority="secondary" hidden>
         <h2 class="sc-title">🟣 穴で面白い</h2>
         <div class="pick-row">
           <div id="under-num" class="big-num color-under">--</div>
@@ -445,7 +448,7 @@
       </section>
 
       <!-- 危険な人気馬 -->
-      <section id="card-danger" class="simple-card sc-danger" hidden>
+      <section id="card-danger" class="simple-card sc-danger" data-priority="secondary" hidden>
         <h2 class="sc-title">🔴 危険な人気馬</h2>
         <div class="pick-row">
           <div id="danger-num" class="big-num color-danger">--</div>
@@ -455,6 +458,14 @@
           </div>
         </div>
       </section>
+
+      <!-- もっと見る (シンプルモード時のみ・詳細表示への切り替え) -->
+      <div id="more-toggle-wrap" class="more-toggle-wrap" hidden>
+        <button id="btn-show-more" type="button" class="more-toggle-btn">
+          <span class="more-icon">▾</span>
+          <span class="more-label">もっと見る (ランキング・WIN5・ニュース・履歴 ほか)</span>
+        </button>
+      </div>
 
       <!-- 今日のひとこと -->
       <section id="card-advice" class="simple-card sc-advice">

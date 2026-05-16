@@ -4706,3 +4706,54 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 .btn-refresh:active{ transform: scale(0.97); }
 .btn-refresh.loading .icon{ animation: kbSpinIcon 0.9s linear infinite; }
 @keyframes kbSpinIcon { to { transform: rotate(360deg); } }
+
+/* ─── シンプル表示モード (パッと見て分かる 3 カード優先) ───── */
+body.simple-view section[data-priority="secondary"] {
+  display: none !important;
+}
+body.simple-view #more-toggle-wrap {
+  display: block;
+}
+
+.view-mode-toggle{
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 9999px;
+  background: rgba(59, 130, 246, 0.16); color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em;
+  cursor: pointer; transition: all 180ms;
+  touch-action: manipulation;
+}
+.view-mode-toggle:hover{ filter: brightness(1.15); }
+.view-mode-toggle:active{ transform: scale(0.96); }
+.view-mode-toggle[aria-pressed="false"]{
+  background: rgba(168, 85, 247, 0.16); color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.32);
+}
+.view-mode-toggle .vm-icon{ font-size: 11px; }
+
+.more-toggle-wrap{
+  margin: 16px 0;
+  display: none;
+}
+.more-toggle-btn{
+  width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(59, 130, 246, 0.18));
+  color: #cbd5e1;
+  border: 1px dashed rgba(168, 85, 247, 0.4);
+  border-radius: 14px;
+  font-weight: 700; font-size: 13.5px;
+  cursor: pointer; transition: all 240ms;
+  touch-action: manipulation;
+}
+.more-toggle-btn:hover{ filter: brightness(1.1); border-style: solid; }
+.more-toggle-btn:active{ transform: scale(0.98); }
+.more-toggle-btn .more-icon{
+  display: inline-block; font-size: 16px; transition: transform 240ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-mode-toggle, .more-toggle-btn{ transition: none; }
+}

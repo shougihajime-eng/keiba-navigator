@@ -2162,6 +2162,54 @@ function updateFreshnessIndicator() {
   window._freshnessTimer = setInterval(renderTick, 1000);
 }
 
+// ─── 表示モード (シンプル ⇄ 詳しく) ──────────────────────
+// シンプル: data-priority="secondary" を全部隠す。「もっと見る」ボタンが出る。
+// 詳しく: 全カードを表示。トグルは右上の小さなピル。
+const VIEW_MODE_KEY = "keiba_nav_view_mode";
+function applyViewMode(mode) {
+  const isSimple = mode === "simple";
+  document.body.classList.toggle("simple-view", isSimple);
+  const btn = document.getElementById("view-mode-toggle");
+  if (btn) {
+    btn.setAttribute("aria-pressed", isSimple ? "true" : "false");
+    const label = btn.querySelector(".vm-label");
+    if (label) label.textContent = isSimple ? "シンプル" : "詳しく";
+  }
+  const moreWrap = document.getElementById("more-toggle-wrap");
+  if (moreWrap) moreWrap.hidden = !isSimple;
+}
+function setupViewMode() {
+  // デフォルトは「シンプル」(初回ユーザに易しい)。設定済みなら尊重。
+  let saved = "simple";
+  try { saved = localStorage.getItem(VIEW_MODE_KEY) || "simple"; } catch {}
+  applyViewMode(saved);
+
+  const btn = document.getElementById("view-mode-toggle");
+  if (btn && !btn.dataset.bound) {
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", () => {
+      const cur = document.body.classList.contains("simple-view") ? "simple" : "detail";
+      const next = cur === "simple" ? "detail" : "simple";
+      applyViewMode(next);
+      try { localStorage.setItem(VIEW_MODE_KEY, next); } catch {}
+      if (typeof showToast === "function") {
+        showToast(next === "simple" ? "✨ シンプル表示に切替" : "📋 全カード表示に切替", "ok");
+      }
+    });
+  }
+
+  const more = document.getElementById("btn-show-more");
+  if (more && !more.dataset.bound) {
+    more.dataset.bound = "1";
+    more.addEventListener("click", () => {
+      applyViewMode("detail");
+      try { localStorage.setItem(VIEW_MODE_KEY, "detail"); } catch {}
+      // 全カード表示してから「もっと見る」位置までスクロール
+      setTimeout(() => more.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    });
+  }
+}
+
 // ─── タブ切替 (View Transitions API + 即時表示 + 重い処理はアイドル時に) ──
 function switchTab(name) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(6);
@@ -3965,6 +4013,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { setupPullToRefresh(); } catch (e) { console.warn(e); }
   try { setupScrollPolish(); } catch (e) { console.warn(e); }
   try { startAutoRefresh(); updateFreshnessIndicator(); } catch (e) { console.warn(e); }
+  try { setupViewMode(); } catch (e) { console.warn(e); }
   registerServiceWorker();
   // SW が ready になってから朝の通知判定
   if ("serviceWorker" in navigator) {
