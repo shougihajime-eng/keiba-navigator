@@ -62,6 +62,7 @@
   <script src="lib/share_image.js" defer></script>
   <script src="lib/help.js" defer></script>
   <script src="lib/ocr.js" defer></script>
+  <script src="lib/notify_v2.js" defer></script>
   <script src="lib/demo_races.js" defer></script>
   <script src="lib/tactile.js" defer></script>
   <script src="lib/sparkle.js" defer></script>
@@ -724,11 +725,12 @@
       </section>
 
       <section class="simple-card sc-info">
-        <h2 class="sc-title">📱 通知 (朝の「今日のベスト1」)</h2>
-        <p class="settings-hint">朝6〜12時にアプリを開いた時、保存済みレースから <b>「今日のベスト1」</b>(補正後EVが最も高いレース) を通知します。</p>
+        <h2 class="sc-title">📱 通知設定</h2>
+        <p class="settings-hint">必要な通知だけ ON にできます。アプリを開いていなくても通知は届きます (ホーム画面追加が必要)。</p>
         <button id="btn-notify-toggle" class="btn-info-outline" type="button">🔔 通知をONにする</button>
         <p id="notify-status" class="settings-hint mt-2">--</p>
-        <button id="btn-notify-test"   class="btn-info-outline" type="button">🔔 テスト通知を出す</button>
+        <ul id="notify-types-list" class="notify-types-list" hidden></ul>
+        <button id="btn-notify-test" class="btn-info-outline" type="button">🔔 テスト通知を出す</button>
         <p class="settings-hint mt-3 text-[11px]">
           <b>iPhoneの場合:</b> Safariで開いた状態で 共有 → <b>「ホーム画面に追加」</b> をしてから、ホーム画面のアイコンから起動してください。<br>
           ブラウザのままでは通知が使えません。

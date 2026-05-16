@@ -3901,6 +3901,35 @@ function refreshNotifyUi() {
     status.textContent = "OFF: ボタンを押すと許可をリクエストします";
     status.style.color = "";
   }
+  // 通知タイプ別 ON/OFF リスト
+  renderNotifyTypesList(enabled);
+}
+
+function renderNotifyTypesList(enabled) {
+  const ul = document.getElementById("notify-types-list");
+  if (!ul || !window.NotifyV2) return;
+  ul.hidden = !enabled;
+  if (!enabled) { ul.innerHTML = ""; return; }
+  const types = window.NotifyV2.types;
+  ul.innerHTML = types.map(t => `
+    <li class="notify-type-row" data-type="${t.id}">
+      <label class="notify-type-label">
+        <input type="checkbox" class="notify-type-checkbox" data-type="${t.id}" ${window.NotifyV2.isEnabled(t.id) ? "checked" : ""}>
+        <div class="notify-type-text">
+          <div class="notify-type-name">${escapeHtml(t.label)}</div>
+          <div class="notify-type-desc">${escapeHtml(t.desc)}</div>
+        </div>
+      </label>
+    </li>
+  `).join("");
+  ul.querySelectorAll(".notify-type-checkbox").forEach(cb => {
+    cb.addEventListener("change", (e) => {
+      window.NotifyV2.setEnabled(cb.dataset.type, cb.checked);
+      try { showToast(cb.checked ? `✓ ${cb.dataset.type} ON` : `OFF: ${cb.dataset.type}`, "ok"); } catch {}
+    });
+  });
+  // 通知の自動チェックを起動
+  if (window.NotifyV2.startAutoChecks) window.NotifyV2.startAutoChecks();
 }
 
 // ─── iOS ホーム画面追加バナー ──────────────────────────────

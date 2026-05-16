@@ -4910,3 +4910,36 @@ button:focus-visible, summary:focus-visible{
 .demo-title{ font-size: 14px; font-weight: 800; }
 .demo-sub{ font-size: 12.5px; line-height: 1.55; opacity: 0.94; }
 
+
+/* ─── 通知タイプ別 ON/OFF リスト (Wave11) ─────────────── */
+.notify-types-list{
+  list-style: none; padding: 0; margin: 12px 0;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  border-radius: 12px;
+}
+.notify-type-row{
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.18);
+}
+.notify-type-row:last-child{ border-bottom: none; }
+.notify-type-label{
+  display: flex; align-items: flex-start; gap: 12px;
+  cursor: pointer;
+}
+.notify-type-checkbox{
+  width: 22px; height: 22px; flex-shrink: 0;
+  accent-color: #34d399;
+  cursor: pointer;
+  margin-top: 2px;
+}
+.notify-type-text{ flex: 1; }
+.notify-type-name{
+  font-weight: 700; font-size: 14px;
+  color: #f1f5f9; line-height: 1.4;
+}
+.notify-type-desc{
+  font-size: 12px; color: #94a3b8; margin-top: 3px;
+  line-height: 1.45;
+}
+.notify-type-label:hover .notify-type-name{ color: #34d399; }
