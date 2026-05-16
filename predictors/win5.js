@@ -56,8 +56,10 @@
 
 (function (global) {
   // 配当の想定レンジ (JRA WIN5 過去配当の経験則)
+  // サーバ側 (lib/win5_engine.js) と同じ「歴史的平均 800 万円」を mid に。
+  // 上下は人気サイド／波乱で大きく振れるが、recommend ロジックは確率×平均で評価する
   const PAYOUT_LOW = 200000;        // 20万円 (人気サイド) -> 控えめな期待
-  const PAYOUT_MID = 1500000;       // 150万円 (中間)
+  const PAYOUT_MID = 8000000;       // 800万円 (歴史的平均・lib/win5_engine.js と整合)
   const PAYOUT_HIGH = 20000000;     // 2000万円 (波乱)
 
   function safeProb(p) {

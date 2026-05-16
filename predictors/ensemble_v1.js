@@ -125,6 +125,35 @@ function scoreJockeyTrainer(features) {
   return Math.max(s, 1e-6);
 }
 
+// (7) career_form: 累計賞金 + 体重偏差 + 騎手/調教師の複勝率 (3 着以内率)
+//     aggregate_features.py から features.json 経由で来る「実績系」シグナル
+function scoreCareerForm(features) {
+  let s = 1.0;
+  const cp = features.careerPrizeNorm;
+  if (cp !== null && cp !== undefined) {
+    // careerPrizeNorm: 0 (新馬) - 1.5 (重賞勝ち多数・億超え)
+    // 0.85 倍 (新馬) - 1.375 倍 (重賞戦線常連) 程度に
+    s *= 0.85 + 0.35 * cp;
+  }
+  const bw = features.bodyWeightDeviation;
+  if (bw !== null && bw !== undefined) {
+    // 適正体重 ±50kg 範囲を中立。それ以上ずれると軽い減点
+    const abs = Math.abs(bw);
+    if (abs > 1.5) s *= 0.92;
+    else if (abs > 1.0) s *= 0.97;
+  }
+  const j3 = features.jockeyInThreeRate;
+  if (j3 !== null && j3 !== undefined) {
+    // 騎手の複勝率: 0.30 をベースラインに、±0.15 で ±18% 補正
+    s *= 1.0 + 1.2 * (j3 - 0.30);
+  }
+  const t3 = features.trainerInThreeRate;
+  if (t3 !== null && t3 !== undefined) {
+    s *= 1.0 + 1.0 * (t3 - 0.30);
+  }
+  return Math.max(s, 1e-6);
+}
+
 // ─── ペース予想 (race 全体から) ─────────────────────────────
 function predictPace(race) {
   if (!race || !Array.isArray(race.horses)) return { tempo: 0, leaders: 0, closers: 0 };
@@ -162,6 +191,9 @@ function computeWeights(completeness) {
   const c = completeness.ratio ?? 0;
   // データ薄: オッズ寄り (0.5)、データ濃: AI 寄り
   // base: 一定の貢献
+  // 重み合計 (c=0): 0.20+0.50+0.10+0.05+0.05+0.10+0.05 = 1.05
+  // 重み合計 (c=1): 0.40+0.20+0.20+0.15+0.10+0.25+0.15 = 1.45
+  // (合計 1.0 でなくても加重幾何平均は順位が保たれるので OK)
   return {
     base:    0.20 + 0.20 * c,
     odds:    0.50 - 0.30 * c,
@@ -169,6 +201,7 @@ function computeWeights(completeness) {
     pace:    0.05 + 0.10 * c,
     pedigree: 0.05 + 0.05 * c,
     jockey:   0.10 + 0.15 * c,
+    career:   0.05 + 0.10 * c,  // career_form (累計賞金 + 体重偏差 + 騎手/調教師複勝)
   };
 }
 
@@ -209,10 +242,11 @@ function predict(race, options = {}) {
     const sPace    = scorePaceFit(features, pace);
     const sPed     = scorePedigree(features, race);
     const sJT      = scoreJockeyTrainer(features);
+    const sCareer  = scoreCareerForm(features);
     return {
       number: horse.number,
       name: horse.name || null,
-      components: { base: sBase, odds: sOdds, form: sForm, pace: sPace, ped: sPed, jt: sJT },
+      components: { base: sBase, odds: sOdds, form: sForm, pace: sPace, ped: sPed, jt: sJT, career: sCareer },
     };
   });
 
@@ -225,7 +259,8 @@ function predict(race, options = {}) {
       weights.form    * Math.log(Math.max(x.form, 1e-9)) +
       weights.pace    * Math.log(Math.max(x.pace, 1e-9)) +
       weights.pedigree* Math.log(Math.max(x.ped,  1e-9)) +
-      weights.jockey  * Math.log(Math.max(x.jt,   1e-9));
+      weights.jockey  * Math.log(Math.max(x.jt,   1e-9)) +
+      weights.career  * Math.log(Math.max(x.career, 1e-9));
     return { ...c, logScore, score: Math.exp(logScore) };
   });
 
@@ -261,4 +296,4 @@ function predict(race, options = {}) {
   };
 }
 
-module.exports = { name: NAME, version: VERSION, predict, predictPace, _internal: { scoreBase, scoreOddsImplied, scoreForm, scorePaceFit, scorePedigree, scoreJockeyTrainer, softmax, computeWeights } };
+module.exports = { name: NAME, version: VERSION, predict, predictPace, _internal: { scoreBase, scoreOddsImplied, scoreForm, scorePaceFit, scorePedigree, scoreJockeyTrainer, scoreCareerForm, softmax, computeWeights } };

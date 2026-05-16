@@ -564,5 +564,62 @@ test("all_races_view.js 構文 OK", () => { new Function(require("fs").readFileS
 test("roi_dashboard.js 構文 OK", () => { new Function(require("fs").readFileSync("lib/roi_dashboard.js", "utf8")); });
 test("ensemble_v1.js 構文 OK", () => { new Function(require("fs").readFileSync("predictors/ensemble_v1.js", "utf8")); });
 
+// ─── QA2: 最終 QA 第 2 弾で追加された機能の回帰防止 ───────────
+console.log("\n=== QA2: ensemble_v1.scoreCareerForm (新規 7 番目の弱学習器) ===");
+const { _internal: ens } = require("../predictors/ensemble_v1");
+test("scoreCareerForm: 全 null は 1.0 (中立)", () => {
+  const s = ens.scoreCareerForm({});
+  assert.strictEqual(s, 1.0);
+});
+test("scoreCareerForm: careerPrizeNorm が高い (1.5) と上方補正", () => {
+  const s = ens.scoreCareerForm({ careerPrizeNorm: 1.5 });
+  assert.ok(s > 1.2, `expected >1.2, got ${s}`);
+});
+test("scoreCareerForm: 新馬 (careerPrizeNorm=0) は減点", () => {
+  const s = ens.scoreCareerForm({ careerPrizeNorm: 0 });
+  assert.ok(s < 1.0, `expected <1.0, got ${s}`);
+});
+test("scoreCareerForm: 体重偏差が極端 (>1.5) なら軽い減点", () => {
+  const s = ens.scoreCareerForm({ bodyWeightDeviation: 2.0 });
+  assert.ok(s < 1.0 && s > 0.85, `expected 0.85-1.0, got ${s}`);
+});
+test("scoreCareerForm: 騎手複勝率 0.50 で上方補正", () => {
+  const s = ens.scoreCareerForm({ jockeyInThreeRate: 0.50 });
+  assert.ok(s > 1.0, `expected >1.0, got ${s}`);
+});
+test("scoreCareerForm: 騎手複勝率 0.15 で下方補正", () => {
+  const s = ens.scoreCareerForm({ jockeyInThreeRate: 0.15 });
+  assert.ok(s < 1.0, `expected <1.0, got ${s}`);
+});
+test("computeWeights: career が weights に含まれる", () => {
+  const w = ens.computeWeights({ ratio: 0.5 });
+  assert.ok(typeof w.career === "number" && w.career > 0, `career weight missing: ${w.career}`);
+});
+
+console.log("\n=== QA2: WIN5 配当定数の整合 ===");
+const win5Client = require("fs").readFileSync("predictors/win5.js", "utf8");
+test("predictors/win5.js PAYOUT_MID が 800 万円 (サーバ側 lib/win5_engine.js と一致)", () => {
+  const m = win5Client.match(/PAYOUT_MID\s*=\s*(\d+)/);
+  assert.ok(m, "PAYOUT_MID not found");
+  assert.strictEqual(Number(m[1]), 8_000_000);
+});
+
+console.log("\n=== QA2: features.js に新規キーが揃っている ===");
+const { extractFeatures, dataCompleteness } = require("../predictors/features");
+test("extractFeatures: careerPrizeNorm / bodyWeightDeviation を返す", () => {
+  const h = { _jv: { careerPrizeNorm: 0.7, bodyWeightDeviation: -0.2, jockeyInThreeRate: 0.35, trainerInThreeRate: 0.32 } };
+  const f = extractFeatures(h);
+  assert.strictEqual(f.careerPrizeNorm, 0.7);
+  assert.strictEqual(f.bodyWeightDeviation, -0.2);
+  assert.strictEqual(f.jockeyInThreeRate, 0.35);
+  assert.strictEqual(f.trainerInThreeRate, 0.32);
+});
+test("dataCompleteness: 新規 4 キーがカウント対象", () => {
+  const f = extractFeatures({ _jv: { careerPrizeNorm: 0.5, bodyWeightDeviation: 0, jockeyInThreeRate: 0.3, trainerInThreeRate: 0.3 } });
+  const c = dataCompleteness(f);
+  assert.ok(c.total >= 18, `expected total >= 18, got ${c.total}`);
+  assert.ok(c.present >= 4, `expected present >= 4, got ${c.present}`);
+});
+
 console.log(`\n=== 合計: ${passed} 通過 / ${failed} 失敗 ===`);
 process.exit(failed > 0 ? 1 : 0);

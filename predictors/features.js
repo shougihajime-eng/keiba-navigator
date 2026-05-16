@@ -53,6 +53,15 @@ function extractFeatures(horse) {
     bestTime:          num(horse._jv?.bestTime),            // 持ち時計
     pedigreeSurfaceAff: num(horse._jv?.pedigreeSurfaceAff), // 血統の芝/ダ適性
     trainingScore:     num(horse._jv?.trainingScore),       // 調教評価
+    // aggregate_features.py が出力する累計賞金・馬体重偏差 (UM レコード由来)
+    careerPrizeJpy:    num(horse._jv?.careerPrizeJpy),      // 累計賞金 (円)
+    careerPrizeNorm:   num(horse._jv?.careerPrizeNorm),     // 累計賞金 [0..1] 正規化済
+    bodyWeight:        num(horse._jv?.bodyWeight),          // 体重 (UM レコード基準)
+    bodyWeightDeviation: num(horse._jv?.bodyWeightDeviation), // 体重偏差 (適正体重との差)
+    // 注: jockeyInThreeRate / trainerInThreeRate は aggregate_features.py 側で計算済だが
+    // predictor は WinRate 中心の設計のため、3 着以内率は parseFeatures 経由で渡す
+    jockeyInThreeRate: num(horse._jv?.jockeyInThreeRate),
+    trainerInThreeRate: num(horse._jv?.trainerInThreeRate),
   };
 }
 
@@ -64,6 +73,8 @@ function dataCompleteness(features) {
     "surfaceWinRate", "goingWinRate", "weightChange",     // JV
     "daysFromLastRace", "runStyleId", "last3F",           // JV
     "bestTime", "pedigreeSurfaceAff", "trainingScore",    // JV
+    "careerPrizeNorm", "bodyWeightDeviation",             // JV (aggregate_features.py 由来)
+    "jockeyInThreeRate", "trainerInThreeRate",            // JV (複勝・3着以内率)
   ];
   let present = 0;
   for (const f of fields) if (features[f] !== null) present++;

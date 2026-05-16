@@ -27,7 +27,12 @@ const { loadVenues }      = require("./lib/venues");
 const { clearCache }      = require("./lib/fetch");
 
 function jsonRes(res, status, obj) {
-  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*",
+    "Vary": "Origin",
+  });
   res.end(JSON.stringify(obj));
 }
 
@@ -35,6 +40,18 @@ async function serve(req, res) {
   try {
     const u = parseReqUrl(req);
     const p = u.pathname || "/";
+
+    // CORS preflight (本番デプロイ整合・ローカル開発で外部ホストから叩く場合用)
+    if (req.method === "OPTIONS" && p.startsWith("/api/")) {
+      res.writeHead(204, {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Max-Age": "86400",
+        "Vary": "Origin",
+      });
+      return res.end();
+    }
 
     if (p === "/api/status") {
       return jsonRes(res, 200, buildStatus());

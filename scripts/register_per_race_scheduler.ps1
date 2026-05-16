@@ -1,4 +1,4 @@
-# Per-race scheduler: 各レースの発走 15 分前 + 5 分前に RT データを取りに行く
+﻿# Per-race scheduler: 各レースの発走 15 分前 + 5 分前に RT データを取りに行く
 # tomorrow_races.json + RA.hassou_time から計算
 # Windows タスクスケジューラに個別タスクとして登録
 #

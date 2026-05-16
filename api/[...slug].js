@@ -23,6 +23,16 @@ function firstQuery(v) { return Array.isArray(v) ? v[0] : v; }
 
 module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
+  // CORS: 単一オリジン PWA 想定だが、本番デプロイで Workbox / 別ホストからの試行に備えて GET を許可
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Vary", "Origin");
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Max-Age", "86400");
+    res.status(204).end();
+    return;
+  }
 
   // Vercel は req.query.slug に [foo, bar] のように配列を渡す
   let slug = req.query?.slug;
