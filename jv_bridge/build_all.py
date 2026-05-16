@@ -146,7 +146,9 @@ def index_horse_master(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any
 
 
 def build_races(groups: Dict[str, Dict[str, Any]]) -> int:
-    """races/<id>.json を書き出す。RA 必須。SE は 0 件でも書く (出走表未配信時)。"""
+    """races/<id>.json を書き出す。RA 必須。SE は 0 件でも書く (出走表未配信時)。
+    DM (JRA-VAN マイニング予想) があれば race JSON に dm_predictions として乗せる。
+    """
     RACES_DIR.mkdir(parents=True, exist_ok=True)
     written = 0
     for rid, g in groups.items():
@@ -154,6 +156,18 @@ def build_races(groups: Dict[str, Dict[str, Any]]) -> int:
         if not ra:
             continue
         race_json = build_race_json.merge(ra, g.get("se_list") or [], g.get("o1"))
+        # DM (data mining = JRA-VAN 公式 AI 予想) を race JSON に乗せる
+        dm_list = g.get("dm_list") or []
+        if dm_list:
+            race_json["dm_predictions"] = [
+                {
+                    "dm_kubun":   d.get("dm_kubun"),
+                    "dm_time":    d.get("dm_time"),
+                    "make_hm":    d.get("make_hm"),
+                }
+                for d in dm_list
+            ]
+            race_json["has_mining"] = True
         path = build_race_json.write(race_json)
         if path:
             written += 1
