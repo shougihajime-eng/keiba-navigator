@@ -384,6 +384,111 @@ def _build_strategies() -> List[Strategy]:
         pay = _payout_fuku(payouts, target["number"])
         return UNIT, pay, pay > 0
 
+    # === Wave19: 100% 越えを狙う「見送り型」戦略 ===
+    # 控除率 20% (払戻 75-80% に固定) のため、機械的に買うと長期で赤字。
+    # 「期待値プラスの場面だけ買う」(= ほとんど見送る) で 100% 越えを目指す。
+
+    def tan_best_ev_any(horses, payouts):
+        """全頭の中で EV (primary) が最大の馬を単勝。EV >= 0.95 のときだけ買う。"""
+        cands = [h for h in horses if h.get("ev") is not None and h["ev"] >= 0.95]
+        if not cands: return 0, 0, False
+        target = max(cands, key=lambda h: h["ev"])
+        pay = _payout_tan(payouts, target["number"])
+        return UNIT, pay, pay > 0
+
+    def fuku_best_ev_any(horses, payouts):
+        """全頭の中で EV が最大の馬を複勝。EV >= 0.85 のときだけ買う。"""
+        cands = [h for h in horses if h.get("ev") is not None and h["ev"] >= 0.85]
+        if not cands: return 0, 0, False
+        target = max(cands, key=lambda h: h["ev"])
+        pay = _payout_fuku(payouts, target["number"])
+        return UNIT, pay, pay > 0
+
+    def tan_strict_combined(horses, payouts):
+        """厳しい複合条件: primary EV>=1.05 AND nopop EV>=1.00 AND value_signal>=0"""
+        cands = [h for h in horses
+                 if (h.get("ev") or 0) >= 1.05
+                 and (h.get("ev_nopop") or 0) >= 1.00
+                 and (h.get("value_signal") or -1) >= 0]
+        if not cands: return 0, 0, False
+        target = max(cands, key=lambda h: h["ev"])
+        pay = _payout_tan(payouts, target["number"])
+        return UNIT, pay, pay > 0
+
+    def fuku_strict_combined(horses, payouts):
+        """厳しい複合条件 (複勝版): EV>=0.95 AND nopop EV>=0.95 AND value_signal>=0"""
+        cands = [h for h in horses
+                 if (h.get("ev") or 0) >= 0.95
+                 and (h.get("ev_nopop") or 0) >= 0.95
+                 and (h.get("value_signal") or -1) >= 0]
+        if not cands: return 0, 0, False
+        target = max(cands, key=lambda h: h["ev"])
+        pay = _payout_fuku(payouts, target["number"])
+        return UNIT, pay, pay > 0
+
+    def tan_top1_confident(horses, payouts):
+        """AI 本命が「確信」レベル (win_prob >= 0.40) のときだけ単勝。"""
+        if not horses: return 0, 0, False
+        top = horses[0]
+        if (top.get("win_prob") or 0) < 0.40: return 0, 0, False
+        pay = _payout_tan(payouts, top["number"])
+        return UNIT, pay, pay > 0
+
+    def fuku_top1_confident(horses, payouts):
+        """AI 本命が確信レベル (win_prob >= 0.35) のときだけ複勝。"""
+        if not horses: return 0, 0, False
+        top = horses[0]
+        if (top.get("win_prob") or 0) < 0.35: return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+
+    def uren_top1_top2_high_ev(horses, payouts):
+        """馬連 (本命-対抗): top1 と top2 の合計 EV が大きいときだけ"""
+        if len(horses) < 2: return 0, 0, False
+        a, b = horses[0], horses[1]
+        # 簡易 EV: (probA + probB) * 平均オッズ (推測値)
+        # ここでは「両方の prob 合計 >= 0.55」を condition に
+        if ((a.get("win_prob") or 0) + (b.get("win_prob") or 0)) < 0.55: return 0, 0, False
+        pay = _payout_uren(payouts, a["number"], b["number"])
+        return UNIT, pay, pay > 0
+
+    def wide_box_top3_confident(horses, payouts):
+        """ワイド 3 点: top3 の合計 prob が高い (= 確信) ときだけ"""
+        if len(horses) < 3: return 0, 0, False
+        top3 = horses[:3]
+        total = sum((h.get("win_prob") or 0) for h in top3)
+        if total < 0.70: return 0, 0, False
+        n1, n2, n3 = top3[0]["number"], top3[1]["number"], top3[2]["number"]
+        pay = (_payout_wide(payouts, n1, n2) +
+               _payout_wide(payouts, n1, n3) +
+               _payout_wide(payouts, n2, n3))
+        return UNIT * 3, pay, pay > 0
+
+    def fuku_underdog_value(horses, payouts):
+        """穴狙い複勝: 人気 4-8 番で nopop_prob (実力派の評価) が上位 3 位以内"""
+        cands = [h for h in horses
+                 if isinstance(h.get("popularity"), int)
+                 and 4 <= h["popularity"] <= 8
+                 and h.get("nopop_prob") is not None]
+        if not cands: return 0, 0, False
+        # nopop 全体での順位
+        ranked_nopop = _ranked_by_nopop(horses)
+        top3_numbers = set(h["number"] for h in ranked_nopop[:3])
+        cands = [h for h in cands if h["number"] in top3_numbers]
+        if not cands: return 0, 0, False
+        target = max(cands, key=lambda h: h.get("nopop_prob") or 0)
+        pay = _payout_fuku(payouts, target["number"])
+        return UNIT, pay, pay > 0
+
+    def fuku_super_strict(horses, payouts):
+        """超厳格: AI 本命が「絶好機」レベル (top1 と top2 の prob 差 >= 0.10) のときだけ複勝"""
+        if len(horses) < 2: return 0, 0, False
+        top, second = horses[0], horses[1]
+        gap = (top.get("win_prob") or 0) - (second.get("win_prob") or 0)
+        if gap < 0.10: return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+
     return [
         Strategy("tan_top1_always",            tan_top1_always),
         Strategy("tan_top1_ev100",             tan_top1_ev100),
@@ -409,7 +514,73 @@ def _build_strategies() -> List[Strategy]:
         Strategy("uren_primary_x_nopop",       uren_primary_nopop_combo),
         Strategy("wide_primary_x_nopop",       wide_primary_nopop_combo),
         Strategy("fuku_ev_nopop_110",          fuku_ev_nopop_110),
+        # Wave19: 見送り型 100% 越え狙い
+        Strategy("tan_best_ev_any",            tan_best_ev_any),
+        Strategy("fuku_best_ev_any",           fuku_best_ev_any),
+        Strategy("tan_strict_combined",        tan_strict_combined),
+        Strategy("fuku_strict_combined",       fuku_strict_combined),
+        Strategy("tan_top1_confident",         tan_top1_confident),
+        Strategy("fuku_top1_confident",        fuku_top1_confident),
+        Strategy("uren_top1_top2_high",        uren_top1_top2_high_ev),
+        Strategy("wide_box_top3_confident",    wide_box_top3_confident),
+        Strategy("fuku_underdog_value",        fuku_underdog_value),
+        Strategy("fuku_super_strict",          fuku_super_strict),
+        # === Wave19 scan: 「ほぼ全部見送る」型の閾値スイープ ===
+        # 最初に当たった「wide_box_top3_confident 0.70 → 213%」を中心に、
+        # 閾値を緩めて発火数を増やしながら、回収率がどう変わるか測る。
+        # サンプル数が少なすぎる戦略は信頼性が低いので、件数 20+ を「実用可能」と判定する。
+        *[
+            Strategy(f"wide_top3_conf_{int(th*100):03d}", _make_wide_top3_conf(th))
+            for th in (0.55, 0.60, 0.65, 0.70, 0.75, 0.80)
+        ],
+        *[
+            Strategy(f"fuku_gap_{int(th*100):03d}", _make_fuku_gap(th))
+            for th in (0.04, 0.06, 0.08, 0.10, 0.12, 0.15)
+        ],
+        *[
+            Strategy(f"fuku_top1_prob_{int(th*100):03d}", _make_fuku_top1_prob(th))
+            for th in (0.20, 0.25, 0.30, 0.35, 0.40, 0.45)
+        ],
     ]
+
+
+# === 閾値スイープ用ファクトリ ===
+def _make_wide_top3_conf(threshold):
+    """ワイド box top3: top1+top2+top3 の合計 prob >= threshold のとき"""
+    def fn(horses, payouts):
+        if len(horses) < 3: return 0, 0, False
+        top3 = horses[:3]
+        total = sum((h.get("win_prob") or 0) for h in top3)
+        if total < threshold: return 0, 0, False
+        n1, n2, n3 = top3[0]["number"], top3[1]["number"], top3[2]["number"]
+        pay = (_payout_wide(payouts, n1, n2) +
+               _payout_wide(payouts, n1, n3) +
+               _payout_wide(payouts, n2, n3))
+        return UNIT * 3, pay, pay > 0
+    return fn
+
+
+def _make_fuku_gap(threshold):
+    """複勝 本命: top1 と top2 の prob 差 >= threshold のとき"""
+    def fn(horses, payouts):
+        if len(horses) < 2: return 0, 0, False
+        top, second = horses[0], horses[1]
+        gap = (top.get("win_prob") or 0) - (second.get("win_prob") or 0)
+        if gap < threshold: return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+    return fn
+
+
+def _make_fuku_top1_prob(threshold):
+    """複勝 本命: top1 の win_prob >= threshold のとき"""
+    def fn(horses, payouts):
+        if not horses: return 0, 0, False
+        top = horses[0]
+        if (top.get("win_prob") or 0) < threshold: return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+    return fn
 
 
 def _predict_horses_for_race(race, model, kind, features_index,

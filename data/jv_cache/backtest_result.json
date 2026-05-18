@@ -1,11 +1,167 @@
 {
-  "backtested_at": "2026-05-18T14:37:11.446052+00:00",
+  "backtested_at": "2026-05-18T22:13:32.615384+00:00",
   "test_ratio": 0.2,
   "test_races": 690,
   "model_trained_at": "2026-05-18T14:02:08.510521+00:00",
   "model_auc": 0.8060957082739253,
   "model_logloss": 0.22874425075113708,
   "strategies": [
+    {
+      "name": "wide_box_top3_confident",
+      "bets": 3,
+      "invested": 900,
+      "returned": 1920,
+      "profit": 1020,
+      "roi": 2.1333,
+      "roi_pct": 213.3,
+      "hit_rate": 1.0,
+      "hits": 3,
+      "max_payout": 1680
+    },
+    {
+      "name": "wide_top3_conf_070",
+      "bets": 3,
+      "invested": 900,
+      "returned": 1920,
+      "profit": 1020,
+      "roi": 2.1333,
+      "roi_pct": 213.3,
+      "hit_rate": 1.0,
+      "hits": 3,
+      "max_payout": 1680
+    },
+    {
+      "name": "fuku_gap_015",
+      "bets": 2,
+      "invested": 200,
+      "returned": 330,
+      "profit": 130,
+      "roi": 1.65,
+      "roi_pct": 165.0,
+      "hit_rate": 1.0,
+      "hits": 2,
+      "max_payout": 220
+    },
+    {
+      "name": "wide_top3_conf_065",
+      "bets": 8,
+      "invested": 2400,
+      "returned": 2790,
+      "profit": 390,
+      "roi": 1.1625,
+      "roi_pct": 116.3,
+      "hit_rate": 0.875,
+      "hits": 7,
+      "max_payout": 1680
+    },
+    {
+      "name": "fuku_top1_prob_030",
+      "bets": 9,
+      "invested": 900,
+      "returned": 1000,
+      "profit": 100,
+      "roi": 1.1111,
+      "roi_pct": 111.1,
+      "hit_rate": 0.7778,
+      "hits": 7,
+      "max_payout": 230
+    },
+    {
+      "name": "wide_top3_conf_060",
+      "bets": 14,
+      "invested": 4200,
+      "returned": 4580,
+      "profit": 380,
+      "roi": 1.0905,
+      "roi_pct": 109.0,
+      "hit_rate": 0.7857,
+      "hits": 11,
+      "max_payout": 1680
+    },
+    {
+      "name": "fuku_top1_prob_020",
+      "bets": 100,
+      "invested": 10000,
+      "returned": 10630,
+      "profit": 630,
+      "roi": 1.063,
+      "roi_pct": 106.3,
+      "hit_rate": 0.72,
+      "hits": 72,
+      "max_payout": 1440
+    },
+    {
+      "name": "fuku_gap_012",
+      "bets": 12,
+      "invested": 1200,
+      "returned": 1220,
+      "profit": 20,
+      "roi": 1.0167,
+      "roi_pct": 101.7,
+      "hit_rate": 0.8333,
+      "hits": 10,
+      "max_payout": 220
+    },
+    {
+      "name": "fuku_super_strict",
+      "bets": 44,
+      "invested": 4400,
+      "returned": 4220,
+      "profit": -180,
+      "roi": 0.9591,
+      "roi_pct": 95.9,
+      "hit_rate": 0.7273,
+      "hits": 32,
+      "max_payout": 390
+    },
+    {
+      "name": "fuku_gap_010",
+      "bets": 44,
+      "invested": 4400,
+      "returned": 4220,
+      "profit": -180,
+      "roi": 0.9591,
+      "roi_pct": 95.9,
+      "hit_rate": 0.7273,
+      "hits": 32,
+      "max_payout": 390
+    },
+    {
+      "name": "fuku_top1_prob_025",
+      "bets": 25,
+      "invested": 2500,
+      "returned": 2390,
+      "profit": -110,
+      "roi": 0.956,
+      "roi_pct": 95.6,
+      "hit_rate": 0.76,
+      "hits": 19,
+      "max_payout": 230
+    },
+    {
+      "name": "fuku_gap_006",
+      "bets": 188,
+      "invested": 18800,
+      "returned": 17930,
+      "profit": -870,
+      "roi": 0.9537,
+      "roi_pct": 95.4,
+      "hit_rate": 0.6862,
+      "hits": 129,
+      "max_payout": 1110
+    },
+    {
+      "name": "fuku_gap_004",
+      "bets": 325,
+      "invested": 32500,
+      "returned": 30920,
+      "profit": -1580,
+      "roi": 0.9514,
+      "roi_pct": 95.1,
+      "hit_rate": 0.6738,
+      "hits": 219,
+      "max_payout": 1440
+    },
     {
       "name": "uren_top1_top2",
       "bets": 690,
@@ -19,6 +175,18 @@
       "max_payout": 22210
     },
     {
+      "name": "fuku_gap_008",
+      "bets": 104,
+      "invested": 10400,
+      "returned": 8920,
+      "profit": -1480,
+      "roi": 0.8577,
+      "roi_pct": 85.8,
+      "hit_rate": 0.6538,
+      "hits": 68,
+      "max_payout": 390
+    },
+    {
       "name": "fuku_top1_always",
       "bets": 690,
       "invested": 69000,
@@ -29,6 +197,18 @@
       "hit_rate": 0.5928,
       "hits": 409,
       "max_payout": 1440
+    },
+    {
+      "name": "wide_top3_conf_055",
+      "bets": 26,
+      "invested": 7800,
+      "returned": 6400,
+      "profit": -1400,
+      "roi": 0.8205,
+      "roi_pct": 82.1,
+      "hit_rate": 0.7308,
+      "hits": 19,
+      "max_payout": 1680
     },
     {
       "name": "fuku_nopop_top1",
@@ -53,6 +233,18 @@
       "hit_rate": 0.4884,
       "hits": 337,
       "max_payout": 4920
+    },
+    {
+      "name": "fuku_underdog_value",
+      "bets": 439,
+      "invested": 43900,
+      "returned": 34650,
+      "profit": -9250,
+      "roi": 0.7893,
+      "roi_pct": 78.9,
+      "hit_rate": 0.3007,
+      "hits": 132,
+      "max_payout": 1540
     },
     {
       "name": "wide_primary_x_nopop",
@@ -149,6 +341,18 @@
       "hit_rate": 0.0888,
       "hits": 19,
       "max_payout": 1560
+    },
+    {
+      "name": "uren_top1_top2_high",
+      "bets": 5,
+      "invested": 500,
+      "returned": 240,
+      "profit": -260,
+      "roi": 0.48,
+      "roi_pct": 48.0,
+      "hit_rate": 0.2,
+      "hits": 1,
+      "max_payout": 240
     },
     {
       "name": "tan_top1_value3",
@@ -281,8 +485,140 @@
       "hit_rate": 0.0,
       "hits": 0,
       "max_payout": 0
+    },
+    {
+      "name": "tan_best_ev_any",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "fuku_best_ev_any",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "tan_strict_combined",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "fuku_strict_combined",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "tan_top1_confident",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "fuku_top1_confident",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "wide_top3_conf_075",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "wide_top3_conf_080",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "fuku_top1_prob_035",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "fuku_top1_prob_040",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "fuku_top1_prob_045",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
     }
   ],
-  "best_strategy": "uren_top1_top2",
-  "best_roi_pct": 89.3
+  "best_strategy": "wide_box_top3_confident",
+  "best_roi_pct": 213.3
 }

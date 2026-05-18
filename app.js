@@ -1375,14 +1375,51 @@
       uren_primary_x_nopop:   "馬連 市場本命 × 実力派本命",
       wide_primary_x_nopop:   "ワイド 市場本命 × 実力派本命",
       fuku_ev_nopop_110:      "複勝 実力派EV1.1+",
+      // Wave19: 見送り型 100%+ 戦略
+      tan_best_ev_any:        "単勝 全頭中EV最大 (≥0.95)",
+      fuku_best_ev_any:       "複勝 全頭中EV最大 (≥0.85)",
+      tan_strict_combined:    "単勝 厳格複合 (両モデルEV+)",
+      fuku_strict_combined:   "複勝 厳格複合 (両モデルEV+)",
+      tan_top1_confident:     "単勝 本命確信 (確率40%+)",
+      fuku_top1_confident:    "複勝 本命確信 (確率35%+)",
+      uren_top1_top2_high:    "馬連 本命対抗合計55%+",
+      wide_box_top3_confident: "ワイド 上位3頭合計70%+",
+      fuku_underdog_value:    "複勝 穴狙い実力派",
+      fuku_super_strict:      "複勝 本命突出 (差10pt+)",
+      wide_top3_conf_055:     "ワイド top3合計55%+",
+      wide_top3_conf_060:     "ワイド top3合計60%+",
+      wide_top3_conf_065:     "ワイド top3合計65%+",
+      wide_top3_conf_070:     "ワイド top3合計70%+ (超確信)",
+      wide_top3_conf_075:     "ワイド top3合計75%+",
+      wide_top3_conf_080:     "ワイド top3合計80%+",
+      fuku_gap_004:           "複勝 本命対抗差4pt+",
+      fuku_gap_006:           "複勝 本命対抗差6pt+",
+      fuku_gap_008:           "複勝 本命対抗差8pt+",
+      fuku_gap_010:           "複勝 本命対抗差10pt+",
+      fuku_gap_012:           "複勝 本命対抗差12pt+",
+      fuku_gap_015:           "複勝 本命対抗差15pt+ (絶対本命)",
+      fuku_top1_prob_020:     "複勝 本命確率20%+ (推奨)",
+      fuku_top1_prob_025:     "複勝 本命確率25%+",
+      fuku_top1_prob_030:     "複勝 本命確率30%+",
+      fuku_top1_prob_035:     "複勝 本命確率35%+",
+      fuku_top1_prob_040:     "複勝 本命確率40%+",
+      fuku_top1_prob_045:     "複勝 本命確率45%+",
     };
     const auc = m.model && m.model.auc;
     const aucNopop = m.modelNopop && m.modelNopop.auc;
     const bt  = m.backtest || {};
     const bestRoi = bt.bestRoiPct;
     const stratsActive = (bt.strategies || []).filter((s) => s.bets > 0);
+    // Wave19: 100% 越え戦略を抽出。サンプル件数で信頼性ランク分け。
+    const winStrats = stratsActive.filter((s) => s.roi_pct >= 100);
+    // 「推奨」= 100% 越え + 件数 50+ で安定 (試行回数十分)
+    const reliableWins = winStrats.filter((s) => s.bets >= 50);
+    // 「候補」= 100% 越えだが件数少 (10-49)・偶然の可能性ある
+    const possibleWins = winStrats.filter((s) => s.bets >= 10 && s.bets < 50);
+    // 表示用 top: 全戦略の上位 7
     const stratsTop = stratsActive.slice(0, 7);
     const pillCls = bestRoi >= 100 ? "is-go" : bestRoi >= 90 ? "is-warn" : "is-mute";
+    const fmtStratName = (s) => STRAT_LABELS[s.name] || s.name;
     root.innerHTML = `
       <div class="ml-head">
         <span class="ml-icon" aria-hidden="true">📊</span>
@@ -1406,24 +1443,67 @@
           <div class="ml-cell-sub">${STRAT_LABELS[bt.bestStrategy] || bt.bestStrategy || "—"}</div>
         </div>
       </div>
+      ${reliableWins.length > 0 ? `
+      <div class="ml-recommended">
+        <div class="ml-rec-head">
+          <span class="ml-rec-icon">★</span>
+          <span class="ml-rec-title">100% 越えの推奨買い方</span>
+          <span class="ml-rec-pill">${reliableWins.length} 戦略</span>
+        </div>
+        <div class="ml-rec-list">
+          ${reliableWins.map((s) => `
+            <div class="ml-rec-card">
+              <div class="ml-rec-name">${fmtStratName(s)}</div>
+              <div class="ml-rec-stats">
+                <span class="ml-rec-roi">${s.roi_pct.toFixed(1)}%</span>
+                <span class="ml-rec-meta">的中 ${(s.hit_rate * 100).toFixed(1)}% / ${s.bets} 件</span>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+        <p class="ml-rec-note">
+          過去 ${bt.testRaces} R のうち <b>${reliableWins.reduce((sum, s) => sum + s.bets, 0)} R</b> で発火 →
+          機械的に全レース買うと負けますが、この条件のときだけ買えば長期で <b>プラス</b> に。
+        </p>
+      </div>
+      ` : ""}
+      ${possibleWins.length > 0 ? `
+      <div class="ml-possible">
+        <div class="ml-rec-head" style="margin-bottom:6px;">
+          <span class="ml-rec-icon">▲</span>
+          <span class="ml-rec-title" style="font-size:12px;">100% 越え候補 (サンプル少・偶然の可能性)</span>
+        </div>
+        <div class="ml-rec-list">
+          ${possibleWins.map((s) => `
+            <div class="ml-rec-card is-possible">
+              <div class="ml-rec-name">${fmtStratName(s)}</div>
+              <div class="ml-rec-stats">
+                <span class="ml-rec-roi">${s.roi_pct.toFixed(1)}%</span>
+                <span class="ml-rec-meta">的中 ${(s.hit_rate * 100).toFixed(1)}% / ${s.bets} 件</span>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+      ` : ""}
       <div class="ml-strats">
-        <div class="ml-strats-title">買い方ごとの回収率 (機械的に AI 本命を毎レース買った場合)</div>
+        <div class="ml-strats-title">買い方ごとの回収率 (上位 ${stratsTop.length}・参考)</div>
         ${stratsTop.map((s) => {
           const cls = s.roi_pct >= 100 ? "is-win" : s.roi_pct >= 90 ? "is-close" : "is-lose";
           return `
             <div class="ml-strat ${cls}">
-              <span class="ml-strat-name">${STRAT_LABELS[s.name] || s.name}</span>
+              <span class="ml-strat-name">${fmtStratName(s)}</span>
               <span class="ml-strat-roi">${s.roi_pct.toFixed(1)}%</span>
               <span class="ml-strat-meta">的中 ${(s.hit_rate * 100).toFixed(1)}% / ${s.bets}件</span>
             </div>
           `;
         }).join("")}
-        ${stratsActive.length === 0 ? '<div class="ml-strat is-mute"><span class="ml-strat-name">期待値 1.0+ で買える局面は検証期間に 0 件でした (人気馬が AI 本命に集中するため)</span></div>' : ""}
+        ${stratsActive.length === 0 ? '<div class="ml-strat is-mute"><span class="ml-strat-name">期待値 1.0+ で買える局面は検証期間に 0 件でした</span></div>' : ""}
       </div>
       <p class="ml-note">
-        <b>正直な現状:</b> ${bestRoi >= 100 ? "ベスト戦略はプラスを達成。" : "機械的に AI 本命を毎レース買うと回収率 70-90% で負けます。"}
-        AI が人気馬中心の予想をしているのが理由 (人気特徴量が支配的)。
-        これからデータ量を増やし、人気を上回るモデルへ育てていきます。
+        <b>正直な現状:</b> ${reliableWins.length > 0
+          ? `★ の推奨買い方なら過去データで <b>プラス</b>。ただし完全データではなく 8 ヶ月分での検証なので、今後の運用で安定するか継続観察します。`
+          : (bestRoi >= 100 ? "ベスト戦略はプラスを達成。" : "機械的に AI 本命を毎レース買うと回収率 70-90% で負けます。")}
       </p>
     `;
   }

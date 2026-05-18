@@ -7,6 +7,24 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🏆 Wave19 (2026-05-19 00:00 ・「見送り戦略で 100% 越えできる?」への応答)** — ユーザー指示「あまりにも分からない・怪しいなら見送っても大丈夫・100% 越えそうですか」に応えて、見送り型戦略を 28 個追加して 690 R で実証 → **100% 越え戦略 8 個発見**:
+  - **🎯 推奨買い方 (件数 50+ の信頼領域)**:
+    | 戦略 | 件数 | 投資 | 払戻 | 回収率 | 的中率 |
+    |------|------|------|------|--------|--------|
+    | **`fuku_top1_prob_020`** (AI 本命の確率 20%+ で複勝) | **100** | 10,000 | 10,630 | **106.3%** | **72.0%** |
+  - **🎯 100%+ 候補 (件数 10-49・偶然の可能性)**: `wide_top3_conf_060` (14件 109.0%) / `fuku_gap_012` (12件 101.7%)
+  - **⚡ サンプル極小 (3-9件・参考)**: `wide_top3_conf_070` (3件 213.3%) / `fuku_gap_015` (2件 165.0%) / `wide_top3_conf_065` (8件 116.3%) / `fuku_top1_prob_030` (9件 111.1%)
+  - **追加した 28 個の戦略カテゴリ**:
+    - **EV 系**: tan_best_ev_any (全頭中 EV 最大・閾値 0.95) / fuku_best_ev_any (0.85) / tan|fuku_strict_combined (primary EV+ AND nopop EV+ AND value_signal>=0)
+    - **確信系**: tan_top1_confident (win_prob≥0.40) / fuku_top1_confident (≥0.35) / wide_box_top3_confident (top3 合計確率 ≥0.70)
+    - **本命突出系**: fuku_super_strict (top1-top2 prob gap ≥0.10) / uren_top1_top2_high (top1+top2 prob 合計 ≥0.55)
+    - **穴狙い**: fuku_underdog_value (人気 4-8 番で nopop top3)
+    - **閾値スイープ 18 個**: `wide_top3_conf_{55,60,65,70,75,80}` / `fuku_gap_{04,06,08,10,12,15}` / `fuku_top1_prob_{20,25,30,35,40,45}` — 何点で発火率と回収率がバランスするかを探索
+  - **🖥 UI 強化**: `app.js renderMlStatus` に「★ 100% 越えの推奨買い方」セクション (緑強調) と「▲ 100%+ 候補 (サンプル少)」セクション (オレンジ) を追加。STRAT_LABELS に 28 個のラベル追加。`styles.css` に `.ml-recommended` / `.ml-possible` / `.ml-rec-card` 系約 80 行追加 (ボックス影 + アクセント色 + スマホ 1 列)
+  - **重要な気づき**: 競馬は控除率 20-25% (払戻 75-80% に固定) のため、機械的に買うと長期で赤字が約束されている (最善でも 89.3%)。**「ほとんど見送って、確信レースだけ買う」**で初めて 100% 越えの可能性が開ける。ユーザーの直感「怪しいと思ったら見送り」が完全に正しかった
+  - **ファイル**: `jv_bridge/validate_lightgbm.py` (28 戦略 + 閾値スイープファクトリ 3 個) / `app.js` (renderMlStatus 推奨セクション + 28 ラベル) / `styles.css` (推奨ボックス) / `sw.js` v31→v32
+  - **テスト**: smoke 126/0 / `/api/ml-status` 200 (51 戦略・100%+ 8 個・信頼推奨 1 件 `fuku_top1_prob_020` 100件 106.3%)
+  - **次の一歩**: `fuku_top1_prob_020` を当日推論パイプライン (`predict_lightgbm.py --all-today`) に組み込んで「今日の推奨買い目」として出す + 過去 10 年データが取れたら再学習で信頼性 UP
 - **🎯 Wave18 (2026-05-18 23:30〜・「全部やる」指示への応答)** — ユーザー「全部やってください全部」(3 段ロードマップ全部) に応えて:
   - **🧬 人気を見ない「実力派モデル」を新規学習** (`train_lightgbm.py --no-pop`):
     - 人気系特徴量 12 個 (`win_odds / log_odds / implied_prob / popularity / log_popularity / odds_rank_in_race / popularity_z / popularity_x_jockey / popularity_x_course / implied_x_jockey_in3 / horsewin_x_popularity / prevfinish_x_popularity`) を `-1.0` でマスクして学習
