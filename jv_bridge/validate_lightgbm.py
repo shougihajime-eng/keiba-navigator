@@ -526,20 +526,23 @@ def _build_strategies() -> List[Strategy]:
         Strategy("fuku_underdog_value",        fuku_underdog_value),
         Strategy("fuku_super_strict",          fuku_super_strict),
         # === Wave19 scan: 「ほぼ全部見送る」型の閾値スイープ ===
-        # 最初に当たった「wide_box_top3_confident 0.70 → 213%」を中心に、
-        # 閾値を緩めて発火数を増やしながら、回収率がどう変わるか測る。
-        # サンプル数が少なすぎる戦略は信頼性が低いので、件数 20+ を「実用可能」と判定する。
+        # 「wide_box_top3_confident 0.70 → 213%」「fuku_top1_prob_020 100件 106%」を中心に、
+        # 閾値を細かく動かして発火数と回収率のトレードオフを探る。
+        # 命名規則: f"name_{int(th*100):03d}" = 003 (=0.03) / 020 (=0.20) / 070 (=0.70)
+        # === Wave19.3: 精密スイープで最適点 (スイートスポット) を探す ===
         *[
             Strategy(f"wide_top3_conf_{int(th*100):03d}", _make_wide_top3_conf(th))
-            for th in (0.55, 0.60, 0.65, 0.70, 0.75, 0.80)
+            for th in (0.50, 0.52, 0.55, 0.58, 0.60, 0.62, 0.65, 0.68, 0.70, 0.72, 0.75, 0.80)
         ],
         *[
             Strategy(f"fuku_gap_{int(th*100):03d}", _make_fuku_gap(th))
-            for th in (0.04, 0.06, 0.08, 0.10, 0.12, 0.15)
+            for th in (0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10,
+                       0.11, 0.12, 0.13, 0.14, 0.15)
         ],
         *[
             Strategy(f"fuku_top1_prob_{int(th*100):03d}", _make_fuku_top1_prob(th))
-            for th in (0.20, 0.25, 0.30, 0.35, 0.40, 0.45)
+            for th in (0.15, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23,
+                       0.24, 0.25, 0.26, 0.28, 0.30, 0.32, 0.35, 0.40, 0.45)
         ],
     ]
 

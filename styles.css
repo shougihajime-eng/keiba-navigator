@@ -1572,9 +1572,91 @@ a { color: inherit; text-decoration: none; }
 }
 .rec-empty b { color: #b45309; font-size: 14px; }
 
+/* Wave19.3: 3 戦略マルチアサイン表示 */
+.rec-strats {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+  margin: 10px 0 12px;
+}
+.rec-strat-card {
+  background: rgba(255,255,255,0.85);
+  border: 1.5px solid rgba(16,185,129,0.20);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+  position: relative;
+}
+.rec-strat-card.rec-strat-hot {
+  background: linear-gradient(135deg, rgba(16,185,129,0.14), rgba(245,158,11,0.10));
+  border-color: rgba(16,185,129,0.50);
+  box-shadow: 0 4px 12px rgba(16,185,129,0.16);
+}
+.rec-strat-card.rec-strat-go {
+  background: rgba(16,185,129,0.08);
+  border-color: rgba(16,185,129,0.35);
+}
+.rec-strat-card.rec-strat-mute {
+  background: rgba(107,114,128,0.06);
+  border-color: rgba(107,114,128,0.20);
+  opacity: 0.85;
+}
+.rec-strat-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 900;
+  padding: 2px 8px; border-radius: 999px;
+  background: rgba(16,185,129,0.18); color: #047857;
+  letter-spacing: 0.08em;
+}
+.rec-strat-card.rec-strat-hot .rec-strat-badge {
+  background: linear-gradient(135deg, #f59e0b, #facc15);
+  color: #064e3b;
+}
+.rec-strat-roi {
+  font-size: 22px; font-weight: 900; line-height: 1.1;
+  margin: 4px 0 0;
+  color: #047857;
+  letter-spacing: -0.01em;
+}
+.rec-strat-card.rec-strat-hot .rec-strat-roi { color: #064e3b; }
+.rec-strat-meta {
+  font-size: 10px; color: #6b7280;
+  margin-top: 2px;
+}
+.rec-strat-label {
+  font-size: 10px; color: #4b5563;
+  margin-top: 6px; line-height: 1.4;
+  border-top: 1px solid rgba(0,0,0,0.05); padding-top: 6px;
+}
+
+/* バッジ (各推奨レース内で発火戦略を示す) */
+.rec-badges {
+  margin-left: auto;
+  display: flex; gap: 4px;
+}
+.rec-badge {
+  font-size: 9px; font-weight: 800;
+  padding: 2px 6px; border-radius: 4px;
+  letter-spacing: 0.06em;
+}
+.rec-badge.rec-b-best {
+  background: linear-gradient(135deg, #f59e0b, #facc15);
+  color: #064e3b;
+}
+.rec-badge.rec-b-safe {
+  background: rgba(16,185,129,0.20); color: #047857;
+}
+.rec-badge.rec-b-wide {
+  background: rgba(59,130,246,0.18); color: #1d4ed8;
+}
+
 @media (max-width: 480px) {
   .rec-race-name { max-width: 180px; }
   .rec-horse { font-size: 14px; }
+  .rec-strats { grid-template-columns: 1fr; gap: 6px; }
+  .rec-strat-card { text-align: left; display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 8px 12px; }
+  .rec-strat-badge { grid-row: span 2; }
+  .rec-strat-roi { font-size: 18px; margin: 0; }
+  .rec-strat-meta { text-align: right; margin: 0; }
+  .rec-strat-label { grid-column: 2 / -1; border-top: none; padding-top: 0; }
 }
 
 /* =====================================================================

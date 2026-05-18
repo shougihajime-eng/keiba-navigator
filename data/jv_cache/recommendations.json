@@ -1,25 +1,87 @@
 {
-  "generatedAt": "2026-05-18T22:25:21.177451+00:00",
+  "generatedAt": "2026-05-18T22:54:23.962864+00:00",
   "todayJst": "2026-05-19",
-  "criteria": {
-    "strategy": "fuku_top1_prob_020",
-    "label": "AI 本命の確率 20% 以上で複勝 100 円",
-    "win_prob_min": 0.2,
-    "bet_type": "複勝",
-    "unit": 100
-  },
+  "strategies_def": [
+    {
+      "key": "best",
+      "label": "AI 本命の確率 22% 以上で複勝 100 円",
+      "short_label": "BEST",
+      "color": "go",
+      "bet_type": "複勝",
+      "unit": 100
+    },
+    {
+      "key": "safe",
+      "label": "AI 本命の確率 20% 以上で複勝 100 円 (発火多め・安定)",
+      "short_label": "SAFE",
+      "color": "turf",
+      "bet_type": "複勝",
+      "unit": 100
+    },
+    {
+      "key": "wide",
+      "label": "AI 上位 3 頭の合計確率 50% 以上で ワイド 3 点 (300 円)",
+      "short_label": "WIDE",
+      "color": "sky",
+      "bet_type": "ワイド3点",
+      "unit": 300
+    }
+  ],
   "stats": {
-    "strategy_name": "fuku_top1_prob_020",
-    "label": "AI 本命の確率 20% 以上で複勝 100 円",
-    "test_races": 690,
-    "fired_count": 100,
-    "fired_rate_pct": 14.5,
-    "roi_pct": 106.3,
-    "hit_rate_pct": 72.0,
-    "invested": 10000,
-    "returned": 10630,
-    "profit": 630,
-    "max_payout": 1440
+    "best": {
+      "strategy_key": "best",
+      "strategy_name": "fuku_top1_prob_022",
+      "label": "AI 本命の確率 22% 以上で複勝 100 円",
+      "short_label": "BEST",
+      "color": "go",
+      "bet_type": "複勝",
+      "unit": 100,
+      "test_races": 690,
+      "fired_count": 65,
+      "fired_rate_pct": 9.4,
+      "roi_pct": 112.2,
+      "hit_rate_pct": 75.4,
+      "invested": 6500,
+      "returned": 7290,
+      "profit": 790,
+      "max_payout": 1440
+    },
+    "safe": {
+      "strategy_key": "safe",
+      "strategy_name": "fuku_top1_prob_020",
+      "label": "AI 本命の確率 20% 以上で複勝 100 円 (発火多め・安定)",
+      "short_label": "SAFE",
+      "color": "turf",
+      "bet_type": "複勝",
+      "unit": 100,
+      "test_races": 690,
+      "fired_count": 100,
+      "fired_rate_pct": 14.5,
+      "roi_pct": 106.3,
+      "hit_rate_pct": 72.0,
+      "invested": 10000,
+      "returned": 10630,
+      "profit": 630,
+      "max_payout": 1440
+    },
+    "wide": {
+      "strategy_key": "wide",
+      "strategy_name": "wide_top3_conf_050",
+      "label": "AI 上位 3 頭の合計確率 50% 以上で ワイド 3 点 (300 円)",
+      "short_label": "WIDE",
+      "color": "sky",
+      "bet_type": "ワイド3点",
+      "unit": 300,
+      "test_races": 690,
+      "fired_count": 49,
+      "fired_rate_pct": 7.1,
+      "roi_pct": 132.0,
+      "hit_rate_pct": 75.5,
+      "invested": 14700,
+      "returned": 19400,
+      "profit": 4700,
+      "max_payout": 4050
+    }
   },
   "recommendations_today": [],
   "recommendations_recent": [
@@ -32,6 +94,10 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe"
+      ],
       "horse": {
         "number": 3,
         "name": "?x?C?‰???@?@?@?@?@?@?@?@?@?@?@?@?@?",
@@ -43,6 +109,30 @@
         "ev": null,
         "rank_nopop": 8
       },
+      "top3": [
+        {
+          "number": 3,
+          "name": "?x?C?‰???@?@?@?@?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.239128,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 5,
+          "name": "?t?@?[?“?O???b?g?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.134795,
+          "odds": null,
+          "popularity": 3
+        },
+        {
+          "number": 4,
+          "name": "?p?[?v???N?‰?E?h?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.096572,
+          "odds": null,
+          "popularity": 6
+        }
+      ],
+      "top3_prob_sum": 0.470495,
       "race_date": "2026-05-17",
       "predicted_at": "2026-05-18T22:23:54.825612+00:00",
       "model_auc": 0.8060957082739253
@@ -56,6 +146,11 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe",
+        "wide"
+      ],
       "horse": {
         "number": 10,
         "name": "???“?_?[?f???G?[???@?@?@?@?@?@?@?@?",
@@ -67,6 +162,30 @@
         "ev": null,
         "rank_nopop": 6
       },
+      "top3": [
+        {
+          "number": 10,
+          "name": "???“?_?[?f???G?[???@?@?@?@?@?@?@?@?",
+          "win_prob": 0.227682,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 7,
+          "name": "?e?C?N?U?X???[?“?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.187447,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 1,
+          "name": "?A?N?e?B?u?w?C???[?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.086001,
+          "odds": null,
+          "popularity": 11
+        }
+      ],
+      "top3_prob_sum": 0.50113,
       "race_date": "2026-05-17",
       "predicted_at": "2026-05-18T22:23:54.813593+00:00",
       "model_auc": 0.8060957082739253
@@ -80,6 +199,11 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe",
+        "wide"
+      ],
       "horse": {
         "number": 5,
         "name": "?o???{?A?p?[?N?@?@?@?@?@?@?@?@?@?@?@",
@@ -91,6 +215,30 @@
         "ev": null,
         "rank_nopop": 5
       },
+      "top3": [
+        {
+          "number": 5,
+          "name": "?o???{?A?p?[?N?@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.270307,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 2,
+          "name": "?t?B?A?[?u???@?@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.246608,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 1,
+          "name": "?”?“?_?[?o?[???@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.085793,
+          "odds": null,
+          "popularity": 0
+        }
+      ],
+      "top3_prob_sum": 0.602708,
       "race_date": "2026-05-17",
       "predicted_at": "2026-05-18T22:23:54.781519+00:00",
       "model_auc": 0.8060957082739253
@@ -104,6 +252,9 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "safe"
+      ],
       "horse": {
         "number": 9,
         "name": "?e?B?s?e?B?[?i?@?@?@?@?@?@?@?@?@?@?@",
@@ -115,6 +266,30 @@
         "ev": null,
         "rank_nopop": 1
       },
+      "top3": [
+        {
+          "number": 9,
+          "name": "?e?B?s?e?B?[?i?@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.203658,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 4,
+          "name": "?V???t???C?@?@?@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.097997,
+          "odds": null,
+          "popularity": 5
+        },
+        {
+          "number": 6,
+          "name": "?†?[?E?F?C?“?@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.095857,
+          "odds": null,
+          "popularity": 7
+        }
+      ],
+      "top3_prob_sum": 0.397512,
       "race_date": "2026-05-17",
       "predicted_at": "2026-05-18T22:23:54.765474+00:00",
       "model_auc": 0.8060957082739253
@@ -128,6 +303,11 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe",
+        "wide"
+      ],
       "horse": {
         "number": 2,
         "name": "?R?R?f?C?b?N?@?@?@?@?@?@?@?@?@?@?@?@",
@@ -139,6 +319,30 @@
         "ev": null,
         "rank_nopop": 3
       },
+      "top3": [
+        {
+          "number": 2,
+          "name": "?R?R?f?C?b?N?@?@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.249027,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 4,
+          "name": "?~?b?L?[?R?“?h???@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.194557,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 5,
+          "name": "?‰?e?‰?C?g?@?@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.083642,
+          "odds": null,
+          "popularity": 8
+        }
+      ],
+      "top3_prob_sum": 0.527226,
       "race_date": "2026-05-17",
       "predicted_at": "2026-05-18T22:23:54.754446+00:00",
       "model_auc": 0.8060957082739253
@@ -152,6 +356,11 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe",
+        "wide"
+      ],
       "horse": {
         "number": 1,
         "name": "?i?E?I?A?l?”?@?[?@?@?@?@?@?@?@?@?@?",
@@ -163,8 +372,83 @@
         "ev": null,
         "rank_nopop": 1
       },
+      "top3": [
+        {
+          "number": 1,
+          "name": "?i?E?I?A?l?”?@?[?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.228986,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 6,
+          "name": "?G?^?“?Z???@?@?@?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.212997,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 5,
+          "name": "?”?@???N?@?@?@?@?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.113228,
+          "odds": null,
+          "popularity": 3
+        }
+      ],
+      "top3_prob_sum": 0.555211,
       "race_date": "2026-05-17",
       "predicted_at": "2026-05-18T22:23:54.737398+00:00",
+      "model_auc": 0.8060957082739253
+    },
+    {
+      "race_id": "202605160803070900",
+      "race_name": "?????????@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@",
+      "course": "京都芝2000",
+      "distance": 2000,
+      "going": "良",
+      "weather": "晴",
+      "is_g1": false,
+      "hassou_time": null,
+      "strategies": [
+        "wide"
+      ],
+      "horse": {
+        "number": 1,
+        "name": "?~?b?L?[?W???“?v?@?@?@?@?@?@?@?@?@?",
+        "win_prob": 0.197988,
+        "nopop_prob": 0.095809,
+        "value_signal": -0.10218,
+        "odds": null,
+        "popularity": 1,
+        "ev": null,
+        "rank_nopop": 8
+      },
+      "top3": [
+        {
+          "number": 1,
+          "name": "?~?b?L?[?W???“?v?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.197988,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 8,
+          "name": "???“?_?t???f?C?Y?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.181666,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 6,
+          "name": "?G?`?S?h?‰?S?“?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.165109,
+          "odds": null,
+          "popularity": 2
+        }
+      ],
+      "top3_prob_sum": 0.544763,
+      "race_date": "2026-05-16",
+      "predicted_at": "2026-05-18T22:23:54.723375+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -176,6 +460,11 @@
       "weather": "小雪",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe",
+        "wide"
+      ],
       "horse": {
         "number": 3,
         "name": "???C?V?‡?E?A?c?C?^?@?@?@?@?@?@?@?@?",
@@ -187,6 +476,30 @@
         "ev": null,
         "rank_nopop": 4
       },
+      "top3": [
+        {
+          "number": 3,
+          "name": "???C?V?‡?E?A?c?C?^?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.258791,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 5,
+          "name": "?V?z?m?X?y?‰?“?c?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.251663,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 6,
+          "name": "?S?[???f?“?X???[?v?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.231355,
+          "odds": null,
+          "popularity": 1
+        }
+      ],
+      "top3_prob_sum": 0.741809,
       "race_date": "2026-05-16",
       "predicted_at": "2026-05-18T22:23:54.721368+00:00",
       "model_auc": 0.8060957082739253
@@ -200,6 +513,10 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe"
+      ],
       "horse": {
         "number": 9,
         "name": "???“?_?[?C???l?@?@?@?@?@?@?@?@?@?@?",
@@ -211,6 +528,30 @@
         "ev": null,
         "rank_nopop": 10
       },
+      "top3": [
+        {
+          "number": 9,
+          "name": "???“?_?[?C???l?@?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.228321,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 2,
+          "name": "?_?m?“?N?????@?@?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.116427,
+          "odds": null,
+          "popularity": 3
+        },
+        {
+          "number": 8,
+          "name": "?j?V?m?C?c?L???X???@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.083181,
+          "odds": null,
+          "popularity": 10
+        }
+      ],
+      "top3_prob_sum": 0.427929,
       "race_date": "2026-05-16",
       "predicted_at": "2026-05-18T22:23:54.718856+00:00",
       "model_auc": 0.8060957082739253
@@ -224,6 +565,11 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe",
+        "wide"
+      ],
       "horse": {
         "number": 4,
         "name": "?A?E?‰?j?@?@?@?@?@?@?@?@?@?@?@?@?@?",
@@ -235,6 +581,30 @@
         "ev": null,
         "rank_nopop": 4
       },
+      "top3": [
+        {
+          "number": 4,
+          "name": "?A?E?‰?j?@?@?@?@?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.240764,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 9,
+          "name": "?T?g?m?r?_?[???@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.221518,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 6,
+          "name": "?h?“?e?X?^?}?X?^?[?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.081342,
+          "odds": null,
+          "popularity": 6
+        }
+      ],
+      "top3_prob_sum": 0.543624,
       "race_date": "2026-05-16",
       "predicted_at": "2026-05-18T22:23:54.710345+00:00",
       "model_auc": 0.8060957082739253
@@ -248,6 +618,9 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "safe"
+      ],
       "horse": {
         "number": 1,
         "name": "?S?[???h?R?b?g?@?@?@?@?@?@?@?@?@?@?@",
@@ -259,6 +632,30 @@
         "ev": null,
         "rank_nopop": 3
       },
+      "top3": [
+        {
+          "number": 1,
+          "name": "?S?[???h?R?b?g?@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.206584,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 3,
+          "name": "?T?“?‰?C?Y?i?X?J?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.116636,
+          "odds": null,
+          "popularity": 3
+        },
+        {
+          "number": 6,
+          "name": "?_?C???C?N?}???g?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.097032,
+          "odds": null,
+          "popularity": 4
+        }
+      ],
+      "top3_prob_sum": 0.42025199999999996,
       "race_date": "2026-05-16",
       "predicted_at": "2026-05-18T22:23:54.704327+00:00",
       "model_auc": 0.8060957082739253
@@ -272,6 +669,11 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe",
+        "wide"
+      ],
       "horse": {
         "number": 8,
         "name": "?u?‰?E?“?o?i?i?@?@?@?@?@?@?@?@?@?@",
@@ -283,6 +685,30 @@
         "ev": null,
         "rank_nopop": 7
       },
+      "top3": [
+        {
+          "number": 8,
+          "name": "?u?‰?E?“?o?i?i?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.234158,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 3,
+          "name": "?}?W?‡?????u???[?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.155576,
+          "odds": null,
+          "popularity": 3
+        },
+        {
+          "number": 1,
+          "name": "?p?b?Z?[?W?s?[?N?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.144401,
+          "odds": null,
+          "popularity": 3
+        }
+      ],
+      "top3_prob_sum": 0.534135,
       "race_date": "2026-05-16",
       "predicted_at": "2026-05-18T22:23:54.681269+00:00",
       "model_auc": 0.8060957082739253
@@ -296,6 +722,10 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe"
+      ],
       "horse": {
         "number": 6,
         "name": "?\\?i?^?“?@?@?@?@?@?@?@?@?@?@?@?@?@?",
@@ -307,6 +737,30 @@
         "ev": null,
         "rank_nopop": 8
       },
+      "top3": [
+        {
+          "number": 6,
+          "name": "?\\?i?^?“?@?@?@?@?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.238117,
+          "odds": null,
+          "popularity": 2
+        },
+        {
+          "number": 8,
+          "name": "?C?[?T?“?n?“?^?[?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.135623,
+          "odds": null,
+          "popularity": 3
+        },
+        {
+          "number": 2,
+          "name": "?I?E?P?“?x???[?@?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.107024,
+          "odds": null,
+          "popularity": 8
+        }
+      ],
+      "top3_prob_sum": 0.48076399999999997,
       "race_date": "2026-05-16",
       "predicted_at": "2026-05-18T22:23:54.614622+00:00",
       "model_auc": 0.8060957082739253
@@ -320,6 +774,10 @@
       "weather": "晴",
       "is_g1": false,
       "hassou_time": null,
+      "strategies": [
+        "best",
+        "safe"
+      ],
       "horse": {
         "number": 8,
         "name": "?e???R?X?@?@?@?@?@?@?@?@?@?@?@?@?@?@",
@@ -331,13 +789,41 @@
         "ev": null,
         "rank_nopop": 1
       },
+      "top3": [
+        {
+          "number": 8,
+          "name": "?e???R?X?@?@?@?@?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.246897,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 1,
+          "name": "???…?E?S?s?…?A?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.094171,
+          "odds": null,
+          "popularity": 5
+        },
+        {
+          "number": 6,
+          "name": "?X?i?[?N?V???‰?N?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.091387,
+          "odds": null,
+          "popularity": 8
+        }
+      ],
+      "top3_prob_sum": 0.43245500000000003,
       "race_date": "2026-05-16",
       "predicted_at": "2026-05-18T22:23:54.548959+00:00",
       "model_auc": 0.8060957082739253
     }
   ],
   "count_today": 0,
-  "count_recent": 13,
+  "count_recent": 14,
   "total_predictions": 3492,
-  "total_fired": 816
+  "fired_by_key": {
+    "best": 537,
+    "safe": 816,
+    "wide": 426
+  }
 }

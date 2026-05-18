@@ -1512,22 +1512,23 @@
     `;
   }
 
-  // ─── 描画: 今日の推奨レース (Wave19) ─────────────────────
-  // 100% 越え戦略 fuku_top1_prob_020 = AI 本命の確率 20% 以上で複勝 100 円
-  // recommendations.json から today / recent を抽出して表示。
+  // ─── 描画: 今日の推奨レース (Wave19.3: 3 戦略マルチアサイン) ──
+  // BEST: fuku_top1_prob_022 (確率 22%+ で複勝) 65 件 112.2%
+  // SAFE: fuku_top1_prob_020 (確率 20%+ で複勝) 100 件 106.3%
+  // WIDE: wide_top3_conf_050 (top3 合計 50%+ でワイド 3 点) 49 件 132%
   function renderRecommendations() {
     const root = $("#recommend-mount");
     if (!root) return;
     const r = state.recommendations;
     if (!r || !r.ok) { root.hidden = true; return; }
+    const stratDefs = r.strategies_def || [];
     const stats = r.stats || {};
     const todayList = r.recommendations_today || [];
     const recentList = (r.recommendations_recent || []).filter(
       (x) => x.race_date !== r.todayJst,
     ).slice(0, 8);
-    // 何も該当しないとき (今日もう開催なし or 推奨レースがない) もカード自体は出して、
-    // 「今日は推奨レースなし (見送り推奨)」と明示する
     root.hidden = false;
+
     const fmtHorse = (h) => {
       const num  = h.number ?? "?";
       const name = h.name || "(名前未取得)";
@@ -1536,37 +1537,63 @@
       const pop  = h.popularity != null ? ` / 人気 ${h.popularity}` : "";
       return `${num} ${name}<span class="rec-hmeta">確率 ${prob}% / 単勝 ${odds}${pop}</span>`;
     };
-    const renderItem = (it) => `
-      <div class="rec-item">
-        <div class="rec-race">
-          <span class="rec-course">${it.course || "—"}</span>
-          ${it.is_g1 ? '<span class="rec-g1">G1</span>' : ""}
-          <span class="rec-race-name">${it.race_name || ""}</span>
+
+    const stratBadges = (keys) => {
+      const labels = { best: "★BEST", safe: "SAFE", wide: "WIDE" };
+      return (keys || []).map((k) => `<span class="rec-badge rec-b-${k}">${labels[k] || k}</span>`).join("");
+    };
+
+    const renderItem = (it) => {
+      const isWide = (it.strategies || []).includes("wide");
+      const betLabel = isWide
+        ? `ワイド ${it.top3 && it.top3.length === 3
+            ? `${it.top3[0].number}-${it.top3[1].number}-${it.top3[2].number}`
+            : "1-2-3"} 300 円`
+        : "複勝 100 円";
+      return `
+        <div class="rec-item">
+          <div class="rec-race">
+            <span class="rec-course">${it.course || "—"}</span>
+            ${it.is_g1 ? '<span class="rec-g1">G1</span>' : ""}
+            <span class="rec-race-name">${it.race_name || ""}</span>
+            <span class="rec-badges">${stratBadges(it.strategies)}</span>
+          </div>
+          <div class="rec-horse">${fmtHorse(it.horse || {})}</div>
+          <div class="rec-action">
+            <span class="rec-bet">${betLabel}</span>
+            <span class="rec-date">${it.race_date}${it.hassou_time ? ` ${it.hassou_time.slice(0,2)}:${it.hassou_time.slice(2,4)}発走` : ""}</span>
+          </div>
         </div>
-        <div class="rec-horse">${fmtHorse(it.horse || {})}</div>
-        <div class="rec-action">
-          <span class="rec-bet">複勝 100 円</span>
-          <span class="rec-date">${it.race_date}${it.hassou_time ? ` ${it.hassou_time.slice(0,2)}:${it.hassou_time.slice(2,4)}発走` : ""}</span>
+      `;
+    };
+
+    const stratCardHtml = (defn) => {
+      const st = stats[defn.key];
+      if (!st) return "";
+      const cls = st.roi_pct >= 110 ? "rec-strat-hot" : (st.roi_pct >= 100 ? "rec-strat-go" : "rec-strat-mute");
+      return `
+        <div class="rec-strat-card ${cls}">
+          <div class="rec-strat-badge">${defn.short_label}</div>
+          <div class="rec-strat-roi">${st.roi_pct ? st.roi_pct.toFixed(1) + "%" : "—"}</div>
+          <div class="rec-strat-meta">${st.fired_count}件・的中${st.hit_rate_pct}%</div>
+          <div class="rec-strat-label">${defn.label}</div>
         </div>
-      </div>
-    `;
+      `;
+    };
+
     root.innerHTML = `
       <div class="rec-head">
         <span class="rec-icon">★</span>
         <span class="rec-title">100% 越え戦略の自動推奨</span>
-        <span class="rec-pill ${stats.roi_pct >= 100 ? 'is-go' : 'is-mute'}">
-          ${stats.roi_pct ? `過去 ${stats.roi_pct}%` : "—"}
-        </span>
+        <span class="rec-pill is-go">3 戦略マルチアサイン</span>
       </div>
+      <div class="rec-strats">${stratDefs.map(stratCardHtml).join("")}</div>
       <p class="rec-criteria">
-        買い方: <b>${r.criteria?.label || "AI 本命の確率 20% 以上で複勝"}</b>
-        <span class="rec-stats">
-          過去 ${stats.test_races || 0} R で ${stats.fired_count || 0} 件発火・的中率 ${stats.hit_rate_pct || 0}%
-        </span>
+        過去 ${stats.best?.test_races || 0} R での実証成績。1 レースで複数戦略が発火するときは複勝とワイドを併用 (信頼性 ↑)。
       </p>
       ${todayList.length > 0 ? `
         <div class="rec-section">
-          <div class="rec-section-head">今日 (${r.todayJst}) の推奨</div>
+          <div class="rec-section-head">今日 (${r.todayJst}) の推奨 ${todayList.length} 件</div>
           <div class="rec-list">${todayList.map(renderItem).join("")}</div>
         </div>
       ` : `
