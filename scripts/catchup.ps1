@@ -43,29 +43,45 @@ if (-not $Force -and -not ($dow -eq [DayOfWeek]::Saturday -or $dow -eq [DayOfWee
     exit 0
 }
 
-# 2) 最終取得時刻チェック
+# 2) 最終アクセス時刻チェック
+# 優先順位: lastAggregate.fetchedAt > updatedAt > なし
+# state="rt_failed" 等のエラー状態でも updatedAt は最後の実行時刻を持つので、
+# 「直近に走ったがエラーだった」場合に毎時走り続けるのを防ぐ
 $staleHours = 4
 $fetchedAt  = $null
+$stateLabel = "(unknown)"
 if (Test-Path $StatusJson) {
     try {
         $j = Get-Content -Path $StatusJson -Raw -Encoding utf8 | ConvertFrom-Json
+        $stateLabel = $j.state
         if ($j.lastAggregate -and $j.lastAggregate.fetchedAt) {
             $fetchedAt = [DateTime]::Parse($j.lastAggregate.fetchedAt)
+        } elseif ($j.updatedAt) {
+            # lastAggregate がない場合は updatedAt をフォールバック
+            $fetchedAt = [DateTime]::Parse($j.updatedAt)
         }
     } catch {
-        Write-Log "status.json 読み込み失敗: $($_.Exception.Message)"
+        Write-Log "status.json 読み込み失敗 (実行する): $($_.Exception.Message)"
     }
 }
 
+Write-Log "JV-Link 状態: $stateLabel"
 if ($fetchedAt) {
     $gap = ($today - $fetchedAt).TotalHours
-    Write-Log ("最終取得: {0:yyyy-MM-dd HH:mm} ({1:F1}h 前)" -f $fetchedAt, $gap)
+    Write-Log ("最終実行: {0:yyyy-MM-dd HH:mm} ({1:F1}h 前)" -f $fetchedAt, $gap)
     if (-not $Force -and $gap -lt $staleHours) {
         Write-Log "4h 以内に取得済みのためスキップ (試運転は -Force で強制実行可)"
         exit 0
     }
 } else {
-    Write-Log "status.json が無い or fetchedAt 未設定。実行する"
+    Write-Log "最終実行時刻 不明。実行する"
+}
+
+# JV-Link がエラー状態 (rt_failed / init_failed) かつ最近 (4h以内) 実行していたら
+# 短時間で再試行しても同じエラーになる可能性が高いのでスキップ (loop 防止)
+if (-not $Force -and $stateLabel -match "_failed" -and $fetchedAt -and ($today - $fetchedAt).TotalHours -lt $staleHours) {
+    Write-Log "JV-Link エラー状態 + 4h 以内に試行済みのためスキップ (試運転は -Force で強制実行可)"
+    exit 0
 }
 
 # 3) バッチを起動 (新ウィンドウ・非対話・終了待たない)

@@ -80,9 +80,11 @@ def main() -> int:
             label = f"[{i}/{len(race_ids)} ds={ds}] race={rid}"
             print(label, end=" -> ", flush=True)
             try:
+                # race_day_pipeline.py と encoding を統一 (utf-8)
+                # 旧 cp932 は Windows シェル前提だが、Python 側で reconfigure 済なので utf-8 で OK
                 result = subprocess.run(
                     [py, str(SCRIPT), "rt", "--dataspec", ds, "--raceid", rid],
-                    capture_output=True, text=True, encoding="cp932", errors="replace",
+                    capture_output=True, text=True, encoding="utf-8", errors="replace",
                     timeout=60,
                 )
                 if result.returncode == 0:

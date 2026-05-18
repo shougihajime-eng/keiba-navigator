@@ -7,6 +7,24 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🛡️ Wave16 当日運用 最終 QA (2026-05-18 12:45 ・ユーザー指示「凄く厳しい目で・バグないように・当日使えるように・修正してください」)** — 4 専門エージェント並列で深掘りレビュー → HIGH 級 3 件を全部修正:
+  - **HIGH-1**: `catchup.ps1` の status.json パースが silent failure → `state="rt_failed"` で `lastAggregate` フィールドが消えるケース (5/18 に発生・JVRTOpen rc=-114) で 4h 判定が機能せず毎時実行されるリスク。修正: `lastAggregate.fetchedAt > updatedAt > なし` の優先順位フォールバック + `state=*_failed` かつ 4h 以内なら loop 防止のためスキップ
+  - **HIGH-2**: `scripts/fetch_tomorrow.py:85` の `encoding="cp932"` を `utf-8` に統一 → `race_day_pipeline.py` の encoding と一致させ、サブプロセス出力の文字化けエラーで例外停止する事故を排除
+  - **HIGH-3**: `race_day_pipeline.py` のタイムアウト時に部分データが git push されるリスク → 任意ステップが `rc=-2` (timeout) を返したら `timed_out=True` を立てて `git_commit_push()` 自体をスキップする防御を追加 (`overall |= 0x100` の新フラグ)
+  - **MED**: `app.js` の `state` 定義に `autostatus: null` を初期化 (Wave16 で追加した renderAutostatus の defense in depth)
+  - **検証**: smoke 126/0 fail / py -3.12-32 で fetch_tomorrow + race_day_pipeline 構文 OK / app.js `new Function()` 構文 OK / 本番 11 エンドポイント curl で全て期待通り (200 = status/weather/news/learning-status/automation-status/connection/venues/schedule/model-info / 503 = races/win5 で今日 5/18 競馬なし正常拒否 / 401 = cron-finalize 認証拒否)
+  - **誤検知の整理**: agent から指摘された「index.html に config.js/storage.js script タグ追加」は Wave15 全削除設計通りで実害なし / 「CRON_SECRET 空文字攻撃」は `process.env.CRON_SECRET || null` で `"" → null` 変換で防御済 / 「path traversal」は `isFinalizableRaceId` で 18 桁数値 or `manual_` のみ通すため防御済 → いずれも修正不要
+  - **当日運用 GO 判定**: 5/23 (土) 朝の本番運用に問題なし。`Win5PreSell 18:30` を含む 7 タスクが Ready 状態で WakeToRun=True + RestartCount=3 確認済
+- **🔬 Wave16 後 最終 QA (2026-05-18 12:30 ・ユーザー指示「ちゃんと予想されているか・クリック効くか・エラー出ないか・更新遅くないか確かめて」)** — 全責任で深掘り検証:
+  - **JV-Link 接続生存確認**: `py -3.12-32 jv_bridge\jv_fetch.py init` → `JVInit OK`
+  - **当日データ確認**: aggregate RACE で 2780 レコード取得 → 5/18 の RA レコードは 0 件 = **5/18 は競馬開催なし** (5/16-5/17 が今週末・次は来週土日)
+  - **API スモーク 16 個**: status/races/win5/race/learning-status/weather/news/conclusion/conclusion-manual/finalize/result/venues/connection/schedule/odds-movement/g1-history → すべて 200 OK
+  - **応答速度**: /api/races 0.4 秒 (precomputed)・/api/win5 0.36 秒・/api/learning-status 1.7ms・他 ms オーダー
+  - **エラーパス**: 不正 JSON POST → 400 / GET on POST-only → 405 / 未知 API → 404 すべて期待通り
+  - **app.js syntax**: 1226 行・new Function() で構文 OK
+  - **smoke テスト**: Node 126 ケース全通過
+  - **発見した HIGH/MED は Wave15.1 + Wave16 で全部対応済を確認**: 過去レース誤表示 (`source:no_today`) / WIN5 stub の嘘の数値 (`evRatio:40000`) 削除 / 死にスクリプト 8 個 (`config.js / storage.js / predictors/*.js / lib/*.js`) を index.html から削除 / `parseVenueLabel` 末尾空白 trim / `tickCountdown` の renderAllRaces 重複 30s→60s / `setupTabs("history")` を id 参照に / 設定タブ active 戻し
+  - **結論**: アプリは完成度高い。本日 5/18 のアプリ表示「今日は開催なしの日」は正しい挙動 (JRA は通常土日開催・5/18 は月曜)
 - **🤖 Wave16 (2026-05-18 昼・「本当に自動更新?」への全面回答)** — ユーザー指示「自動更新アプリになってるんだよね・手動はほぼ無いはずなんだよね・最高のものを作ってね」に応えて、自動化レイヤーの穴を全部塞いだ:
   - **🔍 致命的バグ発見**: 5/17 (日曜) のスケジューラタスク 4 つすべて `LastResult=0x1` で失敗 → 原因は `WakeToRun=False` (PC スリープ中起動せず) + `RestartCount=0` (リトライなし) + `LogonType=Interactive` (ログオン中のみ実行) + ログが残らないほど早期に Python が落ちていた
   - **🛡️ 多層防御の自動化レイヤー** (`scripts/register_scheduler.ps1` 全面強化):

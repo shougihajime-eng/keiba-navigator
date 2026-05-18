@@ -340,30 +340,43 @@ def main():
     log_line(f"  log: {LOG_DIR / ('race_day_' + dt.date.today().isoformat() + '.log')}")
 
     overall = 0
+    timed_out = False  # ★Wave16-QA: タイムアウト時は部分データを push しない
     if not args.skip_refresh:
         rc = refresh_tomorrow_races()
+        if rc == -2: timed_out = True
         if rc != 0: overall |= 0x01
     if not args.skip_rt:
         rc = run_fetch_tomorrow()
+        if rc == -2: timed_out = True
         if rc != 0 and rc != 2: overall |= 0x02   # rc=2 は一部失敗 (warn 扱い)
     if not args.skip_build:
         rc = run_build_all()
+        if rc == -2: timed_out = True
         if rc != 0: overall |= 0x04
     if not args.skip_features:
         rc = run_aggregate_features()
+        if rc == -2: timed_out = True
         if rc != 0: overall |= 0x08
     # LightGBM 訓練 (64bit Python があれば・データ少ない時はスキップ動作)
     if not getattr(args, "skip_train", False):
         rc = run_train_lightgbm()
+        if rc == -2: timed_out = True
         if rc != 0: overall |= 0x20
     # ★Wave14: 全レース予想の事前計算 (スマホ瞬時応答用)
     if not getattr(args, "skip_precompute", False):
         rc = run_precompute_predictions()
+        if rc == -2: timed_out = True
         if rc != 0: overall |= 0x40
-    rc = git_commit_push()
-    if rc != 0: overall |= 0x10
 
-    log_line(f"=== race_day_pipeline 終了 (overall={overall:#x}) ===")
+    # ★Wave16-QA: 途中タイムアウトがあった場合、部分データを push せず次回再取得に任せる
+    if timed_out:
+        log_line("!! どこかのステップがタイムアウト → 不整合データの本番反映を避けるため git push スキップ")
+        overall |= 0x100
+    else:
+        rc = git_commit_push()
+        if rc != 0: overall |= 0x10
+
+    log_line(f"=== race_day_pipeline 終了 (overall={overall:#x}, timed_out={timed_out}) ===")
     return overall
 
 

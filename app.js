@@ -29,6 +29,7 @@
     win5Budget: parseInt(localStorage.getItem("keiba_win5_budget"), 10) || null,
     win5SelectedKey: localStorage.getItem("keiba_win5_selected") || null,
     win5UserPlan: null, // [k1,k2,k3,k4,k5]
+    autostatus: null, // ★Wave16-QA: /api/automation-status の結果。初回描画前は null
   };
 
   // ─── Util ───────────────────────────────────────────────
@@ -126,8 +127,7 @@
   // 次回 WIN5 開催 (= 次の日曜) の予定情報を返す
   function nextWin5Schedule() {
     const now = new Date();
-    const day = now.getDay(); // 0=日, 6=土
-    // 次の日曜まで何日先か (今日が日曜なら 7 日後を「次回」とする)
+    const day = now.getDay();
     const daysToSun = day === 0 ? 7 : (7 - day);
     const sun = new Date(now);
     sun.setDate(now.getDate() + daysToSun);
@@ -141,6 +141,67 @@
       weekday: "日曜",
       sunday: sun, saturday: sat,
     };
+  }
+
+  // ─── WIN5 通知 (土19:25 発売直前 / 日14:45 締切15分前) ───
+  // PWA をホーム画面に追加してあれば iOS Safari でも通知が出る (iOS 16.4+)。
+  // バックグラウンド通知には Web Push が必要だが、ここではアプリが開いている間に
+  // setInterval で時刻をチェックして発火する方式 (シンプルかつブラウザ依存少)。
+  const NOTIFY_KEY = "keiba_win5_notify";
+  function isWin5NotifyEnabled() { return localStorage.getItem(NOTIFY_KEY) === "1"; }
+  function setWin5NotifyEnabled(v) { localStorage.setItem(NOTIFY_KEY, v ? "1" : "0"); }
+  async function enableWin5Notify() {
+    if (!("Notification" in window)) { toast("このブラウザは通知に対応していません"); return false; }
+    let perm = Notification.permission;
+    if (perm === "default") perm = await Notification.requestPermission();
+    if (perm !== "granted") { toast("通知が許可されませんでした"); return false; }
+    setWin5NotifyEnabled(true);
+    toast("WIN5 通知を ON にしました (土19:25 / 日14:45)");
+    return true;
+  }
+  function disableWin5Notify() {
+    setWin5NotifyEnabled(false);
+    toast("WIN5 通知を OFF にしました");
+  }
+  function fireWin5Notify(title, body) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    try {
+      if (navigator.serviceWorker?.getRegistration) {
+        navigator.serviceWorker.getRegistration().then((reg) => {
+          if (reg && reg.showNotification) {
+            reg.showNotification(title, { body, icon: "/icon.svg", badge: "/icon.svg", tag: "keiba-win5" });
+          } else {
+            new Notification(title, { body, icon: "/icon.svg" });
+          }
+        });
+      } else {
+        new Notification(title, { body, icon: "/icon.svg" });
+      }
+    } catch (e) { console.warn("notify failed", e); }
+  }
+  function checkWin5NotifyTick() {
+    if (!isWin5NotifyEnabled()) return;
+    const now = new Date();
+    const day = now.getDay();
+    const hh = now.getHours();
+    const mm = now.getMinutes();
+    const last = localStorage.getItem("keiba_win5_notify_last") || "";
+    const todayKey = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+    if (day === 6 && hh === 19 && mm >= 25 && mm <= 35) {
+      const key = `${todayKey}-sat`;
+      if (last !== key) {
+        const w = nextWin5Schedule();
+        fireWin5Notify("もうすぐ WIN5 発売", `今夜 19:30 から WIN5 発売開始。対象は ${w.dateLabel}(日) の 5 レース (14:50〜15:40)。アプリを開いて戦略を選んでください。`);
+        localStorage.setItem("keiba_win5_notify_last", key);
+      }
+    }
+    if (day === 0 && hh === 14 && mm >= 40 && mm <= 50) {
+      const key = `${todayKey}-sun`;
+      if (last !== key) {
+        fireWin5Notify("WIN5 締切まで残りわずか", "WIN5 第1レース (14:50発走) の 5 分前で締切。最後の確認を。");
+        localStorage.setItem("keiba_win5_notify_last", key);
+      }
+    }
   }
 
   // ─── ティア判定 ─────────────────────────────────────────
@@ -563,6 +624,32 @@
         refreshAll();
       });
       toolbar.appendChild(clr);
+    }
+
+    // 通知 ON/OFF ボタン
+    const notifyOn = isWin5NotifyEnabled();
+    const ntBtn = el("button", {
+      class: "chip-filter" + (notifyOn ? " is-active" : ""),
+      style: "padding:4px 10px",
+    }, notifyOn ? "通知 ON (土19:25 / 日14:45)" : "通知 OFF");
+    ntBtn.addEventListener("click", async () => {
+      if (isWin5NotifyEnabled()) {
+        disableWin5Notify();
+      } else {
+        await enableWin5Notify();
+      }
+      renderWin5();
+    });
+    toolbar.appendChild(ntBtn);
+
+    // テスト通知ボタン (動作確認用)
+    if (notifyOn) {
+      const testBtn = el("button", { class: "chip-filter", style: "padding:4px 10px" }, "テスト通知");
+      testBtn.addEventListener("click", () => {
+        fireWin5Notify("テスト通知 (KEIBA NAVIGATOR)", "通知設定は正常です。次の土曜 19:25 ごろにこの形で通知が出ます。");
+        toast("テスト通知を出しました");
+      });
+      toolbar.appendChild(testBtn);
     }
 
     body.appendChild(toolbar);
@@ -1357,6 +1444,9 @@
     refreshAll();
     setInterval(refreshAll, REFRESH_MS);
     setInterval(tickCountdown, TICK_MS);
+    // 通知チェック (30 秒に 1 回・該当時刻なら 1 回だけ通知)
+    setInterval(checkWin5NotifyTick, 30_000);
+    checkWin5NotifyTick();
   }
 
   if (document.readyState === "loading") {
