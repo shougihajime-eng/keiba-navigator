@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v27"; // Wave15: 必殺一号艇インスパイア全面リライト (Light + Glass + Turf)
+const CACHE_VERSION = "keiba-nav-v29"; // Wave16-QA: 過去レース誤表示修正 / WIN5 stub 削除 / 死にスクリプト削除
 const PRECACHE = [
   "/",
   "/index.html",

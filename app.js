@@ -1084,12 +1084,17 @@
             toast("WIN5 は日曜のみ表示されます");
           }
         } else if (tab === "history") {
-          const lastCard = $$('.section-card').pop();
-          if (lastCard) lastCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          // 「買ったもの と 収支」セクションは #profit-grid を含む section-card
+          const profitCard = document.getElementById("profit-grid")?.closest(".section-card");
+          if (profitCard) profitCard.scrollIntoView({ behavior: "smooth", block: "start" });
         } else if (tab === "add") {
           openAddBetModal();
         } else if (tab === "settings") {
-          alert("設定画面は次のアップデートで追加されます");
+          // 設定画面は未実装 → active を「本日」に戻して alert は toast へ降格
+          $$(".bottom-nav__item").forEach((n) => n.classList.remove("active"));
+          const homeBtn = $$(".bottom-nav__item").find((n) => n.dataset.tab === "home");
+          if (homeBtn) homeBtn.classList.add("active");
+          toast("設定画面は次のアップデートで追加されます");
         }
       });
     });
@@ -1186,8 +1191,9 @@
         }
       }
     }
-    // 30 秒に 1 度 全レース行再描画 (締切表示の更新)
-    if (Date.now() - lastAllRacesRender > 30000) {
+    // 60 秒に 1 度 全レース行再描画 (締切表示更新)。
+    // refreshAll (30s) と重ならないように間隔を取る — 重複描画でカクつくのを防ぐ
+    if (Date.now() - lastAllRacesRender > 60000) {
       lastAllRacesRender = Date.now();
       renderAllRaces();
     }

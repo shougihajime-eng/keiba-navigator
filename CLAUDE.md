@@ -7,6 +7,31 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🤖 Wave16 (2026-05-18 昼・「本当に自動更新?」への全面回答)** — ユーザー指示「自動更新アプリになってるんだよね・手動はほぼ無いはずなんだよね・最高のものを作ってね」に応えて、自動化レイヤーの穴を全部塞いだ:
+  - **🔍 致命的バグ発見**: 5/17 (日曜) のスケジューラタスク 4 つすべて `LastResult=0x1` で失敗 → 原因は `WakeToRun=False` (PC スリープ中起動せず) + `RestartCount=0` (リトライなし) + `LogonType=Interactive` (ログオン中のみ実行) + ログが残らないほど早期に Python が落ちていた
+  - **🛡️ 多層防御の自動化レイヤー** (`scripts/register_scheduler.ps1` 全面強化):
+    - 土日定時 4 タスク (`Morning 08:30 / Pre 11:00 / Afternoon 13:30 / Evening 16:00`)
+    - **`WakeToRun=True`**: PC スリープ中でも自動的に起こして実行
+    - **`RestartCount=3 + RestartInterval=15min`**: 失敗時 15 分後に最大 3 回まで自動リトライ
+    - **`MultipleInstances=IgnoreNew`**: 多重起動を防止
+    - **`AllowStartIfOnBatteries + DontStopIfGoingOnBatteries`**: バッテリ駆動でも止めない
+    - **キャッチアップ 2 タスク** (`Catchup-0800 / Catchup-1200`・毎日): `catchup.ps1` を呼んで「土日 + 最後の取得から 4h 以上空き」のときだけ実行 (PC が落ちてた時間帯のレースを救済)
+  - **☁️ Vercel cron による結果自動 finalize** (`vercel.json` + `lib/cron_finalize.js` + `/api/cron-finalize`):
+    - 毎日 14:00 UTC (= 23:00 JST) に Vercel cron が `/api/cron-finalize` を叩く
+    - Supabase の `keiba.bets` テーブルから「result is null」かつ「race_id が 18 桁 JRA 形式」の bets を最大 500 件取得
+    - `keiba.race_results` を一括取得して `finalizeBet()` で当落判定
+    - bets テーブルを `result/factors/profit` で PATCH 更新
+    - 認証: `Authorization: Bearer ${CRON_SECRET}` 必須 (Vercel cron が自動付与)・手動キック `?key=<CRON_SECRET>` も可
+    - `CRON_SECRET` (32 文字ランダム) を Vercel 本番環境変数に登録済
+    - `SUPABASE_SERVICE_ROLE_KEY` を Supabase Management API 経由で取得 → Vercel 環境変数に登録済 (RLS バイパスして全ユーザー分処理)
+  - **📊 自動化ステータス カード** (`#automation-mount` / `/api/automation-status`):
+    - 「データ取得 / 予想計算 / 本番反映 / 結果照合」の 4 セルを 30 秒ごと更新
+    - 各セルに `is-ok / is-warn / is-ng` の状態色 + 経過時間 (例「12 分前」「2.3 時間前」)
+    - 総合 pill: 「すべて自動稼働中」「確認推奨」「要対応」
+    - これで「今自動が動いてるか」がアプリ開いた瞬間に判る
+  - **テスト**: smoke 126 ケース全通過 (回帰なし) / `/api/cron-finalize` 認証なしで 401 / `/api/automation-status` 200 + 必要キー全揃い
+  - **タスク登録**: PowerShell で 6 タスク (`Morning/Pre/Afternoon/Evening/Catchup-0800/Catchup-1200`) すべて `WakeToRun=True + RestartCount=3` で登録成功確認済
+  - **ファイル**: `vercel.json` (crons 追加) / `lib/cron_finalize.js` (新規) / `api/[...slug].js` (cron-finalize + automation-status 追加) / `index.html` (autostatus-card 追加) / `app.js` (renderAutostatus 追加) / `styles.css` (autostatus 系約 90 行追加) / `scripts/register_scheduler.ps1` (全面強化) / `scripts/catchup.ps1` (新規) / `sw.js` v27 → v28
 - **🎨 Wave15 (2026-05-18 夕・必殺一号艇インスパイア 全面リライト)** — ユーザー指示「必殺一号艇みたいに見やすく・アニメーションも入れて・何を買うか分かりやすく・WIN5 もどれ買うかクリアに・妥協なし」に応えて、`index.html` / `styles.css` / `app.js` を一気にリライト:
   - **デザイン**: ライト + ガラスモーフィズム (rgba 白 + backdrop-blur)・メッシュグラデ背景 (シアン・ターフミント・ラベンダー・サンセット・ターフライト)・fractalNoise SVG グレイン・必殺一号艇相当のクオリティ
   - **DecisionCard** (最上段・必殺一号艇の `DecisionCard.tsx` を競馬向け移植): ティア別 (gold/go/cond/best/none) で色分け、`★★★★ / ★★★ / ★★ / ★ / ☆` 自信表示、場名+R 超デカ表示 (44-64px)、締切カウントダウン (秒進行・urgent/warn/past 切替)、期待値/1着確率/AI信頼度 の BigStat 3 つ、主軸/対抗/3着の買い目を `本命 単勝 / 押さえ 複勝 / 対抗 馬連 / 保険 ワイド` の ロールタグ + 金額 + 予想戻り 付き、CTA 大ボタン 2 本

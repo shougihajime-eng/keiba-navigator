@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # KEIBA NAVIGATOR  自動取得タスクの登録 (Windows タスクスケジューラ)
 # Wave16: スリープ復帰 / 失敗時リトライ / 起動時キャッチアップ を追加
 # ============================================================
@@ -78,27 +78,29 @@ foreach ($slot in $slots) {
 }
 
 # ─── 2) 起動時キャッチアップ ────────────────────────────────
-# PC を起動した時点で「最後の取得から 4 時間以上経過 かつ 今日が土日」なら即実行
-# (PC が落ちていた時間帯のレースをカバー)
+# 毎日 08:00 と 12:00 に catchup.ps1 を起動。
+# catchup.ps1 側で「土日 かつ 最後の取得から 4 時間以上空いている」場合だけ実行する。
+# (AtLogon/AtStartup は Win11 で Access Denied になるため Daily トリガで代用)
 if (Test-Path $CatchupPs) {
-    $TriggerLogon  = New-ScheduledTaskTrigger -AtLogOn
-    $TriggerStart  = New-ScheduledTaskTrigger -AtStartup
-    # 起動直後すぐ走ると重いので 2 分遅延
-    $TriggerLogon.Delay  = "PT2M"
-    $TriggerStart.Delay  = "PT2M"
-    $Action = New-ScheduledTaskAction -Execute "powershell.exe" `
-        -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$CatchupPs`""
-    $Settings = New-KeibaSettings
+    $catchupSlots = @("08:00", "12:00")
+    foreach ($t in $catchupSlots) {
+        $TrigDaily = New-ScheduledTaskTrigger -Daily -At $t
+        $TrigDaily.StartBoundary = ([DateTime]::Parse($TrigDaily.StartBoundary)).ToString("s")
+        $Action = New-ScheduledTaskAction -Execute "powershell.exe" `
+            -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$CatchupPs`""
+        $Settings = New-KeibaSettings
 
-    Register-ScheduledTask `
-        -TaskName "KeibaNavigator-Catchup" `
-        -Description "起動/ログオン時に最後の取得から4時間以上空いていれば自動キャッチアップ" `
-        -Trigger @($TriggerLogon, $TriggerStart) `
-        -Action $Action `
-        -Settings $Settings `
-        -User $env:USERNAME | Out-Null
+        $taskName = "KeibaNavigator-Catchup-" + ($t -replace ":", "")
+        Register-ScheduledTask `
+            -TaskName $taskName `
+            -Description ("毎日 " + $t + " に catchup.ps1 を起動 (土日 + 4h以上空きの場合のみ実行)") `
+            -Trigger $TrigDaily `
+            -Action $Action `
+            -Settings $Settings `
+            -User $env:USERNAME | Out-Null
 
-    Write-Host "[OK] 登録: KeibaNavigator-Catchup  起動/ログオン時 (4h以上空きなら自動実行)"
+        Write-Host "[OK] 登録: $taskName  毎日 $t (土日 + 4h以上空き なら自動実行)"
+    }
 } else {
     Write-Host "[WARN] catchup.ps1 が見つかりません: $CatchupPs"
 }
@@ -118,5 +120,5 @@ Write-Host "    起動時/ログオン時  4h 以上空きがあれば自動キ�
 Write-Host "    失敗時             15 分後に最大 3 回まで再試行"
 Write-Host "    スリープ中         自動的に起こして実行 (WakeToRun)"
 Write-Host ""
-Write-Host "確認: Get-ScheduledTask -TaskName 'KeibaNavigator-*'"
-Write-Host "解除: Get-ScheduledTask -TaskName 'KeibaNavigator-*' | Unregister-ScheduledTask -Confirm:`$false"
+Write-Host '確認: Get-ScheduledTask -TaskName "KeibaNavigator-*"'
+Write-Host '解除: Get-ScheduledTask -TaskName "KeibaNavigator-*" | Unregister-ScheduledTask -Confirm:$false'
