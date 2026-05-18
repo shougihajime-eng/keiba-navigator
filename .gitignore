@@ -35,6 +35,8 @@ data/jv_cache/*
 !data/jv_cache/backtest_result.json
 # 例外: 推奨買い目集約 (Wave19・100% 越え戦略の今日のレース)
 !data/jv_cache/recommendations.json
+# Wave19.7: Walk-forward 安定性検証結果
+!data/jv_cache/walk_forward_result.json
 
 # Editor
 .vscode/

@@ -1578,12 +1578,28 @@
     const stratCardHtml = (defn) => {
       const st = stats[defn.key];
       if (!st) return "";
-      const cls = st.roi_pct >= 110 ? "rec-strat-hot" : (st.roi_pct >= 100 ? "rec-strat-go" : "rec-strat-mute");
+      // Walk-forward 信頼性指標で色クラスを決定 (見せかけの ROI ではなく安定性で判断)
+      const trustLvl = st.trust_level || 0;
+      const trustLabel = st.trust_label || "—";
+      const cls = trustLvl >= 4 ? "rec-strat-trusted"
+                : trustLvl >= 3 ? "rec-strat-stable"
+                : trustLvl >= 2 ? "rec-strat-mixed"
+                : "rec-strat-risky";
+      const stars = "★".repeat(trustLvl) + "☆".repeat(4 - trustLvl);
+      const wf = st.walk_forward || {};
+      const wfRoi = wf.mean_roi_pct != null ? wf.mean_roi_pct.toFixed(1) + "%" : null;
+      const wfWin = wf.win_periods != null && wf.active_periods != null
+        ? `${wf.win_periods}/${wf.active_periods} 期間 ◎`
+        : null;
       return `
         <div class="rec-strat-card ${cls}">
           <div class="rec-strat-badge">${defn.short_label}</div>
+          <div class="rec-strat-stars" title="${trustLabel}">${stars}</div>
           <div class="rec-strat-roi">${st.roi_pct ? st.roi_pct.toFixed(1) + "%" : "—"}</div>
-          <div class="rec-strat-meta">${st.fired_count}件・的中${st.hit_rate_pct}%</div>
+          <div class="rec-strat-meta">
+            ${st.fired_count}件・的中${st.hit_rate_pct}%
+            ${wfWin ? `<span class="rec-strat-wf">分割検証: ${wfRoi}・${wfWin}</span>` : ""}
+          </div>
           <div class="rec-strat-label">${defn.label}</div>
         </div>
       `;

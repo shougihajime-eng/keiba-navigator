@@ -1601,6 +1601,36 @@ a { color: inherit; text-decoration: none; }
   border-color: rgba(107,114,128,0.20);
   opacity: 0.85;
 }
+/* Wave19.7: Walk-forward 信頼性ベースのカード色分け */
+.rec-strat-card.rec-strat-trusted {
+  background: linear-gradient(135deg, rgba(16,185,129,0.16), rgba(245,158,11,0.10));
+  border: 2px solid rgba(16,185,129,0.60);
+  box-shadow: 0 6px 18px rgba(16,185,129,0.20);
+}
+.rec-strat-card.rec-strat-stable {
+  background: rgba(16,185,129,0.10);
+  border-color: rgba(16,185,129,0.40);
+}
+.rec-strat-card.rec-strat-mixed {
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.30);
+}
+.rec-strat-card.rec-strat-risky {
+  background: rgba(239,68,68,0.05);
+  border-color: rgba(239,68,68,0.25);
+  opacity: 0.85;
+}
+.rec-strat-stars {
+  font-size: 11px; color: #f59e0b; letter-spacing: 0.05em;
+  margin: 2px 0 -2px;
+}
+.rec-strat-card.rec-strat-trusted .rec-strat-stars { color: #047857; }
+.rec-strat-card.rec-strat-risky .rec-strat-stars   { color: #b91c1c; }
+.rec-strat-wf {
+  display: block;
+  font-size: 9.5px; color: #6b7280;
+  margin-top: 2px;
+}
 .rec-strat-badge {
   display: inline-block;
   font-size: 10px; font-weight: 900;

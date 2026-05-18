@@ -616,7 +616,85 @@ def _build_strategies() -> List[Strategy]:
         # 場別 (10 場ぶん)
         *[Strategy(f"best_venue_{vn}", _make_best_venue(vn))
           for vn in ("札幌","函館","福島","新潟","東京","中山","中京","京都","阪神","小倉")],
+        # === Wave19.7: BIG+TURF 複合戦略 ===
+        Strategy("combo_big_turf",             _combo_big_turf),
+        Strategy("combo_big_turf_double_bet",  _combo_big_turf_double_bet),
+        Strategy("combo_big_turf_ultra",       _combo_big_turf_ultra),
+        Strategy("combo_big_turf_high_conf",   _combo_big_turf_high_conf),
+        Strategy("combo_turf_ultra",           _combo_turf_ultra),
     ]
+
+
+# === Wave19.7: BIG + TURF 系の複合戦略 ===
+
+def _combo_big_turf(horses, payouts):
+    """芝レース AND top3 合計 >= 0.50 → 3 連複 ボックス 1 点"""
+    if len(horses) < 3: return 0, 0, False
+    if "芝" not in (horses[0].get("race_surface") or ""): return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    a, b, c = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay = _payout_fuku3(payouts, a, b, c)
+    return UNIT, pay, pay > 0
+
+
+def _combo_big_turf_double_bet(horses, payouts):
+    """芝レース AND BIG 発火 (top3 0.50+) AND TURF 発火 (本命確率 22%+ かつ対抗差 4pt+)
+    → 3 連複 ボックス 100 + 複勝 100 = 200 円"""
+    if len(horses) < 3: return 0, 0, False
+    if "芝" not in (horses[0].get("race_surface") or ""): return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0) < 0.04: return 0, 0, False
+    a, b, c = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay_f = _payout_fuku(payouts, a)
+    pay_3 = _payout_fuku3(payouts, a, b, c)
+    total = pay_f + pay_3
+    return UNIT * 2, total, total > 0
+
+
+def _combo_big_turf_ultra(horses, payouts):
+    """芝レース AND BIG AND TURF AND ULTRA (= 全部発火)
+    → 複勝 100 + ワイド 3 点 300 + 3 連複ボックス 100 = 500 円"""
+    if len(horses) < 3: return 0, 0, False
+    if "芝" not in (horses[0].get("race_surface") or ""): return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0) < 0.04: return 0, 0, False
+    a, b, c = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay_f  = _payout_fuku(payouts, a)
+    pay_w  = _payout_wide(payouts, a, b) + _payout_wide(payouts, a, c) + _payout_wide(payouts, b, c)
+    pay_3  = _payout_fuku3(payouts, a, b, c)
+    total = pay_f + pay_w + pay_3
+    return UNIT * 5, total, total > 0
+
+
+def _combo_big_turf_high_conf(horses, payouts):
+    """芝レース AND top3 合計 >= 0.55 (より厳しい) AND 本命確率 22%+
+    → 3 連複ボックス 1 点"""
+    if len(horses) < 3: return 0, 0, False
+    if "芝" not in (horses[0].get("race_surface") or ""): return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.55: return 0, 0, False
+    if (horses[0].get("win_prob") or 0) < 0.22: return 0, 0, False
+    a, b, c = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay = _payout_fuku3(payouts, a, b, c)
+    return UNIT, pay, pay > 0
+
+
+def _combo_turf_ultra(horses, payouts):
+    """芝レース AND ULTRA (BEST+WIDE 同時) → 複勝 + ワイド = 400 円
+    芝の絶好機 ULTRA は的中率最高クラスの予測"""
+    if len(horses) < 3: return 0, 0, False
+    if "芝" not in (horses[0].get("race_surface") or ""): return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    a, b, c = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay_f = _payout_fuku(payouts, a)
+    pay_w = _payout_wide(payouts, a, b) + _payout_wide(payouts, a, c) + _payout_wide(payouts, b, c)
+    total = pay_f + pay_w
+    return UNIT * 4, total, total > 0
 
 
 # === Wave19.6: 馬連・3 連複・季節・コース・場別 戦略実装 ===

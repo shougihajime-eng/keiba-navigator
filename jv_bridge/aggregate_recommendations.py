@@ -46,6 +46,7 @@ CACHE = ROOT / "data" / "jv_cache"
 RACES_DIR = CACHE / "races"
 PREDICTIONS_DIR = CACHE / "predictions"
 BACKTEST_PATH = CACHE / "backtest_result.json"
+WALK_FORWARD_PATH = CACHE / "walk_forward_result.json"
 OUT_PATH = CACHE / "recommendations.json"
 
 JST = dt.timezone(dt.timedelta(hours=9))
@@ -156,8 +157,23 @@ STRATEGY_DEFS = [
 ]
 
 
+def _load_walk_forward() -> Dict[str, Dict[str, Any]]:
+    """Walk-forward 検証結果を {strategy_name: stats} で返す。"""
+    out: Dict[str, Dict[str, Any]] = {}
+    if not WALK_FORWARD_PATH.exists():
+        return out
+    try:
+        wf = json.loads(WALK_FORWARD_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return out
+    for s in (wf.get("strategies") or []):
+        out[s.get("name")] = s
+    return out
+
+
 def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
-    """戦略ごとの実証統計を {key: {...}} で返す。"""
+    """戦略ごとの実証統計を {key: {...}} で返す。
+    Walk-forward 検証があればその安定性データも含める。"""
     out: Dict[str, Dict[str, Any]] = {}
     if not BACKTEST_PATH.exists():
         return out
@@ -167,10 +183,38 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
         return out
     test_races = bt.get("test_races")
     by_name = {s.get("name"): s for s in (bt.get("strategies") or [])}
+    wf_by_name = _load_walk_forward()
+
     for defn in STRATEGY_DEFS:
         s = by_name.get(defn["name_in_backtest"])
         if not s:
             continue
+        wf = wf_by_name.get(defn["name_in_backtest"])
+        # Walk-forward 信頼性指標 (★ 数で表示する用)
+        # 4/4 期間勝 + σ<10 = ★★★★ TRUSTED
+        # 3-4/4 + σ<15        = ★★★ STABLE
+        # 2/4                = ★★ MIXED
+        # 0-1/4               = ★ RISKY
+        trust_level = None
+        trust_label = None
+        if wf:
+            wp = wf.get("win_periods") or 0
+            ap = wf.get("active_periods") or 1
+            sigma = wf.get("roi_std") or 99
+            mean_roi = wf.get("mean_roi_pct") or 0
+            if wp == ap and sigma < 10 and mean_roi >= 105:
+                trust_level = 4
+                trust_label = "TRUSTED"
+            elif wp >= ap - 1 and sigma < 15 and mean_roi >= 100:
+                trust_level = 3
+                trust_label = "STABLE"
+            elif wp >= ap // 2 and mean_roi >= 100:
+                trust_level = 2
+                trust_label = "MIXED"
+            else:
+                trust_level = 1
+                trust_label = "RISKY"
+
         out[defn["key"]] = {
             "strategy_key": defn["key"],
             "strategy_name": defn["name_in_backtest"],
@@ -188,6 +232,9 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
             "returned": s.get("returned"),
             "profit": s.get("profit"),
             "max_payout": s.get("max_payout"),
+            "walk_forward": wf,        # 期間別 ROI 配列 / 統計
+            "trust_level": trust_level,
+            "trust_label": trust_label,
         }
     return out
 

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-18T23:18:36.784439+00:00",
+  "generatedAt": "2026-05-18T23:32:19.033516+00:00",
   "todayJst": "2026-05-19",
   "strategies_def": [
     {
@@ -60,7 +60,32 @@
       "invested": 4900,
       "returned": 6990,
       "profit": 2090,
-      "max_payout": 2090
+      "max_payout": 2090,
+      "walk_forward": {
+        "name": "fuku3_top3_conf50",
+        "active_periods": 4,
+        "total_bets": 323,
+        "total_hits": 73,
+        "mean_roi_pct": 108.5,
+        "worst_roi_pct": 93.5,
+        "best_roi_pct": 139.6,
+        "roi_std": 18.2,
+        "win_periods": 2,
+        "period_rois": [
+          93.5,
+          101.2,
+          99.8,
+          139.6
+        ],
+        "period_bets": [
+          130,
+          89,
+          53,
+          51
+        ]
+      },
+      "trust_level": 2,
+      "trust_label": "MIXED"
     },
     "turf": {
       "strategy_key": "turf",
@@ -78,7 +103,32 @@
       "invested": 3700,
       "returned": 5250,
       "profit": 1550,
-      "max_payout": 1440
+      "max_payout": 1440,
+      "walk_forward": {
+        "name": "best_turf",
+        "active_periods": 4,
+        "total_bets": 213,
+        "total_hits": 183,
+        "mean_roi_pct": 113.4,
+        "worst_roi_pct": 98.8,
+        "best_roi_pct": 137.2,
+        "roi_std": 16.0,
+        "win_periods": 2,
+        "period_rois": [
+          98.8,
+          98.8,
+          118.9,
+          137.2
+        ],
+        "period_bets": [
+          83,
+          56,
+          35,
+          39
+        ]
+      },
+      "trust_level": 2,
+      "trust_label": "MIXED"
     },
     "ultra": {
       "strategy_key": "ultra",
@@ -96,7 +146,32 @@
       "invested": 16400,
       "returned": 20850,
       "profit": 4450,
-      "max_payout": 4050
+      "max_payout": 4050,
+      "walk_forward": {
+        "name": "combo_best_wide_double_bet",
+        "active_periods": 4,
+        "total_bets": 269,
+        "total_hits": 250,
+        "mean_roi_pct": 99.2,
+        "worst_roi_pct": 82.7,
+        "best_roi_pct": 124.9,
+        "roi_std": 16.2,
+        "win_periods": 2,
+        "period_rois": [
+          82.7,
+          88.4,
+          100.7,
+          124.9
+        ],
+        "period_bets": [
+          112,
+          69,
+          45,
+          43
+        ]
+      },
+      "trust_level": 1,
+      "trust_label": "RISKY"
     },
     "best": {
       "strategy_key": "best",
@@ -114,7 +189,32 @@
       "invested": 5300,
       "returned": 6720,
       "profit": 1420,
-      "max_payout": 1440
+      "max_payout": 1440,
+      "walk_forward": {
+        "name": "combo_best_and_gap",
+        "active_periods": 4,
+        "total_bets": 346,
+        "total_hits": 304,
+        "mean_roi_pct": 113.6,
+        "worst_roi_pct": 105.1,
+        "best_roi_pct": 123.6,
+        "roi_std": 6.6,
+        "win_periods": 4,
+        "period_rois": [
+          105.1,
+          113.2,
+          112.6,
+          123.6
+        ],
+        "period_bets": [
+          133,
+          85,
+          72,
+          56
+        ]
+      },
+      "trust_level": 4,
+      "trust_label": "TRUSTED"
     },
     "safe": {
       "strategy_key": "safe",
@@ -132,7 +232,32 @@
       "invested": 10000,
       "returned": 10630,
       "profit": 630,
-      "max_payout": 1440
+      "max_payout": 1440,
+      "walk_forward": {
+        "name": "fuku_top1_prob_020",
+        "active_periods": 4,
+        "total_bets": 630,
+        "total_hits": 522,
+        "mean_roi_pct": 107.4,
+        "worst_roi_pct": 103.3,
+        "best_roi_pct": 111.0,
+        "roi_std": 3.3,
+        "win_periods": 4,
+        "period_rois": [
+          103.3,
+          110.2,
+          111.0,
+          105.1
+        ],
+        "period_bets": [
+          231,
+          175,
+          121,
+          103
+        ]
+      },
+      "trust_level": 4,
+      "trust_label": "TRUSTED"
     }
   },
   "recommendations_today": [],
