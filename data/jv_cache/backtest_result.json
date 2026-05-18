@@ -1,5 +1,5 @@
 {
-  "backtested_at": "2026-05-18T22:50:55.407166+00:00",
+  "backtested_at": "2026-05-18T23:00:10.372258+00:00",
   "test_ratio": 0.2,
   "test_races": 690,
   "model_trained_at": "2026-05-18T14:02:08.510521+00:00",
@@ -115,6 +115,42 @@
       "max_payout": 220
     },
     {
+      "name": "combo_wide_with_pop1",
+      "bets": 42,
+      "invested": 12600,
+      "returned": 16160,
+      "profit": 3560,
+      "roi": 1.2825,
+      "roi_pct": 128.3,
+      "hit_rate": 0.7381,
+      "hits": 31,
+      "max_payout": 4050
+    },
+    {
+      "name": "combo_best_wide_double_bet",
+      "bets": 41,
+      "invested": 16400,
+      "returned": 20850,
+      "profit": 4450,
+      "roi": 1.2713,
+      "roi_pct": 127.1,
+      "hit_rate": 0.878,
+      "hits": 36,
+      "max_payout": 4050
+    },
+    {
+      "name": "combo_best_and_gap",
+      "bets": 53,
+      "invested": 5300,
+      "returned": 6720,
+      "profit": 1420,
+      "roi": 1.2679,
+      "roi_pct": 126.8,
+      "hit_rate": 0.8302,
+      "hits": 44,
+      "max_payout": 1440
+    },
+    {
       "name": "wide_top3_conf_062",
       "bets": 11,
       "invested": 3300,
@@ -125,6 +161,42 @@
       "hit_rate": 0.9091,
       "hits": 10,
       "max_payout": 1680
+    },
+    {
+      "name": "combo_best_and_wide",
+      "bets": 41,
+      "invested": 4100,
+      "returned": 5090,
+      "profit": 990,
+      "roi": 1.2415,
+      "roi_pct": 124.1,
+      "hit_rate": 0.7561,
+      "hits": 31,
+      "max_payout": 1440
+    },
+    {
+      "name": "combo_super_safe",
+      "bets": 41,
+      "invested": 4100,
+      "returned": 5090,
+      "profit": 990,
+      "roi": 1.2415,
+      "roi_pct": 124.1,
+      "hit_rate": 0.7561,
+      "hits": 31,
+      "max_payout": 1440
+    },
+    {
+      "name": "combo_wide_concentrated",
+      "bets": 40,
+      "invested": 12000,
+      "returned": 14030,
+      "profit": 2030,
+      "roi": 1.1692,
+      "roi_pct": 116.9,
+      "hit_rate": 0.75,
+      "hits": 30,
+      "max_payout": 4050
     },
     {
       "name": "wide_top3_conf_065",
@@ -209,6 +281,18 @@
       "hit_rate": 0.7349,
       "hits": 61,
       "max_payout": 1440
+    },
+    {
+      "name": "combo_fuku_strong_value",
+      "bets": 16,
+      "invested": 1600,
+      "returned": 1680,
+      "profit": 80,
+      "roi": 1.05,
+      "roi_pct": 105.0,
+      "hit_rate": 0.875,
+      "hits": 14,
+      "max_payout": 230
     },
     {
       "name": "fuku_gap_012",
@@ -461,6 +545,18 @@
       "hit_rate": 0.6538,
       "hits": 68,
       "max_payout": 390
+    },
+    {
+      "name": "combo_wide_high_value",
+      "bets": 15,
+      "invested": 4500,
+      "returned": 3840,
+      "profit": -660,
+      "roi": 0.8533,
+      "roi_pct": 85.3,
+      "hit_rate": 0.8,
+      "hits": 12,
+      "max_payout": 1210
     },
     {
       "name": "fuku_top1_always",
@@ -896,6 +992,30 @@
     },
     {
       "name": "fuku_top1_prob_045",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "combo_best_and_nopop_match",
+      "bets": 0,
+      "invested": 0,
+      "returned": 0,
+      "profit": 0,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "combo_tan_high_payout",
       "bets": 0,
       "invested": 0,
       "returned": 0,

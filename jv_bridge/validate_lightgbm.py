@@ -544,7 +544,143 @@ def _build_strategies() -> List[Strategy]:
             for th in (0.15, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23,
                        0.24, 0.25, 0.26, 0.28, 0.30, 0.32, 0.35, 0.40, 0.45)
         ],
+        # === Wave19.4: 複合戦略 (条件を AND で重ねる) ===
+        # 単一戦略の発火率を下げる代わりに信頼性を上げる
+        Strategy("combo_best_and_wide",        _combo_best_and_wide),
+        Strategy("combo_best_wide_double_bet", _combo_best_wide_double_bet),
+        Strategy("combo_best_and_nopop_match", _combo_best_and_nopop_match),
+        Strategy("combo_best_and_gap",         _combo_best_and_gap),
+        Strategy("combo_wide_with_pop1",       _combo_wide_with_pop1),
+        Strategy("combo_wide_high_value",      _combo_wide_high_value),
+        Strategy("combo_tan_high_payout",      _combo_tan_high_payout),
+        Strategy("combo_super_safe",           _combo_super_safe),
+        Strategy("combo_fuku_strong_value",    _combo_fuku_strong_value),
+        Strategy("combo_wide_concentrated",    _combo_wide_concentrated),
     ]
+
+
+# === Wave19.4: 複合戦略の実装本体 ===
+
+def _combo_best_and_wide(horses, payouts):
+    """BEST 条件 (prob>=0.22) AND WIDE 条件 (top3 合計>=0.50) で複勝買い
+    両方の strict 条件を満たした「超信頼」レースだけ"""
+    if not horses: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if len(horses) < 3: return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    pay = _payout_fuku(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_best_wide_double_bet(horses, payouts):
+    """BEST + WIDE 両方発火時に 「複勝 100 + ワイド 3 点 300」 を併買 (合計 400 円)"""
+    if not horses or len(horses) < 3: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    # 複勝 100 + ワイド 3 点 300
+    n1, n2, n3 = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay_fuku = _payout_fuku(payouts, n1)
+    pay_wide = (_payout_wide(payouts, n1, n2) +
+                _payout_wide(payouts, n1, n3) +
+                _payout_wide(payouts, n2, n3))
+    total = pay_fuku + pay_wide
+    return UNIT * 4, total, total > 0
+
+
+def _combo_best_and_nopop_match(horses, payouts):
+    """BEST 条件 (prob>=0.22) AND nopop モデル本命と一致 = 2 モデル合意の最強信頼"""
+    if not horses: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    rank_nopop = top.get("rank_nopop")
+    if rank_nopop != 1: return 0, 0, False
+    pay = _payout_fuku(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_best_and_gap(horses, payouts):
+    """BEST 条件 AND 本命対抗差 (gap) >= 0.04 = 本命が明確に突出"""
+    if not horses or len(horses) < 2: return 0, 0, False
+    top, second = horses[0], horses[1]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if (top.get("win_prob") or 0) - (second.get("win_prob") or 0) < 0.04: return 0, 0, False
+    pay = _payout_fuku(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_wide_with_pop1(horses, payouts):
+    """WIDE 条件 (top3 合計>=0.50) AND 本命が単勝 1 番人気 (= 市場合意も得てる)"""
+    if not horses or len(horses) < 3: return 0, 0, False
+    top = horses[0]
+    if top.get("popularity") != 1: return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    n1, n2, n3 = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay = (_payout_wide(payouts, n1, n2) +
+           _payout_wide(payouts, n1, n3) +
+           _payout_wide(payouts, n2, n3))
+    return UNIT * 3, pay, pay > 0
+
+
+def _combo_wide_high_value(horses, payouts):
+    """WIDE 条件 AND value_signal (nopop と primary の差分) が top1 で正"""
+    if not horses or len(horses) < 3: return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    top = horses[0]
+    if (top.get("value_signal") or -1) < 0: return 0, 0, False
+    n1, n2, n3 = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay = (_payout_wide(payouts, n1, n2) +
+           _payout_wide(payouts, n1, n3) +
+           _payout_wide(payouts, n2, n3))
+    return UNIT * 3, pay, pay > 0
+
+
+def _combo_tan_high_payout(horses, payouts):
+    """BEST 条件 AND オッズ 3.0 倍以上 = 払戻が大きい単勝で利益最大化"""
+    if not horses: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    odds = top.get("odds")
+    if odds is None or float(odds) < 3.0: return 0, 0, False
+    pay = _payout_tan(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_super_safe(horses, payouts):
+    """SAFE+BEST+WIDE 全部発火 + 本命が単勝 1-2 番人気 = 最大限の安全策で複勝"""
+    if not horses or len(horses) < 3: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    pop = top.get("popularity")
+    if not (isinstance(pop, int) and pop <= 2): return 0, 0, False
+    pay = _payout_fuku(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_fuku_strong_value(horses, payouts):
+    """BEST + value_signal > 0.02 = 実力派モデルも市場より高く評価している本命"""
+    if not horses: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if (top.get("value_signal") or -1) < 0.02: return 0, 0, False
+    pay = _payout_fuku(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_wide_concentrated(horses, payouts):
+    """WIDE 条件 AND top3 の prob 分布が「集中型」 (top1 が top3 合計の 40% 以上を占有)"""
+    if not horses or len(horses) < 3: return 0, 0, False
+    p1 = horses[0].get("win_prob") or 0
+    s3 = sum((h.get("win_prob") or 0) for h in horses[:3])
+    if s3 < 0.50: return 0, 0, False
+    if s3 < 1e-9 or p1 / s3 < 0.40: return 0, 0, False
+    n1, n2, n3 = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay = (_payout_wide(payouts, n1, n2) +
+           _payout_wide(payouts, n1, n3) +
+           _payout_wide(payouts, n2, n3))
+    return UNIT * 3, pay, pay > 0
 
 
 # === 閾値スイープ用ファクトリ ===

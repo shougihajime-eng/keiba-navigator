@@ -1,10 +1,18 @@
 {
-  "generatedAt": "2026-05-18T22:54:23.962864+00:00",
+  "generatedAt": "2026-05-18T23:01:24.403500+00:00",
   "todayJst": "2026-05-19",
   "strategies_def": [
     {
+      "key": "ultra",
+      "label": "BEST+WIDE 両方発火時に「複勝 100 + ワイド 3 点 300」併買 (400 円)",
+      "short_label": "ULTRA",
+      "color": "gold",
+      "bet_type": "複勝+ワイド3点",
+      "unit": 400
+    },
+    {
       "key": "best",
-      "label": "AI 本命の確率 22% 以上で複勝 100 円",
+      "label": "AI 本命確率 22%+ かつ 対抗との差 4pt 以上 で複勝 100 円",
       "short_label": "BEST",
       "color": "go",
       "bet_type": "複勝",
@@ -12,44 +20,54 @@
     },
     {
       "key": "safe",
-      "label": "AI 本命の確率 20% 以上で複勝 100 円 (発火多め・安定)",
+      "label": "AI 本命確率 20%+ で複勝 100 円 (発火多め・安定)",
       "short_label": "SAFE",
       "color": "turf",
       "bet_type": "複勝",
       "unit": 100
-    },
-    {
-      "key": "wide",
-      "label": "AI 上位 3 頭の合計確率 50% 以上で ワイド 3 点 (300 円)",
-      "short_label": "WIDE",
-      "color": "sky",
-      "bet_type": "ワイド3点",
-      "unit": 300
     }
   ],
   "stats": {
+    "ultra": {
+      "strategy_key": "ultra",
+      "strategy_name": "combo_best_wide_double_bet",
+      "label": "BEST+WIDE 両方発火時に「複勝 100 + ワイド 3 点 300」併買 (400 円)",
+      "short_label": "ULTRA",
+      "color": "gold",
+      "bet_type": "複勝+ワイド3点",
+      "unit": 400,
+      "test_races": 690,
+      "fired_count": 41,
+      "fired_rate_pct": 5.9,
+      "roi_pct": 127.1,
+      "hit_rate_pct": 87.8,
+      "invested": 16400,
+      "returned": 20850,
+      "profit": 4450,
+      "max_payout": 4050
+    },
     "best": {
       "strategy_key": "best",
-      "strategy_name": "fuku_top1_prob_022",
-      "label": "AI 本命の確率 22% 以上で複勝 100 円",
+      "strategy_name": "combo_best_and_gap",
+      "label": "AI 本命確率 22%+ かつ 対抗との差 4pt 以上 で複勝 100 円",
       "short_label": "BEST",
       "color": "go",
       "bet_type": "複勝",
       "unit": 100,
       "test_races": 690,
-      "fired_count": 65,
-      "fired_rate_pct": 9.4,
-      "roi_pct": 112.2,
-      "hit_rate_pct": 75.4,
-      "invested": 6500,
-      "returned": 7290,
-      "profit": 790,
+      "fired_count": 53,
+      "fired_rate_pct": 7.7,
+      "roi_pct": 126.8,
+      "hit_rate_pct": 83.0,
+      "invested": 5300,
+      "returned": 6720,
+      "profit": 1420,
       "max_payout": 1440
     },
     "safe": {
       "strategy_key": "safe",
       "strategy_name": "fuku_top1_prob_020",
-      "label": "AI 本命の確率 20% 以上で複勝 100 円 (発火多め・安定)",
+      "label": "AI 本命確率 20%+ で複勝 100 円 (発火多め・安定)",
       "short_label": "SAFE",
       "color": "turf",
       "bet_type": "複勝",
@@ -63,24 +81,6 @@
       "returned": 10630,
       "profit": 630,
       "max_payout": 1440
-    },
-    "wide": {
-      "strategy_key": "wide",
-      "strategy_name": "wide_top3_conf_050",
-      "label": "AI 上位 3 頭の合計確率 50% 以上で ワイド 3 点 (300 円)",
-      "short_label": "WIDE",
-      "color": "sky",
-      "bet_type": "ワイド3点",
-      "unit": 300,
-      "test_races": 690,
-      "fired_count": 49,
-      "fired_rate_pct": 7.1,
-      "roi_pct": 132.0,
-      "hit_rate_pct": 75.5,
-      "invested": 14700,
-      "returned": 19400,
-      "profit": 4700,
-      "max_payout": 4050
     }
   },
   "recommendations_today": [],
@@ -147,9 +147,9 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "ultra",
         "best",
-        "safe",
-        "wide"
+        "safe"
       ],
       "horse": {
         "number": 10,
@@ -200,9 +200,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
-        "best",
-        "safe",
-        "wide"
+        "ultra",
+        "safe"
       ],
       "horse": {
         "number": 5,
@@ -304,9 +303,9 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "ultra",
         "best",
-        "safe",
-        "wide"
+        "safe"
       ],
       "horse": {
         "number": 2,
@@ -357,9 +356,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
-        "best",
-        "safe",
-        "wide"
+        "ultra",
+        "safe"
       ],
       "horse": {
         "number": 1,
@@ -401,57 +399,6 @@
       "model_auc": 0.8060957082739253
     },
     {
-      "race_id": "202605160803070900",
-      "race_name": "?????????@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@",
-      "course": "京都芝2000",
-      "distance": 2000,
-      "going": "良",
-      "weather": "晴",
-      "is_g1": false,
-      "hassou_time": null,
-      "strategies": [
-        "wide"
-      ],
-      "horse": {
-        "number": 1,
-        "name": "?~?b?L?[?W???“?v?@?@?@?@?@?@?@?@?@?",
-        "win_prob": 0.197988,
-        "nopop_prob": 0.095809,
-        "value_signal": -0.10218,
-        "odds": null,
-        "popularity": 1,
-        "ev": null,
-        "rank_nopop": 8
-      },
-      "top3": [
-        {
-          "number": 1,
-          "name": "?~?b?L?[?W???“?v?@?@?@?@?@?@?@?@?@?",
-          "win_prob": 0.197988,
-          "odds": null,
-          "popularity": 1
-        },
-        {
-          "number": 8,
-          "name": "???“?_?t???f?C?Y?@?@?@?@?@?@?@?@?@?",
-          "win_prob": 0.181666,
-          "odds": null,
-          "popularity": 1
-        },
-        {
-          "number": 6,
-          "name": "?G?`?S?h?‰?S?“?@?@?@?@?@?@?@?@?@?@",
-          "win_prob": 0.165109,
-          "odds": null,
-          "popularity": 2
-        }
-      ],
-      "top3_prob_sum": 0.544763,
-      "race_date": "2026-05-16",
-      "predicted_at": "2026-05-18T22:23:54.723375+00:00",
-      "model_auc": 0.8060957082739253
-    },
-    {
       "race_id": "202605160803070800",
       "race_name": "??“s?n?C?W???“?v?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@",
       "course": "京都",
@@ -461,9 +408,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
-        "best",
-        "safe",
-        "wide"
+        "ultra",
+        "safe"
       ],
       "horse": {
         "number": 3,
@@ -566,9 +512,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
-        "best",
-        "safe",
-        "wide"
+        "ultra",
+        "safe"
       ],
       "horse": {
         "number": 4,
@@ -670,9 +615,9 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "ultra",
         "best",
-        "safe",
-        "wide"
+        "safe"
       ],
       "horse": {
         "number": 8,
@@ -819,11 +764,11 @@
     }
   ],
   "count_today": 0,
-  "count_recent": 14,
+  "count_recent": 13,
   "total_predictions": 3492,
   "fired_by_key": {
-    "best": 537,
-    "safe": 816,
-    "wide": 426
+    "ultra": 348,
+    "best": 451,
+    "safe": 816
   }
 }

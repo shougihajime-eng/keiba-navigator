@@ -79,37 +79,46 @@ def _load_race_meta(race_id: str) -> Dict[str, Any]:
         return {}
 
 
-# Wave19.3: 戦略マルチアサイン定義 — 過去検証で 100% 越え + サンプル件数 50 越えのもの
+# Wave19.4: 複合戦略を導入 — 単純な閾値型より高 ROI 高的中率
+# 過去 690 R で 100% 越え + 件数 30+ のものから 3 段階の階層に整理
 STRATEGY_DEFS = [
     {
+        "key": "ultra",
+        "name_in_backtest": "combo_best_wide_double_bet",
+        "label": "BEST+WIDE 両方発火時に「複勝 100 + ワイド 3 点 300」併買 (400 円)",
+        "short_label": "ULTRA",
+        "color": "gold",
+        "bet_type": "複勝+ワイド3点",
+        "unit": 400,
+        "trigger": lambda top, horses: (
+            (top.get("win_prob") or 0) >= 0.22 and
+            len(horses) >= 3 and
+            sum((h.get("win_prob") or 0) for h in horses[:3]) >= 0.50
+        ),
+    },
+    {
         "key": "best",
-        "name_in_backtest": "fuku_top1_prob_022",
-        "label": "AI 本命の確率 22% 以上で複勝 100 円",
+        "name_in_backtest": "combo_best_and_gap",
+        "label": "AI 本命確率 22%+ かつ 対抗との差 4pt 以上 で複勝 100 円",
         "short_label": "BEST",
         "color": "go",
         "bet_type": "複勝",
         "unit": 100,
-        "trigger": lambda top, horses: (top.get("win_prob") or 0) >= 0.22,
+        "trigger": lambda top, horses: (
+            (top.get("win_prob") or 0) >= 0.22 and
+            len(horses) >= 2 and
+            ((top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0)) >= 0.04
+        ),
     },
     {
         "key": "safe",
         "name_in_backtest": "fuku_top1_prob_020",
-        "label": "AI 本命の確率 20% 以上で複勝 100 円 (発火多め・安定)",
+        "label": "AI 本命確率 20%+ で複勝 100 円 (発火多め・安定)",
         "short_label": "SAFE",
         "color": "turf",
         "bet_type": "複勝",
         "unit": 100,
         "trigger": lambda top, horses: (top.get("win_prob") or 0) >= 0.20,
-    },
-    {
-        "key": "wide",
-        "name_in_backtest": "wide_top3_conf_050",
-        "label": "AI 上位 3 頭の合計確率 50% 以上で ワイド 3 点 (300 円)",
-        "short_label": "WIDE",
-        "color": "sky",
-        "bet_type": "ワイド3点",
-        "unit": 300,
-        "trigger": lambda top, horses: sum((h.get("win_prob") or 0) for h in horses[:3]) >= 0.50,
     },
 ]
 

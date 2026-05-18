@@ -1539,17 +1539,18 @@
     };
 
     const stratBadges = (keys) => {
-      const labels = { best: "★BEST", safe: "SAFE", wide: "WIDE" };
+      const labels = { ultra: "★ULTRA", best: "BEST", safe: "SAFE" };
       return (keys || []).map((k) => `<span class="rec-badge rec-b-${k}">${labels[k] || k}</span>`).join("");
     };
 
     const renderItem = (it) => {
-      const isWide = (it.strategies || []).includes("wide");
-      const betLabel = isWide
-        ? `ワイド ${it.top3 && it.top3.length === 3
-            ? `${it.top3[0].number}-${it.top3[1].number}-${it.top3[2].number}`
-            : "1-2-3"} 300 円`
-        : "複勝 100 円";
+      const isUltra = (it.strategies || []).includes("ultra");
+      const numStr = it.top3 && it.top3.length === 3
+        ? `${it.top3[0].number}-${it.top3[1].number}-${it.top3[2].number}`
+        : "1-2-3";
+      const betLabel = isUltra
+        ? `複勝 #${it.horse?.number} 100 円 + ワイド ${numStr} 300 円 = 400 円`
+        : `複勝 #${it.horse?.number} 100 円`;
       return `
         <div class="rec-item">
           <div class="rec-race">
