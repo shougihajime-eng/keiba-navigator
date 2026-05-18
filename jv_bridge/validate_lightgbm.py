@@ -556,7 +556,161 @@ def _build_strategies() -> List[Strategy]:
         Strategy("combo_super_safe",           _combo_super_safe),
         Strategy("combo_fuku_strong_value",    _combo_fuku_strong_value),
         Strategy("combo_wide_concentrated",    _combo_wide_concentrated),
+        # === Wave19.5: 3 条件 AND + 単勝高配当狙い ===
+        Strategy("combo_triple_pop12",         _combo_triple_pop12),
+        Strategy("combo_triple_gap_concentrated", _combo_triple_gap_concentrated),
+        Strategy("combo_triple_value_match",   _combo_triple_value_match),
+        Strategy("combo_triple_high_quality",  _combo_triple_high_quality),
+        Strategy("combo_uren_strong_top12",    _combo_uren_strong_top12),
+        Strategy("combo_tan_value_3to6",       _combo_tan_value_3to6),
+        Strategy("combo_tan_odds_5to10",       _combo_tan_odds_5to10),
+        Strategy("combo_tan_underdog_value",   _combo_tan_underdog_value),
+        Strategy("combo_wide_box_top4",        _combo_wide_box_top4),
+        Strategy("combo_quadruple_safety",     _combo_quadruple_safety),
     ]
+
+
+# === Wave19.5: 3 条件 AND + 単勝中穴狙い ===
+
+def _is_best_wide(top, horses):
+    """ULTRA 発火条件 (BEST + WIDE 両方)"""
+    if (top.get("win_prob") or 0) < 0.22: return False
+    if len(horses) < 3: return False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return False
+    return True
+
+
+def _combo_triple_pop12(horses, payouts):
+    """ULTRA + 単勝 1-2 番人気 = 「AI 確信 + 市場合意 + 厚い 3 着圏」三位一体"""
+    if not horses: return 0, 0, False
+    top = horses[0]
+    if not _is_best_wide(top, horses): return 0, 0, False
+    pop = top.get("popularity")
+    if not (isinstance(pop, int) and pop <= 2): return 0, 0, False
+    n1, n2, n3 = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay_f = _payout_fuku(payouts, n1)
+    pay_w = _payout_wide(payouts, n1, n2) + _payout_wide(payouts, n1, n3) + _payout_wide(payouts, n2, n3)
+    total = pay_f + pay_w
+    return UNIT * 4, total, total > 0
+
+
+def _combo_triple_gap_concentrated(horses, payouts):
+    """ULTRA + 対抗差 4pt+ + top1 が top3 の 40%+ (集中型・本命が圧倒的)"""
+    if not horses or len(horses) < 3: return 0, 0, False
+    top = horses[0]
+    if not _is_best_wide(top, horses): return 0, 0, False
+    gap = (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0)
+    if gap < 0.04: return 0, 0, False
+    s3 = sum((h.get("win_prob") or 0) for h in horses[:3])
+    if s3 < 1e-9 or (top.get("win_prob") or 0) / s3 < 0.40: return 0, 0, False
+    n1, n2, n3 = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay_f = _payout_fuku(payouts, n1)
+    pay_w = _payout_wide(payouts, n1, n2) + _payout_wide(payouts, n1, n3) + _payout_wide(payouts, n2, n3)
+    total = pay_f + pay_w
+    return UNIT * 4, total, total > 0
+
+
+def _combo_triple_value_match(horses, payouts):
+    """ULTRA + value_signal >= 0 + 本命 1-3 番人気 = AI/nopop/市場 三者合意"""
+    if not horses: return 0, 0, False
+    top = horses[0]
+    if not _is_best_wide(top, horses): return 0, 0, False
+    if (top.get("value_signal") or -1) < 0: return 0, 0, False
+    pop = top.get("popularity")
+    if not (isinstance(pop, int) and pop <= 3): return 0, 0, False
+    n1, n2, n3 = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay_f = _payout_fuku(payouts, n1)
+    pay_w = _payout_wide(payouts, n1, n2) + _payout_wide(payouts, n1, n3) + _payout_wide(payouts, n2, n3)
+    total = pay_f + pay_w
+    return UNIT * 4, total, total > 0
+
+
+def _combo_triple_high_quality(horses, payouts):
+    """ULTRA + 対抗差 >= 0.05 + 本命オッズ 2.0 倍以上 (買い甲斐ある配当)"""
+    if not horses or len(horses) < 2: return 0, 0, False
+    top = horses[0]
+    if not _is_best_wide(top, horses): return 0, 0, False
+    gap = (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0)
+    if gap < 0.05: return 0, 0, False
+    odds = top.get("odds")
+    if odds is None or float(odds) < 2.0: return 0, 0, False
+    n1, n2, n3 = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay_f = _payout_fuku(payouts, n1)
+    pay_w = _payout_wide(payouts, n1, n2) + _payout_wide(payouts, n1, n3) + _payout_wide(payouts, n2, n3)
+    total = pay_f + pay_w
+    return UNIT * 4, total, total > 0
+
+
+def _combo_uren_strong_top12(horses, payouts):
+    """BEST + 本命対抗 prob 合計 0.40+ → 馬連 本命-対抗 (1-2 着確信)"""
+    if not horses or len(horses) < 2: return 0, 0, False
+    top, second = horses[0], horses[1]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if ((top.get("win_prob") or 0) + (second.get("win_prob") or 0)) < 0.40: return 0, 0, False
+    pay = _payout_uren(payouts, top["number"], second["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_tan_value_3to6(horses, payouts):
+    """nopop 本命が単勝 3-6 番人気 + nopop 確率 0.18+ = 実力派が推す中穴"""
+    np_ranked = _ranked_by_nopop(horses)
+    if not np_ranked: return 0, 0, False
+    top = np_ranked[0]
+    if (top.get("nopop_prob") or 0) < 0.18: return 0, 0, False
+    pop = top.get("popularity")
+    if not (isinstance(pop, int) and 3 <= pop <= 6): return 0, 0, False
+    pay = _payout_tan(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_tan_odds_5to10(horses, payouts):
+    """BEST + 単勝オッズ 5-10 倍 (払戻 1.2-2.5 倍くらいの中配当狙い)"""
+    if not horses: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    odds = top.get("odds")
+    if odds is None or not (5.0 <= float(odds) <= 10.0): return 0, 0, False
+    pay = _payout_tan(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_tan_underdog_value(horses, payouts):
+    """BEST + 人気 4-7 番 + value_signal >= 0.03 = 過小評価された AI 本命"""
+    if not horses: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    pop = top.get("popularity")
+    if not (isinstance(pop, int) and 4 <= pop <= 7): return 0, 0, False
+    if (top.get("value_signal") or -1) < 0.03: return 0, 0, False
+    pay = _payout_tan(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_wide_box_top4(horses, payouts):
+    """WIDE 条件 (top3 合計 >= 0.50) + 上位 4 頭で box 6 点 = 守備範囲拡大"""
+    if not horses or len(horses) < 4: return 0, 0, False
+    if sum((h.get("win_prob") or 0) for h in horses[:3]) < 0.50: return 0, 0, False
+    nums = [h["number"] for h in horses[:4]]
+    total_pay = 0
+    for i in range(4):
+        for j in range(i+1, 4):
+            total_pay += _payout_wide(payouts, nums[i], nums[j])
+    return UNIT * 6, total_pay, total_pay > 0
+
+
+def _combo_quadruple_safety(horses, payouts):
+    """4 条件 AND: BEST + WIDE + 人気 1-2 番 + nopop 本命と一致 = 最強の安全策"""
+    if not horses: return 0, 0, False
+    top = horses[0]
+    if not _is_best_wide(top, horses): return 0, 0, False
+    pop = top.get("popularity")
+    if not (isinstance(pop, int) and pop <= 2): return 0, 0, False
+    if top.get("rank_nopop") != 1: return 0, 0, False
+    n1, n2, n3 = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+    pay_f = _payout_fuku(payouts, n1)
+    pay_w = _payout_wide(payouts, n1, n2) + _payout_wide(payouts, n1, n3) + _payout_wide(payouts, n2, n3)
+    total = pay_f + pay_w
+    return UNIT * 4, total, total > 0
 
 
 # === Wave19.4: 複合戦略の実装本体 ===

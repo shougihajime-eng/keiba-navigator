@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v35"; // Wave19.4: 複合戦略 ULTRA=combo_best_wide_double_bet (127% 88%) 発見 + 3 戦略を高 ROI 版に更新
+const CACHE_VERSION = "keiba-nav-v36"; // Wave19.5: 3 条件 AND 10 戦略追加検証 + combo_triple_gap_concentrated 的中率 93.1% 発見
 const PRECACHE = [
   "/",
   "/index.html",
