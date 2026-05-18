@@ -17,15 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-  <script src="storage.js"></script>
-  <script src="predictors/learner.js"></script>
-  <script src="predictors/rankings.js"></script>
-  <script src="predictors/win5.js"></script>
-  <script src="lib/kelly.js"></script>
-  <script src="lib/race_id.js"></script>
-  <script src="lib/venues.js" defer></script>
+  <!-- Wave15: app.js は self-contained。旧モジュール 8 個は app.js が参照していないので削除 -->
 </head>
 <body>
 
@@ -82,6 +74,40 @@
     <span class="learning-badge" style="margin-left:auto">
       常時 学習中
     </span>
+  </section>
+
+  <!-- 2.5) 自動化ステータス (Wave16) -->
+  <section id="automation-mount" class="autostatus-card fade-in">
+    <div class="autostatus-head">
+      <span class="autostatus-icon" aria-hidden="true">⚙</span>
+      <span class="autostatus-title">自動化ステータス</span>
+      <span id="autostatus-overall" class="autostatus-pill is-ok">確認中…</span>
+    </div>
+    <div class="autostatus-grid">
+      <div class="autostatus-cell" data-key="fetch">
+        <div class="autostatus-label">データ取得</div>
+        <div class="autostatus-value" id="autostatus-fetch">—</div>
+        <div class="autostatus-sub" id="autostatus-fetch-sub">—</div>
+      </div>
+      <div class="autostatus-cell" data-key="predict">
+        <div class="autostatus-label">予想計算</div>
+        <div class="autostatus-value" id="autostatus-predict">—</div>
+        <div class="autostatus-sub" id="autostatus-predict-sub">—</div>
+      </div>
+      <div class="autostatus-cell" data-key="deploy">
+        <div class="autostatus-label">本番反映</div>
+        <div class="autostatus-value" id="autostatus-deploy">—</div>
+        <div class="autostatus-sub" id="autostatus-deploy-sub">—</div>
+      </div>
+      <div class="autostatus-cell" data-key="finalize">
+        <div class="autostatus-label">結果照合</div>
+        <div class="autostatus-value" id="autostatus-finalize">—</div>
+        <div class="autostatus-sub" id="autostatus-finalize-sub">—</div>
+      </div>
+    </div>
+    <p class="autostatus-note" id="autostatus-note">
+      4 つすべて緑なら手動操作は不要です。
+    </p>
   </section>
 
   <!-- 3) 結論カード (今日いちばん買う1点) -->
@@ -193,6 +219,28 @@
     </a>
   </div>
 </nav>
+
+<!-- ─── WIN5 カスタム編集 モーダル ─── -->
+<div class="modal-mask" id="modal-win5-edit" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="title">WIN5 を自分で編集</div>
+      <button class="modal-close" id="w5e-close" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body" id="w5e-body">
+      <p style="font-size:13px;color:var(--c-ink-soft);margin:0 0 12px">
+        5 つのレースそれぞれに何頭ずつ買うかを 1〜5 の範囲で決められます。<br>
+        点数 (合計の組合せ数) と費用が自動で計算されます。
+      </p>
+      <div id="w5e-races" class="flex-col gap-2"></div>
+      <div class="reason-box mt-3" id="w5e-summary"></div>
+      <div class="cta-grid mt-3">
+        <button class="btn-cta btn-cta-mute" id="w5e-cancel">キャンセル</button>
+        <button class="btn-cta btn-cta-go" id="w5e-apply">この内容で確定</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ─── レース詳細 モーダル ─── -->
 <div class="modal-mask" id="modal-race-detail" hidden>

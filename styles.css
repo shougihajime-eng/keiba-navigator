@@ -696,10 +696,63 @@ a { color: inherit; text-decoration: none; }
 .win5-body { padding: 16px 18px; background: rgba(255,255,255,0.65); position: relative; z-index: 1; }
 .win5-body > * + * { margin-top: 14px; }
 
-.win5-strategies {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+.win5-toolbar {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(248,250,252,0.65);
+  border: 1px solid rgba(15,23,42,0.06);
+  margin-bottom: 10px;
 }
-@media (max-width: 480px) { .win5-strategies { grid-template-columns: 1fr; } }
+.win5-toolbar .seg {
+  display: inline-flex; align-items: stretch;
+  border-radius: 999px; padding: 2px;
+  background: rgba(15,23,42,0.06);
+  border: 1px solid rgba(15,23,42,0.06);
+}
+.win5-toolbar .seg button {
+  padding: 6px 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 800; color: var(--c-ink-mute);
+  background: transparent; transition: background 0.15s, color 0.15s;
+}
+.win5-toolbar .seg button.is-active {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px -2px rgba(16,185,129,0.5);
+}
+.win5-toolbar .budget-input {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 12px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(15,23,42,0.10);
+}
+.win5-toolbar .budget-input input {
+  width: 92px; border: none; outline: none; background: transparent;
+  font-family: inherit; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums;
+  color: var(--c-ink); text-align: right;
+}
+.win5-toolbar .budget-input span {
+  font-size: 12px; color: var(--c-ink-soft); font-weight: 700;
+}
+.win5-toolbar .budget-btn {
+  padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 800;
+  background: linear-gradient(135deg, #c084fc, #8b5cf6); color: #fff;
+  box-shadow: 0 2px 8px -2px rgba(139,92,246,0.50);
+}
+.win5-toolbar .budget-btn:active { transform: scale(0.96); }
+
+.win5-strategies {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+}
+.win5-strategies.has-custom { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 680px) {
+  .win5-strategies { grid-template-columns: repeat(2, 1fr); }
+  .win5-strategies.has-custom { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 380px) {
+  .win5-strategies { grid-template-columns: 1fr; }
+  .win5-strategies.has-custom { grid-template-columns: 1fr; }
+}
 .win5-strategy {
   border-radius: 16px;
   padding: 12px;
@@ -1251,6 +1304,41 @@ a { color: inherit; text-decoration: none; }
 .time-pill.urgent { background: rgba(254,226,226,0.75); color: var(--c-bad); border-color: rgba(244,63,94,0.30); }
 .time-pill.warn   { background: rgba(254,243,199,0.75); color: var(--c-warn); border-color: rgba(245,158,11,0.30); }
 .time-pill.past   { background: rgba(226,232,240,0.65); color: var(--c-ink-mute); border-color: rgba(148,163,184,0.30); }
+
+/* =====================================================================
+   WIN5 カスタム編集 各レース行
+   ===================================================================== */
+.w5e-race {
+  display: grid; grid-template-columns: 1fr auto; gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(248,250,252,0.65);
+  border: 1px solid rgba(15,23,42,0.06);
+  align-items: center;
+}
+.w5e-race .head {
+  font-size: 13px; font-weight: 800; color: var(--c-ink);
+}
+.w5e-race .sub {
+  font-size: 11px; color: var(--c-ink-soft); margin-top: 2px;
+}
+.w5e-race .stepper {
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.w5e-race .stepper button {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(15,23,42,0.06);
+  font-size: 18px; font-weight: 900; color: var(--c-ink);
+  transition: background 0.15s, transform 0.15s;
+}
+.w5e-race .stepper button:active { transform: scale(0.94); }
+.w5e-race .stepper button:hover { background: rgba(15,23,42,0.12); }
+.w5e-race .stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+.w5e-race .stepper .val {
+  min-width: 32px; text-align: center;
+  font-size: 20px; font-weight: 900; color: var(--c-deep); font-variant-numeric: tabular-nums;
+}
+.w5e-race .stepper .unit { font-size: 11px; color: var(--c-ink-mute); font-weight: 700; }
 
 /* =====================================================================
    詳細モーダル本体 (馬一覧 / 出走表)

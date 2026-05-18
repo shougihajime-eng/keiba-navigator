@@ -24,6 +24,11 @@
     allRacesSort: "time",
     detailRaceId: null,
     isRefreshing: false,
+    // ★Wave15.1 WIN5 拡張
+    win5Mode: localStorage.getItem("keiba_win5_mode") || "ev",   // "ev" | "hit"
+    win5Budget: parseInt(localStorage.getItem("keiba_win5_budget"), 10) || null,
+    win5SelectedKey: localStorage.getItem("keiba_win5_selected") || null,
+    win5UserPlan: null, // [k1,k2,k3,k4,k5]
   };
 
   // ─── Util ───────────────────────────────────────────────
@@ -162,10 +167,19 @@
     state.isRefreshing = true;
     $("#ai-thinking").hidden = false;
     try {
-      const [status, races, win5] = await Promise.all([
+      // ★Wave15.1: WIN5 にクエリパラメータ付き
+      const w5Params = [];
+      if (state.win5Mode === "hit") w5Params.push("mode=hit");
+      if (state.win5Budget) w5Params.push(`budget=${state.win5Budget}`);
+      if (Array.isArray(state.win5UserPlan) && state.win5UserPlan.length === 5) {
+        w5Params.push(`plan=${state.win5UserPlan.join(",")}`);
+      }
+      const w5Url = "/api/win5" + (w5Params.length ? "?" + w5Params.join("&") : "");
+      const [status, races, win5, autostatus] = await Promise.all([
         api("/api/status"),
         api("/api/races"),
-        api("/api/win5"),
+        api(w5Url),
+        api("/api/automation-status"),
       ]);
       if (status) state.status = status;
       if (races && races.ok) {
@@ -177,6 +191,7 @@
         state.racesLast = races;
       }
       if (win5) state.win5 = win5;
+      if (autostatus) state.autostatus = autostatus;
       render();
     } finally {
       state.isRefreshing = false;
@@ -464,7 +479,7 @@
     let venue = "";
     if (race.course) {
       const m = String(race.course).match(/^([^\d]+?)(?:[芝ダ障].*)?$/);
-      if (m) venue = m[1].replace(/[芝ダ障].*/, "");
+      if (m) venue = m[1].replace(/[芝ダ障].*/, "").trim();
     }
     let raceNo = "";
     if (race.raceId && race.raceId.length >= 16) {
@@ -477,48 +492,90 @@
   function renderWin5() {
     const mount = $("#win5-mount");
     const w5 = state.win5;
-    if (!w5 || !w5.ok || !w5.strategies) {
-      const today = new Date();
-      if (today.getDay() !== 0) {
-        mount.innerHTML = "";
-        return;
-      }
-      mount.innerHTML = "";
-      const card = el("div", { class: "win5-card fade-in" });
-      card.appendChild(el("div", { class: "win5-head" },
-        el("div", { class: "title" }, "WIN5 — 日曜の祭り"),
-        el("div", { class: "day" }, "データ準備中")
-      ));
-      card.appendChild(el("div", { class: "win5-body", html: `
-        <p style="text-align:center;color:var(--c-ink-soft);font-size:14px;padding:16px 0">
-          ${w5?.note || "WIN5 対象レース 5 つのデータがまだ揃っていません"}<br>
-          <small>競馬場で発売が始まる土曜21:00 以降に表示されます</small>
-        </p>
-      `}));
-      mount.appendChild(card);
-      return;
-    }
+    if (!w5) { mount.innerHTML = ""; return; }
 
     mount.innerHTML = "";
     const card = el("div", { class: "win5-card fade-in" });
     card.appendChild(el("div", { class: "win5-head" },
       el("div", { class: "title" }, "WIN5 — 日曜の祭り (200円 で最大 6 億円)"),
-      el("div", { class: "day" }, `信頼度 ${(w5.avgConfidence * 100).toFixed(0)}%`)
+      el("div", { class: "day" }, w5.ok ? `信頼度 ${(w5.avgConfidence * 100).toFixed(0)}%` : "データ準備中")
     ));
     const body = el("div", { class: "win5-body" });
-    body.appendChild(el("div", { class: "sec-title" },
-      el("span", { class: "bar gold" }),
-      el("h2", null, "戦略を選ぼう (AI推奨にバッジ付き)")
-    ));
 
-    const stratsGrid = el("div", { class: "win5-strategies" });
-    const strategies = [
+    // ── Toolbar: モード切替 + 予算入力 ──
+    const toolbar = el("div", { class: "win5-toolbar" });
+    const seg = el("div", { class: "seg" });
+    const btnEv = el("button", { class: state.win5Mode === "ev" ? "is-active" : "" }, "期待値で推奨");
+    const btnHit = el("button", { class: state.win5Mode === "hit" ? "is-active" : "" }, "的中重視で推奨");
+    btnEv.addEventListener("click", () => switchWin5Mode("ev"));
+    btnHit.addEventListener("click", () => switchWin5Mode("hit"));
+    seg.appendChild(btnEv); seg.appendChild(btnHit);
+    toolbar.appendChild(seg);
+
+    const budgetWrap = el("div", { class: "budget-input" });
+    budgetWrap.appendChild(el("span", null, "予算"));
+    const budgetIn = el("input", {
+      type: "number", min: "200", step: "100",
+      placeholder: "3000",
+      value: state.win5Budget || "",
+      id: "w5-budget-in",
+    });
+    budgetWrap.appendChild(budgetIn);
+    budgetWrap.appendChild(el("span", null, "円"));
+    toolbar.appendChild(budgetWrap);
+
+    const optBtn = el("button", { class: "budget-btn" }, "AI 最適化");
+    optBtn.addEventListener("click", () => {
+      const v = parseInt(budgetIn.value, 10);
+      if (!Number.isFinite(v) || v < 200) { toast("予算は 200 円以上で入れてください"); return; }
+      state.win5Budget = v;
+      localStorage.setItem("keiba_win5_budget", String(v));
+      toast(`予算 ¥${fmtYen(v)} で AI 最適化中…`);
+      refreshAll();
+    });
+    toolbar.appendChild(optBtn);
+
+    if (state.win5Budget) {
+      const clr = el("button", { class: "chip-filter", style: "padding:4px 10px" }, "予算クリア");
+      clr.addEventListener("click", () => {
+        state.win5Budget = null;
+        localStorage.removeItem("keiba_win5_budget");
+        budgetIn.value = "";
+        refreshAll();
+      });
+      toolbar.appendChild(clr);
+    }
+
+    body.appendChild(toolbar);
+
+    if (!w5.ok) {
+      body.appendChild(el("div", { html: `
+        <p style="text-align:center;color:var(--c-ink-soft);font-size:14px;padding:20px 0">
+          ${escapeHtml(w5.note || "WIN5 対象レース 5 つのデータがまだ揃っていません")}<br>
+          <small>競馬場で発売が始まる土曜21:00 以降に表示されます。<br>
+          上のツールバーや戦略カードは試しに触ることができます。</small>
+        </p>
+      `}));
+    } else {
+      body.appendChild(el("div", { class: "sec-title" },
+        el("span", { class: "bar gold" }),
+        el("h2", null, `戦略を選ぼう (${state.win5Mode === "hit" ? "的中確率重視" : "期待値最大"} で AI 推奨)`)
+      ));
+    }
+
+    // ── 戦略カード (4-5 列) ──
+    const strategyList = [
       { key: "safe", name: "堅め", sub: "1×1×1×1×1 = 1点" },
-      { key: "mid",  name: "中波", sub: "2^5 = 32点" },
-      { key: "wide", name: "万舟", sub: "3^5 = 243点" },
+      { key: "axis", name: "軸1頭流し", sub: "高信頼 2R は 1 頭・残り 3R は 2 頭" },
+      { key: "mid",  name: "中波",     sub: "2×2×2×2×2 = 32点" },
+      { key: "wide", name: "万舟",     sub: "3×3×3×3×3 = 243点" },
     ];
+    if (w5.strategies.custom) strategyList.push({ key: "custom", name: "予算最適", sub: `AI が ¥${fmtYen(w5.budget)} 以内で最適化` });
+    if (w5.strategies.userCustom) strategyList.push({ key: "userCustom", name: "あなたのカスタム", sub: "編集した内容" });
+
+    const stratsGrid = el("div", { class: "win5-strategies" + (w5.strategies.custom || w5.strategies.userCustom ? " has-custom" : "") });
     const rec = w5.recommended;
-    strategies.forEach((s) => {
+    strategyList.forEach((s) => {
       const st = w5.strategies[s.key];
       if (!st) return;
       const c = el("div", { class: "win5-strategy" + (rec === s.key ? " is-recommended" : "") });
@@ -526,12 +583,19 @@
       c.appendChild(el("div", { class: "name" }, s.name));
       c.appendChild(el("div", { class: "stake" }, `¥${fmtYen(st.totalCost)}`));
       c.appendChild(el("div", { class: "sub" }, s.sub));
+      const hitPct = st.hitProb != null ? (st.hitProb * 100).toFixed(st.hitProb < 0.001 ? 4 : 2) + "%" : "—";
+      c.appendChild(el("div", { class: "sub" }, `${st.combo}点 / 的中 ${hitPct}`));
       c.appendChild(el("div", { class: "sub" }, `期待 ¥${fmtYen(st.expectedReturn)} / EV ×${st.evRatio.toFixed(1)}`));
+      // クリック → カスタム編集起動
+      c.addEventListener("click", () => {
+        if (w5.ok) openWin5EditModal(s.key);
+      });
       stratsGrid.appendChild(c);
     });
     body.appendChild(stratsGrid);
 
-    if (Array.isArray(w5.perRace) && w5.perRace.length > 0) {
+    // 5 レース本命
+    if (Array.isArray(w5.perRace) && w5.perRace.length > 0 && w5.ok) {
       body.appendChild(el("div", { class: "sec-title" },
         el("span", { class: "bar gold" }),
         el("h2", null, "5 レースの本命")
@@ -540,8 +604,8 @@
       w5.perRace.slice(0, 5).forEach((pr, i) => {
         const item = el("div", { class: "win5-race" });
         item.appendChild(el("div", { class: "label" }, `第${i+1}戦`));
-        const topNum = pr.top1?.number ?? pr.picks?.[0]?.number ?? "—";
-        const topName = pr.top1?.name ?? pr.picks?.[0]?.name ?? "";
+        const topNum = pr.top1?.number ?? "—";
+        const topName = pr.top1?.name ?? "";
         item.appendChild(el("div", { class: "horse" }, String(topNum)));
         item.appendChild(el("div", { class: "name" }, topName));
         races.appendChild(item);
@@ -549,8 +613,91 @@
       body.appendChild(races);
     }
 
+    // カスタム編集ボタン
+    if (w5.ok) {
+      const editBtn = el("button", {
+        class: "btn-cta btn-cta-mute mt-3",
+        style: "width:100%",
+        onclick: () => openWin5EditModal(w5.recommended || "safe"),
+      }, "自分で編集する (各レースの頭数を指定)");
+      body.appendChild(editBtn);
+    }
+
     card.appendChild(body);
     mount.appendChild(card);
+  }
+
+  function switchWin5Mode(mode) {
+    state.win5Mode = mode;
+    localStorage.setItem("keiba_win5_mode", mode);
+    refreshAll();
+  }
+
+  // ─── WIN5 カスタム編集モーダル ─────────────────────────
+  function openWin5EditModal(baseKey) {
+    const w5 = state.win5;
+    if (!w5 || !w5.ok || !Array.isArray(w5.perRace) || w5.perRace.length === 0) {
+      toast("WIN5 データが揃っていないので編集できません");
+      return;
+    }
+    // 既存戦略の plan を初期値に
+    let plan;
+    if (state.win5UserPlan && state.win5UserPlan.length === w5.perRace.length) {
+      plan = [...state.win5UserPlan];
+    } else if (baseKey && w5.strategies[baseKey]?.plan) {
+      plan = [...w5.strategies[baseKey].plan];
+    } else if (w5.strategies.safe?.plan) {
+      plan = [...w5.strategies.safe.plan];
+    } else {
+      plan = w5.perRace.map(() => 1);
+    }
+    const wrap = $("#w5e-races");
+    const summary = $("#w5e-summary");
+    wrap.innerHTML = "";
+
+    function rerender() {
+      wrap.innerHTML = "";
+      w5.perRace.forEach((r, i) => {
+        const maxK = Math.min(5, r.ranked?.length || r.conclusion?.picks?.length || 3);
+        const row = el("div", { class: "w5e-race" });
+        const left = el("div", null);
+        left.appendChild(el("div", { class: "head" }, `第${i+1}戦 ${r.raceName || ""}`));
+        const topName = r.top1?.name || (r.top1?.number ? `${r.top1.number}番` : "—");
+        left.appendChild(el("div", { class: "sub" }, `本命: ${topName} / 信頼度 ${((r.confidence || 0) * 100).toFixed(0)}%`));
+        row.appendChild(left);
+        const step = el("div", { class: "stepper" });
+        const dec = el("button", { type: "button", disabled: plan[i] <= 1 }, "−");
+        const val = el("span", { class: "val" }, String(plan[i]));
+        const inc = el("button", { type: "button", disabled: plan[i] >= maxK }, "+");
+        dec.addEventListener("click", () => { if (plan[i] > 1) { plan[i]--; rerender(); } });
+        inc.addEventListener("click", () => { if (plan[i] < maxK) { plan[i]++; rerender(); } });
+        step.appendChild(dec);
+        step.appendChild(val);
+        step.appendChild(el("span", { class: "unit" }, "頭"));
+        step.appendChild(inc);
+        row.appendChild(step);
+        wrap.appendChild(row);
+      });
+      const combo = plan.reduce((a, k) => a * k, 1);
+      const cost = combo * 200;
+      summary.innerHTML = `
+        <div class="label">合計</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-variant-numeric:tabular-nums">
+          <div style="font-size:14px;color:var(--c-ink-soft)">${plan.join(" × ")} = <b style="color:var(--c-deep);font-size:18px">${combo}</b> 点</div>
+          <div style="font-size:22px;font-weight:900;color:var(--c-violet)">¥${fmtYen(cost)}</div>
+        </div>
+      `;
+    }
+    rerender();
+    $("#w5e-apply").onclick = () => {
+      state.win5UserPlan = plan;
+      localStorage.setItem("keiba_win5_plan", JSON.stringify(plan));
+      $("#modal-win5-edit").hidden = true;
+      toast("カスタム編集を反映しました");
+      refreshAll();
+    };
+    $("#w5e-cancel").onclick = () => { $("#modal-win5-edit").hidden = true; };
+    $("#modal-win5-edit").hidden = false;
   }
 
   // ─── 描画: AllRaces ──────────────────────────────────────
@@ -981,6 +1128,23 @@
     $("#add-result").addEventListener("change", (e) => {
       $("#add-payout-group").hidden = e.target.value !== "hit";
     });
+    // WIN5 編集モーダル
+    const w5eClose = $("#w5e-close");
+    if (w5eClose) w5eClose.addEventListener("click", () => { $("#modal-win5-edit").hidden = true; });
+    const w5eMask = $("#modal-win5-edit");
+    if (w5eMask) w5eMask.addEventListener("click", (e) => {
+      if (e.target.id === "modal-win5-edit") $("#modal-win5-edit").hidden = true;
+    });
+    // localStorage から保存済み plan を復元
+    try {
+      const saved = localStorage.getItem("keiba_win5_plan");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === 5 && parsed.every(n => Number.isFinite(n) && n >= 1 && n <= 8)) {
+          state.win5UserPlan = parsed;
+        }
+      }
+    } catch {}
   }
 
   // ─── カウントダウン秒更新 ───────────────────────────────
@@ -1035,12 +1199,112 @@
     try {
       renderHeader();
       renderLive();
+      renderAutostatus();
       renderDecisionCard();
       renderWin5();
       renderAllRaces();
       renderHistory();
     } catch (e) {
       console.error("[render] error", e);
+    }
+  }
+
+  // ─── 描画: 自動化ステータス (Wave16) ─────────────────────
+  function renderAutostatus() {
+    const root = $("#automation-mount");
+    if (!root) return;
+    const a = state.autostatus;
+    if (!a || !a.ok) {
+      $("#autostatus-overall").textContent = "取得中…";
+      return;
+    }
+    const now = Date.now();
+    const ageHours = (iso) => {
+      if (!iso) return null;
+      const t = new Date(iso).getTime();
+      if (isNaN(t)) return null;
+      return (now - t) / 3600000;
+    };
+    const fmtHours = (h) => {
+      if (h == null) return "—";
+      if (h < 1) return `${Math.round(h * 60)} 分前`;
+      if (h < 48) return `${h.toFixed(1)} 時間前`;
+      return `${Math.floor(h / 24)} 日前`;
+    };
+    const cells = [
+      {
+        key: "fetch", labelEl: "#autostatus-fetch", subEl: "#autostatus-fetch-sub",
+        ageH: ageHours(a.lastDataFetch),
+        okIfUnder: 48,
+        okText: "稼働中", warnText: "確認", ngText: "停止中",
+        sub: a.lastDataFetch ? `JV-Link 最終取得 ${fmtHours(ageHours(a.lastDataFetch))}` : "未取得",
+      },
+      {
+        key: "predict", labelEl: "#autostatus-predict", subEl: "#autostatus-predict-sub",
+        ageH: ageHours(a.predictionsComputedAt),
+        okIfUnder: 24,
+        okText: a.predictionsFresh ? "最新" : "やや古い",
+        warnText: "やや古い", ngText: "未計算",
+        sub: a.predictionsComputedAt ? `事前計算 ${fmtHours(ageHours(a.predictionsComputedAt))}` : "事前計算なし",
+      },
+      {
+        key: "deploy", labelEl: "#autostatus-deploy", subEl: "#autostatus-deploy-sub",
+        ageH: ageHours(a.lastGitPushDeploy),
+        okIfUnder: 72,
+        okText: "反映済", warnText: "やや古い", ngText: "停止中",
+        sub: a.lastGitPushDeploy ? `本番反映 ${fmtHours(ageHours(a.lastGitPushDeploy))}` : "未反映",
+      },
+      {
+        key: "finalize", labelEl: "#autostatus-finalize", subEl: "#autostatus-finalize-sub",
+        ageH: null,
+        okIfUnder: 999,
+        okText: "毎日 23:00 自動", warnText: "未設定", ngText: "停止中",
+        sub: a.nextCronFinalizeISO
+          ? `次回 ${new Date(a.nextCronFinalizeISO).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+          : "未設定",
+      },
+    ];
+
+    let okCount = 0;
+    let warnCount = 0;
+    for (const c of cells) {
+      const v = $(c.labelEl);
+      const s = $(c.subEl);
+      if (!v) continue;
+      let cls = "is-ok";
+      let txt = c.okText;
+      if (c.key === "finalize") {
+        if (a.nextCronFinalizeISO) { cls = "is-ok"; txt = c.okText; okCount++; }
+        else { cls = "is-warn"; txt = c.warnText; warnCount++; }
+      } else if (c.ageH == null) {
+        cls = "is-ng"; txt = c.ngText;
+      } else if (c.ageH < c.okIfUnder) {
+        cls = "is-ok"; txt = c.okText; okCount++;
+      } else if (c.ageH < c.okIfUnder * 2) {
+        cls = "is-warn"; txt = c.warnText; warnCount++;
+      } else {
+        cls = "is-ng"; txt = c.ngText;
+      }
+      v.className = "autostatus-value " + cls;
+      v.textContent = txt;
+      if (s) s.textContent = c.sub;
+      const cell = root.querySelector(`.autostatus-cell[data-key="${c.key}"]`);
+      if (cell) cell.className = "autostatus-cell " + cls;
+    }
+    // 総合: 全部 OK → 緑, 1 つでも NG → 赤, それ以外 → オレンジ
+    const ovr = $("#autostatus-overall");
+    if (ovr) {
+      if (okCount === cells.length) { ovr.className = "autostatus-pill is-ok"; ovr.textContent = "すべて自動稼働中"; }
+      else if (okCount + warnCount === cells.length) { ovr.className = "autostatus-pill is-warn"; ovr.textContent = "確認推奨"; }
+      else { ovr.className = "autostatus-pill is-ng"; ovr.textContent = "要対応"; }
+    }
+    const note = $("#autostatus-note");
+    if (note) {
+      if (okCount === cells.length) {
+        note.textContent = "緑 4 つ揃っているので手動操作は不要です。寝ていてもデータが揃います。";
+      } else {
+        note.textContent = "赤/橙のセルがあります。設定 → 自動化 から詳細を確認できます。";
+      }
     }
   }
 

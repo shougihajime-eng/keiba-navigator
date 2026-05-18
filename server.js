@@ -191,7 +191,19 @@ async function serve(req, res) {
         }
         return true;
       });
-      const races = filtered.length > 0 ? filtered : allRaces.slice(-48);
+      if (filtered.length === 0) {
+        // 当日+翌日のデータ無し → 過去レースを誤表示しないように空で返す
+        return jsonRes(res, 200, {
+          ok: true,
+          fetchedAt: new Date().toISOString(),
+          source: "no_today",
+          learning: predCache.readLearningStatus(),
+          raceCount: 0,
+          races: [],
+          reason: "本日と明日の開催レースはまだ取り込まれていません",
+        });
+      }
+      const races = filtered;
       const summaries = races.map(race => {
         const c = buildConclusion(race);
         return {
@@ -250,8 +262,26 @@ async function serve(req, res) {
         if (!t) return false;
         return new Date(t).getDay() === 0;
       });
+      // 当日+翌日のレースが無いなら WIN5 は組めない
+      if (races.length === 0) {
+        return jsonRes(res, 200, {
+          ok: false, perRace: [], strategies: {}, recommended: null, avgConfidence: 0,
+          note: "本日と明日の開催レースがまだ取り込まれていません", candidateRaceIds: [],
+        });
+      }
       const candidates = (sundayRaces.length >= 5 ? sundayRaces : races).slice(0, 5);
-      const win5 = buildWin5(candidates);
+      // ★Wave15.1: クエリ ?budget=3000 / ?mode=hit / ?plan=1,1,2,2,2
+      const wUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+      const opts = {};
+      const budget = parseInt(wUrl.searchParams.get("budget"), 10);
+      if (Number.isFinite(budget) && budget >= 200) opts.budget = budget;
+      if (wUrl.searchParams.get("mode") === "hit") opts.mode = "hit";
+      const planStr = wUrl.searchParams.get("plan");
+      if (planStr && /^\d+(,\d+){0,4}$/.test(planStr)) {
+        const arr = planStr.split(",").map(x => parseInt(x, 10)).filter(Number.isFinite);
+        if (arr.length === 5 && arr.every(n => n >= 1 && n <= 8)) opts.customPlan = arr;
+      }
+      const win5 = buildWin5(candidates, opts);
       return jsonRes(res, 200, { ok: true, ...formatWin5(win5), candidateRaceIds: candidates.map(r => r.race_id || null) });
     }
     if (p === "/api/news-annotated") {

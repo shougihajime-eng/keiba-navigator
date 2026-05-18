@@ -12,6 +12,12 @@
   "rewrites": [
     { "source": "/", "destination": "/index.html" }
   ],
+  "crons": [
+    {
+      "path": "/api/cron-finalize",
+      "schedule": "0 14 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

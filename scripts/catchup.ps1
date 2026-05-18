@@ -1,0 +1,78 @@
+# ============================================================
+# KEIBA NAVIGATOR  起動/ログオン時のキャッチアップ
+# ============================================================
+# 動作: PC 起動 / Windows ログオン後 2 分で 1 回実行される。
+# 内容:
+#   1. 今日が土曜 or 日曜なら → 後続チェックへ
+#   2. data/jv_cache/_status.json の lastAggregate.fetchedAt が 4 時間以上前なら
+#      明日のレースを取る.bat --no-pause を起動 (バックグラウンド)
+#   3. 平日 or 4h 以内に取れていればスキップ (重複防止)
+#
+# ログ: logs\catchup_YYYY-MM-DD.log
+
+$ErrorActionPreference = "Continue"
+
+$ScriptRoot = Split-Path -Parent $PSScriptRoot
+$BatchFile  = Join-Path $ScriptRoot "明日のレースを取る.bat"
+$StatusJson = Join-Path $ScriptRoot "data\jv_cache\_status.json"
+$LogDir     = Join-Path $ScriptRoot "logs"
+
+if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
+
+$today    = Get-Date
+$logPath  = Join-Path $LogDir ("catchup_" + $today.ToString("yyyy-MM-dd") + ".log")
+
+function Write-Log($msg) {
+    $line = "[" + (Get-Date -Format "yyyy-MM-dd HH:mm:ss") + "] " + $msg
+    Add-Content -Path $logPath -Value $line -Encoding utf8
+}
+
+Write-Log "=== catchup 開始 ==="
+
+# 1) 土日チェック
+$dow = $today.DayOfWeek
+Write-Log "今日: $($today.ToString('yyyy-MM-dd')) ($dow)"
+if (-not ($dow -eq [DayOfWeek]::Saturday -or $dow -eq [DayOfWeek]::Sunday)) {
+    Write-Log "平日のためスキップ"
+    exit 0
+}
+
+# 2) 最終取得時刻チェック
+$staleHours = 4
+$fetchedAt  = $null
+if (Test-Path $StatusJson) {
+    try {
+        $j = Get-Content -Path $StatusJson -Raw -Encoding utf8 | ConvertFrom-Json
+        if ($j.lastAggregate -and $j.lastAggregate.fetchedAt) {
+            $fetchedAt = [DateTime]::Parse($j.lastAggregate.fetchedAt)
+        }
+    } catch {
+        Write-Log "status.json 読み込み失敗: $($_.Exception.Message)"
+    }
+}
+
+if ($fetchedAt) {
+    $gap = ($today - $fetchedAt).TotalHours
+    Write-Log ("最終取得: {0:yyyy-MM-dd HH:mm} ({1:F1}h 前)" -f $fetchedAt, $gap)
+    if ($gap -lt $staleHours) {
+        Write-Log "4h 以内に取得済みのためスキップ"
+        exit 0
+    }
+} else {
+    Write-Log "status.json が無い or fetchedAt 未設定。実行する"
+}
+
+# 3) バッチを起動 (新ウィンドウ・非対話・終了待たない)
+Write-Log "race_day_pipeline を起動: $BatchFile"
+try {
+    Start-Process -FilePath "cmd.exe" `
+                  -ArgumentList "/c", $BatchFile, "--no-pause" `
+                  -WorkingDirectory $ScriptRoot `
+                  -WindowStyle Minimized | Out-Null
+    Write-Log "起動 OK (バックグラウンド実行)"
+} catch {
+    Write-Log "起動失敗: $($_.Exception.Message)"
+    exit 1
+}
+
+Write-Log "=== catchup 終了 ==="

@@ -155,8 +155,19 @@ module.exports = async (req, res) => {
         }
         return true;  // 非 JRA 形式 (manual_ 等) は素通し
       });
-      // 0 件なら直近 48 件 (3 開催場 × 12R × 2 日相当) を返す
-      const races = filtered.length > 0 ? filtered : allRaces.slice(-48);
+      if (filtered.length === 0) {
+        // 当日+翌日のデータ無し → 過去レースを「今日の予想」として誤表示しないよう空で返す
+        return ok(res, {
+          ok: true,
+          fetchedAt: new Date().toISOString(),
+          source: "no_today",
+          learning: predCache.readLearningStatus(),
+          raceCount: 0,
+          races: [],
+          reason: "本日と明日の開催レースはまだ取り込まれていません",
+        });
+      }
+      const races = filtered;
       const summaries = races.map(race => {
         const c = buildConclusion(race);
         return {
@@ -195,7 +206,7 @@ module.exports = async (req, res) => {
       if (!allRaces.length) {
         return bad(res, 503, { ok: false, status: "unavailable", reason: "出走馬データ未取得" });
       }
-      // ★Wave9-fix: 当日+翌日のレースのみに絞る (蓄積 10 年分でハング防止)
+      // ★Wave9-fix: 当日+翌日のレースのみに絞る
       const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
       const tmrDate = new Date(Date.now() + 24*60*60*1000).toISOString().slice(0, 10).replace(/-/g, "");
       const races = allRaces.filter(r => {
@@ -206,15 +217,32 @@ module.exports = async (req, res) => {
         }
         return true;
       });
-      // 日曜の WIN5 対象は当日の指定 5 レース。データが揃わない時は
-      // 「先頭 5 レース」をフォールバックで使う
       const sundayRaces = races.filter(r => {
         const t = r.race_start || r.start_time;
         if (!t) return false;
         return new Date(t).getDay() === 0;
       });
+      // 当日+翌日のレースが無いなら WIN5 は組めない
+      if (races.length === 0) {
+        return ok(res, {
+          ok: false, perRace: [], strategies: {}, recommended: null, avgConfidence: 0,
+          note: "本日と明日の開催レースがまだ取り込まれていません", candidateRaceIds: [],
+        });
+      }
       const candidates = (sundayRaces.length >= 5 ? sundayRaces : races).slice(0, 5);
-      const win5 = buildWin5(candidates);
+      // ★Wave15.1: クエリ ?budget=3000 / ?mode=hit / ?plan=1,1,2,2,2
+      const budgetStr = firstQuery(req.query?.budget);
+      const modeStr = firstQuery(req.query?.mode);
+      const planStr = firstQuery(req.query?.plan);
+      const opts = {};
+      const budget = parseInt(budgetStr, 10);
+      if (Number.isFinite(budget) && budget >= 200) opts.budget = budget;
+      if (modeStr === "hit") opts.mode = "hit";
+      if (typeof planStr === "string" && /^\d+(,\d+){0,4}$/.test(planStr)) {
+        const arr = planStr.split(",").map(x => parseInt(x, 10)).filter(Number.isFinite);
+        if (arr.length === 5 && arr.every(n => n >= 1 && n <= 8)) opts.customPlan = arr;
+      }
+      const win5 = buildWin5(candidates, opts);
       return ok(res, { ok: true, ...formatWin5(win5), candidateRaceIds: candidates.map(r => r.race_id || null) });
     }
     if (path === "/news-annotated") {
@@ -304,6 +332,59 @@ module.exports = async (req, res) => {
         movements: moves,
         threshold: { minDiffPct: 5, largeMovePct: 10 },
         note: "JV-Link接続後・複数回更新で履歴が蓄積され、変動が検出されます。",
+      });
+    }
+    if (path === "/cron-finalize") {
+      // Vercel cron 経由でのみ実行: Authorization: Bearer ${CRON_SECRET}
+      const secret = process.env.CRON_SECRET || null;
+      const auth = req.headers?.authorization || "";
+      const isCron = !!secret && auth === `Bearer ${secret}`;
+      // 管理者の手動キックも許可: ?key=<CRON_SECRET>
+      const queryKey = firstQuery(req.query?.key);
+      const isManual = !!secret && queryKey === secret;
+      if (!isCron && !isManual) {
+        return bad(res, 401, { ok: false, error: "Unauthorized. CRON_SECRET required." });
+      }
+      const { runCronFinalize } = require("../lib/cron_finalize");
+      const summary = await runCronFinalize();
+      return ok(res, summary);
+    }
+    if (path === "/automation-status") {
+      // 自動化レイヤーの健康状態をまとめて返す (アプリのカードが読む)
+      const fs = require("fs");
+      const pth = require("path");
+      const meta = predCache.predictionsMeta();
+      const learning = predCache.readLearningStatus() || {};
+      const status = buildStatus();
+      let lastCommitISO = null;
+      try {
+        const headPath = pth.join(__dirname, "..", ".git", "HEAD");
+        if (fs.existsSync(headPath)) {
+          const head = fs.readFileSync(headPath, "utf8").trim();
+          if (head.startsWith("ref: ")) {
+            const ref = head.slice(5);
+            const refPath = pth.join(__dirname, "..", ".git", ref);
+            if (fs.existsSync(refPath)) {
+              lastCommitISO = fs.statSync(refPath).mtime.toISOString();
+            }
+          }
+        }
+      } catch {}
+      // 次回 Vercel cron は毎日 14:00 UTC (23:00 JST)
+      const nowMs = Date.now();
+      const nextCron = new Date();
+      nextCron.setUTCHours(14, 0, 0, 0);
+      if (nextCron.getTime() <= nowMs) nextCron.setUTCDate(nextCron.getUTCDate() + 1);
+      return ok(res, {
+        ok: true,
+        fetchedAt: new Date().toISOString(),
+        jvBridge: status.jvBridge || null,
+        lastDataFetch: status.jvBridge?.updatedAt || null,
+        predictionsFresh: predCache.isPredictionsFresh(),
+        predictionsComputedAt: meta?.fetchedAt || null,
+        lastGitPushDeploy: lastCommitISO,
+        nextCronFinalizeISO: nextCron.toISOString(),
+        learning,
       });
     }
     if (path === "/schedule") {
