@@ -1,5 +1,5 @@
 {
-  "backtested_at": "2026-05-18T14:06:22.354377+00:00",
+  "backtested_at": "2026-05-18T14:37:11.446052+00:00",
   "test_ratio": 0.2,
   "test_races": 690,
   "model_trained_at": "2026-05-18T14:02:08.510521+00:00",
@@ -31,6 +31,18 @@
       "max_payout": 1440
     },
     {
+      "name": "fuku_nopop_top1",
+      "bets": 690,
+      "invested": 69000,
+      "returned": 56610,
+      "profit": -12390,
+      "roi": 0.8204,
+      "roi_pct": 82.0,
+      "hit_rate": 0.5362,
+      "hits": 370,
+      "max_payout": 1110
+    },
+    {
       "name": "wide_box_top3",
       "bets": 690,
       "invested": 207000,
@@ -43,6 +55,42 @@
       "max_payout": 4920
     },
     {
+      "name": "wide_primary_x_nopop",
+      "bets": 365,
+      "invested": 36500,
+      "returned": 27780,
+      "profit": -8720,
+      "roi": 0.7611,
+      "roi_pct": 76.1,
+      "hit_rate": 0.189,
+      "hits": 69,
+      "max_payout": 3320
+    },
+    {
+      "name": "fuku_nopop_undervalued",
+      "bets": 214,
+      "invested": 21400,
+      "returned": 16220,
+      "profit": -5180,
+      "roi": 0.7579,
+      "roi_pct": 75.8,
+      "hit_rate": 0.3411,
+      "hits": 73,
+      "max_payout": 690
+    },
+    {
+      "name": "fuku_value_signal_003",
+      "bets": 631,
+      "invested": 63100,
+      "returned": 47690,
+      "profit": -15410,
+      "roi": 0.7558,
+      "roi_pct": 75.6,
+      "hit_rate": 0.4279,
+      "hits": 270,
+      "max_payout": 970
+    },
+    {
       "name": "tan_top1_always",
       "bets": 690,
       "invested": 69000,
@@ -53,6 +101,78 @@
       "hit_rate": 0.2768,
       "hits": 191,
       "max_payout": 2570
+    },
+    {
+      "name": "tan_value_signal_005",
+      "bets": 508,
+      "invested": 50800,
+      "returned": 37710,
+      "profit": -13090,
+      "roi": 0.7423,
+      "roi_pct": 74.2,
+      "hit_rate": 0.1673,
+      "hits": 85,
+      "max_payout": 1750
+    },
+    {
+      "name": "tan_nopop_top1",
+      "bets": 690,
+      "invested": 69000,
+      "returned": 47630,
+      "profit": -21370,
+      "roi": 0.6903,
+      "roi_pct": 69.0,
+      "hit_rate": 0.2261,
+      "hits": 156,
+      "max_payout": 1560
+    },
+    {
+      "name": "uren_primary_x_nopop",
+      "bets": 365,
+      "invested": 36500,
+      "returned": 22960,
+      "profit": -13540,
+      "roi": 0.629,
+      "roi_pct": 62.9,
+      "hit_rate": 0.0795,
+      "hits": 29,
+      "max_payout": 3260
+    },
+    {
+      "name": "tan_nopop_undervalued",
+      "bets": 214,
+      "invested": 21400,
+      "returned": 13090,
+      "profit": -8310,
+      "roi": 0.6117,
+      "roi_pct": 61.2,
+      "hit_rate": 0.0888,
+      "hits": 19,
+      "max_payout": 1560
+    },
+    {
+      "name": "tan_top1_value3",
+      "bets": 14,
+      "invested": 1400,
+      "returned": 390,
+      "profit": -1010,
+      "roi": 0.2786,
+      "roi_pct": 27.9,
+      "hit_rate": 0.0714,
+      "hits": 1,
+      "max_payout": 390
+    },
+    {
+      "name": "fuku_top1_value3",
+      "bets": 14,
+      "invested": 1400,
+      "returned": 320,
+      "profit": -1080,
+      "roi": 0.2286,
+      "roi_pct": 22.9,
+      "hit_rate": 0.1429,
+      "hits": 2,
+      "max_payout": 170
     },
     {
       "name": "tan_top1_ev100",
@@ -91,18 +211,6 @@
       "max_payout": 0
     },
     {
-      "name": "tan_top1_value3",
-      "bets": 0,
-      "invested": 0,
-      "returned": 0,
-      "profit": 0,
-      "roi": 0.0,
-      "roi_pct": 0.0,
-      "hit_rate": 0.0,
-      "hits": 0,
-      "max_payout": 0
-    },
-    {
       "name": "fuku_top1_ev090",
       "bets": 0,
       "invested": 0,
@@ -127,23 +235,11 @@
       "max_payout": 0
     },
     {
-      "name": "fuku_top1_value3",
-      "bets": 0,
-      "invested": 0,
-      "returned": 0,
-      "profit": 0,
-      "roi": 0.0,
-      "roi_pct": 0.0,
-      "hit_rate": 0.0,
-      "hits": 0,
-      "max_payout": 0
-    },
-    {
       "name": "uren_value3_x_pop1",
-      "bets": 0,
-      "invested": 0,
+      "bets": 4,
+      "invested": 400,
       "returned": 0,
-      "profit": 0,
+      "profit": -400,
       "roi": 0.0,
       "roi_pct": 0.0,
       "hit_rate": 0.0,
@@ -152,6 +248,18 @@
     },
     {
       "name": "wide_value3_x_pop1",
+      "bets": 4,
+      "invested": 400,
+      "returned": 0,
+      "profit": -400,
+      "roi": 0.0,
+      "roi_pct": 0.0,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "tan_top1_kelly",
       "bets": 0,
       "invested": 0,
       "returned": 0,
@@ -163,7 +271,7 @@
       "max_payout": 0
     },
     {
-      "name": "tan_top1_kelly",
+      "name": "fuku_ev_nopop_110",
       "bets": 0,
       "invested": 0,
       "returned": 0,

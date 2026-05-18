@@ -405,7 +405,27 @@ def load_races_and_labels() -> Tuple[List[List[float]], List[int], List[str]]:
     return X, y, race_ids
 
 
-def train(min_races: int, test_ratio: float) -> int:
+# 人気系特徴量 (オッズ + 単勝人気 + その関連) のセット。
+# --no-pop モードで -1.0 にマスクすることで「人気を見ない second model」を作る。
+# primary (人気込) と nopop (人気抜き) の予測差分が大きい馬 = 市場が見落としてる候補。
+POPULARITY_FEATURE_NAMES = {
+    "win_odds", "log_odds", "implied_prob",
+    "popularity", "log_popularity", "odds_rank_in_race", "popularity_z",
+    "popularity_x_jockey", "popularity_x_course", "implied_x_jockey_in3",
+    "horsewin_x_popularity", "prevfinish_x_popularity",
+}
+
+
+def _mask_pop_columns(X_arr, np):
+    """X 配列の人気系特徴量 column を -1.0 で上書きしたコピーを返す。"""
+    pop_idx = [i for i, n in enumerate(FEATURE_NAMES) if n in POPULARITY_FEATURE_NAMES]
+    out = X_arr.copy()
+    for i in pop_idx:
+        out[:, i] = -1.0
+    return out, pop_idx
+
+
+def train(min_races: int, test_ratio: float, no_pop: bool = False) -> int:
     np = _try_import_numpy()
     lgb = _try_import_lightgbm()
     sk_ens = _try_import_sklearn()
@@ -429,6 +449,18 @@ def train(min_races: int, test_ratio: float) -> int:
 
     X_arr = np.array(X, dtype="float64")
     y_arr = np.array(y, dtype="int32")
+
+    # 人気を見ないモデル: 人気系特徴量を -1 にマスク
+    pop_masked_idx = []
+    if no_pop:
+        X_arr, pop_masked_idx = _mask_pop_columns(X_arr, np)
+        # モデルパスを別名にする (primary と並存させる)
+        model_path = CACHE / "model_lgbm_nopop.txt"
+        meta_path  = CACHE / "model_lgbm_nopop_meta.json"
+        print(f"[info] --no-pop モード: 人気系 {len(pop_masked_idx)} 特徴量を -1 でマスク", flush=True)
+    else:
+        model_path = MODEL_PATH
+        meta_path  = META_PATH
 
     # 時系列分割: race_id は 18 桁 (YYYYMMDD...) なので昇順ソートで時系列順になる
     # 最新 test_ratio (デフォルト 20%) を test に。
@@ -495,14 +527,14 @@ def train(min_races: int, test_ratio: float) -> int:
                 tmp_path = tf.name
             try:
                 booster.save_model(tmp_path)
-                shutil.copy(tmp_path, str(MODEL_PATH))
+                shutil.copy(tmp_path, str(model_path))
             finally:
                 try: os.unlink(tmp_path)
                 except Exception: pass
             # Node 側で評価できるよう JSON ダンプも保存
             try:
                 model_json = booster.dump_model()
-                json_path = MODEL_PATH.with_suffix(".json")
+                json_path = model_path.with_suffix(".json")
                 json_path.write_text(
                     json.dumps(model_json, ensure_ascii=False),
                     encoding="utf-8"
@@ -517,14 +549,15 @@ def train(min_races: int, test_ratio: float) -> int:
             importance = dict(zip(FEATURE_NAMES, [int(v) for v in booster.feature_importance(importance_type="gain")]))
             meta.update({
                 "model": "lightgbm",
+                "no_pop": no_pop,
                 "params": params,
                 "metrics": {"auc": auc, "logloss": logloss},
                 "feature_importance": importance,
-                "model_path": str(MODEL_PATH.relative_to(ROOT)),
+                "model_path": str(model_path.relative_to(ROOT)),
             })
-            META_PATH.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
-            print(f"[OK] LightGBM 訓練完了 — AUC={auc:.3f} logloss={logloss:.4f}", flush=True)
-            print(f"     model: {MODEL_PATH.name}", flush=True)
+            meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+            print(f"[OK] LightGBM 訓練完了 — AUC={auc:.3f} logloss={logloss:.4f}{' (no-pop)' if no_pop else ''}", flush=True)
+            print(f"     model: {model_path.name}", flush=True)
             print(f"     重要度 top-5:", flush=True)
             for k, v in sorted(importance.items(), key=lambda x: -x[1])[:5]:
                 print(f"       {k}: {v}", flush=True)
@@ -543,16 +576,17 @@ def train(min_races: int, test_ratio: float) -> int:
             logloss = _logloss(yte, preds, np)
             # モデル保存 (pickle)
             import pickle
-            with open(MODEL_PATH.with_suffix(".pkl"), "wb") as f:
+            with open(model_path.with_suffix(".pkl"), "wb") as f:
                 pickle.dump(clf, f)
             importance = dict(zip(FEATURE_NAMES, [float(v) for v in clf.feature_importances_]))
             meta.update({
                 "model": "sklearn_gbdt",
+                "no_pop": no_pop,
                 "metrics": {"auc": auc, "logloss": logloss},
                 "feature_importance": importance,
-                "model_path": str(MODEL_PATH.with_suffix(".pkl").relative_to(ROOT)),
+                "model_path": str(model_path.with_suffix(".pkl").relative_to(ROOT)),
             })
-            META_PATH.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+            meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
             print(f"[OK] sklearn GBDT 訓練完了 — AUC={auc:.3f} logloss={logloss:.4f}", flush=True)
             return 0
         except Exception as e:
@@ -602,8 +636,11 @@ def main():
                     help="最低必要なレース数 (デフォルト 20)")
     ap.add_argument("--test-ratio", type=float, default=0.2,
                     help="テスト分割比率 (デフォルト 0.2 = 20%)")
+    ap.add_argument("--no-pop", action="store_true",
+                    help="人気系特徴量 (オッズ・人気・人気交差項) を -1 でマスクして学習。"
+                         "model_lgbm_nopop.txt として出力。primary との差分で「市場が見落としてる馬」を発見する用。")
     args = ap.parse_args()
-    return train(args.min_races, args.test_ratio)
+    return train(args.min_races, args.test_ratio, no_pop=args.no_pop)
 
 
 if __name__ == "__main__":

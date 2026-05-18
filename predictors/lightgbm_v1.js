@@ -18,6 +18,7 @@ const VERSION = "1.0.0";
 
 const PREDICTIONS_DIR = path.join(__dirname, "..", "data", "jv_cache", "predictions");
 const META_PATH = path.join(__dirname, "..", "data", "jv_cache", "model_lgbm_meta.json");
+const META_NOPOP_PATH = path.join(__dirname, "..", "data", "jv_cache", "model_lgbm_nopop_meta.json");
 const BACKTEST_PATH = path.join(__dirname, "..", "data", "jv_cache", "backtest_result.json");
 
 function _readJsonSafe(p) {
@@ -31,6 +32,10 @@ function _readJsonSafe(p) {
 
 function loadModelMeta() {
   return _readJsonSafe(META_PATH);
+}
+
+function loadModelMetaNopop() {
+  return _readJsonSafe(META_NOPOP_PATH);
 }
 
 function loadBacktest() {
@@ -75,6 +80,7 @@ module.exports = {
   version: VERSION,
   predict,
   loadModelMeta,
+  loadModelMetaNopop,
   loadBacktest,
   loadPrediction,
 };

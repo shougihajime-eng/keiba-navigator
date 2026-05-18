@@ -1351,26 +1351,37 @@
     if (!m || !m.ok || !m.modelAvailable) { root.hidden = true; return; }
     root.hidden = false;
     const STRAT_LABELS = {
-      tan_top1_always:     "単勝 本命",
-      tan_top1_ev100:      "単勝 EV1.0+",
-      tan_top1_ev110:      "単勝 EV1.1+",
-      tan_top1_ev130:      "単勝 EV1.3+ (絶好機のみ)",
-      tan_top1_value3:     "単勝 価値投資 (人気 3 番以下)",
-      tan_top1_kelly:      "単勝 ケリー基準",
-      fuku_top1_always:    "複勝 本命",
-      fuku_top1_ev090:     "複勝 EV0.9+",
-      fuku_top1_ev110:     "複勝 EV1.1+",
-      fuku_top1_value3:    "複勝 価値投資",
-      uren_top1_top2:      "馬連 本命-対抗",
-      uren_value3_x_pop1:  "馬連 価値 × 人気1番",
-      wide_box_top3:       "ワイド 本命-対抗-3着候補 3点",
-      wide_value3_x_pop1:  "ワイド 価値 × 人気1番",
+      tan_top1_always:        "単勝 本命",
+      tan_top1_ev100:         "単勝 EV1.0+",
+      tan_top1_ev110:         "単勝 EV1.1+",
+      tan_top1_ev130:         "単勝 EV1.3+ (絶好機のみ)",
+      tan_top1_value3:        "単勝 価値投資 (人気 3 番以下)",
+      tan_top1_kelly:         "単勝 ケリー基準",
+      fuku_top1_always:       "複勝 本命",
+      fuku_top1_ev090:        "複勝 EV0.9+",
+      fuku_top1_ev110:        "複勝 EV1.1+",
+      fuku_top1_value3:       "複勝 価値投資",
+      uren_top1_top2:         "馬連 本命-対抗",
+      uren_value3_x_pop1:     "馬連 価値 × 人気1番",
+      wide_box_top3:          "ワイド 本命-対抗-3着候補 3点",
+      wide_value3_x_pop1:     "ワイド 価値 × 人気1番",
+      // Wave18: nopop モデルとの組み合わせ
+      tan_nopop_top1:         "単勝 実力派モデル本命",
+      fuku_nopop_top1:        "複勝 実力派モデル本命",
+      tan_nopop_undervalued:  "単勝 実力派本命 × 人気 3 番以下",
+      fuku_nopop_undervalued: "複勝 実力派本命 × 人気 3 番以下",
+      tan_value_signal_005:   "単勝 価値シグナル+0.05",
+      fuku_value_signal_003:  "複勝 価値シグナル+0.03",
+      uren_primary_x_nopop:   "馬連 市場本命 × 実力派本命",
+      wide_primary_x_nopop:   "ワイド 市場本命 × 実力派本命",
+      fuku_ev_nopop_110:      "複勝 実力派EV1.1+",
     };
     const auc = m.model && m.model.auc;
+    const aucNopop = m.modelNopop && m.modelNopop.auc;
     const bt  = m.backtest || {};
     const bestRoi = bt.bestRoiPct;
     const stratsActive = (bt.strategies || []).filter((s) => s.bets > 0);
-    const stratsTop = stratsActive.slice(0, 5);
+    const stratsTop = stratsActive.slice(0, 7);
     const pillCls = bestRoi >= 100 ? "is-go" : bestRoi >= 90 ? "is-warn" : "is-mute";
     root.innerHTML = `
       <div class="ml-head">
@@ -1380,12 +1391,17 @@
       </div>
       <div class="ml-grid">
         <div class="ml-cell">
-          <div class="ml-cell-label">AI 精度 (AUC)</div>
+          <div class="ml-cell-label">AI 精度 (人気込)</div>
           <div class="ml-cell-value">${auc != null ? (auc * 100).toFixed(1) + "<small>%</small>" : "—"}</div>
-          <div class="ml-cell-sub">学習 ${(m.model?.samplesTrain ?? 0).toLocaleString()} 行 / 検証 ${(m.model?.samplesTest ?? 0).toLocaleString()} 行</div>
+          <div class="ml-cell-sub">学習 ${(m.model?.samplesTrain ?? 0).toLocaleString()} 行</div>
         </div>
         <div class="ml-cell">
-          <div class="ml-cell-label">過去 ${bt.testRaces ?? 0} R で実証</div>
+          <div class="ml-cell-label">実力派 AI 精度</div>
+          <div class="ml-cell-value">${aucNopop != null ? (aucNopop * 100).toFixed(1) + "<small>%</small>" : "—"}</div>
+          <div class="ml-cell-sub">${aucNopop != null ? "人気を見ないモデル" : "未学習"}</div>
+        </div>
+        <div class="ml-cell">
+          <div class="ml-cell-label">過去 ${bt.testRaces ?? 0} R 検証</div>
           <div class="ml-cell-value">${bestRoi != null ? bestRoi.toFixed(1) + "<small>%</small>" : "—"}</div>
           <div class="ml-cell-sub">${STRAT_LABELS[bt.bestStrategy] || bt.bestStrategy || "—"}</div>
         </div>

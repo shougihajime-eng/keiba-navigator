@@ -92,25 +92,30 @@ async function serve(req, res) {
       try {
         const lgbm = require("./predictors/lightgbm_v1");
         const meta = lgbm.loadModelMeta();
+        const metaNopop = lgbm.loadModelMetaNopop();
         const backtest = lgbm.loadBacktest();
+        const buildModelView = (m) => m ? {
+          trainedAt: m.trained_at,
+          samplesTotal: m.samples_total,
+          racesTotal: m.races_total,
+          samplesTrain: m.samples_train,
+          samplesTest: m.samples_test,
+          auc: m.metrics ? m.metrics.auc : null,
+          logloss: m.metrics ? m.metrics.logloss : null,
+          noPop: !!m.no_pop,
+          featureImportanceTop: m.feature_importance
+            ? Object.entries(m.feature_importance).sort((a,b) => b[1]-a[1]).slice(0,8)
+                .map(([name, gain]) => ({ name, gain }))
+            : null,
+        } : null;
         return jsonRes(res, 200, {
           ok: true,
           fetchedAt: new Date().toISOString(),
           modelAvailable: !!meta,
+          nopopAvailable: !!metaNopop,
           backtestAvailable: !!backtest,
-          model: meta ? {
-            trainedAt: meta.trained_at,
-            samplesTotal: meta.samples_total,
-            racesTotal: meta.races_total,
-            samplesTrain: meta.samples_train,
-            samplesTest: meta.samples_test,
-            auc: meta.metrics ? meta.metrics.auc : null,
-            logloss: meta.metrics ? meta.metrics.logloss : null,
-            featureImportanceTop: meta.feature_importance
-              ? Object.entries(meta.feature_importance).sort((a,b) => b[1]-a[1]).slice(0,8)
-                  .map(([name, gain]) => ({ name, gain }))
-              : null,
-          } : null,
+          model: buildModelView(meta),
+          modelNopop: buildModelView(metaNopop),
           backtest: backtest ? {
             backtestedAt: backtest.backtested_at,
             testRaces: backtest.test_races,

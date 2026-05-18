@@ -7,6 +7,45 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🎯 Wave18 (2026-05-18 23:30〜・「全部やる」指示への応答)** — ユーザー「全部やってください全部」(3 段ロードマップ全部) に応えて:
+  - **🧬 人気を見ない「実力派モデル」を新規学習** (`train_lightgbm.py --no-pop`):
+    - 人気系特徴量 12 個 (`win_odds / log_odds / implied_prob / popularity / log_popularity / odds_rank_in_race / popularity_z / popularity_x_jockey / popularity_x_course / implied_x_jockey_in3 / horsewin_x_popularity / prevfinish_x_popularity`) を `-1.0` でマスクして学習
+    - 出力: `model_lgbm_nopop.txt` + `model_lgbm_nopop.json` + `model_lgbm_nopop_meta.json`
+    - 結果: **AUC = 0.758** (人気込 0.806 から 5pt 減・実用上 OK)
+    - トップ特徴量が `jockey_in_three_rate` / `horse_avg_finish` / `horse_prev_finish` / `trainer_in_three_rate` / `horse_in3_rate` に逆転 (= 実力派の見解)
+  - **🔮 predict_lightgbm を 2 モデル合成に拡張**: primary (人気込) と nopop (実力派) を同時に推論し、`value_signal = nopop_prob - primary_prob` を算出。正なら「実力派モデルが市場より高評価」= 過小評価候補
+  - **🎰 9 つの value pick 戦略を追加** (`validate_lightgbm.py` 23 戦略へ):
+    - `tan/fuku_nopop_top1`: 実力派本命を単/複
+    - `tan/fuku_nopop_undervalued`: 実力派本命が人気 3 番以下
+    - `tan_value_signal_005` / `fuku_value_signal_003`: value_signal 大きい馬を狙う
+    - `uren_primary_x_nopop` / `wide_primary_x_nopop`: 市場本命 × 実力派本命の馬連/ワイド
+    - `fuku_ev_nopop_110`: 実力派 EV ≥ 1.10
+  - **📊 23 戦略の実証結果 (test 690 R)**:
+    | 戦略 | 件数 | 回収率 | 的中率 |
+    |------|------|--------|--------|
+    | 馬連 本命-対抗 (=Wave17 best) | 690 | **89.3%** | 11.9% |
+    | 複勝 本命 (人気込) | 690 | 82.5% | 59.3% |
+    | 複勝 実力派本命 | 690 | 82.0% | 53.6% |
+    | ワイド 3 点 | 690 | 80.1% | 48.8% |
+    | ワイド 市場本命×実力派本命 | 365 | 76.1% | 18.9% |
+    | 複勝 実力派×人気3番以下 | 214 | 75.8% | 34.1% |
+    | 複勝 価値シグナル+0.03 | 631 | 75.6% | 42.8% |
+    | 単勝 本命 | 690 | 74.4% | 27.7% |
+    | EV 閾値型 / 価値投資型 | 0〜14 件発火 | (発火少) |
+    - 100% 越えはまだ届かず。理由: 「人気を見ない」モデルでも結局「騎手・馬の通算実績」を使うので実力馬 = 人気馬になりやすい
+  - **🖥 JV-Link 設定 GUI を Win32 SendMessage で自動操作**:
+    - 「状態を取得する」ボタン (id=261) を `BM_CLICK (0x00F5)` で発火
+    - UIA は古い Win32 ダイアログ (#32770) に対応せず → `MainWindowHandle` + `EnumChildWindows` + `GetDlgItem` の Win32 直接呼び出しで実装
+    - 結果: 試用期間ステータス (id=234) のテキストが空になった = 何かしら状態更新が走った
+    - その後 `JVOpen option=4 fromtime=20140101` 再挑戦 → background PID=51404 で持続 (前回 rc=-501 即終了より進捗)
+    - 取得結果は翌朝 build_all で評価予定
+  - **🔌 アプリ統合 強化**:
+    - `predictors/lightgbm_v1.js` に `loadModelMetaNopop()` 追加
+    - `/api/ml-status` に `modelNopop` (nopop AUC + 重要度) を追加
+    - `app.js renderMlStatus` を 3 セル化: 「AI 精度 (人気込)」「実力派 AI 精度」「過去 N R 検証 ベスト」
+    - 23 戦略の日本語ラベルを追加 (tan_nopop_top1 = 「単勝 実力派モデル本命」など)
+    - `styles.css .ml-grid` を 3 列 (スマホ < 480px は 1 列)
+  - **テスト**: smoke 126/0 / `/api/ml-status` 200 (nopopAvailable=true, primary AUC 0.806, nopop AUC 0.758, 23 戦略)
 - **🧠 Wave17 (2026-05-18 夜・「世界最高クラスの予想 AI」へ踏み出す)** — ユーザー指示「絶対当たる自信があるか・無いなら何時間かけてでも修正・最高のものを作ろう」に応えて、機械学習モデル一式を完成:
   - **🔧 raw 800MB → races/results を再展開** (`jv_bridge/build_all.py` 実行): 過去 raw データ (2025-2026 約 8 ヶ月分) から RA 3606 / SE 49238 / HR 3521 / O1-O6 各 3552 をパース → races/ 3492 件・results/ 3449 件で書き出し (新フィールド入り)
   - **⚠ 時系列リーク 2 件を発見・排除**:

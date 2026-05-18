@@ -55,36 +55,55 @@ MODEL_JSON = CACHE / "model_lgbm.json"
 MODEL_PKL = CACHE / "model_lgbm.pkl"
 META_PATH = CACHE / "model_lgbm_meta.json"
 PREDICTIONS_DIR = CACHE / "predictions"
+# Wave18: 人気を見ない second model (実力派の見解を持つ)
+MODEL_NOPOP_TXT = CACHE / "model_lgbm_nopop.txt"
+MODEL_NOPOP_JSON = CACHE / "model_lgbm_nopop.json"
+META_NOPOP_PATH = CACHE / "model_lgbm_nopop_meta.json"
 
 # 同じ特徴量抽出を使う (train_lightgbm から import)
 sys.path.insert(0, str(HERE.parent))
 from jv_bridge.train_lightgbm import (  # noqa: E402
-    FEATURE_NAMES, extract_horse_features, _race_context,
+    FEATURE_NAMES, POPULARITY_FEATURE_NAMES, extract_horse_features, _race_context,
 )
 
+# 人気系特徴量の index — nopop 推論時に -1 でマスクするため
+_POP_IDX = [i for i, n in enumerate(FEATURE_NAMES) if n in POPULARITY_FEATURE_NAMES]
 
-def _load_model():
-    """利用可能なモデルをロードして (model, kind) を返す。
+
+def _load_model_at(txt_path, json_path):
+    """指定パスのモデルをロードして (model, kind) を返す。
     LightGBM Windows ビルドは非 ASCII パス (例: 「競馬」) を扱えない既知の制約があるので、
     一旦 temp に copy して LightGBM Booster に渡す。
     """
-    # 1. LightGBM text 形式 (temp 経由で日本語パス回避)
-    if MODEL_TXT.exists():
+    if txt_path.exists():
         try:
             import lightgbm as lgb  # type: ignore
             import tempfile, shutil
             with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as tf:
                 tmp_path = tf.name
             try:
-                shutil.copy(str(MODEL_TXT), tmp_path)
+                shutil.copy(str(txt_path), tmp_path)
                 booster = lgb.Booster(model_file=tmp_path)
                 return booster, "lightgbm"
             finally:
                 try: os.unlink(tmp_path)
                 except Exception: pass
         except Exception as e:
-            print(f"[warn] LightGBM model 読込失敗: {e}", flush=True)
-    # 2. sklearn pickle
+            print(f"[warn] LightGBM model 読込失敗 {txt_path.name}: {e}", flush=True)
+    if json_path.exists():
+        try:
+            data = json.loads(json_path.read_text(encoding="utf-8"))
+            return data, "lightgbm_json"
+        except Exception as e:
+            print(f"[warn] LightGBM JSON 読込失敗 {json_path.name}: {e}", flush=True)
+    return None, None
+
+
+def _load_model():
+    """primary (人気込) を返す。"""
+    model, kind = _load_model_at(MODEL_TXT, MODEL_JSON)
+    if model is not None:
+        return model, kind
     if MODEL_PKL.exists():
         try:
             import pickle
@@ -92,14 +111,30 @@ def _load_model():
                 return pickle.load(f), "sklearn"
         except Exception as e:
             print(f"[warn] sklearn model 読込失敗: {e}", flush=True)
-    # 3. JSON dump (pure-python fallback)
-    if MODEL_JSON.exists():
-        try:
-            data = json.loads(MODEL_JSON.read_text(encoding="utf-8"))
-            return data, "lightgbm_json"
-        except Exception as e:
-            print(f"[warn] LightGBM JSON dump 読込失敗: {e}", flush=True)
     return None, None
+
+
+def _load_model_nopop():
+    """secondary (人気抜き・実力派) を返す。"""
+    return _load_model_at(MODEL_NOPOP_TXT, MODEL_NOPOP_JSON)
+
+
+def _mask_pop_features(X, np):
+    """X (2D array) の人気系 column を -1 で上書きしたコピーを返す。"""
+    if np is None or not _POP_IDX:
+        return X
+    if hasattr(X, "copy"):
+        out = X.copy()
+    else:
+        out = [list(row) for row in X]
+        for row in out:
+            for i in _POP_IDX:
+                if i < len(row):
+                    row[i] = -1.0
+        return out
+    for i in _POP_IDX:
+        out[:, i] = -1.0
+    return out
 
 
 def _predict_one(model, kind, X):
@@ -201,7 +236,12 @@ def _confidence_from_completeness(race: Dict[str, Any], features_index: Dict[str
 
 def predict_race(race: Dict[str, Any],
                  model, kind,
-                 features_index: Dict[str, Any]) -> Dict[str, Any]:
+                 features_index: Dict[str, Any],
+                 model_nopop=None, kind_nopop=None) -> Dict[str, Any]:
+    """primary (人気込) と secondary (人気抜き) の 2 モデルで推論し、
+    両者の確率差を value_signal として返す。
+    value_signal > 0: 実力派モデルがこの馬を市場より高く評価 (= 市場の見落とし候補)
+    """
     horses = race.get("horses") or []
     if not horses:
         return {"ok": False, "reason": "no_horses", "race_id": race.get("race_id")}
@@ -212,6 +252,7 @@ def predict_race(race: Dict[str, Any],
         import numpy as np  # type: ignore
         X_arr = np.array(X, dtype="float64")
     except Exception:
+        np = None
         X_arr = X  # JSON fallback では plain list でも OK
     try:
         raw = list(_predict_one(model, kind, X_arr))
@@ -220,25 +261,59 @@ def predict_race(race: Dict[str, Any],
                 "race_id": race.get("race_id")}
     raw = [float(p) for p in raw]
     normalized = _normalize_softmax(raw)
-    # rank: 確率高い順
+
+    # secondary model (人気抜き) の推論
+    raw_nopop = None
+    nopop_normalized = None
+    if model_nopop is not None and np is not None:
+        try:
+            X_nopop = _mask_pop_features(X_arr, np)
+            raw_nopop = [float(p) for p in _predict_one(model_nopop, kind_nopop, X_nopop)]
+            nopop_normalized = _normalize_softmax(raw_nopop)
+        except Exception as e:
+            print(f"[warn] nopop 推論失敗: {e}", flush=True)
+
+    # rank: 確率高い順 (primary)
     indexed = sorted(enumerate(normalized), key=lambda x: -x[1])
     ranks = [0] * len(normalized)
     for rank, (i, _) in enumerate(indexed, 1):
         ranks[i] = rank
+
+    # nopop rank (実力派の本命順)
+    ranks_nopop = [0] * len(horses)
+    if nopop_normalized is not None:
+        idx_nopop = sorted(enumerate(nopop_normalized), key=lambda x: -x[1])
+        for rank, (i, _) in enumerate(idx_nopop, 1):
+            ranks_nopop[i] = rank
 
     pred_horses = []
     for i, h in enumerate(horses):
         odds = h.get("win_odds")
         win_prob = normalized[i]
         ev = (win_prob * float(odds)) if (odds and float(odds) > 0) else None
+        # value_signal = nopop_prob - primary_prob
+        #   正なら実力派モデルが市場より評価 (過小評価候補)
+        #   負なら逆 (人気馬の AI も同調)
+        value_signal = None
+        nopop_prob = None
+        ev_nopop = None
+        if nopop_normalized is not None:
+            nopop_prob = nopop_normalized[i]
+            value_signal = nopop_prob - win_prob
+            if odds and float(odds) > 0:
+                ev_nopop = nopop_prob * float(odds)
         pred_horses.append({
             "number": h.get("number"),
             "name": h.get("name"),
             "raw_win_prob": round(raw[i], 6),
             "win_prob": round(win_prob, 6),
+            "nopop_prob": round(nopop_prob, 6) if nopop_prob is not None else None,
+            "value_signal": round(value_signal, 6) if value_signal is not None else None,
             "rank": ranks[i],
+            "rank_nopop": ranks_nopop[i] if nopop_normalized is not None else None,
             "odds": odds,
             "ev": round(ev, 4) if ev is not None else None,
+            "ev_nopop": round(ev_nopop, 4) if ev_nopop is not None else None,
             "popularity": h.get("popularity"),
         })
     pred_horses.sort(key=lambda x: x["rank"])
@@ -250,13 +325,20 @@ def predict_race(race: Dict[str, Any],
             meta = json.loads(META_PATH.read_text(encoding="utf-8"))
         except Exception:
             pass
+    meta_nopop = {}
+    if META_NOPOP_PATH.exists():
+        try:
+            meta_nopop = json.loads(META_NOPOP_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            pass
     return {
         "ok": True,
         "race_id": race.get("race_id"),
         "predicted_at": datetime.now(timezone.utc).isoformat(),
-        "model_version": "lgbm_v1",
+        "model_version": "lgbm_v2_ensemble" if nopop_normalized is not None else "lgbm_v1",
         "model_trained_at": meta.get("trained_at"),
         "model_auc": (meta.get("metrics") or {}).get("auc"),
+        "model_nopop_auc": (meta_nopop.get("metrics") or {}).get("auc"),
         "horses": pred_horses,
         "confidence": round(confidence, 3),
     }
@@ -273,7 +355,13 @@ def main():
     if model is None:
         print("[NG] モデルが見つかりません。train_lightgbm.py を実行してください。", flush=True)
         return 2
-    print(f"[info] model kind: {kind}", flush=True)
+    print(f"[info] primary model kind: {kind}", flush=True)
+    # secondary: 人気を見ない実力派モデル (任意)
+    model_nopop, kind_nopop = _load_model_nopop()
+    if model_nopop is not None:
+        print(f"[info] secondary (nopop) model: {kind_nopop} — value_signal 計算有効", flush=True)
+    else:
+        print(f"[info] secondary (nopop) model なし — train_lightgbm.py --no-pop で生成可", flush=True)
 
     features_index = _load_features_index()
     PREDICTIONS_DIR.mkdir(parents=True, exist_ok=True)
@@ -284,13 +372,14 @@ def main():
             print(f"[NG] race file not found: {path}", flush=True)
             return 3
         race = json.loads(path.read_text(encoding="utf-8"))
-        out = predict_race(race, model, kind, features_index)
+        out = predict_race(race, model, kind, features_index, model_nopop, kind_nopop)
         out_path = PREDICTIONS_DIR / f"{args.race_id}.json"
         out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[OK] {args.race_id} → {out_path.name}", flush=True)
         # 簡易サマリ
         for h in (out.get("horses") or [])[:5]:
-            print(f"  {h['rank']}. #{h['number']} {h.get('name','')} prob={h['win_prob']:.3f} ev={h.get('ev')}", flush=True)
+            print(f"  {h['rank']}. #{h['number']} {h.get('name','')} prob={h['win_prob']:.3f} "
+                  f"ev={h.get('ev')} value={h.get('value_signal')}", flush=True)
         return 0
 
     if args.all_today:
@@ -314,7 +403,7 @@ def main():
         except Exception:
             continue
         rid = race.get("race_id") or race_path.stem
-        out = predict_race(race, model, kind, features_index)
+        out = predict_race(race, model, kind, features_index, model_nopop, kind_nopop)
         if not out.get("ok"):
             print(f"[skip] {rid} reason={out.get('reason')}", flush=True)
             continue

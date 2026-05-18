@@ -23,6 +23,9 @@ data/jv_cache/*
 # 例外: 訓練済モデル + メタは Vercel デプロイに乗せる (推論で必要)
 !data/jv_cache/model_lgbm.json
 !data/jv_cache/model_lgbm_meta.json
+# Wave18: 人気を見ない実力派モデル (value pick 戦略で primary との差分を取る)
+!data/jv_cache/model_lgbm_nopop.json
+!data/jv_cache/model_lgbm_nopop_meta.json
 # 例外: 集計済特徴量 + 馬マスタも乗せる (rankings / UI から参照)
 !data/jv_cache/features.json
 !data/jv_cache/horse_master.json

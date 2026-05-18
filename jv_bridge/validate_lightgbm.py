@@ -58,7 +58,10 @@ sys.path.insert(0, str(HERE.parent))
 from jv_bridge.train_lightgbm import (  # noqa: E402
     FEATURE_NAMES, extract_horse_features, _race_context,
 )
-from jv_bridge.predict_lightgbm import _load_model, _predict_one, _normalize_softmax  # noqa: E402
+from jv_bridge.predict_lightgbm import (  # noqa: E402
+    _load_model, _load_model_nopop, _predict_one,
+    _normalize_softmax, _mask_pop_features,
+)
 
 UNIT = 100  # 1 ベット = 100 円
 
@@ -300,26 +303,120 @@ def _build_strategies() -> List[Strategy]:
         pay = _payout_fuku(payouts, top["number"])
         return UNIT, pay, pay > 0
 
+    # === Wave18: nopop モデル (実力派) を使った value pick 戦略 ===
+    def tan_nopop_top1_always(horses, payouts):
+        """実力派モデルの本命を単勝で買う"""
+        np_ranked = _ranked_by_nopop(horses)
+        if not np_ranked: return 0, 0, False
+        top = np_ranked[0]
+        pay = _payout_tan(payouts, top["number"])
+        return UNIT, pay, pay > 0
+
+    def fuku_nopop_top1_always(horses, payouts):
+        np_ranked = _ranked_by_nopop(horses)
+        if not np_ranked: return 0, 0, False
+        top = np_ranked[0]
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+
+    def tan_nopop_top1_undervalued(horses, payouts):
+        """実力派モデル本命が単勝 人気 3 番以下 = 市場が見落とし"""
+        np_ranked = _ranked_by_nopop(horses)
+        if not np_ranked: return 0, 0, False
+        top = np_ranked[0]
+        pop = top.get("popularity")
+        if not (isinstance(pop, int) and pop >= 3): return 0, 0, False
+        pay = _payout_tan(payouts, top["number"])
+        return UNIT, pay, pay > 0
+
+    def fuku_nopop_top1_undervalued(horses, payouts):
+        np_ranked = _ranked_by_nopop(horses)
+        if not np_ranked: return 0, 0, False
+        top = np_ranked[0]
+        pop = top.get("popularity")
+        if not (isinstance(pop, int) and pop >= 3): return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+
+    def tan_value_signal_strong(horses, payouts):
+        """value_signal >= 0.05 が最大の馬を単勝で買う (実力派が市場より大幅評価)"""
+        cands = [h for h in horses if (h.get("value_signal") or 0) >= 0.05]
+        if not cands: return 0, 0, False
+        target = max(cands, key=lambda h: h["value_signal"])
+        pay = _payout_tan(payouts, target["number"])
+        return UNIT, pay, pay > 0
+
+    def fuku_value_signal_strong(horses, payouts):
+        """value_signal >= 0.03 が最大の馬を複勝で買う (実力派が市場より評価高い)"""
+        cands = [h for h in horses if (h.get("value_signal") or 0) >= 0.03]
+        if not cands: return 0, 0, False
+        target = max(cands, key=lambda h: h["value_signal"])
+        pay = _payout_fuku(payouts, target["number"])
+        return UNIT, pay, pay > 0
+
+    def uren_primary_nopop_combo(horses, payouts):
+        """primary top1 (市場本命相当) × nopop top1 (実力派本命) の馬連"""
+        if not horses: return 0, 0, False
+        a = horses[0]["number"]
+        np_ranked = _ranked_by_nopop(horses)
+        if not np_ranked: return 0, 0, False
+        b = np_ranked[0]["number"]
+        if a == b: return 0, 0, False
+        pay = _payout_uren(payouts, a, b)
+        return UNIT, pay, pay > 0
+
+    def wide_primary_nopop_combo(horses, payouts):
+        """primary top1 × nopop top1 のワイド"""
+        if not horses: return 0, 0, False
+        a = horses[0]["number"]
+        np_ranked = _ranked_by_nopop(horses)
+        if not np_ranked: return 0, 0, False
+        b = np_ranked[0]["number"]
+        if a == b: return 0, 0, False
+        pay = _payout_wide(payouts, a, b)
+        return UNIT, pay, pay > 0
+
+    def fuku_ev_nopop_110(horses, payouts):
+        """nopop_prob × オッズ (= EV_nopop) >= 1.10 の最良馬を複勝で買う"""
+        cands = [h for h in horses if (h.get("ev_nopop") or 0) >= 1.10]
+        if not cands: return 0, 0, False
+        target = max(cands, key=lambda h: h["ev_nopop"])
+        pay = _payout_fuku(payouts, target["number"])
+        return UNIT, pay, pay > 0
+
     return [
-        Strategy("tan_top1_always",         tan_top1_always),
-        Strategy("tan_top1_ev100",          tan_top1_ev100),
-        Strategy("tan_top1_ev110",          tan_top1_ev110),
-        Strategy("tan_top1_ev130",          tan_top1_ev130),
-        Strategy("tan_top1_value3",         tan_top1_value3),         # AI 本命 × 人気 3 番以下
-        Strategy("fuku_top1_always",        fuku_top1_always),
-        Strategy("fuku_top1_ev090",         fuku_top1_ev090),
-        Strategy("fuku_top1_ev110",         fuku_top1_ev110),
-        Strategy("fuku_top1_value3",        fuku_top1_value3),
-        Strategy("uren_top1_top2",          uren_top1_top2),
-        Strategy("uren_value3_x_pop1",      uren_top1_value3_with_pop1),  # 万馬券狙い
-        Strategy("wide_box_top3",           wide_box_top3),
-        Strategy("wide_value3_x_pop1",      wide_top1_value3_with_pop1),
-        Strategy("tan_top1_kelly",          tan_top1_kelly),
+        Strategy("tan_top1_always",            tan_top1_always),
+        Strategy("tan_top1_ev100",             tan_top1_ev100),
+        Strategy("tan_top1_ev110",             tan_top1_ev110),
+        Strategy("tan_top1_ev130",             tan_top1_ev130),
+        Strategy("tan_top1_value3",            tan_top1_value3),
+        Strategy("fuku_top1_always",           fuku_top1_always),
+        Strategy("fuku_top1_ev090",            fuku_top1_ev090),
+        Strategy("fuku_top1_ev110",            fuku_top1_ev110),
+        Strategy("fuku_top1_value3",           fuku_top1_value3),
+        Strategy("uren_top1_top2",             uren_top1_top2),
+        Strategy("uren_value3_x_pop1",         uren_top1_value3_with_pop1),
+        Strategy("wide_box_top3",              wide_box_top3),
+        Strategy("wide_value3_x_pop1",         wide_top1_value3_with_pop1),
+        Strategy("tan_top1_kelly",             tan_top1_kelly),
+        # Wave18: nopop value pick
+        Strategy("tan_nopop_top1",             tan_nopop_top1_always),
+        Strategy("fuku_nopop_top1",            fuku_nopop_top1_always),
+        Strategy("tan_nopop_undervalued",      tan_nopop_top1_undervalued),
+        Strategy("fuku_nopop_undervalued",     fuku_nopop_top1_undervalued),
+        Strategy("tan_value_signal_005",       tan_value_signal_strong),
+        Strategy("fuku_value_signal_003",      fuku_value_signal_strong),
+        Strategy("uren_primary_x_nopop",       uren_primary_nopop_combo),
+        Strategy("wide_primary_x_nopop",       wide_primary_nopop_combo),
+        Strategy("fuku_ev_nopop_110",          fuku_ev_nopop_110),
     ]
 
 
-def _predict_horses_for_race(race, model, kind, features_index):
-    """1 レースの全頭を予測して horses_ranked (rank 順) を返す。"""
+def _predict_horses_for_race(race, model, kind, features_index,
+                              model_nopop=None, kind_nopop=None):
+    """1 レースの全頭を予測して horses_ranked (rank 順) を返す。
+    nopop モデルがあれば nopop_prob と value_signal も付ける。
+    """
     horses = race.get("horses") or []
     if not horses:
         return []
@@ -329,24 +426,47 @@ def _predict_horses_for_race(race, model, kind, features_index):
         import numpy as np
         X_arr = np.array(X, dtype="float64")
     except Exception:
+        np = None
         X_arr = X
     raw = list(_predict_one(model, kind, X_arr))
     raw = [float(p) for p in raw]
     normalized = _normalize_softmax(raw)
+
+    nopop_normalized = None
+    if model_nopop is not None and np is not None:
+        try:
+            X_nopop = _mask_pop_features(X_arr, np)
+            raw_n = [float(p) for p in _predict_one(model_nopop, kind_nopop, X_nopop)]
+            nopop_normalized = _normalize_softmax(raw_n)
+        except Exception:
+            pass
 
     ranked = []
     for i, h in enumerate(horses):
         odds = h.get("win_odds")
         win_prob = normalized[i]
         ev = (win_prob * float(odds)) if (odds and float(odds) > 0) else None
+        nopop_prob = nopop_normalized[i] if nopop_normalized is not None else None
+        value_signal = (nopop_prob - win_prob) if nopop_prob is not None else None
+        ev_nopop = (nopop_prob * float(odds)) if (nopop_prob is not None and odds and float(odds) > 0) else None
         ranked.append({
             "number": h.get("number"),
             "win_prob": win_prob,
+            "nopop_prob": nopop_prob,
+            "value_signal": value_signal,
             "odds": odds,
             "ev": ev,
+            "ev_nopop": ev_nopop,
+            "popularity": h.get("popularity"),
         })
     ranked.sort(key=lambda x: -x["win_prob"])
     return ranked
+
+
+def _ranked_by_nopop(ranked):
+    """nopop_prob 降順で並び替えたコピー (実力派の本命順)"""
+    return sorted([h for h in ranked if h.get("nopop_prob") is not None],
+                  key=lambda x: -x["nopop_prob"])
 
 
 def run_backtest(test_ratio: float) -> int:
@@ -354,6 +474,11 @@ def run_backtest(test_ratio: float) -> int:
     if model is None:
         print("[NG] モデル未生成。先に train_lightgbm.py を回してください。", flush=True)
         return 2
+    model_nopop, kind_nopop = _load_model_nopop()
+    if model_nopop is not None:
+        print(f"[info] nopop モデル読込済 ({kind_nopop}) — value pick 戦略が機能", flush=True)
+    else:
+        print(f"[info] nopop モデル未生成 — train_lightgbm.py --no-pop を実行してください", flush=True)
 
     features_index = _load_features_index()
     if not RACES_DIR.exists() or not RESULTS_DIR.exists():
@@ -389,7 +514,8 @@ def run_backtest(test_ratio: float) -> int:
         except Exception:
             continue
         payouts = result.get("payouts") or {}
-        ranked = _predict_horses_for_race(race, model, kind, features_index)
+        ranked = _predict_horses_for_race(race, model, kind, features_index,
+                                          model_nopop, kind_nopop)
         if not ranked:
             continue
         for st in strategies:
