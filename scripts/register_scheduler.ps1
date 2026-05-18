@@ -56,7 +56,8 @@ $slots = @(
     @{ Name = "KeibaNavigator-Morning";   Time = "08:30"; Desc = "朝の出走表 + RT" },
     @{ Name = "KeibaNavigator-Pre";       Time = "11:00"; Desc = "直前オッズ" },
     @{ Name = "KeibaNavigator-Afternoon"; Time = "13:30"; Desc = "発走後オッズ更新" },
-    @{ Name = "KeibaNavigator-Evening";   Time = "16:00"; Desc = "確定オッズ + 払戻" }
+    @{ Name = "KeibaNavigator-Evening";   Time = "16:00"; Desc = "確定オッズ + 払戻" },
+    @{ Name = "KeibaNavigator-Win5PreSell";Time = "18:30"; Desc = "WIN5 発売直前 (土19:30〜発売) の最新出走馬データ取得" }
 )
 
 foreach ($slot in $slots) {
@@ -114,6 +115,7 @@ Write-Host "    08:30  朝の出走表取得"
 Write-Host "    11:00  直前オッズ"
 Write-Host "    13:30  発走後オッズ更新"
 Write-Host "    16:00  確定オッズ + 払戻"
+Write-Host "    18:30  WIN5 発売直前 (土曜 19:30 から発売開始のため)"
 Write-Host ""
 Write-Host "  保険レイヤー:"
 Write-Host "    起動時/ログオン時  4h 以上空きがあれば自動キャッチアップ"

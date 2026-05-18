@@ -123,6 +123,25 @@
     if (!dt) return null;
     return Math.floor((dt.getTime() - Date.now()) / 60000);
   }
+  // 次回 WIN5 開催 (= 次の日曜) の予定情報を返す
+  function nextWin5Schedule() {
+    const now = new Date();
+    const day = now.getDay(); // 0=日, 6=土
+    // 次の日曜まで何日先か (今日が日曜なら 7 日後を「次回」とする)
+    const daysToSun = day === 0 ? 7 : (7 - day);
+    const sun = new Date(now);
+    sun.setDate(now.getDate() + daysToSun);
+    sun.setHours(14, 50, 0, 0);
+    const sat = new Date(sun);
+    sat.setDate(sun.getDate() - 1);
+    const fmt = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+    return {
+      dateLabel: fmt(sun),
+      saturdayLabel: fmt(sat),
+      weekday: "日曜",
+      sunday: sun, saturday: sat,
+    };
+  }
 
   // ─── ティア判定 ─────────────────────────────────────────
   function tierOfRace(race) {
@@ -549,12 +568,28 @@
     body.appendChild(toolbar);
 
     if (!w5.ok) {
+      const next = nextWin5Schedule();
       body.appendChild(el("div", { html: `
-        <p style="text-align:center;color:var(--c-ink-soft);font-size:14px;padding:20px 0">
-          ${escapeHtml(w5.note || "WIN5 対象レース 5 つのデータがまだ揃っていません")}<br>
-          <small>WIN5 は土曜 19:30 から発売開始 (日曜・祝日のレースが対象) です。<br>
-          上のツールバーや戦略カードは試しに触ることができます。</small>
-        </p>
+        <div style="text-align:center;padding:18px 12px">
+          <p style="font-size:14px;color:var(--c-ink-soft);margin:0 0 14px">
+            ${escapeHtml(w5.note || "WIN5 対象レース 5 つのデータがまだ揃っていません")}
+          </p>
+          <div class="reason-box" style="text-align:left;background:rgba(196,181,253,0.12);border-color:rgba(139,92,246,0.30)">
+            <div class="label" style="color:#6d28d9">次回 WIN5 予定</div>
+            <p style="margin:6px 0 0;font-size:15px;font-weight:800;color:var(--c-ink)">
+              ${next.dateLabel} (${next.weekday}) — 14:50〜15:40 ごろの 5 レース
+            </p>
+            <p style="margin:8px 0 0;font-size:12px;color:var(--c-ink-soft);line-height:1.6">
+              ▸ <b>${next.saturdayLabel} (土) 19:30</b> から発売開始<br>
+              ▸ <b>${next.saturdayLabel} (土) 18:30</b> にアプリが翌日の出走馬データを自動取得<br>
+              ▸ <b>${next.dateLabel} (日) 朝 08:30</b> にオッズが入り期待値が確定<br>
+              ▸ 締切は WIN5 第1レースの発走 5 分前
+            </p>
+          </div>
+          <p style="margin:14px 0 0;font-size:12px;color:var(--c-ink-soft)">
+            上のツールバーや戦略カードは試しに触ることができます。
+          </p>
+        </div>
       `}));
     } else {
       body.appendChild(el("div", { class: "sec-title" },
