@@ -48,6 +48,12 @@ module.exports = async (req, res) => {
 
   try {
     if (path === "/status")     return ok(res, buildStatus());
+    if (path === "/recommendations") {
+      // Wave19: 推奨買い目 (fuku_top1_prob_020 = AI 本命の確率 20%+ で複勝 100 円)
+      const rec = lightgbm_v1.loadRecommendations();
+      if (!rec) return ok(res, { ok: false, reason: "no_recommendations" });
+      return ok(res, { ok: true, ...rec });
+    }
     if (path === "/ml-status") {
       // LightGBM の学習メタ + 過去レース実証結果 (回収率)
       const meta = lightgbm_v1.loadModelMeta();

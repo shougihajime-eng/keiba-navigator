@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v32"; // Wave19: 100% 越え戦略 8 個発見 (fuku_top1_prob_020 106%・100 件発火) + UI 推奨セクション
+const CACHE_VERSION = "keiba-nav-v33"; // Wave19.1: 推奨買い目を当日レースに自動適用 (#recommend-mount + recommendations.json)
 const PRECACHE = [
   "/",
   "/index.html",

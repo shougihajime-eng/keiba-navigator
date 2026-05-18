@@ -31,6 +31,7 @@
     win5UserPlan: null, // [k1,k2,k3,k4,k5]
     autostatus: null, // ★Wave16-QA: /api/automation-status の結果。初回描画前は null
     mlStatus: null,   // ★Wave17: /api/ml-status の結果 (LightGBM 学習メタ + 過去レース実証回収率)
+    recommendations: null,  // ★Wave19: /api/recommendations の結果 (100% 越え戦略の今日の推奨レース)
   };
 
   // ─── Util ───────────────────────────────────────────────
@@ -256,12 +257,13 @@
         w5Params.push(`plan=${state.win5UserPlan.join(",")}`);
       }
       const w5Url = "/api/win5" + (w5Params.length ? "?" + w5Params.join("&") : "");
-      const [status, races, win5, autostatus, mlStatus] = await Promise.all([
+      const [status, races, win5, autostatus, mlStatus, recommendations] = await Promise.all([
         api("/api/status"),
         api("/api/races"),
         api(w5Url),
         api("/api/automation-status"),
         api("/api/ml-status"),
+        api("/api/recommendations"),
       ]);
       if (status) state.status = status;
       if (races && races.ok) {
@@ -275,6 +277,7 @@
       if (win5) state.win5 = win5;
       if (autostatus) state.autostatus = autostatus;
       if (mlStatus) state.mlStatus = mlStatus;
+      if (recommendations) state.recommendations = recommendations;
       render();
     } finally {
       state.isRefreshing = false;
@@ -1332,6 +1335,7 @@
       renderLive();
       renderAutostatus();
       renderMlStatus();
+      renderRecommendations();
       renderDecisionCard();
       renderWin5();
       renderAllRaces();
@@ -1505,6 +1509,78 @@
           ? `★ の推奨買い方なら過去データで <b>プラス</b>。ただし完全データではなく 8 ヶ月分での検証なので、今後の運用で安定するか継続観察します。`
           : (bestRoi >= 100 ? "ベスト戦略はプラスを達成。" : "機械的に AI 本命を毎レース買うと回収率 70-90% で負けます。")}
       </p>
+    `;
+  }
+
+  // ─── 描画: 今日の推奨レース (Wave19) ─────────────────────
+  // 100% 越え戦略 fuku_top1_prob_020 = AI 本命の確率 20% 以上で複勝 100 円
+  // recommendations.json から today / recent を抽出して表示。
+  function renderRecommendations() {
+    const root = $("#recommend-mount");
+    if (!root) return;
+    const r = state.recommendations;
+    if (!r || !r.ok) { root.hidden = true; return; }
+    const stats = r.stats || {};
+    const todayList = r.recommendations_today || [];
+    const recentList = (r.recommendations_recent || []).filter(
+      (x) => x.race_date !== r.todayJst,
+    ).slice(0, 8);
+    // 何も該当しないとき (今日もう開催なし or 推奨レースがない) もカード自体は出して、
+    // 「今日は推奨レースなし (見送り推奨)」と明示する
+    root.hidden = false;
+    const fmtHorse = (h) => {
+      const num  = h.number ?? "?";
+      const name = h.name || "(名前未取得)";
+      const prob = h.win_prob != null ? (h.win_prob * 100).toFixed(1) : "—";
+      const odds = h.odds != null ? `${Number(h.odds).toFixed(1)} 倍` : "オッズ未取得";
+      const pop  = h.popularity != null ? ` / 人気 ${h.popularity}` : "";
+      return `${num} ${name}<span class="rec-hmeta">確率 ${prob}% / 単勝 ${odds}${pop}</span>`;
+    };
+    const renderItem = (it) => `
+      <div class="rec-item">
+        <div class="rec-race">
+          <span class="rec-course">${it.course || "—"}</span>
+          ${it.is_g1 ? '<span class="rec-g1">G1</span>' : ""}
+          <span class="rec-race-name">${it.race_name || ""}</span>
+        </div>
+        <div class="rec-horse">${fmtHorse(it.horse || {})}</div>
+        <div class="rec-action">
+          <span class="rec-bet">複勝 100 円</span>
+          <span class="rec-date">${it.race_date}${it.hassou_time ? ` ${it.hassou_time.slice(0,2)}:${it.hassou_time.slice(2,4)}発走` : ""}</span>
+        </div>
+      </div>
+    `;
+    root.innerHTML = `
+      <div class="rec-head">
+        <span class="rec-icon">★</span>
+        <span class="rec-title">100% 越え戦略の自動推奨</span>
+        <span class="rec-pill ${stats.roi_pct >= 100 ? 'is-go' : 'is-mute'}">
+          ${stats.roi_pct ? `過去 ${stats.roi_pct}%` : "—"}
+        </span>
+      </div>
+      <p class="rec-criteria">
+        買い方: <b>${r.criteria?.label || "AI 本命の確率 20% 以上で複勝"}</b>
+        <span class="rec-stats">
+          過去 ${stats.test_races || 0} R で ${stats.fired_count || 0} 件発火・的中率 ${stats.hit_rate_pct || 0}%
+        </span>
+      </p>
+      ${todayList.length > 0 ? `
+        <div class="rec-section">
+          <div class="rec-section-head">今日 (${r.todayJst}) の推奨</div>
+          <div class="rec-list">${todayList.map(renderItem).join("")}</div>
+        </div>
+      ` : `
+        <div class="rec-empty">
+          今日 (${r.todayJst}) は条件を満たすレースが <b>0 件</b> です。<br>
+          「絶対に分からない」レースは <b>見送り</b> が正解です。
+        </div>
+      `}
+      ${recentList.length > 0 ? `
+        <div class="rec-section">
+          <div class="rec-section-head">直近の推奨レース 過去ログ (${recentList.length})</div>
+          <div class="rec-list rec-list-small">${recentList.map(renderItem).join("")}</div>
+        </div>
+      ` : ""}
     `;
   }
 

@@ -33,6 +33,8 @@ data/jv_cache/*
 !data/jv_cache/predictions.json
 # 例外: 回収率実証結果 (UI に正直に表示する用)
 !data/jv_cache/backtest_result.json
+# 例外: 推奨買い目集約 (Wave19・100% 越え戦略の今日のレース)
+!data/jv_cache/recommendations.json
 
 # Editor
 .vscode/

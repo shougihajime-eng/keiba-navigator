@@ -88,6 +88,16 @@ async function serve(req, res) {
         return jsonRes(res, 200, { ok: false, error: e.message });
       }
     }
+    if (p === "/api/recommendations") {
+      try {
+        const lgbm = require("./predictors/lightgbm_v1");
+        const rec = lgbm.loadRecommendations();
+        if (!rec) return jsonRes(res, 200, { ok: false, reason: "no_recommendations" });
+        return jsonRes(res, 200, { ok: true, ...rec });
+      } catch (e) {
+        return jsonRes(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (p === "/api/ml-status") {
       try {
         const lgbm = require("./predictors/lightgbm_v1");
