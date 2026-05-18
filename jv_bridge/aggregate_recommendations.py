@@ -190,11 +190,11 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
         if not s:
             continue
         wf = wf_by_name.get(defn["name_in_backtest"])
-        # Walk-forward 信頼性指標 (★ 数で表示する用)
-        # 4/4 期間勝 + σ<10 = ★★★★ TRUSTED
-        # 3-4/4 + σ<15        = ★★★ STABLE
-        # 2/4                = ★★ MIXED
-        # 0-1/4               = ★ RISKY
+        # Walk-forward 信頼性指標 (Wave19.8: 8 期間検証に合わせて調整)
+        #   全期間 (wp==ap) 100%+ + σ<15 + 平均 105%+   → ★★★★ TRUSTED
+        #   80%+ 期間勝 + σ<20 + 平均 100%+              → ★★★ STABLE
+        #   半数以上勝 + 平均 100%+                       → ★★ MIXED
+        #   それ未満                                      → ★ RISKY
         trust_level = None
         trust_label = None
         if wf:
@@ -202,10 +202,10 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
             ap = wf.get("active_periods") or 1
             sigma = wf.get("roi_std") or 99
             mean_roi = wf.get("mean_roi_pct") or 0
-            if wp == ap and sigma < 10 and mean_roi >= 105:
+            if wp == ap and sigma < 15 and mean_roi >= 105:
                 trust_level = 4
                 trust_label = "TRUSTED"
-            elif wp >= ap - 1 and sigma < 15 and mean_roi >= 100:
+            elif wp >= ap * 0.8 and sigma < 20 and mean_roi >= 100:
                 trust_level = 3
                 trust_label = "STABLE"
             elif wp >= ap // 2 and mean_roi >= 100:

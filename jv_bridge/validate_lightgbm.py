@@ -622,7 +622,67 @@ def _build_strategies() -> List[Strategy]:
         Strategy("combo_big_turf_ultra",       _combo_big_turf_ultra),
         Strategy("combo_big_turf_high_conf",   _combo_big_turf_high_conf),
         Strategy("combo_turf_ultra",           _combo_turf_ultra),
+        # === Wave19.8: TRUSTED 戦略の閾値再最適化 ===
+        # BEST の対抗差を 3-7pt でスイープ (既存 04 のスイートスポット周辺)
+        *[Strategy(f"best_gap_{int(g*100):03d}", _make_best_gap(g))
+          for g in (0.03, 0.04, 0.05, 0.06, 0.07, 0.08)],
+        # SAFE 周辺の精密スイープ (BEST 級・既存 0.20 と 0.22 のさらに細かく)
+        *[Strategy(f"best_prob_only_{int(p*100):03d}", _make_best_prob_only(p))
+          for p in (0.20, 0.21, 0.22, 0.23, 0.24, 0.25)],
+        # BEST に「人気 1-3 番」を AND (= 市場合意も条件に)
+        Strategy("combo_best_pop123",          _combo_best_pop123),
+        # BEST に「対抗差 + 人気 1-3 番」(= TRUSTED 強化)
+        Strategy("combo_trusted_strict",       _combo_trusted_strict),
     ]
+
+
+# === Wave19.8: TRUSTED 系の閾値再最適化 ===
+
+def _make_best_gap(gap):
+    """BEST 形式: 本命確率 22%+ AND 対抗との差 >= gap で複勝"""
+    def fn(horses, payouts):
+        if not horses or len(horses) < 2: return 0, 0, False
+        top = horses[0]
+        if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+        if (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0) < gap: return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+    return fn
+
+
+def _make_best_prob_only(prob):
+    """SAFE 形式: 本命確率 prob+ のみで複勝 (gap 条件なし)"""
+    def fn(horses, payouts):
+        if not horses: return 0, 0, False
+        top = horses[0]
+        if (top.get("win_prob") or 0) < prob: return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+    return fn
+
+
+def _combo_best_pop123(horses, payouts):
+    """BEST 条件 AND 単勝 1-3 番人気 = 市場合意込みで信頼性アップ"""
+    if not horses or len(horses) < 2: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0) < 0.04: return 0, 0, False
+    pop = top.get("popularity")
+    if not (isinstance(pop, int) and pop <= 3): return 0, 0, False
+    pay = _payout_fuku(payouts, top["number"])
+    return UNIT, pay, pay > 0
+
+
+def _combo_trusted_strict(horses, payouts):
+    """超 TRUSTED: BEST + 対抗差 5pt+ + 人気 1-3 番"""
+    if not horses or len(horses) < 2: return 0, 0, False
+    top = horses[0]
+    if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+    if (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0) < 0.05: return 0, 0, False
+    pop = top.get("popularity")
+    if not (isinstance(pop, int) and pop <= 3): return 0, 0, False
+    pay = _payout_fuku(payouts, top["number"])
+    return UNIT, pay, pay > 0
 
 
 # === Wave19.7: BIG + TURF 系の複合戦略 ===

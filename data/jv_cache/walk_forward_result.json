@@ -1,315 +1,347 @@
 {
-  "validated_at": "2026-05-18T23:30:03.509460+00:00",
-  "periods": 5,
+  "validated_at": "2026-05-18T23:36:30.171608+00:00",
+  "periods": 8,
   "total_races": 3449,
-  "period_size": 689,
+  "period_size": 431,
   "period_ranges": [
     {
       "index": 0,
       "race_start": "202505170401050100",
-      "race_end": "202507260402010600",
-      "count": 689
+      "race_end": "202506290201061200",
+      "count": 431
     },
     {
       "index": 1,
-      "race_start": "202507260402010700",
-      "race_end": "202510050504021100",
-      "count": 689
+      "race_start": "202506290302020100",
+      "race_end": "202508100101061100",
+      "count": 431
     },
     {
       "index": 2,
-      "race_start": "202510050504021200",
-      "race_end": "202512200605050400",
-      "count": 689
+      "race_start": "202508100101061200",
+      "race_end": "202509210904071000",
+      "count": 431
     },
     {
       "index": 3,
-      "race_start": "202512200605050500",
-      "race_end": "202603010901040300",
-      "count": 689
+      "race_start": "202509210904071100",
+      "race_end": "202511090804020900",
+      "count": 431
     },
     {
       "index": 4,
-      "race_start": "202603010901040400",
+      "race_start": "202511090804021000",
+      "race_end": "202512270905070800",
+      "count": 431
+    },
+    {
+      "index": 5,
+      "race_start": "202512270905070900",
+      "race_end": "202602141001070100",
+      "count": 431
+    },
+    {
+      "index": 6,
+      "race_start": "202602141001070200",
+      "race_end": "202603290603021200",
+      "count": 431
+    },
+    {
+      "index": 7,
+      "race_start": "202603290701060100",
       "race_end": "202605170803081200",
-      "count": 693
+      "count": 432
     }
   ],
   "strategies": [
     {
-      "name": "combo_big_turf_double_bet",
-      "active_periods": 4,
-      "total_bets": 136,
-      "total_hits": 121,
-      "mean_roi_pct": 115.7,
-      "worst_roi_pct": 78.6,
-      "best_roi_pct": 163.5,
-      "roi_std": 33.7,
-      "win_periods": 2,
+      "name": "combo_best_and_gap",
+      "active_periods": 7,
+      "total_bets": 391,
+      "total_hits": 341,
+      "mean_roi_pct": 112.1,
+      "worst_roi_pct": 102.8,
+      "best_roi_pct": 139.7,
+      "roi_std": 12.1,
+      "win_periods": 7,
       "period_rois": [
-        78.6,
-        90.2,
-        130.5,
-        163.5
+        104.4,
+        104.3,
+        113.9,
+        104.9,
+        114.5,
+        102.8,
+        139.7
       ],
       "period_bets": [
-        59,
-        33,
-        20,
-        24
+        85,
+        86,
+        61,
+        35,
+        49,
+        43,
+        32
       ]
     },
     {
-      "name": "combo_best_and_gap",
-      "active_periods": 4,
-      "total_bets": 346,
-      "total_hits": 304,
-      "mean_roi_pct": 113.6,
-      "worst_roi_pct": 105.1,
-      "best_roi_pct": 123.6,
-      "roi_std": 6.6,
-      "win_periods": 4,
+      "name": "combo_best_pop123",
+      "active_periods": 7,
+      "total_bets": 391,
+      "total_hits": 341,
+      "mean_roi_pct": 112.1,
+      "worst_roi_pct": 102.8,
+      "best_roi_pct": 139.7,
+      "roi_std": 12.1,
+      "win_periods": 7,
       "period_rois": [
-        105.1,
-        113.2,
-        112.6,
-        123.6
+        104.4,
+        104.3,
+        113.9,
+        104.9,
+        114.5,
+        102.8,
+        139.7
       ],
       "period_bets": [
-        133,
         85,
-        72,
-        56
+        86,
+        61,
+        35,
+        49,
+        43,
+        32
       ]
     },
     {
       "name": "best_turf",
-      "active_periods": 4,
-      "total_bets": 213,
-      "total_hits": 183,
-      "mean_roi_pct": 113.4,
-      "worst_roi_pct": 98.8,
-      "best_roi_pct": 137.2,
-      "roi_std": 16.0,
-      "win_periods": 2,
+      "active_periods": 7,
+      "total_bets": 247,
+      "total_hits": 211,
+      "mean_roi_pct": 111.0,
+      "worst_roi_pct": 91.1,
+      "best_roi_pct": 157.3,
+      "roi_std": 21.2,
+      "win_periods": 5,
       "period_rois": [
-        98.8,
-        98.8,
-        118.9,
-        137.2
+        104.2,
+        92.8,
+        100.0,
+        91.1,
+        120.9,
+        110.7,
+        157.3
       ],
       "period_bets": [
-        83,
-        56,
-        35,
-        39
-      ]
-    },
-    {
-      "name": "fuku_top1_prob_022",
-      "active_periods": 4,
-      "total_bets": 419,
-      "total_hits": 357,
-      "mean_roi_pct": 110.1,
-      "worst_roi_pct": 104.7,
-      "best_roi_pct": 116.7,
-      "roi_std": 4.3,
-      "win_periods": 4,
-      "period_rois": [
-        104.7,
-        109.0,
-        116.7,
-        110.1
-      ],
-      "period_bets": [
-        161,
-        109,
-        81,
-        68
-      ]
-    },
-    {
-      "name": "combo_big_turf",
-      "active_periods": 4,
-      "total_bets": 229,
-      "total_hits": 56,
-      "mean_roi_pct": 108.8,
-      "worst_roi_pct": 91.8,
-      "best_roi_pct": 128.6,
-      "roi_std": 13.4,
-      "win_periods": 3,
-      "period_rois": [
-        91.8,
-        111.2,
-        103.5,
-        128.6
-      ],
-      "period_bets": [
-        94,
-        64,
-        34,
-        37
+        66,
+        47,
+        44,
+        18,
+        22,
+        28,
+        22
       ]
     },
     {
       "name": "fuku3_top3_conf50",
-      "active_periods": 4,
-      "total_bets": 323,
-      "total_hits": 73,
-      "mean_roi_pct": 108.5,
-      "worst_roi_pct": 93.5,
-      "best_roi_pct": 139.6,
-      "roi_std": 18.2,
-      "win_periods": 2,
+      "active_periods": 7,
+      "total_bets": 370,
+      "total_hits": 86,
+      "mean_roi_pct": 110.1,
+      "worst_roi_pct": 95.5,
+      "best_roi_pct": 175.9,
+      "roi_std": 27.1,
+      "win_periods": 3,
       "period_rois": [
-        93.5,
-        101.2,
-        99.8,
-        139.6
+        97.5,
+        96.2,
+        101.6,
+        95.5,
+        106.3,
+        97.4,
+        175.9
       ],
       "period_bets": [
-        130,
+        85,
+        84,
+        62,
+        40,
+        35,
+        35,
+        29
+      ]
+    },
+    {
+      "name": "fuku_top1_prob_022",
+      "active_periods": 7,
+      "total_bets": 470,
+      "total_hits": 399,
+      "mean_roi_pct": 108.8,
+      "worst_roi_pct": 99.4,
+      "best_roi_pct": 120.3,
+      "roi_std": 6.9,
+      "win_periods": 6,
+      "period_rois": [
+        104.3,
+        102.8,
+        111.0,
+        107.8,
+        115.7,
+        99.4,
+        120.3
+      ],
+      "period_bets": [
+        97,
+        106,
+        77,
+        46,
+        54,
+        51,
+        39
+      ]
+    },
+    {
+      "name": "best_prob_only_025",
+      "active_periods": 7,
+      "total_bets": 228,
+      "total_hits": 200,
+      "mean_roi_pct": 108.7,
+      "worst_roi_pct": 82.4,
+      "best_roi_pct": 118.8,
+      "roi_std": 12.6,
+      "win_periods": 5,
+      "period_rois": [
+        118.0,
+        97.3,
+        115.1,
+        113.8,
+        118.8,
+        115.2,
+        82.4
+      ],
+      "period_bets": [
+        55,
+        55,
+        35,
+        21,
+        24,
+        21,
+        17
+      ]
+    },
+    {
+      "name": "best_prob_only_023",
+      "active_periods": 7,
+      "total_bets": 384,
+      "total_hits": 336,
+      "mean_roi_pct": 107.0,
+      "worst_roi_pct": 84.2,
+      "best_roi_pct": 118.0,
+      "roi_std": 11.0,
+      "win_periods": 6,
+      "period_rois": [
+        114.1,
+        100.3,
+        113.9,
+        114.3,
+        118.0,
+        103.9,
+        84.2
+      ],
+      "period_bets": [
+        75,
         89,
-        53,
-        51
+        64,
+        37,
+        45,
+        41,
+        33
       ]
     },
     {
       "name": "fuku_top1_prob_020",
-      "active_periods": 4,
-      "total_bets": 630,
-      "total_hits": 522,
-      "mean_roi_pct": 107.4,
-      "worst_roi_pct": 103.3,
-      "best_roi_pct": 111.0,
-      "roi_std": 3.3,
-      "win_periods": 4,
+      "active_periods": 7,
+      "total_bets": 713,
+      "total_hits": 591,
+      "mean_roi_pct": 106.7,
+      "worst_roi_pct": 93.6,
+      "best_roi_pct": 116.8,
+      "roi_std": 7.0,
+      "win_periods": 6,
       "period_rois": [
-        103.3,
-        110.2,
-        111.0,
-        105.1
+        106.3,
+        101.5,
+        112.3,
+        106.8,
+        109.6,
+        93.6,
+        116.8
       ],
       "period_bets": [
-        231,
-        175,
-        121,
-        103
+        145,
+        147,
+        132,
+        74,
+        81,
+        77,
+        57
       ]
     },
     {
-      "name": "combo_turf_ultra",
-      "active_periods": 4,
-      "total_bets": 187,
-      "total_hits": 173,
-      "mean_roi_pct": 101.4,
-      "worst_roi_pct": 79.5,
-      "best_roi_pct": 138.2,
-      "roi_std": 22.7,
-      "win_periods": 2,
+      "name": "combo_trusted_strict",
+      "active_periods": 7,
+      "total_bets": 369,
+      "total_hits": 326,
+      "mean_roi_pct": 105.8,
+      "worst_roi_pct": 96.2,
+      "best_roi_pct": 113.3,
+      "roi_std": 4.8,
+      "win_periods": 6,
       "period_rois": [
-        79.5,
-        86.2,
-        101.6,
-        138.2
+        107.8,
+        108.0,
+        105.8,
+        104.9,
+        113.3,
+        104.4,
+        96.2
       ],
       "period_bets": [
         79,
-        51,
-        26,
-        31
-      ]
-    },
-    {
-      "name": "uren_top1_top2",
-      "active_periods": 4,
-      "total_bets": 2760,
-      "total_hits": 490,
-      "mean_roi_pct": 99.5,
-      "worst_roi_pct": 89.2,
-      "best_roi_pct": 107.3,
-      "roi_std": 6.5,
-      "win_periods": 3,
-      "period_rois": [
-        101.5,
-        100.2,
-        107.3,
-        89.2
-      ],
-      "period_bets": [
-        689,
-        689,
-        689,
-        693
-      ]
-    },
-    {
-      "name": "wide_top3_conf_050",
-      "active_periods": 4,
-      "total_bets": 323,
-      "total_hits": 253,
-      "mean_roi_pct": 99.5,
-      "worst_roi_pct": 81.1,
-      "best_roi_pct": 129.7,
-      "roi_std": 18.2,
-      "win_periods": 1,
-      "period_rois": [
-        81.1,
-        91.8,
-        95.6,
-        129.7
-      ],
-      "period_bets": [
-        130,
-        89,
-        53,
-        51
+        82,
+        57,
+        35,
+        46,
+        41,
+        29
       ]
     },
     {
       "name": "combo_best_wide_double_bet",
-      "active_periods": 4,
-      "total_bets": 269,
-      "total_hits": 250,
-      "mean_roi_pct": 99.2,
-      "worst_roi_pct": 82.7,
-      "best_roi_pct": 124.9,
-      "roi_std": 16.2,
+      "active_periods": 7,
+      "total_bets": 300,
+      "total_hits": 278,
+      "mean_roi_pct": 98.3,
+      "worst_roi_pct": 83.5,
+      "best_roi_pct": 137.4,
+      "roi_std": 16.9,
       "win_periods": 2,
       "period_rois": [
-        82.7,
-        88.4,
-        100.7,
-        124.9
+        87.5,
+        83.5,
+        93.2,
+        87.8,
+        98.7,
+        100.3,
+        137.4
       ],
       "period_bets": [
-        112,
-        69,
-        45,
-        43
-      ]
-    },
-    {
-      "name": "fuku_top1_always",
-      "active_periods": 4,
-      "total_bets": 2760,
-      "total_hits": 1833,
-      "mean_roi_pct": 90.5,
-      "worst_roi_pct": 82.5,
-      "best_roi_pct": 95.0,
-      "roi_std": 4.8,
-      "win_periods": 0,
-      "period_rois": [
-        92.0,
-        92.7,
-        95.0,
-        82.5
-      ],
-      "period_bets": [
-        689,
-        689,
-        689,
-        693
+        65,
+        71,
+        50,
+        29,
+        29,
+        30,
+        26
       ]
     }
   ]

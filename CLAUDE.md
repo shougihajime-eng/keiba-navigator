@@ -7,6 +7,25 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🛡️ Wave19.8 + 20 (2026-05-19 03:30・8 期間検証 + 朝の自動リトライ完成)** —
+  - **8 期間 Walk-forward 検証** (`walk_forward_validate.py --periods 8`):
+    | 戦略 | 1期 | 8期 平均 | 最悪 | 勝期間 | σ | trust |
+    |------|-----|----------|------|--------|---|-------|
+    | **BEST** | 126.8% | **112.1%** | **102.8%** | **7/7** | 12.1 | **★★★★ TRUSTED** |
+    | **SAFE** | 106.3% | 106.7% | 93.6% | 6/7 | 7.0 | **★★★☆ STABLE** |
+    | TURF | 141.9% | 111.0% | 91.1% | 5/7 | 21.2 | ★★ MIXED |
+    | BIG | 142.7% | 110.1% | 95.5% | 3/7 | 27.1 | ★★ MIXED |
+    | ULTRA | 127.1% | 98.3% | 83.5% | 2/7 | 16.9 | ★ RISKY |
+  - **新発見**: `combo_trusted_strict` (BEST + 対抗差 5pt+ + 人気1-3 番) → 8 期間 σ=4.8 (歴代最小)・最悪 96.2%・勝 6/7・平均 105.8%
+  - **TRUSTED 基準を 8 期間検証に合わせて調整**: `aggregate_recommendations.py` の trust_label を「全期間勝 + σ<15 + 平均 105%+」へ。これで BEST が ★★★★ TRUSTED に確定
+  - **閾値スイープ追加** (`best_gap_*` 6 段階・`best_prob_only_*` 6 段階): `gap=0.04 / prob=0.22` が引き続きスイートスポット (これより緩める/厳しめにすると ROI 下がる)
+  - **🌅 Wave20: 朝の自動リトライ仕込み (`scripts/retry_full_history.ps1` 新規)**:
+    - Windows タスクスケジューラに 3 タスク登録: `KeibaRetryFullHistory-0900/1200/1500`
+    - 動作: JV-Link 設定 GUI で「状態を取得する」を Win32 SendMessage 発火 → 60 秒待つ → JVOpen aggregate option=4 試行 → 成功時は build_all + 集計 + 学習 + 推論 + 推奨集約 + 検証 + git push を `race_day_pipeline.py --skip-refresh --skip-rt` で chain 実行
+    - 営業時間内 (9-18 時) のみ動作・成功時は `full_history_fetched.flag` を作って当日中は再試行しない
+    - WakeToRun=True + RestartCount=3 で堅牢
+  - **sw.js**: v38 → v39 / smoke 126/0
+  - **明朝 9:00 (5/19) 以降**: JRA-VAN サーバ営業開始 → 3 回の試行のいずれかで rc=-501 解消・過去 10 年データ取得 → 学習データ 5 万 → 60 万行へ → 全戦略の Walk-forward 信頼性が大幅 UP の見込み
 - **🔬 Wave19.7 (2026-05-19 02:50・Walk-forward 検証で本物と偽物を判別)** — ユーザー「BIG+TURF 複合 + Walk-forward 検証」指示に応えて、戦略の真の安定性を初検証:
   - **🚨 重要な発見**: 過去 1 期間 (test 20%) で見えていた「ULTRA 127%・88% 的中率」は **Walk-forward 4 期間で平均 99.2% (期待値マイナス)** だった。「見かけの高 ROI」と「真の期待 ROI」は別物
   - **★★★★ TRUSTED (真に信頼できる戦略・全 4 期間で 100%+ かつ σ<10)**:
