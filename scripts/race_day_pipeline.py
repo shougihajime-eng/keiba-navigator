@@ -208,16 +208,86 @@ def run_aggregate_features() -> int:
     )
 
 
+# ─── ステップ 4.4: aggregate_features_v2.py (leak-free 版) ─────
+def run_aggregate_features_v2() -> int:
+    """Wave17: 時系列リーク排除版の features.json を生成。
+    旧 aggregate_features.py を上書きする。"""
+    log_line("[step4.4] aggregate_features_v2.py (leak-free 集計)")
+    py = python_exe()
+    return run_subprocess(
+        [py, str(JV_BRIDGE / "aggregate_features_v2.py")],
+        "aggregate_features_v2", timeout=300,
+    )
+
+
 # ─── ステップ 4.5: train_lightgbm.py (LightGBM 訓練・64bit) ─────
 def run_train_lightgbm() -> int:
-    log_line("[step4.5] train_lightgbm.py (LightGBM モデル再訓練)")
+    log_line("[step4.5] train_lightgbm.py (primary モデル: 人気込)")
     py64 = python_exe_64()
     if not py64:
         log_line("  64bit Python 未検出・LightGBM 訓練をスキップ")
         return 0
     return run_subprocess(
         [py64, str(JV_BRIDGE / "train_lightgbm.py"), "--min-races", "20"],
-        "train_lightgbm", timeout=900,
+        "train_lightgbm primary", timeout=900,
+    )
+
+
+# ─── ステップ 4.55: train_lightgbm.py --no-pop (実力派モデル) ────
+def run_train_lightgbm_nopop() -> int:
+    """Wave18: 人気を見ない実力派モデル (value pick 用)"""
+    log_line("[step4.55] train_lightgbm.py --no-pop (secondary: 実力派モデル)")
+    py64 = python_exe_64()
+    if not py64:
+        log_line("  64bit Python 未検出・nopop モデル訓練をスキップ")
+        return 0
+    return run_subprocess(
+        [py64, str(JV_BRIDGE / "train_lightgbm.py"), "--no-pop", "--min-races", "20"],
+        "train_lightgbm nopop", timeout=900,
+    )
+
+
+# ─── ステップ 4.7: predict_lightgbm.py (全レースの LGBM 推論) ─────
+def run_predict_lightgbm() -> int:
+    """Wave19: 全 races/*.json に対して LightGBM 推論 →
+    data/jv_cache/predictions/<id>.json を生成。
+    primary + nopop の 2 モデルで推論し value_signal を計算。"""
+    log_line("[step4.7] predict_lightgbm.py --all-races (LGBM 推論)")
+    py64 = python_exe_64()
+    if not py64:
+        log_line("  64bit Python 未検出・LGBM 推論をスキップ")
+        return 0
+    return run_subprocess(
+        [py64, str(JV_BRIDGE / "predict_lightgbm.py"), "--all-races"],
+        "predict_lightgbm", timeout=600,
+    )
+
+
+# ─── ステップ 4.75: aggregate_recommendations.py (推奨買い目集約) ─
+def run_aggregate_recommendations() -> int:
+    """Wave19: 100% 越え戦略 fuku_top1_prob_020 の条件を満たすレースを
+    recommendations.json に集約。git push で本番反映 → 画面の推奨セクションに表示。"""
+    log_line("[step4.75] aggregate_recommendations.py (推奨買い目を集約)")
+    py64 = python_exe_64()
+    if not py64:
+        py64 = python_exe()
+    return run_subprocess(
+        [py64, str(JV_BRIDGE / "aggregate_recommendations.py")],
+        "aggregate_recommendations", timeout=120,
+    )
+
+
+# ─── ステップ 4.76: validate_lightgbm.py (回収率実証を更新) ─────
+def run_validate_lightgbm() -> int:
+    """Wave19: 学習データが増えるたびに backtest_result.json を更新。"""
+    log_line("[step4.76] validate_lightgbm.py (回収率実証)")
+    py64 = python_exe_64()
+    if not py64:
+        log_line("  64bit Python 未検出・回収率実証をスキップ")
+        return 0
+    return run_subprocess(
+        [py64, str(JV_BRIDGE / "validate_lightgbm.py"), "--test-ratio", "0.2"],
+        "validate_lightgbm", timeout=600,
     )
 
 
@@ -282,6 +352,11 @@ def git_commit_push() -> int:
         "data/jv_cache/features.json",
         "data/jv_cache/horse_master.json",
         "data/jv_cache/predictions.json",  # ★Wave14: 事前計算予想 (スマホ瞬時応答用)
+        # ★Wave18-19: LightGBM 実力派モデル + 推奨買い目 + 回収率実証
+        "data/jv_cache/model_lgbm_nopop.json",
+        "data/jv_cache/model_lgbm_nopop_meta.json",
+        "data/jv_cache/recommendations.json",
+        "data/jv_cache/backtest_result.json",
     ]
     add_args = ["git", "add"] + [t for t in targets if (ROOT / t).exists()]
     if len(add_args) == 2:
@@ -329,10 +404,20 @@ def main():
                     help="build_all.py をスキップ")
     ap.add_argument("--skip-features", action="store_true",
                     help="aggregate_features.py をスキップ")
+    ap.add_argument("--skip-features-v2", action="store_true",
+                    help="aggregate_features_v2.py (leak-free) をスキップ")
     ap.add_argument("--skip-train", action="store_true",
                     help="LightGBM 訓練をスキップ")
+    ap.add_argument("--skip-train-nopop", action="store_true",
+                    help="LightGBM nopop (実力派) 訓練をスキップ")
     ap.add_argument("--skip-precompute", action="store_true",
                     help="全レース予想の事前計算 (Node) をスキップ")
+    ap.add_argument("--skip-lgbm-predict", action="store_true",
+                    help="predict_lightgbm (全レース推論) をスキップ")
+    ap.add_argument("--skip-recommend", action="store_true",
+                    help="aggregate_recommendations をスキップ")
+    ap.add_argument("--skip-validate", action="store_true",
+                    help="validate_lightgbm (回収率実証) をスキップ")
     args = ap.parse_args()
 
     log_line("=== race_day_pipeline 開始 ===")
@@ -357,11 +442,36 @@ def main():
         rc = run_aggregate_features()
         if rc == -2: timed_out = True
         if rc != 0: overall |= 0x08
+    # ★Wave17: leak-free 版の集計 (旧 features.json を上書き)
+    if not getattr(args, "skip_features_v2", False):
+        rc = run_aggregate_features_v2()
+        if rc == -2: timed_out = True
+        if rc != 0: overall |= 0x10
     # LightGBM 訓練 (64bit Python があれば・データ少ない時はスキップ動作)
     if not getattr(args, "skip_train", False):
         rc = run_train_lightgbm()
         if rc == -2: timed_out = True
         if rc != 0: overall |= 0x20
+    # ★Wave18: 人気を見ない実力派モデル
+    if not getattr(args, "skip_train_nopop", False):
+        rc = run_train_lightgbm_nopop()
+        if rc == -2: timed_out = True
+        if rc != 0: overall |= 0x200
+    # ★Wave19: 全レースの LGBM 推論 (predictions/<id>.json)
+    if not getattr(args, "skip_lgbm_predict", False):
+        rc = run_predict_lightgbm()
+        if rc == -2: timed_out = True
+        if rc != 0: overall |= 0x400
+    # ★Wave19: 推奨買い目を集約 (100% 越え戦略 fuku_top1_prob_020)
+    if not getattr(args, "skip_recommend", False):
+        rc = run_aggregate_recommendations()
+        if rc == -2: timed_out = True
+        if rc != 0: overall |= 0x800
+    # ★Wave19: 回収率実証 (backtest_result.json 更新)
+    if not getattr(args, "skip_validate", False):
+        rc = run_validate_lightgbm()
+        if rc == -2: timed_out = True
+        if rc != 0: overall |= 0x1000
     # ★Wave14: 全レース予想の事前計算 (スマホ瞬時応答用)
     if not getattr(args, "skip_precompute", False):
         rc = run_precompute_predictions()
