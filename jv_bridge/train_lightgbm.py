@@ -130,10 +130,19 @@ FEATURE_NAMES = [
     # 脚質
     "run_style_id",
     "days_from_last_race",
-    # 馬の通算成績 (aggregate_features.py horse_career 由来)
-    "horse_starts",            # 通算出走数
-    "horse_win_rate",          # 通算勝率
-    "horse_in3_rate",          # 通算複勝率
+    # 馬の通算成績 (aggregate_features_v2: 時系列リーク排除版)
+    "horse_starts",            # 当該レース直前までの出走数
+    "horse_win_rate",          # 当該レース直前までの勝率
+    "horse_in3_rate",          # 当該レース直前までの複勝率
+    # 馬個別の直近 5 走集計 (v2 で新規)
+    "horse_avg_last3F",        # 直近 5 走の上がり 3F 平均
+    "horse_avg_pos_4c",        # 直近 5 走の 4 コーナー通過順平均
+    "horse_run_style_mode",    # 直近 5 走の脚質最頻 (1 逃〜5 マ)
+    "horse_avg_finish",        # 直近 5 走の確定着順平均
+    "horse_prev_finish",       # 直前 1 走の確定着順
+    "horse_days_since_last",   # 直前 1 走からの経過日数
+    "jockey_samples",          # 騎手の累計出走数 (経験量)
+    "trainer_samples",         # 調教師の累計出走数
     # 交差項 (interaction features)
     "popularity_x_jockey",     # 人気 × 騎手勝率 (人気馬の名手騎乗)
     "popularity_x_course",     # 人気 × コース勝率 (相性込み)
@@ -141,7 +150,9 @@ FEATURE_NAMES = [
     "distance_x_distwinrate",  # 距離 × 距離別勝率 (距離適性)
     "weight_diff_x_career",    # 体重変化 × 累計賞金 (実力馬の状態)
     "age_x_distance",          # 馬齢 × 距離 (世代×距離)
-    "horsewin_x_popularity",   # 通算勝率 × 人気 (実力馬の人気)
+    "horsewin_x_popularity",   # 通算勝率 × 人気 (実力馬の市場評価)
+    "last3F_x_distance",       # 直近上がり × 距離 (短距離での切れ / 長距離での持続)
+    "prevfinish_x_popularity", # 前走着順 × 人気 (前走から評価がどう動いたか)
 ]
 
 
@@ -292,12 +303,21 @@ def extract_horse_features(horse: Dict[str, Any],
         1.0 if race.get("is_g1") else 0.0,
         is_dirt,
         # 脚質
-        _safe_num(feat.get("runStyleId"), 0.0),
-        _safe_num(feat.get("daysFromLastRace"), -1.0),
-        # 馬通算成績
+        _safe_num(feat.get("runStyleId") or feat.get("horseRunStyleMode"), 0.0),
+        _safe_num(feat.get("daysFromLastRace") or feat.get("horseDaysSinceLast"), -1.0),
+        # 馬通算成績 (v2: 時系列リーク排除版)
         _safe_num(feat.get("horseStarts"), 0.0),
         _safe_num(feat.get("horseWinRate"), 0.10),    # JRA 平均勝率
         _safe_num(feat.get("horseIn3Rate"), 0.30),    # JRA 平均複勝率
+        # 馬個別 直近 5 走集計 (v2 新規)
+        _safe_num(feat.get("horseAvgLast3F"), -1.0),      # 直近 5 走 上がり 3F 平均
+        _safe_num(feat.get("horseAvgPos4c"), -1.0),       # 4 コーナー通過順平均
+        _safe_num(feat.get("horseRunStyleMode"), 0.0),    # 脚質最頻
+        _safe_num(feat.get("horseAvgFinish"), -1.0),      # 直近 5 走 着順平均
+        _safe_num(feat.get("horsePrevFinish"), -1.0),     # 直前 1 走の着順
+        _safe_num(feat.get("horseDaysSinceLast"), -1.0),  # 直前 1 走からの日数
+        _safe_num(feat.get("jockeySamples"), 0.0),
+        _safe_num(feat.get("trainerSamples"), 0.0),
     ]
     # 交差項 (interaction features) - 末尾に追加
     pop_s = pop if pop is not None and pop > 0 else 7.0  # 不明時は中央値
@@ -311,14 +331,18 @@ def extract_horse_features(horse: Dict[str, Any],
     cp    = _safe_num(feat.get("careerPrizeNorm"), 0.0)
     agev  = _parse_age(horse.get("sex_age")) or 4.0
     hwr   = _safe_num(feat.get("horseWinRate"), 0.10)
+    h_l3f = _safe_num(feat.get("horseAvgLast3F"), 34.5)
+    h_prev = _safe_num(feat.get("horsePrevFinish"), 8.0)
     vec.extend([
-        (1.0 / pop_s) * jw,         # popularity_x_jockey: 1番人気で勝率高い騎手 = 強信号
-        (1.0 / pop_s) * cw,         # popularity_x_course
-        impl * j3,                  # implied_x_jockey_in3
-        (dist / 1600.0) * dwr,      # distance_x_distwinrate
-        wd * cp,                    # weight_diff_x_career
-        (agev / 5.0) * (dist / 1600.0),  # age_x_distance
-        hwr * (1.0 / pop_s),        # horsewin_x_popularity (実力馬の市場評価)
+        (1.0 / pop_s) * jw,                # popularity_x_jockey
+        (1.0 / pop_s) * cw,                # popularity_x_course
+        impl * j3,                          # implied_x_jockey_in3
+        (dist / 1600.0) * dwr,             # distance_x_distwinrate
+        wd * cp,                            # weight_diff_x_career
+        (agev / 5.0) * (dist / 1600.0),    # age_x_distance
+        hwr * (1.0 / pop_s),               # horsewin_x_popularity
+        (35.0 - h_l3f) * (dist / 1600.0),  # last3F_x_distance: 上がり 3F の良さ × 距離 (小さいほど切れる)
+        (1.0 / max(1.0, h_prev)) * (1.0 / pop_s),  # prevfinish_x_popularity
     ])
     return vec
 

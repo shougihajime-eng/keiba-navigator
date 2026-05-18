@@ -7,6 +7,42 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🧠 Wave17 (2026-05-18 夜・「世界最高クラスの予想 AI」へ踏み出す)** — ユーザー指示「絶対当たる自信があるか・無いなら何時間かけてでも修正・最高のものを作ろう」に応えて、機械学習モデル一式を完成:
+  - **🔧 raw 800MB → races/results を再展開** (`jv_bridge/build_all.py` 実行): 過去 raw データ (2025-2026 約 8 ヶ月分) から RA 3606 / SE 49238 / HR 3521 / O1-O6 各 3552 をパース → races/ 3492 件・results/ 3449 件で書き出し (新フィールド入り)
+  - **⚠ 時系列リーク 2 件を発見・排除**:
+    - LEAK-1 (AUC 0.955 → 0.806): 旧 `aggregate_features.py` は `horse_career.wins/starts` を**全期間通算**で計算 → train データの特徴量に「未来の結果」が混入 → AUC が異常に高い偽の値。修正: 新 `jv_bridge/aggregate_features_v2.py` を新規作成し、race_id 昇順走査で「当該レース直前まで」の集計のみを使う設計に
+    - LEAK-2 (career_prize_norm 重要度 78748): SE の `honsyokin` は「**当該レースで獲得した本賞金**」(1 着なら大金) → これを「累計賞金」として特徴量化していた = 完璧な leakage。修正: `horse_prize_acc` を時系列で累積するよう v2 で書き直し
+  - **🐛 payouts 欠損バグも修正**: `parse_record` が HR の `_raw` を保存していなかったため `build_result_json.from_se_list` が payouts を組み立てられず、results/*.json の payouts が `{}` 空 → 回収率検証が「全 690 R 払戻 0 円」になっていた。`parse.parse_raw_file` で HR レコードに限り `_raw` を保持するよう修正 → tan/fuku/uren/wide/utan/fuku3/tan3/wakuren 全 8 券種の payouts が復活
+  - **🎯 過去レース特徴量を 12 個追加** (`jv_bridge/build_race_json.py` + `aggregate_features_v2.py` + `train_lightgbm.py`):
+    - SE 由来: `haron_l3` (上がり 3F) / `haron_l4` / `jyuni_1c-4c` (コーナー通過順) / `time` (走破タイム) / `honsyokin` / `kyakusitu` (脚質)
+    - v2 集計: `horseAvgLast3F` / `horseAvgPos4c` / `horseRunStyleMode` / `horseAvgFinish` / `horsePrevFinish` / `horseDaysSinceLast` (直近 5 走 ring buffer)
+    - 累計: `jockeySamples` / `trainerSamples` / `careerPrizeJpy` (過去累積)
+    - 交差項 2 個追加: `last3F_x_distance` / `prevfinish_x_popularity` → FEATURE_NAMES 計 54 個 (旧 42 個)
+  - **🏋️ LightGBM 学習**:
+    - 64bit Python 3.12.7 に lightgbm / scikit-learn / pandas を導入 (32bit Python は scipy/sklearn の wheel 無し・C コンパイラ要)
+    - 学習設定: num_leaves 63 / learning_rate 0.02 / num_boost_round 1200 / early_stopping 40 / min_data_in_leaf 25 / lambda_l1/l2 0.15 / feature_fraction 0.8 / bagging
+    - 時系列分割: race_id 昇順で train 80% (38,367 行) / valid 20% (9,519 行)
+    - 結果: **AUC = 0.806** / logloss 0.2287 (leak-free な現実的な値)
+    - 重要度 top-5: popularity (24334) / horsewin_x_popularity (15302) / popularity_z (4024) / log_popularity (2575) / weight_z (1159)
+    - LightGBM Windows binary は非 ASCII path (「競馬」) を扱えないため tempfile copy で回避
+  - **🎰 14 戦略で実証** (`jv_bridge/validate_lightgbm.py` 新規・test 期間 690 R):
+    | 戦略 | 件数 | 投資 | 払戻 | 回収率 | 的中率 |
+    |------|------|------|------|--------|--------|
+    | 馬連 本命-対抗 | 690 | 69,000 | 61,620 | **89.3%** | 11.9% |
+    | 複勝 本命 | 690 | 69,000 | 56,940 | 82.5% | 59.3% |
+    | ワイド 3 点 | 690 | 207,000 | 165,790 | 80.1% | 48.8% |
+    | 単勝 本命 | 690 | 69,000 | 51,340 | 74.4% | 27.7% |
+    | EV 閾値 / 価値投資型 (人気 3 番以下) | 0 件発火 | — | — | — | — |
+  - **❗ 正直な現状認識**: 「機械的に AI 本命を毎レース買う」と回収率 75-89% で **負け**。理由は AI が人気馬中心の予想をしている (popularity / implied_prob 特徴量が支配的)。価値投資型 (人気 3 番以下の AI 推し) は 690 R で **0 件発火** = AI と市場の予想がほぼ一致している
+  - **🔌 アプリ統合**:
+    - `predictors/lightgbm_v1.js` 新規 (Node 統合 wrapper・predictions/<race_id>.json を読む)
+    - `/api/ml-status` を api/[...slug].js + server.js に追加 (model meta + backtest 結果)
+    - `index.html` に `#ml-status-mount` 追加 / `app.js` に `renderMlStatus()` 追加 (14 戦略の回収率を色分け表示・正直な現状コメント込み)
+    - `styles.css` に `.mlstatus-card` 系 約 110 行追加 (ライトな緑系ガラスモーフィズム + 戦略カード is-win/is-close/is-lose 色分け + スマホレスポンシブ)
+    - `sw.js` v29 → v30
+  - **テスト**: smoke 126/0 fail / `/api/ml-status` 200 OK (modelAvailable=true, AUC=0.806, bestStrategy=uren_top1_top2, bestRoiPct=89.3, 戦略数 14)
+  - **次に強くするための地図**: (1) JV-Link のセットアップ期間問題を解決して過去 10 年フル取得 (現在 8 ヶ月分) → 学習サンプル 60 万行へ / (2) 人気依存を弱める feature engineering (popularity 系特徴量に lambda_l1 強める / 人気を見ない second model を作って ensemble) / (3) 調教タイム (HC/WC) と血統 (HN) を組み込む / (4) 券種ごとの最適停止
+  - **ファイル**: `jv_bridge/aggregate_features_v2.py` (新規 270 行) / `jv_bridge/predict_lightgbm.py` (新規 240 行) / `jv_bridge/validate_lightgbm.py` (新規 280 行) / `predictors/lightgbm_v1.js` (新規 70 行) / `jv_bridge/build_race_json.py` (merge() 拡張) / `jv_bridge/build_result_json.py` (HR _raw 対応コメント) / `jv_bridge/parse.py` (HR _raw 保存) / `jv_bridge/train_lightgbm.py` (FEATURE_NAMES + extract_horse_features 拡張) / `api/[...slug].js` / `server.js` / `index.html` / `app.js` / `styles.css` / `sw.js` / `.gitignore`
 - **🛡️ Wave16 当日運用 最終 QA (2026-05-18 12:45 ・ユーザー指示「凄く厳しい目で・バグないように・当日使えるように・修正してください」)** — 4 専門エージェント並列で深掘りレビュー → HIGH 級 3 件を全部修正:
   - **HIGH-1**: `catchup.ps1` の status.json パースが silent failure → `state="rt_failed"` で `lastAggregate` フィールドが消えるケース (5/18 に発生・JVRTOpen rc=-114) で 4h 判定が機能せず毎時実行されるリスク。修正: `lastAggregate.fetchedAt > updatedAt > なし` の優先順位フォールバック + `state=*_failed` かつ 4h 以内なら loop 防止のためスキップ
   - **HIGH-2**: `scripts/fetch_tomorrow.py:85` の `encoding="cp932"` を `utf-8` に統一 → `race_day_pipeline.py` の encoding と一致させ、サブプロセス出力の文字化けエラーで例外停止する事故を排除
@@ -324,27 +360,26 @@
 - 既存: Supabase keiba スキーマ、AI 育成レベル ★1-5、GitHub + Vercel 公開、catch-all集約
 
 ### 🟡 進行中
-- なし (JV-Link 接続成功・アプリは Wave 5 まで仕上げ済)
+- なし (Wave17 で機械学習モデル LightGBM の土台完成・AUC 0.806・ベスト戦略 馬連 89.3%)
 
-### 🔜 次の一歩 (0 円フェーズ → 月額フェーズ の順)
+### 🔜 次の一歩 (回収率 100% 超を狙う 3 段ロードマップ)
 
-**フェーズ A (0 円)** — ✅ **完走**:
-1. ✅ JRA-VAN 開発者登録 (無料) — 完了 (`oneone` / 2026-05-15)
-2. ✅ SDK ダウンロード — `JVDTLABSDK4902.zip` を取得済み
-3. ✅ 仕様書転記 — C# 構造体から RA/SE/O1/HR 全 offset を `jvdata_struct.py` に転記済み
-4. ✅ **32bit Python 3.12.4 インストール** (`C:\Users\shoug\AppData\Local\Programs\Python\Python312-32\python.exe`)
-5. ✅ pytest 9.0.3 + pywin32 311 をインストール
-6. ✅ **pytest: 64 passed / 6 skipped / 0 failed** (skip 6 件は JV-Link 実バイナリ依存・月額契約後に自動緑化)
-   → **🚦 月額契約 GO サイン点灯**
+**フェーズ C (世界最高クラス化)** — Wave17 で土台完成・回収率 100% 超を狙う:
+1. 🔜 **JV-Link セットアップ期間問題を解決** → 過去 10 年フル取得 (現在 8 ヶ月分 / 約 3500 R)
+   - 現在の制約: option=4 で「Could not find vswhere.exe」「JVOpen は通るが過去 10 ヶ月分しか配信されない」
+   - 対策案: JV-Link 設定 GUI で「セットアップ」を一度フォアグラウンドで実行・あるいは複数回 fromtime を遡らせて差分蓄積
+2. 🔜 **人気依存を弱める feature engineering** → AI が市場 (人気) と同じ予想をしている問題への対策
+   - popularity 系特徴量に lambda_l1 を強める / drop_feature で部分的に外したモデルとアンサンブル
+   - 「人気を見ない second model」と「人気を含む primary model」の差分が大きいレースを value pick として推奨
+3. 🔜 **未活用の取得データを訓練に組み込む** → 調教 (HC = 坂路 / WC = ウッドチップ) と血統 (HN = 馬経歴) の特徴量化
+4. 🔜 **券種ごとの最適停止** → 単/複/馬連/ワイドそれぞれで EV 閾値を最適化 (現在 1.10 固定)
+5. 🔜 **当日推論パイプライン** → ローカル PC で朝に `predict_lightgbm.py --all-today` を回し、`data/jv_cache/predictions/<id>.json` を生成 → git push で本番反映 (scripts/race_day_pipeline.py に組み込み)
 
-**フェーズ B (月額 2,090 円)** — ✅ **接続完了 (2026-05-16)**:
-6. ✅ **Supabase スキーマ反映完了** (2026-05-15・Management API 経由で `db/schema.sql` を直接実行)
-7. ✅ **JRA-VAN Data Lab. 契約完了** (2026-05-15・利用キー `3UJC-46WW-7VV1-T7RX-4` 取得済)
-8. ✅ **JV-Link COM 接続成功** (2026-05-16・HKCU の古い CLSID 上書きを除去 + JV-Link 設定で「状態を取得する」を 1 回手動クリックして本契約モード移行)
-9. ✅ `py -3.12-32 jv_bridge\jv_fetch.py init` → `[OK] JVInit 成功` 確認済
-10. 🔜 **過去 10 年分の蓄積データ取得**: `py -3.12-32 jv_bridge\jv_fetch.py aggregate --dataspec RACE --fromtime 20140101000000`
-11. 🔜 **本番で実運用テスト**: スマホで「ホーム画面に追加」→ 通知ON → 翌朝に「今日のベスト1」を確認
-12. 🔜 **手動入力の運用**: 末尾に騎手・調教師名を入れる癖をつけ、相性データを溜める
+**フェーズ A (0 円・無料準備)** — ✅ **完走** (2026-05-15):
+- JRA-VAN 開発者登録 → SDK ダウンロード → 仕様書転記 → 32bit Python + pytest 環境構築 → smoke 64/6 skip 全部緑
+
+**フェーズ B (月額 2,090 円・実データ接続)** — ✅ **完走** (2026-05-16):
+- JRA-VAN Data Lab. 契約 → JV-Link COM 接続 → 過去 raw 800MB 取得 → races/results 3500 件展開済
 
 ---
 

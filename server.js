@@ -88,6 +88,41 @@ async function serve(req, res) {
         return jsonRes(res, 200, { ok: false, error: e.message });
       }
     }
+    if (p === "/api/ml-status") {
+      try {
+        const lgbm = require("./predictors/lightgbm_v1");
+        const meta = lgbm.loadModelMeta();
+        const backtest = lgbm.loadBacktest();
+        return jsonRes(res, 200, {
+          ok: true,
+          fetchedAt: new Date().toISOString(),
+          modelAvailable: !!meta,
+          backtestAvailable: !!backtest,
+          model: meta ? {
+            trainedAt: meta.trained_at,
+            samplesTotal: meta.samples_total,
+            racesTotal: meta.races_total,
+            samplesTrain: meta.samples_train,
+            samplesTest: meta.samples_test,
+            auc: meta.metrics ? meta.metrics.auc : null,
+            logloss: meta.metrics ? meta.metrics.logloss : null,
+            featureImportanceTop: meta.feature_importance
+              ? Object.entries(meta.feature_importance).sort((a,b) => b[1]-a[1]).slice(0,8)
+                  .map(([name, gain]) => ({ name, gain }))
+              : null,
+          } : null,
+          backtest: backtest ? {
+            backtestedAt: backtest.backtested_at,
+            testRaces: backtest.test_races,
+            bestStrategy: backtest.best_strategy,
+            bestRoiPct: backtest.best_roi_pct,
+            strategies: backtest.strategies,
+          } : null,
+        });
+      } catch (e) {
+        return jsonRes(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (p === "/api/weather") {
       return jsonRes(res, 200, await fetchAllWeather());
     }

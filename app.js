@@ -30,6 +30,7 @@
     win5SelectedKey: localStorage.getItem("keiba_win5_selected") || null,
     win5UserPlan: null, // [k1,k2,k3,k4,k5]
     autostatus: null, // ★Wave16-QA: /api/automation-status の結果。初回描画前は null
+    mlStatus: null,   // ★Wave17: /api/ml-status の結果 (LightGBM 学習メタ + 過去レース実証回収率)
   };
 
   // ─── Util ───────────────────────────────────────────────
@@ -255,11 +256,12 @@
         w5Params.push(`plan=${state.win5UserPlan.join(",")}`);
       }
       const w5Url = "/api/win5" + (w5Params.length ? "?" + w5Params.join("&") : "");
-      const [status, races, win5, autostatus] = await Promise.all([
+      const [status, races, win5, autostatus, mlStatus] = await Promise.all([
         api("/api/status"),
         api("/api/races"),
         api(w5Url),
         api("/api/automation-status"),
+        api("/api/ml-status"),
       ]);
       if (status) state.status = status;
       if (races && races.ok) {
@@ -272,6 +274,7 @@
       }
       if (win5) state.win5 = win5;
       if (autostatus) state.autostatus = autostatus;
+      if (mlStatus) state.mlStatus = mlStatus;
       render();
     } finally {
       state.isRefreshing = false;
@@ -1328,6 +1331,7 @@
       renderHeader();
       renderLive();
       renderAutostatus();
+      renderMlStatus();
       renderDecisionCard();
       renderWin5();
       renderAllRaces();
@@ -1335,6 +1339,77 @@
     } catch (e) {
       console.error("[render] error", e);
     }
+  }
+
+  // ─── 描画: AI 実証成績カード (Wave17) ────────────────────
+  // LightGBM の学習メタ + 過去レース実証回収率を 1 枚にまとめて表示。
+  // 「機械学習モデルが今どれくらい当たるか」を、誇張なしに数字で見せる。
+  function renderMlStatus() {
+    const root = $("#ml-status-mount");
+    if (!root) return;
+    const m = state.mlStatus;
+    if (!m || !m.ok || !m.modelAvailable) { root.hidden = true; return; }
+    root.hidden = false;
+    const STRAT_LABELS = {
+      tan_top1_always:     "単勝 本命",
+      tan_top1_ev100:      "単勝 EV1.0+",
+      tan_top1_ev110:      "単勝 EV1.1+",
+      tan_top1_ev130:      "単勝 EV1.3+ (絶好機のみ)",
+      tan_top1_value3:     "単勝 価値投資 (人気 3 番以下)",
+      tan_top1_kelly:      "単勝 ケリー基準",
+      fuku_top1_always:    "複勝 本命",
+      fuku_top1_ev090:     "複勝 EV0.9+",
+      fuku_top1_ev110:     "複勝 EV1.1+",
+      fuku_top1_value3:    "複勝 価値投資",
+      uren_top1_top2:      "馬連 本命-対抗",
+      uren_value3_x_pop1:  "馬連 価値 × 人気1番",
+      wide_box_top3:       "ワイド 本命-対抗-3着候補 3点",
+      wide_value3_x_pop1:  "ワイド 価値 × 人気1番",
+    };
+    const auc = m.model && m.model.auc;
+    const bt  = m.backtest || {};
+    const bestRoi = bt.bestRoiPct;
+    const stratsActive = (bt.strategies || []).filter((s) => s.bets > 0);
+    const stratsTop = stratsActive.slice(0, 5);
+    const pillCls = bestRoi >= 100 ? "is-go" : bestRoi >= 90 ? "is-warn" : "is-mute";
+    root.innerHTML = `
+      <div class="ml-head">
+        <span class="ml-icon" aria-hidden="true">📊</span>
+        <span class="ml-title">AI モデル実証成績</span>
+        <span class="ml-pill ${pillCls}">${bestRoi != null ? "ベスト " + bestRoi.toFixed(1) + "%" : "—"}</span>
+      </div>
+      <div class="ml-grid">
+        <div class="ml-cell">
+          <div class="ml-cell-label">AI 精度 (AUC)</div>
+          <div class="ml-cell-value">${auc != null ? (auc * 100).toFixed(1) + "<small>%</small>" : "—"}</div>
+          <div class="ml-cell-sub">学習 ${(m.model?.samplesTrain ?? 0).toLocaleString()} 行 / 検証 ${(m.model?.samplesTest ?? 0).toLocaleString()} 行</div>
+        </div>
+        <div class="ml-cell">
+          <div class="ml-cell-label">過去 ${bt.testRaces ?? 0} R で実証</div>
+          <div class="ml-cell-value">${bestRoi != null ? bestRoi.toFixed(1) + "<small>%</small>" : "—"}</div>
+          <div class="ml-cell-sub">${STRAT_LABELS[bt.bestStrategy] || bt.bestStrategy || "—"}</div>
+        </div>
+      </div>
+      <div class="ml-strats">
+        <div class="ml-strats-title">買い方ごとの回収率 (機械的に AI 本命を毎レース買った場合)</div>
+        ${stratsTop.map((s) => {
+          const cls = s.roi_pct >= 100 ? "is-win" : s.roi_pct >= 90 ? "is-close" : "is-lose";
+          return `
+            <div class="ml-strat ${cls}">
+              <span class="ml-strat-name">${STRAT_LABELS[s.name] || s.name}</span>
+              <span class="ml-strat-roi">${s.roi_pct.toFixed(1)}%</span>
+              <span class="ml-strat-meta">的中 ${(s.hit_rate * 100).toFixed(1)}% / ${s.bets}件</span>
+            </div>
+          `;
+        }).join("")}
+        ${stratsActive.length === 0 ? '<div class="ml-strat is-mute"><span class="ml-strat-name">期待値 1.0+ で買える局面は検証期間に 0 件でした (人気馬が AI 本命に集中するため)</span></div>' : ""}
+      </div>
+      <p class="ml-note">
+        <b>正直な現状:</b> ${bestRoi >= 100 ? "ベスト戦略はプラスを達成。" : "機械的に AI 本命を毎レース買うと回収率 70-90% で負けます。"}
+        AI が人気馬中心の予想をしているのが理由 (人気特徴量が支配的)。
+        これからデータ量を増やし、人気を上回るモデルへ育てていきます。
+      </p>
+    `;
   }
 
   // ─── 描画: 自動化ステータス (Wave16) ─────────────────────

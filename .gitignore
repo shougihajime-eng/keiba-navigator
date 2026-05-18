@@ -28,6 +28,8 @@ data/jv_cache/*
 !data/jv_cache/horse_master.json
 # 例外: 事前計算予想 (スマホ瞬時応答用・/api/races が最優先で読む)
 !data/jv_cache/predictions.json
+# 例外: 回収率実証結果 (UI に正直に表示する用)
+!data/jv_cache/backtest_result.json
 
 # Editor
 .vscode/

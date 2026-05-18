@@ -122,6 +122,7 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
             "number":      num,
             "frame":       se.get("frame_num"),
             "name":        se.get("horse_name"),
+            "ketto_num":   se.get("ketto_num"),
             "sex_age":     _sex_age(se),
             "weight":      se.get("burden_kg"),
             "body_weight": se.get("body_weight"),
@@ -137,6 +138,17 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
             # SE が確定済みなら kakutei_jyuni / time が入る (結果データとしても利用可)
             "kakutei_jyuni": se.get("kakutei_jyuni"),
             "ijyou_code":    se.get("ijyou_code"),
+            # 確定後の実走データ (集計バッチが「過去成績」を計算する時の元値)
+            "time":          se.get("time"),           # 走破タイム 'MSSS'
+            "haron_l3":      se.get("haron_l3"),       # 上がり 3F
+            "haron_l4":      se.get("haron_l4"),       # 上がり 4F
+            "jyuni_1c":      se.get("jyuni_1c"),       # 1 コーナー通過順
+            "jyuni_2c":      se.get("jyuni_2c"),
+            "jyuni_3c":      se.get("jyuni_3c"),
+            "jyuni_4c":      se.get("jyuni_4c"),       # 直線入り口の位置
+            "honsyokin":     se.get("honsyokin"),      # 獲得本賞金 (百円単位)
+            "kyakusitu":     se.get("kyakusitu"),      # 脚質判定 1逃/2先/3差/4追/5マ
+            "dm_jyuni":      se.get("dm_jyuni"),       # マイニング予想順位 (参考)
         })
 
     surface = _surface_from_ra(ra)

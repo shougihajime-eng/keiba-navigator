@@ -66,11 +66,19 @@ def split_raw_file(raw: bytes) -> List[bytes]:
 
 
 def parse_raw_file(raw: bytes) -> List[Dict[str, Any]]:
-    """raw .bin → パース済みレコードのリスト。"""
+    """raw .bin → パース済みレコードのリスト。
+
+    HR (払戻) レコードは offset ベースの繰り返し領域 (8 券種) を持つため、
+    parse_hr_payouts が後段で raw bytes を必要とする。
+    そのため HR レコードに限り `_raw` フィールドを保持する。
+    JSON シリアライズ時には呼び出し側で削除すること (build_result_json は自動)。
+    """
     results: List[Dict[str, Any]] = []
     for rec in split_raw_file(raw):
         parsed = parse_record(rec)
         if parsed is not None:
+            if parsed.get("_record_id") == "HR":
+                parsed["_raw"] = rec
             results.append(parsed)
     return results
 

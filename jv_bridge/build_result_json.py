@@ -326,6 +326,8 @@ def from_se_list(ra: Dict[str, Any],
         elif isinstance(hr.get("_raw"), (bytes, bytearray)):
             parsed = parse_hr_payouts(hr["_raw"])
             payouts = _shape_payouts(parsed)
+        # フォールバック: hr 自体に各券種フィールドが直接埋まっている (parse_record 由来)
+        # この時点で payouts が空でも、HR レコードの raw が無ければ何もできない
 
     # 単勝払戻を 1 着馬に attach
     tan_amount = (payouts.get("tan") or {}).get("amount") if isinstance(payouts.get("tan"), dict) else None

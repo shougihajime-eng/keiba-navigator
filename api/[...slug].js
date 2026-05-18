@@ -11,6 +11,7 @@ const { buildConclusion }   = require("../lib/conclusion");
 const { loadVenues }        = require("../lib/venues");
 const { clearCache }        = require("../lib/fetch");
 const predCache             = require("../lib/predictions_cache");
+const lightgbm_v1           = require("../predictors/lightgbm_v1");
 
 function ok(res, body)  { res.setHeader("Cache-Control", "no-store"); res.status(200).json(body); }
 function bad(res, code, body) { res.setHeader("Cache-Control", "no-store"); res.status(code).json(body); }
@@ -47,6 +48,37 @@ module.exports = async (req, res) => {
 
   try {
     if (path === "/status")     return ok(res, buildStatus());
+    if (path === "/ml-status") {
+      // LightGBM の学習メタ + 過去レース実証結果 (回収率)
+      const meta = lightgbm_v1.loadModelMeta();
+      const backtest = lightgbm_v1.loadBacktest();
+      return ok(res, {
+        ok: true,
+        fetchedAt: new Date().toISOString(),
+        modelAvailable: !!meta,
+        backtestAvailable: !!backtest,
+        model: meta ? {
+          trainedAt: meta.trained_at,
+          samplesTotal: meta.samples_total,
+          racesTotal: meta.races_total,
+          samplesTrain: meta.samples_train,
+          samplesTest: meta.samples_test,
+          auc: meta.metrics ? meta.metrics.auc : null,
+          logloss: meta.metrics ? meta.metrics.logloss : null,
+          featureImportanceTop: meta.feature_importance
+            ? Object.entries(meta.feature_importance).sort((a,b) => b[1]-a[1]).slice(0,8)
+                .map(([name, gain]) => ({ name, gain }))
+            : null,
+        } : null,
+        backtest: backtest ? {
+          backtestedAt: backtest.backtested_at,
+          testRaces: backtest.test_races,
+          bestStrategy: backtest.best_strategy,
+          bestRoiPct: backtest.best_roi_pct,
+          strategies: backtest.strategies,
+        } : null,
+      });
+    }
     if (path === "/learning-status") {
       // AI が裏で何回学習したかを 1 タップで分かる形で返す (UI のホームに出す用)
       const meta = predCache.predictionsMeta();
