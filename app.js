@@ -497,7 +497,7 @@
     mount.innerHTML = "";
     const card = el("div", { class: "win5-card fade-in" });
     card.appendChild(el("div", { class: "win5-head" },
-      el("div", { class: "title" }, "WIN5 — 日曜の祭り (200円 で最大 6 億円)"),
+      el("div", { class: "title" }, "WIN5 — 土19:30〜 日曜・祝日レースを的中 (200円で最大6億円)"),
       el("div", { class: "day" }, w5.ok ? `信頼度 ${(w5.avgConfidence * 100).toFixed(0)}%` : "データ準備中")
     ));
     const body = el("div", { class: "win5-body" });
@@ -552,7 +552,7 @@
       body.appendChild(el("div", { html: `
         <p style="text-align:center;color:var(--c-ink-soft);font-size:14px;padding:20px 0">
           ${escapeHtml(w5.note || "WIN5 対象レース 5 つのデータがまだ揃っていません")}<br>
-          <small>競馬場で発売が始まる土曜21:00 以降に表示されます。<br>
+          <small>WIN5 は土曜 19:30 から発売開始 (日曜・祝日のレースが対象) です。<br>
           上のツールバーや戦略カードは試しに触ることができます。</small>
         </p>
       `}));
