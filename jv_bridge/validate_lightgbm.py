@@ -116,6 +116,31 @@ def _payout_wide(payouts: Dict[str, Any], a: int, b: int) -> int:
     return 0
 
 
+def _payout_fuku3(payouts: Dict[str, Any], a: int, b: int, c: int) -> int:
+    """3 連複 (馬番 3 つを順不同で一致)"""
+    fuku3 = (payouts or {}).get("fuku3")
+    if not isinstance(fuku3, dict):
+        return 0
+    key = fuku3.get("key") or ""
+    nums = sorted(int(x) for x in key.split("-") if x.isdigit())
+    target = sorted([a, b, c])
+    if nums == target:
+        return int(fuku3.get("amount") or 0)
+    return 0
+
+
+def _payout_tan3(payouts: Dict[str, Any], a: int, b: int, c: int) -> int:
+    """3 連単 (馬番 3 つを順序通りに一致)"""
+    tan3 = (payouts or {}).get("tan3")
+    if not isinstance(tan3, dict):
+        return 0
+    key = tan3.get("key") or ""
+    nums = [int(x) for x in key.split("-") if x.isdigit()]
+    if nums == [a, b, c]:
+        return int(tan3.get("amount") or 0)
+    return 0
+
+
 def _half_kelly_stake(prob: float, odds: float, bankroll_unit: int = 1000) -> int:
     """Half Kelly: f = (p*odds - 1) / (odds - 1) の半分。100 円単位 floor。"""
     if not (prob and odds and odds > 1.0 and 0 < prob < 1):
@@ -567,7 +592,126 @@ def _build_strategies() -> List[Strategy]:
         Strategy("combo_tan_underdog_value",   _combo_tan_underdog_value),
         Strategy("combo_wide_box_top4",        _combo_wide_box_top4),
         Strategy("combo_quadruple_safety",     _combo_quadruple_safety),
+        # === Wave19.6: 馬連・3 連複・季節・コース・場別 ===
+        # 馬連 (uren) スイープ
+        Strategy("uren_top12_prob30",          _make_uren_top12_prob(0.30)),
+        Strategy("uren_top12_prob35",          _make_uren_top12_prob(0.35)),
+        Strategy("uren_top12_prob40",          _make_uren_top12_prob(0.40)),
+        Strategy("uren_top12_prob45",          _make_uren_top12_prob(0.45)),
+        Strategy("uren_ultra",                 _uren_ultra),
+        # 3 連複 (fuku3) スイープ — top3 ボックス 1 点
+        Strategy("fuku3_top3_conf45",          _make_fuku3_top3(0.45)),
+        Strategy("fuku3_top3_conf50",          _make_fuku3_top3(0.50)),
+        Strategy("fuku3_top3_conf55",          _make_fuku3_top3(0.55)),
+        Strategy("fuku3_top3_conf60",          _make_fuku3_top3(0.60)),
+        Strategy("fuku3_top3_conf65",          _make_fuku3_top3(0.65)),
+        # 季節別 (BEST 戦略 + 月条件)
+        Strategy("best_spring",                _make_best_season("spring")),
+        Strategy("best_summer",                _make_best_season("summer")),
+        Strategy("best_autumn",                _make_best_season("autumn")),
+        Strategy("best_winter",                _make_best_season("winter")),
+        # 芝/ダート別
+        Strategy("best_turf",                  _make_best_surface("芝")),
+        Strategy("best_dirt",                  _make_best_surface("ダート")),
+        # 場別 (10 場ぶん)
+        *[Strategy(f"best_venue_{vn}", _make_best_venue(vn))
+          for vn in ("札幌","函館","福島","新潟","東京","中山","中京","京都","阪神","小倉")],
     ]
+
+
+# === Wave19.6: 馬連・3 連複・季節・コース・場別 戦略実装 ===
+
+def _make_uren_top12_prob(threshold):
+    """馬連 本命-対抗: top1 と top2 の prob 合計 >= threshold で発火"""
+    def fn(horses, payouts):
+        if len(horses) < 2: return 0, 0, False
+        a, b = horses[0], horses[1]
+        if ((a.get("win_prob") or 0) + (b.get("win_prob") or 0)) < threshold: return 0, 0, False
+        pay = _payout_uren(payouts, a["number"], b["number"])
+        return UNIT, pay, pay > 0
+    return fn
+
+
+def _uren_ultra(horses, payouts):
+    """馬連 ULTRA: BEST 条件 + top12 prob 合計 >= 0.40 + 対抗差 4pt 以内 (互角の 1-2 着)"""
+    if len(horses) < 2: return 0, 0, False
+    a, b = horses[0], horses[1]
+    if (a.get("win_prob") or 0) < 0.22: return 0, 0, False
+    sum_p = (a.get("win_prob") or 0) + (b.get("win_prob") or 0)
+    if sum_p < 0.40: return 0, 0, False
+    gap = (a.get("win_prob") or 0) - (b.get("win_prob") or 0)
+    if gap > 0.08: return 0, 0, False
+    pay = _payout_uren(payouts, a["number"], b["number"])
+    return UNIT, pay, pay > 0
+
+
+def _make_fuku3_top3(threshold):
+    """3 連複: top3 ボックス 1 点 (本命・対抗・3 着) を 100 円。top3 合計 >= threshold で発火"""
+    def fn(horses, payouts):
+        if len(horses) < 3: return 0, 0, False
+        if sum((h.get("win_prob") or 0) for h in horses[:3]) < threshold: return 0, 0, False
+        a, b, c = horses[0]["number"], horses[1]["number"], horses[2]["number"]
+        pay = _payout_fuku3(payouts, a, b, c)
+        return UNIT, pay, pay > 0
+    return fn
+
+
+def _is_in_season(month, season):
+    if month is None: return False
+    if season == "spring": return month in (3, 4, 5)
+    if season == "summer": return month in (6, 7, 8)
+    if season == "autumn": return month in (9, 10, 11)
+    if season == "winter": return month in (12, 1, 2)
+    return False
+
+
+def _make_best_season(season):
+    """BEST 戦略 + 季節フィルタ"""
+    def fn(horses, payouts):
+        if not horses: return 0, 0, False
+        top = horses[0]
+        if not _is_in_season(top.get("race_month"), season): return 0, 0, False
+        if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+        if len(horses) >= 2:
+            gap = (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0)
+            if gap < 0.04: return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+    return fn
+
+
+def _make_best_surface(surface_jp):
+    """BEST 戦略 + 芝/ダート フィルタ"""
+    def fn(horses, payouts):
+        if not horses: return 0, 0, False
+        top = horses[0]
+        s = top.get("race_surface") or ""
+        if surface_jp == "芝":
+            if "芝" not in s: return 0, 0, False
+        elif surface_jp == "ダート":
+            if "ダ" not in s: return 0, 0, False
+        if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+        if len(horses) >= 2:
+            gap = (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0)
+            if gap < 0.04: return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+    return fn
+
+
+def _make_best_venue(venue_jp):
+    """BEST 戦略 + 場フィルタ"""
+    def fn(horses, payouts):
+        if not horses: return 0, 0, False
+        top = horses[0]
+        if top.get("race_venue") != venue_jp: return 0, 0, False
+        if (top.get("win_prob") or 0) < 0.22: return 0, 0, False
+        if len(horses) >= 2:
+            gap = (top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0)
+            if gap < 0.04: return 0, 0, False
+        pay = _payout_fuku(payouts, top["number"])
+        return UNIT, pay, pay > 0
+    return fn
 
 
 # === Wave19.5: 3 条件 AND + 単勝中穴狙い ===
@@ -905,6 +1049,21 @@ def _predict_horses_for_race(race, model, kind, features_index,
         except Exception:
             pass
 
+    # Wave19.6: race の meta を各 horse に注入 (季節・コース・場別の戦略で使う)
+    course = race.get("course") or ""
+    surface = race.get("surface") or ""
+    rid = race.get("race_id") or ""
+    month = None
+    if rid and len(rid) >= 6 and rid[4:6].isdigit():
+        m = int(rid[4:6])
+        if 1 <= m <= 12: month = m
+    venue_code = rid[8:10] if len(rid) >= 10 else None
+    VENUE_NAMES = {
+        "01": "札幌", "02": "函館", "03": "福島", "04": "新潟", "05": "東京",
+        "06": "中山", "07": "中京", "08": "京都", "09": "阪神", "10": "小倉",
+    }
+    venue_name = VENUE_NAMES.get(venue_code or "", "")
+
     ranked = []
     for i, h in enumerate(horses):
         odds = h.get("win_odds")
@@ -922,6 +1081,11 @@ def _predict_horses_for_race(race, model, kind, features_index,
             "ev": ev,
             "ev_nopop": ev_nopop,
             "popularity": h.get("popularity"),
+            # race meta (全 horse 同じ値・戦略関数から参照しやすくするため埋め込み)
+            "race_course": course,
+            "race_surface": surface,
+            "race_month": month,
+            "race_venue": venue_name,
         })
     ranked.sort(key=lambda x: -x["win_prob"])
     return ranked

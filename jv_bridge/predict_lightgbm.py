@@ -286,14 +286,25 @@ def predict_race(race: Dict[str, Any],
         for rank, (i, _) in enumerate(idx_nopop, 1):
             ranks_nopop[i] = rank
 
+    # Wave19.6: race の meta を各 horse に注入 (季節・コース・場別戦略で使う)
+    rmcourse = race.get("course") or ""
+    rmsurface = race.get("surface") or ""
+    rmrid = race.get("race_id") or ""
+    rmmonth = None
+    if rmrid and len(rmrid) >= 6 and rmrid[4:6].isdigit():
+        m = int(rmrid[4:6])
+        if 1 <= m <= 12: rmmonth = m
+    _VENUE_NAMES = {
+        "01": "札幌", "02": "函館", "03": "福島", "04": "新潟", "05": "東京",
+        "06": "中山", "07": "中京", "08": "京都", "09": "阪神", "10": "小倉",
+    }
+    rmvenue = _VENUE_NAMES.get(rmrid[8:10] if len(rmrid) >= 10 else "", "")
+
     pred_horses = []
     for i, h in enumerate(horses):
         odds = h.get("win_odds")
         win_prob = normalized[i]
         ev = (win_prob * float(odds)) if (odds and float(odds) > 0) else None
-        # value_signal = nopop_prob - primary_prob
-        #   正なら実力派モデルが市場より評価 (過小評価候補)
-        #   負なら逆 (人気馬の AI も同調)
         value_signal = None
         nopop_prob = None
         ev_nopop = None
@@ -315,6 +326,11 @@ def predict_race(race: Dict[str, Any],
             "ev": round(ev, 4) if ev is not None else None,
             "ev_nopop": round(ev_nopop, 4) if ev_nopop is not None else None,
             "popularity": h.get("popularity"),
+            # Wave19.6: race meta
+            "race_course": rmcourse,
+            "race_surface": rmsurface,
+            "race_month": rmmonth,
+            "race_venue": rmvenue,
         })
     pred_horses.sort(key=lambda x: x["rank"])
 

@@ -79,9 +79,42 @@ def _load_race_meta(race_id: str) -> Dict[str, Any]:
         return {}
 
 
-# Wave19.4: 複合戦略を導入 — 単純な閾値型より高 ROI 高的中率
-# 過去 690 R で 100% 越え + 件数 30+ のものから 3 段階の階層に整理
+# Wave19.6: 5 戦略マルチアサイン (馬連・3 連複・芝限定を追加発見)
+# 過去 690 R で 100% 越え + 件数 20+ のものから階層化
+def _is_surface_turf(horses):
+    if not horses: return False
+    s = horses[0].get("race_surface") or ""
+    return "芝" in s
+
 STRATEGY_DEFS = [
+    {
+        "key": "big",
+        "name_in_backtest": "fuku3_top3_conf50",
+        "label": "AI 上位 3 頭の合計確率 50%+ で「3 連複 ボックス 1 点」(100 円)",
+        "short_label": "BIG",
+        "color": "violet",
+        "bet_type": "3連複ボックス",
+        "unit": 100,
+        "trigger": lambda top, horses: (
+            len(horses) >= 3 and
+            sum((h.get("win_prob") or 0) for h in horses[:3]) >= 0.50
+        ),
+    },
+    {
+        "key": "turf",
+        "name_in_backtest": "best_turf",
+        "label": "芝レース で BEST 条件 (本命確率 22%+ かつ 対抗差 4pt+) → 複勝 100 円",
+        "short_label": "TURF",
+        "color": "emerald",
+        "bet_type": "複勝",
+        "unit": 100,
+        "trigger": lambda top, horses: (
+            _is_surface_turf(horses) and
+            (top.get("win_prob") or 0) >= 0.22 and
+            len(horses) >= 2 and
+            ((top.get("win_prob") or 0) - (horses[1].get("win_prob") or 0)) >= 0.04
+        ),
+    },
     {
         "key": "ultra",
         "name_in_backtest": "combo_best_wide_double_bet",
@@ -99,7 +132,7 @@ STRATEGY_DEFS = [
     {
         "key": "best",
         "name_in_backtest": "combo_best_and_gap",
-        "label": "AI 本命確率 22%+ かつ 対抗との差 4pt 以上 で複勝 100 円",
+        "label": "AI 本命確率 22%+ かつ 対抗との差 4pt+ で複勝 100 円",
         "short_label": "BEST",
         "color": "go",
         "bet_type": "複勝",

@@ -1,7 +1,23 @@
 {
-  "generatedAt": "2026-05-18T23:01:24.403500+00:00",
+  "generatedAt": "2026-05-18T23:18:36.784439+00:00",
   "todayJst": "2026-05-19",
   "strategies_def": [
+    {
+      "key": "big",
+      "label": "AI 上位 3 頭の合計確率 50%+ で「3 連複 ボックス 1 点」(100 円)",
+      "short_label": "BIG",
+      "color": "violet",
+      "bet_type": "3連複ボックス",
+      "unit": 100
+    },
+    {
+      "key": "turf",
+      "label": "芝レース で BEST 条件 (本命確率 22%+ かつ 対抗差 4pt+) → 複勝 100 円",
+      "short_label": "TURF",
+      "color": "emerald",
+      "bet_type": "複勝",
+      "unit": 100
+    },
     {
       "key": "ultra",
       "label": "BEST+WIDE 両方発火時に「複勝 100 + ワイド 3 点 300」併買 (400 円)",
@@ -12,7 +28,7 @@
     },
     {
       "key": "best",
-      "label": "AI 本命確率 22%+ かつ 対抗との差 4pt 以上 で複勝 100 円",
+      "label": "AI 本命確率 22%+ かつ 対抗との差 4pt+ で複勝 100 円",
       "short_label": "BEST",
       "color": "go",
       "bet_type": "複勝",
@@ -28,6 +44,42 @@
     }
   ],
   "stats": {
+    "big": {
+      "strategy_key": "big",
+      "strategy_name": "fuku3_top3_conf50",
+      "label": "AI 上位 3 頭の合計確率 50%+ で「3 連複 ボックス 1 点」(100 円)",
+      "short_label": "BIG",
+      "color": "violet",
+      "bet_type": "3連複ボックス",
+      "unit": 100,
+      "test_races": 690,
+      "fired_count": 49,
+      "fired_rate_pct": 7.1,
+      "roi_pct": 142.7,
+      "hit_rate_pct": 24.5,
+      "invested": 4900,
+      "returned": 6990,
+      "profit": 2090,
+      "max_payout": 2090
+    },
+    "turf": {
+      "strategy_key": "turf",
+      "strategy_name": "best_turf",
+      "label": "芝レース で BEST 条件 (本命確率 22%+ かつ 対抗差 4pt+) → 複勝 100 円",
+      "short_label": "TURF",
+      "color": "emerald",
+      "bet_type": "複勝",
+      "unit": 100,
+      "test_races": 690,
+      "fired_count": 37,
+      "fired_rate_pct": 5.4,
+      "roi_pct": 141.9,
+      "hit_rate_pct": 86.5,
+      "invested": 3700,
+      "returned": 5250,
+      "profit": 1550,
+      "max_payout": 1440
+    },
     "ultra": {
       "strategy_key": "ultra",
       "strategy_name": "combo_best_wide_double_bet",
@@ -49,7 +101,7 @@
     "best": {
       "strategy_key": "best",
       "strategy_name": "combo_best_and_gap",
-      "label": "AI 本命確率 22%+ かつ 対抗との差 4pt 以上 で複勝 100 円",
+      "label": "AI 本命確率 22%+ かつ 対抗との差 4pt+ で複勝 100 円",
       "short_label": "BEST",
       "color": "go",
       "bet_type": "複勝",
@@ -134,7 +186,7 @@
       ],
       "top3_prob_sum": 0.470495,
       "race_date": "2026-05-17",
-      "predicted_at": "2026-05-18T22:23:54.825612+00:00",
+      "predicted_at": "2026-05-18T23:18:19.937964+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -147,6 +199,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "big",
+        "turf",
         "ultra",
         "best",
         "safe"
@@ -187,7 +241,7 @@
       ],
       "top3_prob_sum": 0.50113,
       "race_date": "2026-05-17",
-      "predicted_at": "2026-05-18T22:23:54.813593+00:00",
+      "predicted_at": "2026-05-18T23:18:19.927958+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -200,6 +254,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "big",
         "ultra",
         "safe"
       ],
@@ -239,7 +294,7 @@
       ],
       "top3_prob_sum": 0.602708,
       "race_date": "2026-05-17",
-      "predicted_at": "2026-05-18T22:23:54.781519+00:00",
+      "predicted_at": "2026-05-18T23:18:19.898957+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -290,7 +345,7 @@
       ],
       "top3_prob_sum": 0.397512,
       "race_date": "2026-05-17",
-      "predicted_at": "2026-05-18T22:23:54.765474+00:00",
+      "predicted_at": "2026-05-18T23:18:19.882958+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -303,6 +358,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "big",
         "ultra",
         "best",
         "safe"
@@ -343,7 +399,7 @@
       ],
       "top3_prob_sum": 0.527226,
       "race_date": "2026-05-17",
-      "predicted_at": "2026-05-18T22:23:54.754446+00:00",
+      "predicted_at": "2026-05-18T23:18:19.870960+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -356,6 +412,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "big",
         "ultra",
         "safe"
       ],
@@ -395,7 +452,58 @@
       ],
       "top3_prob_sum": 0.555211,
       "race_date": "2026-05-17",
-      "predicted_at": "2026-05-18T22:23:54.737398+00:00",
+      "predicted_at": "2026-05-18T23:18:19.846449+00:00",
+      "model_auc": 0.8060957082739253
+    },
+    {
+      "race_id": "202605160803070900",
+      "race_name": "?????????@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@",
+      "course": "京都芝2000",
+      "distance": 2000,
+      "going": "良",
+      "weather": "晴",
+      "is_g1": false,
+      "hassou_time": null,
+      "strategies": [
+        "big"
+      ],
+      "horse": {
+        "number": 1,
+        "name": "?~?b?L?[?W???“?v?@?@?@?@?@?@?@?@?@?",
+        "win_prob": 0.197988,
+        "nopop_prob": 0.095809,
+        "value_signal": -0.10218,
+        "odds": null,
+        "popularity": 1,
+        "ev": null,
+        "rank_nopop": 8
+      },
+      "top3": [
+        {
+          "number": 1,
+          "name": "?~?b?L?[?W???“?v?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.197988,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 8,
+          "name": "???“?_?t???f?C?Y?@?@?@?@?@?@?@?@?@?",
+          "win_prob": 0.181666,
+          "odds": null,
+          "popularity": 1
+        },
+        {
+          "number": 6,
+          "name": "?G?`?S?h?‰?S?“?@?@?@?@?@?@?@?@?@?@",
+          "win_prob": 0.165109,
+          "odds": null,
+          "popularity": 2
+        }
+      ],
+      "top3_prob_sum": 0.544763,
+      "race_date": "2026-05-16",
+      "predicted_at": "2026-05-18T23:18:19.832449+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -408,6 +516,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "big",
         "ultra",
         "safe"
       ],
@@ -447,7 +556,7 @@
       ],
       "top3_prob_sum": 0.741809,
       "race_date": "2026-05-16",
-      "predicted_at": "2026-05-18T22:23:54.721368+00:00",
+      "predicted_at": "2026-05-18T23:18:19.830445+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -460,6 +569,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "turf",
         "best",
         "safe"
       ],
@@ -499,7 +609,7 @@
       ],
       "top3_prob_sum": 0.427929,
       "race_date": "2026-05-16",
-      "predicted_at": "2026-05-18T22:23:54.718856+00:00",
+      "predicted_at": "2026-05-18T23:18:19.827447+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -512,6 +622,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "big",
         "ultra",
         "safe"
       ],
@@ -551,7 +662,7 @@
       ],
       "top3_prob_sum": 0.543624,
       "race_date": "2026-05-16",
-      "predicted_at": "2026-05-18T22:23:54.710345+00:00",
+      "predicted_at": "2026-05-18T23:18:19.820445+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -602,7 +713,7 @@
       ],
       "top3_prob_sum": 0.42025199999999996,
       "race_date": "2026-05-16",
-      "predicted_at": "2026-05-18T22:23:54.704327+00:00",
+      "predicted_at": "2026-05-18T23:18:19.815445+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -615,6 +726,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "big",
+        "turf",
         "ultra",
         "best",
         "safe"
@@ -655,7 +768,7 @@
       ],
       "top3_prob_sum": 0.534135,
       "race_date": "2026-05-16",
-      "predicted_at": "2026-05-18T22:23:54.681269+00:00",
+      "predicted_at": "2026-05-18T23:18:19.794445+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -707,7 +820,7 @@
       ],
       "top3_prob_sum": 0.48076399999999997,
       "race_date": "2026-05-16",
-      "predicted_at": "2026-05-18T22:23:54.614622+00:00",
+      "predicted_at": "2026-05-18T23:18:19.768446+00:00",
       "model_auc": 0.8060957082739253
     },
     {
@@ -759,14 +872,16 @@
       ],
       "top3_prob_sum": 0.43245500000000003,
       "race_date": "2026-05-16",
-      "predicted_at": "2026-05-18T22:23:54.548959+00:00",
+      "predicted_at": "2026-05-18T23:18:19.758445+00:00",
       "model_auc": 0.8060957082739253
     }
   ],
   "count_today": 0,
-  "count_recent": 13,
+  "count_recent": 14,
   "total_predictions": 3492,
   "fired_by_key": {
+    "big": 426,
+    "turf": 287,
     "ultra": 348,
     "best": 451,
     "safe": 816

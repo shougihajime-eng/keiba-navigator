@@ -1539,18 +1539,25 @@
     };
 
     const stratBadges = (keys) => {
-      const labels = { ultra: "★ULTRA", best: "BEST", safe: "SAFE" };
+      const labels = { big: "BIG", turf: "TURF", ultra: "★ULTRA", best: "BEST", safe: "SAFE" };
       return (keys || []).map((k) => `<span class="rec-badge rec-b-${k}">${labels[k] || k}</span>`).join("");
     };
 
     const renderItem = (it) => {
-      const isUltra = (it.strategies || []).includes("ultra");
+      const stratSet = new Set(it.strategies || []);
       const numStr = it.top3 && it.top3.length === 3
         ? `${it.top3[0].number}-${it.top3[1].number}-${it.top3[2].number}`
         : "1-2-3";
-      const betLabel = isUltra
-        ? `複勝 #${it.horse?.number} 100 円 + ワイド ${numStr} 300 円 = 400 円`
-        : `複勝 #${it.horse?.number} 100 円`;
+      // 買い方の決定: 発火戦略の中で最も「具体的・利益期待大」のものを選ぶ
+      // ULTRA > BIG (3 連複) > TURF/BEST/SAFE (複勝) の優先順
+      let betLabel;
+      if (stratSet.has("ultra")) {
+        betLabel = `複勝 #${it.horse?.number} 100 円 + ワイド ${numStr} 300 円 = 400 円`;
+      } else if (stratSet.has("big")) {
+        betLabel = `3 連複 ボックス ${numStr} 100 円`;
+      } else {
+        betLabel = `複勝 #${it.horse?.number} 100 円`;
+      }
       return `
         <div class="rec-item">
           <div class="rec-race">
