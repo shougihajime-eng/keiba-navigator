@@ -31,6 +31,11 @@
     - これで「今自動が動いてるか」がアプリ開いた瞬間に判る
   - **テスト**: smoke 126 ケース全通過 (回帰なし) / `/api/cron-finalize` 認証なしで 401 / `/api/automation-status` 200 + 必要キー全揃い
   - **タスク登録**: PowerShell で 6 タスク (`Morning/Pre/Afternoon/Evening/Catchup-0800/Catchup-1200`) すべて `WakeToRun=True + RestartCount=3` で登録成功確認済
+  - **🧪 試運転で実証 (2026-05-18 12:00 / 12:21)**:
+    - 12:00:01 にスケジューラから `Catchup-1200` が自動起動 → 「平日のためスキップ」を正しく記録 (自動実行されている証拠)
+    - 12:21:23 に `-Force` で強制実行 → `JV-Link → aggregate RACE 2780 レコード → build_all → fetch_tomorrow → features` の chain が頭から動くことを確認
+    - 本番 (Vercel) で `/api/automation-status` 200 + `/api/cron-finalize` 401 (認証拒否) を確認 → デプロイ済 + 認証ガード稼働
+    - `catchup.ps1` の `Start-Process` 引数渡しを 1 文字列形式に修正 (漢字パスでも壊れない)
   - **ファイル**: `vercel.json` (crons 追加) / `lib/cron_finalize.js` (新規) / `api/[...slug].js` (cron-finalize + automation-status 追加) / `index.html` (autostatus-card 追加) / `app.js` (renderAutostatus 追加) / `styles.css` (autostatus 系約 90 行追加) / `scripts/register_scheduler.ps1` (全面強化) / `scripts/catchup.ps1` (新規) / `sw.js` v27 → v28
 - **🎨 Wave15 (2026-05-18 夕・必殺一号艇インスパイア 全面リライト)** — ユーザー指示「必殺一号艇みたいに見やすく・アニメーションも入れて・何を買うか分かりやすく・WIN5 もどれ買うかクリアに・妥協なし」に応えて、`index.html` / `styles.css` / `app.js` を一気にリライト:
   - **デザイン**: ライト + ガラスモーフィズム (rgba 白 + backdrop-blur)・メッシュグラデ背景 (シアン・ターフミント・ラベンダー・サンセット・ターフライト)・fractalNoise SVG グレイン・必殺一号艇相当のクオリティ
