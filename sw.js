@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v39"; // Wave19.8+20: 8 期間検証 / BEST 7/7勝 TRUSTED / SAFE 6/7勝 STABLE / 朝 9:00 自動リトライ仕込み
+const CACHE_VERSION = "keiba-nav-v40"; // Wave20.1: 平日「開催なし」表示の大幅強化 + 文字化け馬名のクライアント補正 + 本番再デプロイ
 const PRECACHE = [
   "/",
   "/index.html",
