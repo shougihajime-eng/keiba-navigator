@@ -394,7 +394,20 @@
     // ── 本体 (card-enter-stagger で子要素がぬるっと入場)
     const body = el("div", { class: "decision-body card-enter-stagger" });
 
-    // (0) 「📢 AI の予想」案内
+    // (0) TODAY'S BEST PICK — 巨大オーバーライン (Wave22.4)
+    const tierEmoji = tier === "ultra" ? "💎✦" : tier === "prime" ? "💎" : tier === "go" ? "🎯" : tier === "cond" ? "⚡" : "🎲";
+    const tierColor = tier === "ultra" ? "gold" : tier === "prime" ? "gold" : tier === "go" ? "turf" : tier === "cond" ? "sky" : "mute";
+    const overline = el("div", { class: `today-best-overline today-best-${tierColor}` },
+      el("div", { class: "tbo-emoji" }, tierEmoji),
+      el("div", { class: "tbo-stack" },
+        el("div", { class: "tbo-eyebrow" }, "TODAY'S BEST PICK"),
+        el("div", { class: "tbo-headline" }, "今日いちばん買う 1 点")
+      ),
+      el("div", { class: "tbo-tier-pill" }, tierTitle(tier))
+    );
+    body.appendChild(overline);
+
+    // (0b) 「📢 AI の予想」案内
     body.appendChild(el("div", { class: "decision-prelabel" },
       el("span", { class: "pl-bar" }),
       el("span", null,
@@ -428,7 +441,13 @@
     headline.appendChild(cd);
     body.appendChild(headline);
 
-    // (2) BigStat 3 列: 期待値 / 1着確率 / AI 信頼度
+    // (1b) 本命馬を「勝負服馬番タグ」で大型表示 (Wave22.4)
+    if (race.topPick) {
+      const silkRow = renderSilkPickRow(race, tier);
+      if (silkRow) body.appendChild(silkRow);
+    }
+
+    // (2) BigStat 3 列: 期待値 / 1着確率 (円グラフ) / AI 信頼度
     const stats = el("div", { class: "bigstat-grid" });
     const ev = race.topPick.ev;
     const evTone = ev >= 1.5 ? "gold" : ev >= 1.1 ? "go" : ev >= 0.95 ? "ink" : "mute";
@@ -437,8 +456,8 @@
     const confPct = (race.confidence ?? 0) * 100;
     const confTone = confPct >= 60 ? "gold" : confPct >= 35 ? "go" : "mute";
     stats.appendChild(makeBigStat("期待値", `×${ev.toFixed(2)}`, evTone, true));
-    stats.appendChild(makeBigStat("1着確率", `${probPct.toFixed(0)}%`, probTone, false));
-    stats.appendChild(makeBigStat("AI 信頼度", `${confPct.toFixed(0)}%`, confTone, false));
+    stats.appendChild(makeBigStatDonut("1着確率", probPct, probTone));
+    stats.appendChild(makeBigStatBars("AI 信頼度", confPct, confTone));
     body.appendChild(stats);
 
     // (3) Walk-forward 検証 ROI (戦略の信頼性) — recommend.stats から
@@ -541,6 +560,90 @@
     const wrap = el("div", { class: "bigstat" + (primary ? " primary" : "") });
     wrap.appendChild(el("div", { class: "label" }, label));
     wrap.appendChild(el("div", { class: `val tone-${tone}` }, value));
+    return wrap;
+  }
+
+  // Wave22.4: 1 着確率を SVG conic-gradient 円グラフで表示
+  function makeBigStatDonut(label, pct, tone) {
+    const wrap = el("div", { class: `bigstat bigstat-donut tone-${tone}` });
+    wrap.appendChild(el("div", { class: "label" }, label));
+    const ring = el("div", { class: "donut-ring" });
+    // CSS conic-gradient 用に pct (0-100) を CSS 変数で渡す
+    const clamped = Math.max(0, Math.min(100, pct));
+    ring.style.setProperty("--p", String(clamped));
+    const txt = el("div", { class: "donut-center" });
+    txt.appendChild(el("div", { class: "donut-num" }, `${clamped.toFixed(0)}`));
+    txt.appendChild(el("div", { class: "donut-unit" }, "%"));
+    ring.appendChild(txt);
+    wrap.appendChild(ring);
+    return wrap;
+  }
+
+  // Wave22.4: AI 信頼度を 5 段ハート + パーセント表記で表示
+  function makeBigStatBars(label, pct, tone) {
+    const wrap = el("div", { class: `bigstat bigstat-bars tone-${tone}` });
+    wrap.appendChild(el("div", { class: "label" }, label));
+    // 5 段階に量子化 (0-20=1, 20-40=2, 40-60=3, 60-80=4, 80-100=5)
+    const lvl = Math.max(1, Math.min(5, Math.ceil(pct / 20)));
+    const heartsRow = el("div", { class: "hearts-row" });
+    for (let i = 1; i <= 5; i++) {
+      heartsRow.appendChild(el("span", { class: "heart " + (i <= lvl ? "is-on" : "is-off") }, i <= lvl ? "♥" : "♡"));
+    }
+    wrap.appendChild(heartsRow);
+    wrap.appendChild(el("div", { class: `val tone-${tone}`, style: "font-size:20px;margin-top:2px" }, `${pct.toFixed(0)}%`));
+    return wrap;
+  }
+
+  // Wave22.4: 本命/対抗/3着候補 を勝負服 (Silk) 馬番タグで横並び表示
+  // 馬番ごとに JRA の勝負服パターン (8 色) を循環適用
+  function renderSilkPickRow(race, tier) {
+    const tp = race.topPick;
+    if (!tp) return null;
+    const wrap = el("div", { class: `silk-pick-row silk-tier-${tier}` });
+    const head = el("div", { class: "spr-head" });
+    head.appendChild(el("span", { class: "spr-eyebrow" }, "AI が選んだ本命 3 頭"));
+    wrap.appendChild(head);
+
+    const row = el("div", { class: "spr-horses" });
+    const horses = [
+      { h: tp, role: "本命", roleIcon: "🥇", main: true },
+      { h: race.second, role: "対抗", roleIcon: "🥈", main: false },
+      { h: race.third,  role: "3着",  roleIcon: "🥉", main: false },
+    ].filter(x => x.h && x.h.number);
+
+    horses.forEach(({ h, role, roleIcon, main }) => {
+      const num = parseInt(h.number, 10) || 1;
+      const silkClass = `silk-${((num - 1) % 8) + 1}`;
+      const probPct = (h.prob ?? 0) * 100;
+      const oddsTxt = h.odds ? `${h.odds.toFixed(1)}倍` : "—";
+      const card = el("div", { class: "spr-card " + (main ? "is-main" : "") });
+      const silkBadge = el("div", { class: `spr-silk ${silkClass}` });
+      silkBadge.appendChild(el("svg", { viewBox: "0 0 80 80", "aria-hidden": "true",
+        html: `
+          <defs>
+            <linearGradient id="silkbg-${num}" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="var(--silk-c1, #fbbf24)"/>
+              <stop offset="1" stop-color="var(--silk-c2, #d97706)"/>
+            </linearGradient>
+          </defs>
+          <circle cx="40" cy="40" r="36" fill="url(#silkbg-${num})" stroke="rgba(15,23,42,0.18)" stroke-width="2"/>
+          <text x="40" y="50" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="30" fill="#fff"
+                style="paint-order: stroke; stroke: rgba(15,23,42,0.30); stroke-width: 2px">${num}</text>
+        `,
+      }));
+      card.appendChild(silkBadge);
+      const info = el("div", { class: "spr-info" });
+      info.appendChild(el("div", { class: "spr-role" }, `${roleIcon} ${role}`));
+      const name = scrubName(h.name, "");
+      if (name) info.appendChild(el("div", { class: "spr-name" }, name));
+      info.appendChild(el("div", { class: "spr-stats" },
+        el("span", { class: "spr-prob" }, `${probPct.toFixed(0)}%`),
+        el("span", { class: "spr-odds" }, oddsTxt)
+      ));
+      card.appendChild(info);
+      row.appendChild(card);
+    });
+    wrap.appendChild(row);
     return wrap;
   }
 
@@ -1294,6 +1397,141 @@
     }
 
     renderProfitChart();
+    renderMegaDashboard();
+  }
+
+  // Wave22.5: 全期間の巨大ダッシュボード (累計回収率 + 連勝 + ベスト勝利)
+  function renderMegaDashboard() {
+    const grid = $("#profit-grid");
+    if (!grid) return;
+    const parent = grid.parentNode;
+
+    // 既存のダッシュボードを削除して再描画
+    const old = parent.querySelector(".mega-dashboard");
+    if (old) old.remove();
+
+    const finished = state.bets.filter((b) => b.result === "hit" || b.result === "miss");
+    if (finished.length === 0) return;  // 結果が無いうちは表示しない
+
+    const totalSpent = finished.reduce((a, b) => a + (b.amount || 0), 0);
+    const totalProfit = finished.reduce((a, b) => a + ((b.payout || 0) - (b.amount || 0)), 0);
+    const totalPayout = totalSpent + totalProfit;
+    const recoveryPct = totalSpent > 0 ? (totalPayout / totalSpent) * 100 : 0;
+    const hitCount = finished.filter((b) => b.result === "hit").length;
+    const hitRate = (hitCount / finished.length) * 100;
+
+    // 連勝記録 (新しい順に並べて hit が連続している数)
+    const ordered = [...finished].sort((a, b) => (b.id || 0) - (a.id || 0));
+    let currentStreak = 0;
+    for (const b of ordered) {
+      if (b.result === "hit") currentStreak++;
+      else break;
+    }
+    // 過去最高連勝
+    let bestStreak = 0, runningStreak = 0;
+    const chrono = [...finished].sort((a, b) => (a.id || 0) - (b.id || 0));
+    for (const b of chrono) {
+      if (b.result === "hit") { runningStreak++; if (runningStreak > bestStreak) bestStreak = runningStreak; }
+      else runningStreak = 0;
+    }
+
+    // 過去最高利益のレース
+    let bestBet = null;
+    finished.forEach((b) => {
+      const p = (b.payout || 0) - (b.amount || 0);
+      if (b.result === "hit" && (bestBet == null || p > ((bestBet.payout || 0) - (bestBet.amount || 0)))) {
+        bestBet = b;
+      }
+    });
+
+    const recovTone = recoveryPct >= 110 ? "gold" : recoveryPct >= 100 ? "go" : recoveryPct >= 85 ? "warn" : "bad";
+    const recovEval = recoveryPct >= 110 ? "★★★ 絶好調"
+                    : recoveryPct >= 100 ? "★★ プラス収支"
+                    : recoveryPct >= 85  ? "★ 損益分岐手前"
+                    :                       "▼ 損益マイナス";
+
+    const dash = el("section", { class: `mega-dashboard mega-${recovTone} fade-in` });
+
+    // 上段: 巨大回収率
+    const recovBlock = el("div", { class: "mega-recovery" });
+    recovBlock.appendChild(el("div", { class: "mega-eyebrow" }, "ALL-TIME 累計回収率"));
+    const big = el("div", { class: "mega-bignum" });
+    big.appendChild(el("span", { class: "mega-bignum-int" }, recoveryPct.toFixed(0)));
+    big.appendChild(el("span", { class: "mega-bignum-unit" }, "%"));
+    recovBlock.appendChild(big);
+    recovBlock.appendChild(el("div", { class: "mega-eval" }, recovEval));
+    recovBlock.appendChild(el("div", { class: "mega-detail" },
+      el("span", null, "投資 ", el("b", null, "¥" + fmtYen(totalSpent))),
+      el("span", { class: "sep" }, " · "),
+      el("span", null, "収支 ", el("b", { class: totalProfit >= 0 ? "txt-go" : "txt-bad" }, (totalProfit >= 0 ? "+" : "") + "¥" + fmtYen(totalProfit))),
+      el("span", { class: "sep" }, " · "),
+      el("span", null, "的中率 ", el("b", null, hitRate.toFixed(0) + "%"))
+    ));
+    dash.appendChild(recovBlock);
+
+    // 下段: 連勝 + 最高記録 + ベスト勝利
+    const sub = el("div", { class: "mega-sub-grid" });
+
+    // 連勝
+    const streakCell = el("div", { class: `mega-cell mega-cell-streak ${currentStreak >= 3 ? "is-fire" : ""}` });
+    streakCell.appendChild(el("div", { class: "cell-label" }, "現在の連勝"));
+    streakCell.appendChild(el("div", { class: "cell-bignum" },
+      el("span", { class: "cell-bignum-int" }, String(currentStreak)),
+      el("span", { class: "cell-bignum-unit" }, "連勝")
+    ));
+    if (currentStreak >= 3) streakCell.appendChild(el("div", { class: "cell-sub" }, "🔥 絶好調"));
+    else if (currentStreak >= 1) streakCell.appendChild(el("div", { class: "cell-sub" }, "前回的中"));
+    else streakCell.appendChild(el("div", { class: "cell-sub" }, "次の的中を狙おう"));
+    sub.appendChild(streakCell);
+
+    // 最高連勝
+    const bestStreakCell = el("div", { class: "mega-cell mega-cell-best-streak" });
+    bestStreakCell.appendChild(el("div", { class: "cell-label" }, "最高連勝"));
+    bestStreakCell.appendChild(el("div", { class: "cell-bignum" },
+      el("span", { class: "cell-bignum-int" }, String(bestStreak)),
+      el("span", { class: "cell-bignum-unit" }, "連勝")
+    ));
+    bestStreakCell.appendChild(el("div", { class: "cell-sub" }, bestStreak >= 5 ? "🏆 殿堂入り" : bestStreak >= 3 ? "🥇 ベスト記録" : "もっと積もう"));
+    sub.appendChild(bestStreakCell);
+
+    // 過去最高利益
+    if (bestBet) {
+      const bestCell = el("div", { class: "mega-cell mega-cell-best-win" });
+      bestCell.appendChild(el("div", { class: "cell-label" }, "歴代最高 1 撃"));
+      const profit = (bestBet.payout || 0) - (bestBet.amount || 0);
+      bestCell.appendChild(el("div", { class: "cell-bignum" },
+        el("span", { class: "cell-bignum-int" }, "+¥" + fmtYen(profit)),
+      ));
+      const date = bestBet.date || "";
+      const race = bestBet.race || "(レース不明)";
+      bestCell.appendChild(el("div", { class: "cell-sub" }, `${date} · ${race}`));
+      sub.appendChild(bestCell);
+    } else {
+      const noWinCell = el("div", { class: "mega-cell mega-cell-no-best" });
+      noWinCell.appendChild(el("div", { class: "cell-label" }, "歴代最高 1 撃"));
+      noWinCell.appendChild(el("div", { class: "cell-bignum" },
+        el("span", { class: "cell-bignum-int", style: "font-size:24px;color:var(--c-ink-mute)" }, "—")
+      ));
+      noWinCell.appendChild(el("div", { class: "cell-sub" }, "次の的中で更新"));
+      sub.appendChild(noWinCell);
+    }
+
+    dash.appendChild(sub);
+
+    // 連勝バナー (3 連勝以上で派手バナー)
+    if (currentStreak >= 3) {
+      const banner = el("div", { class: "streak-banner" });
+      banner.innerHTML = `
+        <div class="sb-icon">🔥🔥🔥</div>
+        <div class="sb-text">
+          <div class="sb-eyebrow">CURRENT STREAK</div>
+          <div class="sb-head"><b>${currentStreak}</b> 連勝中 — このペースを維持しよう!</div>
+        </div>
+      `;
+      dash.appendChild(banner);
+    }
+
+    parent.insertBefore(dash, grid);
   }
 
   function renderHistoryRow(b) {

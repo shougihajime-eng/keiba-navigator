@@ -3715,3 +3715,603 @@ body::after {
   .race-row .info .meta .venue { font-size: 14px !important; }
   .race-row .ev .num-big { font-size: 20px !important; }
 }
+
+/* =====================================================================
+   Wave22.4 — 結論カードの最強化 (TODAY'S BEST + 勝負服馬番 + 円グラフ)
+   ===================================================================== */
+
+/* TODAY'S BEST PICK 巨大オーバーライン */
+.today-best-overline {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(254,243,199,0.65) 60%, rgba(255,255,255,0.85) 100%);
+  border: 1px solid rgba(245,158,11,0.30);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.85) inset,
+    0 4px 14px -4px rgba(245,158,11,0.18);
+  margin-bottom: 6px;
+}
+.tbo-emoji {
+  font-size: 30px;
+  line-height: 1;
+  animation: tboBounce 2.6s ease-in-out infinite;
+}
+@keyframes tboBounce {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-3px) rotate(2deg); }
+}
+.tbo-stack { min-width: 0; }
+.tbo-eyebrow {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.30em;
+  font-weight: 900;
+  color: var(--c-ink-mute);
+  font-style: italic;
+}
+.tbo-headline {
+  font-family: "Noto Sans JP", serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.005em;
+  line-height: 1.15;
+  margin-top: 2px;
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.tbo-tier-pill {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.10em;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #7c2d12;
+  border: 1px solid rgba(180,83,9,0.40);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+  white-space: nowrap;
+  box-shadow: 0 4px 14px -4px rgba(217,119,6,0.45);
+}
+@media (min-width: 1024px) {
+  .tbo-emoji { font-size: 40px; }
+  .tbo-headline { font-size: 26px; }
+  .tbo-eyebrow { font-size: 13px; }
+  .tbo-tier-pill { font-size: 15px; padding: 7px 14px; }
+}
+@media (max-width: 480px) {
+  .today-best-overline { grid-template-columns: auto 1fr; gap: 10px; padding: 10px 12px; }
+  .tbo-tier-pill { grid-column: 1 / -1; justify-self: end; font-size: 11px; padding: 4px 10px; }
+  .tbo-headline { font-size: 16px; }
+  .tbo-emoji { font-size: 24px; }
+}
+
+/* tier カラー変化 */
+.today-best-turf {
+  background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(220,252,231,0.70) 60%, rgba(255,255,255,0.85) 100%);
+  border-color: rgba(16,185,129,0.30);
+}
+.today-best-turf .tbo-headline {
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  -webkit-background-clip: text; background-clip: text;
+}
+.today-best-turf .tbo-tier-pill {
+  background: linear-gradient(135deg, #34d399, #10b981);
+  color: #064e3b;
+}
+.today-best-sky {
+  background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(224,242,254,0.70) 60%, rgba(255,255,255,0.85) 100%);
+  border-color: rgba(56,189,248,0.30);
+}
+.today-best-sky .tbo-headline {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  -webkit-background-clip: text; background-clip: text;
+}
+.today-best-sky .tbo-tier-pill {
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+  color: #0c4a6e;
+}
+.today-best-mute {
+  background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(241,245,249,0.85) 60%, rgba(255,255,255,0.85) 100%);
+  border-color: rgba(148,163,184,0.30);
+}
+.today-best-mute .tbo-headline {
+  background: linear-gradient(135deg, #64748b 0%, #334155 100%);
+  -webkit-background-clip: text; background-clip: text;
+}
+.today-best-mute .tbo-tier-pill {
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+  color: #1e293b;
+}
+
+/* ULTRA キラキラ枠 (極稀な絶好機) */
+.decision-card.tier-ultra::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg,
+    rgba(251,191,36,0) 0%,
+    rgba(251,191,36,0.45) 20%,
+    rgba(251,191,36,0) 40%,
+    rgba(251,191,36,0) 60%,
+    rgba(251,191,36,0.45) 80%,
+    rgba(251,191,36,0) 100%);
+  background-size: 220% 220%;
+  animation: ultraShimmer 4.5s linear infinite;
+  z-index: 1;
+  mask: linear-gradient(black, black) content-box, linear-gradient(black, black);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(black, black) content-box, linear-gradient(black, black);
+  -webkit-mask-composite: xor;
+  padding: 2px;
+}
+@keyframes ultraShimmer {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 200% 200%; }
+}
+
+/* 勝負服馬番タグ (本命3頭) */
+.silk-pick-row {
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(15,23,42,0.06);
+  box-shadow: 0 1px 2px rgba(15,23,42,0.03);
+}
+.spr-head { margin-bottom: 10px; }
+.spr-eyebrow {
+  font-size: 10px; letter-spacing: 0.22em; font-weight: 900;
+  color: var(--c-ink-mute); text-transform: uppercase;
+}
+.spr-horses {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.spr-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 6px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(15,23,42,0.05);
+  position: relative;
+  transition: transform 0.2s var(--ease-spring);
+}
+.spr-card.is-main {
+  background: linear-gradient(180deg, rgba(254,243,199,0.85), rgba(253,230,138,0.55));
+  border-color: rgba(245,158,11,0.40);
+  box-shadow: 0 8px 20px -6px rgba(245,158,11,0.35);
+  transform: translateY(-2px) scale(1.02);
+}
+.spr-silk {
+  width: 60px; height: 60px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.spr-card.is-main .spr-silk {
+  width: 70px; height: 70px;
+}
+.spr-silk svg { width: 100%; height: 100%; filter: drop-shadow(0 3px 8px rgba(15,23,42,0.18)); }
+.spr-card.is-main .spr-silk svg { filter: drop-shadow(0 6px 16px rgba(245,158,11,0.55)); }
+
+/* JRA の勝負服 8 色 (馬番 1-8 番のリンク色) */
+.silk-1 { --silk-c1: #ffffff; --silk-c2: #e5e7eb; }
+.silk-2 { --silk-c1: #1f2937; --silk-c2: #111827; }
+.silk-3 { --silk-c1: #ef4444; --silk-c2: #b91c1c; }
+.silk-4 { --silk-c1: #3b82f6; --silk-c2: #1d4ed8; }
+.silk-5 { --silk-c1: #fbbf24; --silk-c2: #d97706; }
+.silk-6 { --silk-c1: #22c55e; --silk-c2: #15803d; }
+.silk-7 { --silk-c1: #f97316; --silk-c2: #c2410c; }
+.silk-8 { --silk-c1: #ec4899; --silk-c2: #be185d; }
+/* 1 番は白なので数字を黒に */
+.spr-silk.silk-1 svg text { fill: #0f172a !important; stroke: rgba(255,255,255,0.55) !important; }
+
+.spr-info {
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.spr-role {
+  font-size: 10px; font-weight: 900; letter-spacing: 0.06em;
+  color: var(--c-ink-soft);
+}
+.spr-card.is-main .spr-role { color: var(--c-amber); }
+.spr-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--c-ink);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.spr-card.is-main .spr-name { font-size: 13px; }
+.spr-stats {
+  display: flex; gap: 6px; align-items: baseline; font-variant-numeric: tabular-nums;
+}
+.spr-prob {
+  font-size: 14px; font-weight: 900; color: var(--c-deep);
+}
+.spr-card.is-main .spr-prob { font-size: 17px; color: var(--c-gold); }
+.spr-odds {
+  font-size: 10px; color: var(--c-ink-mute); font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .spr-silk { width: 48px; height: 48px; }
+  .spr-card.is-main .spr-silk { width: 58px; height: 58px; }
+  .spr-name { font-size: 10px; }
+  .spr-card.is-main .spr-name { font-size: 12px; }
+  .spr-prob { font-size: 13px; }
+  .spr-card.is-main .spr-prob { font-size: 15px; }
+}
+
+/* 円グラフ (1着確率) */
+.bigstat-donut {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 6px 12px;
+}
+.donut-ring {
+  --p: 0;
+  --c-fill: var(--c-deep);
+  width: 84px; height: 84px; border-radius: 50%;
+  background:
+    conic-gradient(var(--c-fill) calc(var(--p) * 1%), rgba(15,23,42,0.08) 0);
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px -4px rgba(15,23,42,0.10);
+  transition: --p 1.2s var(--ease-spring);
+}
+.bigstat-donut.tone-go .donut-ring   { --c-fill: #10b981; }
+.bigstat-donut.tone-gold .donut-ring { --c-fill: #f59e0b; }
+.bigstat-donut.tone-warn .donut-ring { --c-fill: #f97316; }
+.bigstat-donut.tone-mute .donut-ring { --c-fill: #94a3b8; }
+.bigstat-donut.tone-ink .donut-ring  { --c-fill: #0f172a; }
+.donut-ring::before {
+  content: "";
+  position: absolute; inset: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.05) inset;
+}
+.donut-center {
+  position: relative; z-index: 1;
+  display: flex; align-items: baseline; gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.donut-num {
+  font-size: 26px; font-weight: 900; line-height: 1;
+  color: var(--c-ink);
+}
+.donut-unit {
+  font-size: 12px; font-weight: 700; color: var(--c-ink-mute);
+}
+.bigstat-donut.tone-go .donut-num   { color: #047857; }
+.bigstat-donut.tone-gold .donut-num { color: #b45309; }
+.bigstat-donut.tone-warn .donut-num { color: #c2410c; }
+@media (min-width: 1024px) {
+  .donut-ring { width: 110px; height: 110px; }
+  .donut-num { font-size: 36px; }
+  .donut-unit { font-size: 14px; }
+}
+@media (max-width: 480px) {
+  .donut-ring { width: 68px; height: 68px; }
+  .donut-num { font-size: 20px; }
+  .donut-unit { font-size: 10px; }
+}
+
+/* AI 信頼度のハート 5 段 */
+.bigstat-bars {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 6px 12px;
+}
+.hearts-row {
+  display: inline-flex; gap: 2px;
+  font-family: "Inter", sans-serif;
+  font-size: 18px;
+  line-height: 1;
+}
+.heart.is-on  { color: #f43f5e; text-shadow: 0 0 6px rgba(244,63,94,0.40); }
+.heart.is-off { color: rgba(148,163,184,0.45); }
+.bigstat-bars.tone-gold .heart.is-on { color: #f59e0b; text-shadow: 0 0 8px rgba(245,158,11,0.45); }
+.bigstat-bars.tone-go   .heart.is-on { color: #10b981; text-shadow: 0 0 6px rgba(16,185,129,0.40); }
+@media (min-width: 1024px) {
+  .hearts-row { font-size: 24px; }
+}
+@media (max-width: 480px) {
+  .hearts-row { font-size: 16px; }
+}
+
+/* =====================================================================
+   Wave22.5 — 収支カードの巨大ダッシュボード
+   ===================================================================== */
+.mega-dashboard {
+  margin-bottom: 16px;
+  border-radius: 20px;
+  padding: 18px 16px 16px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(248,250,252,0.7) 100%);
+  border: 2px solid rgba(15,23,42,0.08);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.95) inset,
+    0 8px 24px -8px rgba(15,23,42,0.12);
+}
+
+/* 回収率に応じた背景 */
+.mega-gold {
+  background: linear-gradient(135deg, rgba(254,243,199,0.85) 0%, rgba(253,230,138,0.65) 50%, rgba(255,255,255,0.85) 100%);
+  border-color: rgba(245,158,11,0.45);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.95) inset,
+    0 0 30px -4px rgba(245,158,11,0.45),
+    0 12px 28px -8px rgba(245,158,11,0.30);
+  animation: megaGoldGlow 3.6s ease-in-out infinite;
+}
+@keyframes megaGoldGlow {
+  0%, 100% { box-shadow: 0 1px 0 0 rgba(255,255,255,0.95) inset, 0 0 30px -4px rgba(245,158,11,0.45), 0 12px 28px -8px rgba(245,158,11,0.30); }
+  50%      { box-shadow: 0 1px 0 0 rgba(255,255,255,0.95) inset, 0 0 50px -2px rgba(245,158,11,0.65), 0 14px 32px -8px rgba(245,158,11,0.40); }
+}
+.mega-go {
+  background: linear-gradient(135deg, rgba(220,252,231,0.85) 0%, rgba(167,243,208,0.55) 50%, rgba(255,255,255,0.85) 100%);
+  border-color: rgba(16,185,129,0.45);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.95) inset,
+    0 8px 24px -8px rgba(16,185,129,0.30);
+}
+.mega-warn {
+  background: linear-gradient(135deg, rgba(255,237,213,0.85) 0%, rgba(254,215,170,0.55) 50%, rgba(255,255,255,0.85) 100%);
+  border-color: rgba(249,115,22,0.40);
+}
+.mega-bad {
+  background: linear-gradient(135deg, rgba(254,226,226,0.75) 0%, rgba(254,202,202,0.55) 50%, rgba(255,255,255,0.85) 100%);
+  border-color: rgba(220,38,38,0.35);
+}
+
+/* メイン回収率ブロック */
+.mega-recovery {
+  text-align: center;
+  padding: 8px 0 16px;
+  border-bottom: 1px dashed rgba(15,23,42,0.10);
+  margin-bottom: 14px;
+}
+.mega-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  font-weight: 900;
+  color: var(--c-ink-mute);
+  font-style: italic;
+}
+.mega-bignum {
+  font-size: 72px;
+  font-weight: 900;
+  line-height: 1;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+.mega-bignum-int {
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.mega-bignum-unit {
+  font-size: 0.45em;
+  font-weight: 700;
+  margin-left: 4px;
+  color: var(--c-ink-soft);
+  -webkit-text-fill-color: var(--c-ink-soft);
+}
+.mega-go .mega-bignum-int {
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.mega-warn .mega-bignum-int {
+  background: linear-gradient(135deg, #fb923c 0%, #c2410c 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.mega-bad .mega-bignum-int {
+  background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@media (min-width: 1024px) {
+  .mega-bignum { font-size: 96px; }
+}
+@media (max-width: 480px) {
+  .mega-bignum { font-size: 56px; }
+}
+
+.mega-eval {
+  font-size: 14px;
+  font-weight: 900;
+  margin-top: 6px;
+  letter-spacing: 0.08em;
+}
+.mega-gold .mega-eval { color: var(--c-amber); }
+.mega-go   .mega-eval { color: var(--c-deep); }
+.mega-warn .mega-eval { color: #c2410c; }
+.mega-bad  .mega-eval { color: var(--c-bad); }
+
+.mega-detail {
+  font-size: 12px;
+  color: var(--c-ink-soft);
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+.mega-detail b { color: var(--c-ink); font-weight: 900; }
+.mega-detail .sep { color: var(--c-ink-dim); margin: 0 4px; }
+.mega-detail .txt-go { color: var(--c-deep) !important; }
+.mega-detail .txt-bad { color: var(--c-bad) !important; }
+@media (min-width: 1024px) {
+  .mega-detail { font-size: 14px; }
+}
+
+/* サブセル: 連勝 + ベスト勝利 */
+.mega-sub-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 480px) {
+  .mega-sub-grid { gap: 6px; }
+}
+.mega-cell {
+  border-radius: 14px;
+  padding: 10px 8px;
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(15,23,42,0.06);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.mega-cell .cell-label {
+  font-size: 9px;
+  letter-spacing: 0.20em;
+  font-weight: 900;
+  color: var(--c-ink-mute);
+  text-transform: uppercase;
+}
+.mega-cell .cell-bignum {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.mega-cell .cell-bignum-int {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.mega-cell .cell-bignum-unit {
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 4px;
+  color: var(--c-ink-soft);
+}
+.mega-cell .cell-sub {
+  font-size: 10px;
+  color: var(--c-ink-soft);
+  margin-top: 4px;
+  font-weight: 700;
+}
+@media (min-width: 1024px) {
+  .mega-cell .cell-bignum { font-size: 36px; }
+}
+@media (max-width: 480px) {
+  .mega-cell .cell-bignum { font-size: 22px; }
+  .mega-cell { padding: 8px 6px; }
+}
+
+/* 現在の連勝が 3+ で炎エフェクト */
+.mega-cell-streak.is-fire {
+  background: linear-gradient(135deg, rgba(254,226,226,0.85) 0%, rgba(254,243,199,0.65) 100%);
+  border-color: rgba(244,63,94,0.40);
+  animation: streakPulse 1.8s ease-in-out infinite;
+}
+.mega-cell-streak.is-fire .cell-bignum-int {
+  background: linear-gradient(135deg, #f43f5e 0%, #f59e0b 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.mega-cell-streak.is-fire .cell-sub {
+  color: var(--c-bad);
+  font-weight: 900;
+}
+@keyframes streakPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244,63,94,0.30); }
+  50%      { box-shadow: 0 0 0 10px rgba(244,63,94,0); }
+}
+
+.mega-cell-best-streak .cell-bignum-int {
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.mega-cell-best-win .cell-bignum-int {
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 22px;
+}
+@media (min-width: 1024px) {
+  .mega-cell-best-win .cell-bignum-int { font-size: 28px; }
+}
+@media (max-width: 480px) {
+  .mega-cell-best-win .cell-bignum-int { font-size: 18px; }
+}
+
+/* 連勝バナー (3 連勝以上で表示) */
+.streak-banner {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #fef3c7 0%, #fee2e2 100%);
+  border: 1px solid rgba(244,63,94,0.40);
+  box-shadow: 0 6px 18px -4px rgba(244,63,94,0.30);
+  animation: bannerWobble 2.4s ease-in-out infinite;
+}
+@keyframes bannerWobble {
+  0%, 100% { transform: rotate(0); }
+  25%      { transform: rotate(-0.4deg); }
+  75%      { transform: rotate(0.4deg); }
+}
+.streak-banner .sb-icon {
+  font-size: 30px;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: sbIconBounce 0.9s ease-in-out infinite;
+}
+@keyframes sbIconBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.streak-banner .sb-text { flex: 1; min-width: 0; }
+.streak-banner .sb-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.30em;
+  font-weight: 900;
+  color: var(--c-bad);
+  font-style: italic;
+}
+.streak-banner .sb-head {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--c-ink);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+.streak-banner .sb-head b {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--c-bad);
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 1024px) {
+  .streak-banner .sb-head { font-size: 16px; }
+  .streak-banner .sb-head b { font-size: 26px; }
+}
+@media (max-width: 480px) {
+  .streak-banner { padding: 10px 12px; gap: 10px; }
+  .streak-banner .sb-icon { font-size: 24px; }
+  .streak-banner .sb-head { font-size: 13px; }
+  .streak-banner .sb-head b { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mega-gold, .mega-cell-streak.is-fire,
+  .streak-banner, .streak-banner .sb-icon {
+    animation: none !important;
+  }
+}
