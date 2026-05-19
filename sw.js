@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v42"; // Wave21.1: レース行リスト 5 段階ティア + ★バッジ + ULTRA 発光・履歴/WIN5 トーン統一
+const CACHE_VERSION = "keiba-nav-v43"; // Wave21.2: 朝の概要トースト + 今週の最高的中バナー (毎日使いたくなる演出)
 const PRECACHE = [
   "/",
   "/index.html",

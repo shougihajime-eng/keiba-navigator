@@ -1675,6 +1675,8 @@
     try {
       renderHeader();
       renderLive();
+      renderMorningSummary();
+      renderTopWinBanner();
       renderAutostatus();
       renderMlStatus();
       renderRecommendations();
@@ -1685,6 +1687,104 @@
     } catch (e) {
       console.error("[render] error", e);
     }
+  }
+
+  // ─── 朝の概要トースト (JST 6:00-12:00 の初回のみ・1日 1 回) ───
+  function renderMorningSummary() {
+    const root = $("#morning-mount");
+    if (!root) return;
+    const now = new Date();
+    const hh = now.getHours();
+    if (hh < 6 || hh >= 12) { root.hidden = true; return; }
+    const today = todayJst();
+    const KEY = "keiba_morning_summary_last";
+    if (localStorage.getItem(KEY) === today) { root.hidden = true; return; }
+
+    // 何も買うものが無い日は出さない (テンション下げ防止)
+    const goRaces = state.races.filter((r) => ["ultra","prime","go","cond"].includes(tierOfRace(r)));
+    const goldRaces = state.races.filter((r) => ["ultra","prime"].includes(tierOfRace(r)));
+    if (goRaces.length === 0) {
+      // ただし「直近の推奨ログ」がある場合は復習促進トーストを出す
+      const recentN = state.recommendations?.recommendations_recent?.length || 0;
+      if (recentN === 0) { root.hidden = true; return; }
+    }
+
+    localStorage.setItem(KEY, today);
+
+    // 最初の締切
+    let firstStart = null;
+    for (const r of state.races) {
+      const dt = startDateOfRace(r);
+      if (dt && dt.getTime() > Date.now()) {
+        if (!firstStart || dt.getTime() < firstStart.getTime()) firstStart = dt;
+      }
+    }
+    const firstHM = firstStart
+      ? `${String(firstStart.getHours()).padStart(2,"0")}:${String(firstStart.getMinutes()).padStart(2,"0")}`
+      : null;
+
+    const wd = ["日","月","火","水","木","金","土"][now.getDay()];
+    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+    const headline = goldRaces.length > 0
+      ? `☀️ おはよう・今日の絶好機 ${goldRaces.length} R`
+      : goRaces.length > 0
+        ? `☀️ おはよう・今日の勝負 ${goRaces.length} R`
+        : isWeekend
+          ? `☀️ おはよう・データ取得中`
+          : `☀️ おはよう・今日 (${wd}) は休む日`;
+
+    const parts = [];
+    if (goldRaces.length > 0) parts.push(`<span style="color:var(--c-gold);font-weight:900">💎 絶好機 ${goldRaces.length}R</span>`);
+    if (goRaces.length > goldRaces.length) parts.push(`<span style="color:var(--c-deep);font-weight:800">勝負 ${goRaces.length - goldRaces.length}R</span>`);
+    if (firstHM) parts.push(`<span style="color:var(--c-ink-soft)">最初の締切 ${firstHM}</span>`);
+
+    root.hidden = false;
+    root.innerHTML = `
+      <div class="morning-toast" id="morning-toast">
+        <div class="head">
+          <span class="emoji">☀️</span>
+          <span class="lab">MORNING BRIEF</span>
+          <span class="close-hint">タップで閉じる</span>
+        </div>
+        <div class="title">${headline}</div>
+        ${parts.length > 0 ? `<div class="parts">${parts.join(" / ")}</div>` : ""}
+      </div>
+    `;
+    const t = root.querySelector(".morning-toast");
+    if (t) {
+      t.addEventListener("click", () => { root.hidden = true; });
+      setTimeout(() => { root.hidden = true; }, 9000);
+    }
+  }
+
+  // ─── 今週の最高的中バナー (利益 ¥10,000+ の直近 HIT を派手に祝う) ──
+  function renderTopWinBanner() {
+    const root = $("#topwin-mount");
+    if (!root) return;
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    const bigWins = (state.bets || [])
+      .filter((b) => b.result === "hit" && b.payout > 0 && b.date >= sevenDaysAgo)
+      .map((b) => ({ ...b, profit: (b.payout || 0) - (b.amount || 0) }))
+      .filter((b) => b.profit >= 10000)
+      .sort((a, b) => b.profit - a.profit);
+    if (bigWins.length === 0) { root.hidden = true; return; }
+    const top = bigWins[0];
+    root.hidden = false;
+    root.innerHTML = `
+      <div class="topwin-banner">
+        <div class="emoji-wrap"><span class="emoji">🎯</span></div>
+        <div class="msg">
+          <div class="lab">🏆 今週の最高的中</div>
+          <div class="title">${escapeHtml(fmtDateMonth(top.date) || "—")} ${escapeHtml(top.race || "?")} ${escapeHtml(top.type || "")}</div>
+          <div class="sub">${escapeHtml(top.pick || "")} ・ 払戻 ¥${fmtYen(top.payout || 0)}${bigWins.length > 1 ? ` <span class="more">他 +${bigWins.length - 1}件</span>` : ""}</div>
+        </div>
+        <div class="amount">
+          <div class="lab">利益</div>
+          <div class="big">+${fmtYen(top.profit)}</div>
+          <div class="lab">円</div>
+        </div>
+      </div>
+    `;
   }
 
   // ─── 描画: AI 実証成績カード (Wave17) ────────────────────
