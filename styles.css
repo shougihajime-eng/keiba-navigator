@@ -2372,6 +2372,213 @@ details[open] .details-summary .details-arrow { transform: rotate(90deg); }
   }
 }
 
+/* ─── 達成バッジ ─── */
+.achievements-card {
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(254,243,199,0.45));
+  border: 1px solid rgba(245,158,11,0.18);
+  box-shadow: 0 8px 24px -10px rgba(245,158,11,0.18);
+  padding: 14px 16px;
+}
+.ach-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px;
+}
+.ach-head .ach-icon {
+  font-size: 18px;
+  filter: drop-shadow(0 0 4px rgba(245,158,11,0.5));
+}
+.ach-head .ach-title {
+  font-size: 14px; font-weight: 900; letter-spacing: 0.04em; color: var(--c-ink);
+}
+.ach-head .ach-count {
+  margin-left: auto;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 800;
+  background: rgba(245,158,11,0.18); color: var(--c-amber);
+  font-variant-numeric: tabular-nums;
+}
+.ach-grid {
+  display: flex; gap: 10px;
+  overflow-x: auto; padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.ach-grid::-webkit-scrollbar { height: 6px; }
+.ach-grid::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.30); border-radius: 3px; }
+@media (min-width: 640px) {
+  .ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); overflow: visible; }
+}
+.ach-badge {
+  flex-shrink: 0;
+  min-width: 144px;
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(15,23,42,0.06);
+  box-shadow: 0 4px 12px -4px rgba(15,23,42,0.08);
+  transition: transform 0.18s var(--ease-spring);
+}
+.ach-badge:hover { transform: translateY(-2px); }
+.ach-badge .head {
+  display: flex; align-items: baseline; gap: 6px;
+}
+.ach-badge .head .emoji {
+  font-size: 18px;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,0.6));
+}
+.ach-badge .head .lab {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.14em;
+  color: var(--c-ink-mute); text-transform: uppercase;
+}
+.ach-badge .val {
+  font-size: 22px; font-weight: 900;
+  font-variant-numeric: tabular-nums; line-height: 1;
+  margin-top: 6px;
+  color: var(--c-ink);
+}
+.ach-badge .sub {
+  font-size: 10px; color: var(--c-ink-soft); margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.ach-tone-gold {
+  background: linear-gradient(135deg, rgba(251,191,36,0.20) 0%, rgba(251,191,36,0.05) 100%);
+  border-color: rgba(245,158,11,0.40);
+  box-shadow: 0 0 0 1px rgba(245,158,11,0.30), 0 8px 20px -8px rgba(245,158,11,0.30);
+}
+.ach-tone-gold .val { color: var(--c-gold); }
+.ach-tone-go {
+  background: linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(16,185,129,0.04) 100%);
+  border-color: rgba(16,185,129,0.40);
+  box-shadow: 0 0 0 1px rgba(16,185,129,0.25), 0 8px 20px -8px rgba(16,185,129,0.25);
+}
+.ach-tone-go .val { color: var(--c-deep); }
+.ach-tone-info {
+  background: linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(56,189,248,0.04) 100%);
+  border-color: rgba(56,189,248,0.35);
+}
+.ach-tone-info .val { color: var(--c-sky); }
+
+/* ─── 連勝記録カード ─── */
+.streak-card {
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(254,242,242,0.30));
+  border: 1px solid rgba(244,63,94,0.18);
+  box-shadow: 0 8px 24px -10px rgba(244,63,94,0.10);
+  padding: 14px 16px;
+}
+.streak-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px;
+}
+.streak-head .streak-icon {
+  font-size: 18px;
+  animation: pulseDot 1.6s ease-in-out infinite;
+}
+.streak-head .streak-title {
+  font-size: 14px; font-weight: 900; letter-spacing: 0.04em; color: var(--c-ink);
+}
+.streak-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin-bottom: 12px;
+}
+.streak-cell {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(15,23,42,0.06);
+  text-align: center;
+}
+.streak-cell.is-hot {
+  background: linear-gradient(135deg, rgba(254,226,226,0.65), rgba(254,202,202,0.30));
+  border-color: rgba(244,63,94,0.40);
+  box-shadow: 0 0 16px -4px rgba(244,63,94,0.30);
+  animation: streakHotPulse 1.8s ease-in-out infinite;
+}
+@keyframes streakHotPulse {
+  0%,100% { box-shadow: 0 0 16px -4px rgba(244,63,94,0.30); }
+  50%     { box-shadow: 0 0 28px -4px rgba(244,63,94,0.55); }
+}
+.streak-cell.is-gold {
+  background: linear-gradient(135deg, rgba(254,243,199,0.75), rgba(253,230,138,0.40));
+  border-color: rgba(245,158,11,0.45);
+}
+.streak-cell.is-go {
+  background: linear-gradient(135deg, rgba(220,252,231,0.65), rgba(167,243,208,0.30));
+  border-color: rgba(16,185,129,0.35);
+}
+.streak-cell .lab {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.14em;
+  color: var(--c-ink-mute); text-transform: uppercase;
+}
+.streak-cell .big {
+  font-size: 32px; font-weight: 900;
+  font-variant-numeric: tabular-nums; line-height: 1;
+  margin-top: 6px;
+  color: var(--c-ink);
+}
+.streak-cell.is-hot .big { color: var(--c-bad); }
+.streak-cell.is-gold .big { color: var(--c-gold); }
+.streak-cell.is-go .big { color: var(--c-deep); }
+.streak-cell .big small {
+  font-size: 12px; font-weight: 700; opacity: 0.6; margin-left: 2px;
+}
+.streak-cell .sub {
+  font-size: 10px; color: var(--c-ink-soft); margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.streak-dots {
+  display: flex; align-items: center; gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(248,250,252,0.7);
+  border: 1px solid rgba(15,23,42,0.05);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.streak-dots::-webkit-scrollbar { height: 4px; }
+.streak-dots .dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.streak-dots .dot-hit {
+  background: var(--c-turf);
+  box-shadow: 0 0 0 1px rgba(16,185,129,0.40);
+}
+.streak-dots .dot-miss {
+  background: rgba(15,23,42,0.10);
+  box-shadow: 0 0 0 1px rgba(15,23,42,0.10);
+}
+.streak-legend {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 8px;
+  font-size: 10px; color: var(--c-ink-soft);
+}
+.streak-legend .dot {
+  width: 8px; height: 8px; display: inline-block;
+  vertical-align: middle; margin-right: 4px;
+}
+.streak-legend .dot-hit { background: var(--c-turf); border-radius: 50%; }
+.streak-legend .dot-miss { background: rgba(15,23,42,0.15); border-radius: 50%; }
+.streak-legend .time { margin-left: auto; font-style: italic; }
+
+/* ─── 累積収支グラフ メタ ─── */
+.profit-chart-meta {
+  display: flex; align-items: center; gap: 10px;
+  justify-content: center; flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 11px; color: var(--c-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.profit-chart-meta .cum {
+  font-size: 13px; font-weight: 900;
+}
+.profit-chart-meta .cum.is-pos { color: var(--c-deep); }
+.profit-chart-meta .cum.is-neg { color: var(--c-bad); }
+.profit-chart-meta .peak {
+  font-size: 11px; font-weight: 800; color: var(--c-amber);
+}
+
 /* ─── 朝の概要トースト ─── */
 #morning-mount {
   position: fixed;

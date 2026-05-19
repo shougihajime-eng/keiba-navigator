@@ -1349,17 +1349,56 @@
     const isPos = pts[pts.length-1].cum >= 0;
     const c = isPos ? "rgba(16,185,129,0.95)" : "rgba(220,38,38,0.95)";
     const cGlow = isPos ? "rgba(16,185,129,0.45)" : "rgba(220,38,38,0.45)";
+
+    // ピーク (最大) と ボトム (最小) を見つける
+    let peakIdx = 0, bottomIdx = 0;
+    pts.forEach((p, i) => {
+      if (p.cum > pts[peakIdx].cum) peakIdx = i;
+      if (p.cum < pts[bottomIdx].cum) bottomIdx = i;
+    });
+    const lastIdx = pts.length - 1;
+
+    // グリッドライン (4 本: yLo, 25%, 50%, 75%, yHi)
+    const gridLines = [];
+    for (let g = 0; g <= 4; g++) {
+      const v = yLo + (yHi - yLo) * (g / 4);
+      const y = yOf(v);
+      gridLines.push(`<line x1="${PAD.l}" y1="${y}" x2="${W-PAD.r}" y2="${y}" stroke="rgba(15,23,42,0.06)" stroke-width="1" stroke-dasharray="2 4"/>`);
+    }
+
+    // マーカー: ピーク・ボトム・現在地
+    const peakMarker = peakIdx !== lastIdx && pts[peakIdx].cum > 0 ? `
+      <circle cx="${xOf(peakIdx)}" cy="${yOf(pts[peakIdx].cum)}" r="3" fill="${c}" opacity="0.6"/>
+      <text x="${xOf(peakIdx)}" y="${yOf(pts[peakIdx].cum) - 6}" text-anchor="middle" font-size="9" font-weight="800" fill="${c}">▲ ピーク +${fmtYen(pts[peakIdx].cum)}</text>
+    ` : "";
+    const bottomMarker = bottomIdx !== lastIdx && pts[bottomIdx].cum < 0 ? `
+      <circle cx="${xOf(bottomIdx)}" cy="${yOf(pts[bottomIdx].cum)}" r="3" fill="rgba(220,38,38,0.6)"/>
+      <text x="${xOf(bottomIdx)}" y="${yOf(pts[bottomIdx].cum) + 14}" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(220,38,38,0.85)">▼ ボトム ${fmtYen(pts[bottomIdx].cum)}</text>
+    ` : "";
+
     root.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:auto">
-        <line x1="${PAD.l}" y1="${yZero}" x2="${W-PAD.r}" y2="${yZero}" stroke="rgba(15,23,42,0.18)" stroke-width="1"/>
-        <text x="${PAD.l-4}" y="${yZero+4}" text-anchor="end" font-size="10" fill="rgba(15,23,42,0.55)">0</text>
-        <path d="${area}" fill="${c}" opacity="0.12"/>
+        <defs>
+          <linearGradient id="profitGrad${isPos ? "Pos" : "Neg"}" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="${c}" stop-opacity="0.30"/>
+            <stop offset="100%" stop-color="${c}" stop-opacity="0.02"/>
+          </linearGradient>
+        </defs>
+        ${gridLines.join("")}
+        <line x1="${PAD.l}" y1="${yZero}" x2="${W-PAD.r}" y2="${yZero}" stroke="rgba(15,23,42,0.30)" stroke-width="1"/>
+        <text x="${PAD.l-4}" y="${yZero+4}" text-anchor="end" font-size="10" fill="rgba(15,23,42,0.55)" font-weight="700">0</text>
+        <path d="${area}" fill="url(#profitGrad${isPos ? "Pos" : "Neg"})"/>
         <path d="${path}" fill="none" stroke="${cGlow}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.55"/>
-        <path d="${path}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-        <circle cx="${xOf(pts.length-1)}" cy="${yOf(pts[pts.length-1].cum)}" r="5" fill="${c}"/>
+        <path d="${path}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        ${peakMarker}
+        ${bottomMarker}
+        <circle cx="${xOf(lastIdx)}" cy="${yOf(pts[lastIdx].cum)}" r="6" fill="${c}"/>
+        <circle cx="${xOf(lastIdx)}" cy="${yOf(pts[lastIdx].cum)}" r="9" fill="none" stroke="${c}" stroke-width="2" opacity="0.4"/>
       </svg>
-      <div style="text-align:center;font-size:11px;color:var(--c-ink-soft);margin-top:6px">
-        ${pts.length} 件 / 累計 <b style="color:${isPos ? 'var(--c-deep)' : 'var(--c-bad)'}">${pts[pts.length-1].cum >= 0 ? '+' : ''}${fmtYen(pts[pts.length-1].cum)}円</b>
+      <div class="profit-chart-meta">
+        <span>${pts.length} 件記録</span>
+        <span class="cum ${isPos ? "is-pos" : "is-neg"}">累計 ${pts[lastIdx].cum >= 0 ? '+' : ''}¥${fmtYen(pts[lastIdx].cum)}</span>
+        ${peakIdx !== lastIdx && pts[peakIdx].cum > 0 ? `<span class="peak">最高 +¥${fmtYen(pts[peakIdx].cum)}</span>` : ""}
       </div>
     `;
   }
@@ -1684,9 +1723,141 @@
       renderWin5();
       renderAllRaces();
       renderHistory();
+      renderAchievements();
+      renderStreakCard();
     } catch (e) {
       console.error("[render] error", e);
     }
+  }
+
+  // ─── 達成バッジシステム (必殺一号艇 AchievementBadges 移植) ──
+  // 15 種類の実績バッジを計算 (達成した分だけ表示)
+  function computeAchievements(bets) {
+    const settled = bets.filter((b) => b.result === "hit" || b.result === "miss");
+    const hits = settled.filter((b) => b.result === "hit");
+    const profitSum = settled.reduce((a, b) => a + ((b.payout || 0) - (b.amount || 0)), 0);
+    const spent = settled.reduce((a, b) => a + (b.amount || 0), 0);
+    const hitRate = settled.length > 0 ? hits.length / settled.length : 0;
+    const sortedByDate = [...settled].sort((a, b) => (b.id || 0) - (a.id || 0));
+    // 現在の連勝 (最新から HIT が続く件数)
+    let currentStreak = 0;
+    for (const b of sortedByDate) { if (b.result === "hit") currentStreak++; else break; }
+    // 過去最高連勝
+    let bestStreak = 0, cur = 0;
+    [...settled].sort((a, b) => (a.id || 0) - (b.id || 0)).forEach((b) => {
+      if (b.result === "hit") { cur++; bestStreak = Math.max(bestStreak, cur); }
+      else cur = 0;
+    });
+
+    const out = [];
+    if (settled.length >= 1) out.push({ icon: "🎯", label: "初記録", value: settled.length, sub: "件 達成", tone: "info" });
+    if (hits.length >= 1) out.push({ icon: "🎉", label: "初的中", value: hits.length, sub: "回 当てた", tone: "go" });
+    if (currentStreak >= 3) out.push({ icon: "🔥", label: "連勝中", value: currentStreak, sub: "連続的中", tone: "gold" });
+    if (bestStreak >= 5) out.push({ icon: "⚡", label: "歴代最高連勝", value: bestStreak, sub: "連続", tone: "gold" });
+    if (profitSum > 0) out.push({ icon: "💰", label: "累積プラス", value: `+¥${fmtYen(profitSum)}`, sub: `${settled.length} 件で`, tone: "go" });
+    if (profitSum >= 10000) out.push({ icon: "💎", label: "+¥1万 突破", value: `+¥${fmtYen(profitSum)}`, sub: "達成済", tone: "gold" });
+    if (profitSum >= 50000) out.push({ icon: "👑", label: "+¥5万 突破", value: `+¥${fmtYen(profitSum)}`, sub: "達成済", tone: "gold" });
+    if (profitSum >= 100000) out.push({ icon: "🏆", label: "+¥10万 突破", value: `+¥${fmtYen(profitSum)}`, sub: "達成済", tone: "gold" });
+    if (settled.length >= 10) out.push({ icon: "📚", label: "記録 10件", value: settled.length, sub: "蓄積中", tone: "info" });
+    if (settled.length >= 50) out.push({ icon: "📖", label: "記録 50件", value: settled.length, sub: "ベテラン", tone: "info" });
+    if (settled.length >= 100) out.push({ icon: "📕", label: "記録 100件", value: settled.length, sub: "達人級", tone: "gold" });
+    if (settled.length >= 5 && hitRate >= 0.50) out.push({ icon: "🎲", label: "的中率 50%+", value: `${(hitRate * 100).toFixed(0)}%`, sub: `${hits.length}/${settled.length}`, tone: "gold" });
+    if (spent > 0 && profitSum >= 0) {
+      const recov = ((spent + profitSum) / spent * 100);
+      if (recov >= 100 && settled.length >= 5) {
+        out.push({ icon: "📈", label: "回収率 100%+", value: `${recov.toFixed(0)}%`, sub: "プロ級", tone: "gold" });
+      }
+    }
+    if (hits.length >= 3) {
+      const maxPayout = Math.max(...hits.map((h) => (h.payout || 0) - (h.amount || 0)));
+      if (maxPayout >= 5000) {
+        out.push({ icon: "🎰", label: "最高利益", value: `+¥${fmtYen(maxPayout)}`, sub: "1 回で", tone: "gold" });
+      }
+    }
+    return out;
+  }
+
+  function renderAchievements() {
+    const root = $("#achievements-mount");
+    if (!root) return;
+    const aclist = computeAchievements(state.bets || []);
+    if (aclist.length === 0) { root.hidden = true; return; }
+    root.hidden = false;
+    root.innerHTML = `
+      <div class="ach-head">
+        <span class="ach-icon">🏅</span>
+        <span class="ach-title">あなたの実績</span>
+        <span class="ach-count">${aclist.length} 件 達成中</span>
+      </div>
+      <div class="ach-grid">
+        ${aclist.map((a) => `
+          <div class="ach-badge ach-tone-${a.tone}">
+            <div class="head">
+              <span class="emoji">${a.icon}</span>
+              <span class="lab">${escapeHtml(a.label)}</span>
+            </div>
+            <div class="val">${escapeHtml(String(a.value))}</div>
+            ${a.sub ? `<div class="sub">${escapeHtml(a.sub)}</div>` : ""}
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  // ─── 連勝記録カード ─────────────────────────────────────
+  function renderStreakCard() {
+    const root = $("#streak-mount");
+    if (!root) return;
+    const bets = state.bets || [];
+    const settled = bets.filter((b) => b.result === "hit" || b.result === "miss");
+    if (settled.length < 3) { root.hidden = true; return; }
+    const hits = settled.filter((b) => b.result === "hit");
+    const sortedByDate = [...settled].sort((a, b) => (b.id || 0) - (a.id || 0));
+    let currentStreak = 0;
+    for (const b of sortedByDate) { if (b.result === "hit") currentStreak++; else break; }
+    let bestStreak = 0, cur = 0;
+    [...settled].sort((a, b) => (a.id || 0) - (b.id || 0)).forEach((b) => {
+      if (b.result === "hit") { cur++; bestStreak = Math.max(bestStreak, cur); }
+      else cur = 0;
+    });
+    // 直近 30 件
+    const last30 = sortedByDate.slice(0, 30);
+    const last30Hits = last30.filter((b) => b.result === "hit").length;
+    const last30Rate = last30.length > 0 ? last30Hits / last30.length : 0;
+    // 直近 30 件のドット可視化 (新しい順)
+    const dots = last30
+      .map((b) => b.result === "hit" ? '<span class="dot dot-hit"></span>' : '<span class="dot dot-miss"></span>')
+      .reverse() // 古い→新しいで表示
+      .join("");
+
+    root.hidden = false;
+    root.innerHTML = `
+      <div class="streak-head">
+        <span class="streak-icon">🔥</span>
+        <span class="streak-title">連勝記録 / 最近の調子</span>
+      </div>
+      <div class="streak-stats">
+        <div class="streak-cell ${currentStreak >= 3 ? "is-hot" : ""}">
+          <div class="lab">現在の連勝</div>
+          <div class="big">${currentStreak}<small>連</small></div>
+        </div>
+        <div class="streak-cell ${bestStreak >= 5 ? "is-gold" : ""}">
+          <div class="lab">歴代最高</div>
+          <div class="big">${bestStreak}<small>連</small></div>
+        </div>
+        <div class="streak-cell ${last30Rate >= 0.5 ? "is-go" : ""}">
+          <div class="lab">直近30件 的中率</div>
+          <div class="big">${(last30Rate * 100).toFixed(0)}<small>%</small></div>
+          <div class="sub">${last30Hits} / ${last30.length}</div>
+        </div>
+      </div>
+      <div class="streak-dots">${dots}</div>
+      <div class="streak-legend">
+        <span><span class="dot dot-hit"></span> 的中</span>
+        <span><span class="dot dot-miss"></span> 外れ</span>
+        <span class="time">古い→新しい</span>
+      </div>
+    `;
   }
 
   // ─── 朝の概要トースト (JST 6:00-12:00 の初回のみ・1日 1 回) ───
