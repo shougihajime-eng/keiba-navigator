@@ -594,6 +594,94 @@
     return wrap;
   }
 
+  // Wave22.6: WIN5 用 1 レースをストーリーカードに描画
+  function renderWin5StoryCard(pr, i) {
+    const card = el("div", { class: "win5-story-card" });
+    // ヘッダ: 第N戦 + 会場名 + R 番号
+    const vl = parseVenueLabel(pr.race || {});
+    const head = el("div", { class: "wsc-head" });
+    head.appendChild(el("div", { class: "wsc-leg" }, `第 ${i+1} 戦`));
+    const venueBlock = el("div", { class: "wsc-venue-block" });
+    venueBlock.appendChild(el("span", { class: "wsc-venue", "data-v": vl.venue || "" }, vl.venue || "—"));
+    if (vl.raceNo) venueBlock.appendChild(el("span", { class: "wsc-rn" }, `${vl.raceNo}R`));
+    head.appendChild(venueBlock);
+    // 馬場・距離
+    const surf = pr.race?.surface || "";
+    if (surf) {
+      const cls = surf.includes("ダ") ? "dirt" : surf.includes("障") ? "shou" : "shiba";
+      head.appendChild(el("span", { class: `surface-pill ${cls}` }, `${surf}${pr.race?.distance ? pr.race.distance + "m" : ""}`));
+    }
+    card.appendChild(head);
+
+    // 本命: シルク馬番 + 馬名 + 確率バー
+    if (pr.ok && pr.top1) {
+      const main = el("div", { class: "wsc-main" });
+
+      // シルク馬番
+      const num = parseInt(pr.top1.number, 10) || 1;
+      const silkClass = `silk-${((num - 1) % 8) + 1}`;
+      const silk = el("div", { class: `wsc-silk ${silkClass}` });
+      silk.appendChild(el("svg", { viewBox: "0 0 80 80", "aria-hidden": "true",
+        html: `
+          <defs><linearGradient id="w5silk-${i}-${num}" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="var(--silk-c1, #fbbf24)"/>
+            <stop offset="1" stop-color="var(--silk-c2, #d97706)"/>
+          </linearGradient></defs>
+          <circle cx="40" cy="40" r="36" fill="url(#w5silk-${i}-${num})" stroke="rgba(15,23,42,0.20)" stroke-width="2"/>
+          <text x="40" y="51" text-anchor="middle" font-family="Inter,sans-serif" font-weight="900" font-size="34" fill="#fff"
+                style="paint-order:stroke;stroke:rgba(15,23,42,0.30);stroke-width:2px">${num}</text>`
+      }));
+      main.appendChild(silk);
+
+      // 馬名 + 確率
+      const info = el("div", { class: "wsc-info" });
+      const horseName = scrubName(pr.top1.name, "本命馬");
+      info.appendChild(el("div", { class: "wsc-horse-name" }, horseName));
+      const probPct = (pr.top1.prob ?? 0) * 100;
+      const oddsTxt = pr.top1.odds ? `${pr.top1.odds.toFixed(1)}倍` : "—";
+      info.appendChild(el("div", { class: "wsc-meta" },
+        el("span", { class: "wsc-prob-pct" }, `${probPct.toFixed(0)}%`),
+        el("span", { class: "wsc-prob-label" }, "1着確率"),
+        el("span", { class: "wsc-sep" }, " · "),
+        el("span", { class: "wsc-odds" }, oddsTxt)
+      ));
+      // 確率バー
+      const bar = el("div", { class: "wsc-bar" });
+      const fill = el("div", { class: "wsc-bar-fill" });
+      fill.style.width = Math.min(100, Math.max(2, probPct)) + "%";
+      // tier color based on prob
+      const probTone = probPct >= 40 ? "high" : probPct >= 25 ? "mid" : "low";
+      fill.classList.add("tone-" + probTone);
+      bar.appendChild(fill);
+      info.appendChild(bar);
+      // 信頼度
+      const confPct = (pr.confidence ?? 0) * 100;
+      info.appendChild(el("div", { class: "wsc-conf" },
+        el("span", { class: "wsc-conf-label" }, "AI 信頼度 "),
+        el("span", { class: "wsc-conf-val" }, `${confPct.toFixed(0)}%`)
+      ));
+      main.appendChild(info);
+      card.appendChild(main);
+
+      // 相手候補 (top2 / top3 を小さく)
+      if (pr.top2 || pr.top3) {
+        const sub = el("div", { class: "wsc-sub" });
+        sub.appendChild(el("span", { class: "wsc-sub-label" }, "相手 →"));
+        [pr.top2, pr.top3].filter(Boolean).forEach((h) => {
+          const sn = parseInt(h.number, 10) || 1;
+          const sc = `silk-${((sn - 1) % 8) + 1}`;
+          const mini = el("span", { class: `wsc-mini-silk ${sc}` }, String(sn));
+          sub.appendChild(mini);
+        });
+        card.appendChild(sub);
+      }
+    } else {
+      // データなし
+      card.appendChild(el("div", { class: "wsc-empty" }, "🐎 出走馬データ準備中"));
+    }
+    return card;
+  }
+
   // Wave22.4: 本命/対抗/3着候補 を勝負服 (Silk) 馬番タグで横並び表示
   // 馬番ごとに JRA の勝負服パターン (8 色) を循環適用
   function renderSilkPickRow(race, tier) {
@@ -1155,21 +1243,15 @@
     });
     body.appendChild(stratsGrid);
 
-    // 5 レース本命
+    // 5 レース本命 (Wave22.6: ストーリーカード化)
     if (Array.isArray(w5.perRace) && w5.perRace.length > 0 && w5.ok) {
       body.appendChild(el("div", { class: "sec-title" },
         el("span", { class: "bar gold" }),
-        el("h2", null, "5 レースの本命")
+        el("h2", null, "5 レースの本命 — ストーリー")
       ));
-      const races = el("div", { class: "win5-races" });
+      const races = el("div", { class: "win5-story-list" });
       w5.perRace.slice(0, 5).forEach((pr, i) => {
-        const item = el("div", { class: "win5-race" });
-        item.appendChild(el("div", { class: "label" }, `第${i+1}戦`));
-        const topNum = pr.top1?.number ?? "—";
-        const topName = pr.top1?.name ?? "";
-        item.appendChild(el("div", { class: "horse" }, String(topNum)));
-        item.appendChild(el("div", { class: "name" }, topName));
-        races.appendChild(item);
+        races.appendChild(renderWin5StoryCard(pr, i));
       });
       body.appendChild(races);
     }
@@ -1348,10 +1430,18 @@
     info.appendChild(pick);
     row.appendChild(info);
 
-    // 期待値 + ティアラベル
+    // 期待値 + ティアラベル + 狙うべき度 (Wave22.6)
     const ev = el("div", { class: "ev" });
     if (race.topPick?.ev != null) {
       ev.appendChild(el("div", { class: "num-big" }, `×${race.topPick.ev.toFixed(2)}`));
+      // 「狙うべき度」を tier から 5 段階の ★ にマッピング
+      const aimLvl = tier === "ultra" ? 5 : tier === "prime" ? 4 : tier === "go" ? 3 : tier === "cond" ? 2 : tier === "best" ? 1 : 0;
+      const aimStars = el("div", { class: `aim-stars aim-${tier}` });
+      aimStars.setAttribute("title", `狙うべき度 ${aimLvl}/5`);
+      for (let s = 1; s <= 5; s++) {
+        aimStars.appendChild(el("span", { class: "aim-star " + (s <= aimLvl ? "on" : "off") }, s <= aimLvl ? "★" : "☆"));
+      }
+      ev.appendChild(aimStars);
       ev.appendChild(el("div", { class: "conf" }, `${tierLabel(tier)} / 信${((race.confidence ?? 0)*100).toFixed(0)}%`));
     } else {
       ev.appendChild(el("div", { class: "num-big" }, "—"));
@@ -1687,22 +1777,49 @@
       });
       const sortedH = [...evHorses].sort((a, b) => (b.pickInfo?.prob ?? 0) - (a.pickInfo?.prob ?? 0));
       html += `<div class="sec-title"><span class="bar gold"></span><h2>AI の推定 順位</h2></div>`;
-      html += `<div class="runner-list">`;
+      html += `<div class="runner-list runner-list-rich">`;
+      // 確率最大値を取得 (確率バーの正規化用)
+      const maxProb = Math.max(0.01, ...sortedH.slice(0, 18).map(h => h.pickInfo?.prob || 0));
       sortedH.slice(0, 18).forEach((h, idx) => {
         const rankCls = idx < 3 ? `rank-${idx + 1}` : "";
-        const prob = h.pickInfo?.prob ? `${(h.pickInfo.prob * 100).toFixed(1)}%` : "—";
+        const probRaw = h.pickInfo?.prob || 0;
+        const probPct = probRaw * 100;
+        const probText = h.pickInfo?.prob ? `${probPct.toFixed(1)}%` : "—";
+        const probBarWidth = Math.max(2, Math.min(100, (probRaw / maxProb) * 100));
+        const probTone = probPct >= 30 ? "high" : probPct >= 15 ? "mid" : "low";
         const oddsVal = h.win_odds ?? h.odds ?? null;
         const odds = oddsVal != null ? `${Number(oddsVal).toFixed(1)}倍 (${h.popularity || "?"}人気)` : "—";
         const name = h.name || `${h.number}番`;
         const sub = [h.jockey, h.trainer, h.sex_age].filter(Boolean).join(" / ");
+        const num = parseInt(h.number, 10) || 1;
+        const silkIdx = ((num - 1) % 8) + 1;
+        const silkClass = `silk-${silkIdx}`;
+        const rankBadge = idx === 0 ? `<span class="rb-medal">🥇</span>`
+                        : idx === 1 ? `<span class="rb-medal">🥈</span>`
+                        : idx === 2 ? `<span class="rb-medal">🥉</span>`
+                        : `<span class="rb-rank">${idx + 1}</span>`;
         html += `<div class="runner-item ${rankCls}">
-          <div class="rank-no">${h.number}</div>
-          <div>
-            <div class="name">${escapeHtml(name)}</div>
+          <div class="runner-silk ${silkClass}">
+            <svg viewBox="0 0 80 80" aria-hidden="true">
+              <defs><linearGradient id="rs-${raceId}-${num}-${idx}" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="var(--silk-c1, #fbbf24)"/>
+                <stop offset="1" stop-color="var(--silk-c2, #d97706)"/>
+              </linearGradient></defs>
+              <circle cx="40" cy="40" r="36" fill="url(#rs-${raceId}-${num}-${idx})" stroke="rgba(15,23,42,0.20)" stroke-width="2"/>
+              <text x="40" y="51" text-anchor="middle" font-family="Inter,sans-serif" font-weight="900" font-size="32" fill="#fff"
+                    style="paint-order:stroke;stroke:rgba(15,23,42,0.30);stroke-width:2px">${num}</text>
+            </svg>
+          </div>
+          <div class="runner-info">
+            <div class="runner-row1">
+              ${rankBadge}
+              <div class="name">${escapeHtml(name)}</div>
+            </div>
             <div class="sub">${escapeHtml(sub)}</div>
+            <div class="prob-bar"><div class="prob-bar-fill tone-${probTone}" style="width:${probBarWidth.toFixed(0)}%"></div></div>
           </div>
           <div class="prob">
-            <div class="pct">${prob}</div>
+            <div class="pct">${probText}</div>
             <div class="odds">${odds}</div>
           </div>
         </div>`;
@@ -1755,7 +1872,40 @@
     $("#add-result").value = "pending";
     $("#add-payout").value = "";
     $("#add-payout-group").hidden = true;
+    renderAddPickHelper();
     modal.hidden = false;
+  }
+  // Wave22.7: 手動入力モーダルに「馬番ヘルプ」勝負服パレット (1-18 番)
+  function renderAddPickHelper() {
+    const mount = $("#add-pick-helper-mount");
+    if (!mount) return;
+    if (mount.dataset.built === "1") return;  // 二重描画防止
+    mount.dataset.built = "1";
+    mount.innerHTML = "";
+    const wrap = el("div", { class: "add-pick-helper" });
+    wrap.appendChild(el("div", { class: "ah-label" }, "馬番をクリックで追加 (1-18)"));
+    const grid = el("div", { class: "ah-grid" });
+    for (let n = 1; n <= 18; n++) {
+      const silkClass = `silk-${((n - 1) % 8) + 1}`;
+      const btn = el("button", { class: `ah-silk-btn ${silkClass}`, type: "button" }, String(n));
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const pickIn = $("#add-pick");
+        if (!pickIn) return;
+        const cur = pickIn.value.trim();
+        const type = $("#add-type").value;
+        const sep = (type === "単勝" || type === "複勝") ? "" : "-";
+        if (!cur) {
+          pickIn.value = String(n);
+        } else {
+          pickIn.value = cur + sep + n;
+        }
+        pickIn.focus();
+      });
+      grid.appendChild(btn);
+    }
+    wrap.appendChild(grid);
+    mount.appendChild(wrap);
   }
   function quickAddBet(race) {
     const vl = parseVenueLabel(race);

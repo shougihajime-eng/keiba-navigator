@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v48"; // Wave22.4-22.5: 結論カード TODAY'S BEST + 勝負服馬番 + 円グラフ + 収支カード巨大ダッシュボード
+const CACHE_VERSION = "keiba-nav-v49"; // Wave22.6-22.7: WIN5 5枚ストーリー + 全レース★狙うべき度 + 詳細モーダル18頭シルク + 手動入力シルクパレット
 const PRECACHE = [
   "/",
   "/index.html",
