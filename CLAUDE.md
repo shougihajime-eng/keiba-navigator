@@ -7,6 +7,27 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🌟 Wave21.2 (2026-05-20 続・毎日使いたくなる演出)** — Wave21 / Wave21.1 に続けて 2 つのエンゲージメント要素を追加:
+  - **☀️ 朝の概要トースト** (`renderMorningSummary` + `#morning-mount`):
+    JST 6:00-12:00 の初回アクセスで 1 日 1 回・画面上部から spring 入場
+    「☀️ おはよう・今日の絶好機 N R」+ 勝負件数 + 最初の締切時刻
+    9 秒で自動消滅・タップで閉じる・localStorage で重複防止
+    ゴールド系グリーンのグラデで朝の爽やかさを演出
+  - **🏆 今週の最高的中バナー** (`renderTopWinBanner` + `#topwin-mount`):
+    過去 7 日で利益 ¥10,000+ の HIT を検出して派手バナー表示
+    ゴールド系グラデ + 心拍アニメーション 🎯 + ターフグリーン利益数字 (gradient text)
+    「他 +N 件」で複数の大当たりも認識・決定カードの直上で目に入る
+  - **CSS +130 行**: `morning-toast` / `topwin-banner` / `morningSlideIn` / `heartbeat` + モバイル <480px の小型化
+  - **本番動作確認**: app.js に `renderMorningSummary` / `renderTopWinBanner` / `morning-toast` / `topwin-banner` / `tierStars` 全て反映済
+  - **sw.js**: v42 → v43
+
+- **🌟 Wave21.1 (2026-05-20・レース行リストの 5 段階ティア対応)** —
+  - `renderRaceRow` を tier-ultra/prime/go/cond/best 全部に対応
+  - 各行に ★ バッジ追加: 💎✦ ULTRA (ゴールドグラデ) / 💎 PRIME / 🎯 GO / ⚡ COND
+  - 馬名表示を `scrubName` で文字化け補正
+  - CSS: `.race-row.tier-ultra` に `ultraRowGlow` (2.8s 周期で発光) 追加・`tier-best` も追加
+  - **sw.js**: v41 → v42
+
 - **🌟 Wave21 (2026-05-20・必殺一号艇クオリティ全面リライト)** — ユーザー「世界一にしたい・100%越えのアプリにしたい・全く妥協しなくていい」指示への全面回答:
   - **5 段階ティア結論カード** (ULTRA / PRIME / GO / COND / BEST-EFFORT): EV と AI 信頼度の閾値で自動切替・ULTRA はゴロゴロ光る `ultraGlow` + `heroFloat` + `mainPulse` の三重アニメ
   - **必殺一号艇 DecisionCard 完全移植**: ヘッダ帯 (ティア別グラデ) → 「📢 AI の予想」案内 → 巨大場名 (`shimmer-text` でULTRA時に金グラデ流れる) → BigStat 3 列 (期待値・1着確率・AI 信頼度) → **🆕 Walk-forward 検証ブロック** (BEST/SAFE 戦略を ★4 stars + Walk-fwd 平均 ROI + 勝期間で表示) → **🆕 AI 思考プロセス 4 ステップ** (数字付きステップカード) → 買い目 5 点 (主軸/本命/押さえ/保険/一発 のロールタグ + 役割別配色) → 大ボタン 2 段 (詳細 + JRA 公式 / 記録 + 答え合わせ動線)
