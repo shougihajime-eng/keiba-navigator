@@ -26,6 +26,107 @@
 <!-- ─── アプリ本体 ─── -->
 <main class="app-root section-stack stagger">
 
+  <!-- 0) ヒーローステージ (Wave22.10 - TV OP風) -->
+  <section class="hero-stage" id="hero-stage" aria-label="今日の挨拶">
+    <!-- 空と背景 (時間帯で色変化) -->
+    <div class="hero-sky" id="hero-sky">
+      <span class="hero-celestial" id="hero-celestial" aria-hidden="true">☀️</span>
+      <span class="hero-cloud cloud-1" aria-hidden="true"></span>
+      <span class="hero-cloud cloud-2" aria-hidden="true"></span>
+      <span class="hero-cloud cloud-3" aria-hidden="true"></span>
+    </div>
+    <!-- 馬場 (緑のターフ) -->
+    <div class="hero-turf" aria-hidden="true">
+      <svg class="hero-grass" viewBox="0 0 1200 80" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grassg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#34d399"/>
+            <stop offset="100%" stop-color="#047857"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,40 Q200,8 400,30 T800,30 T1200,30 L1200,80 L0,80 Z" fill="url(#grassg)"/>
+        <path d="M0,55 Q200,40 400,50 T800,45 T1200,50 L1200,80 L0,80 Z" fill="#047857" opacity="0.50"/>
+      </svg>
+    </div>
+    <!-- 走る馬群 (3 頭) -->
+    <div class="hero-horses" aria-hidden="true">
+      <svg class="hero-horse horse-A" viewBox="0 0 240 200">
+        <defs><linearGradient id="hA" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#7c2d12"/><stop offset="100%" stop-color="#451a03"/>
+        </linearGradient></defs>
+        <g fill="url(#hA)">
+          <path d="M40,110 Q60,80 100,82 Q140,80 175,90 Q200,98 210,110 Q200,125 180,128 Q170,142 175,158 Q172,162 167,160 Q158,150 158,138 L140,140 Q138,160 132,164 Q126,162 128,148 L112,148 Q108,168 102,172 Q96,168 100,154 L86,154 Q80,170 74,172 Q70,166 76,150 Q60,144 50,132 Q44,122 40,110 Z"/>
+          <path d="M30,90 Q34,72 50,62 Q66,55 76,60 Q70,72 64,80 Q56,90 50,98 Q44,102 38,100 Q32,96 30,90 Z"/>
+          <path d="M40,55 Q48,45 60,42 Q72,40 78,46 Q82,52 78,58 Q70,62 60,62 Q50,60 44,60 Q40,58 40,55 Z"/>
+          <path d="M60,40 L64,30 L70,42 Z"/>
+          <path d="M55,55 Q40,60 30,82 Q40,80 50,75 Q60,68 55,55 Z" opacity="0.85"/>
+          <path d="M205,108 Q230,100 234,112 Q230,124 218,128 Q210,124 205,118 Z"/>
+        </g>
+        <circle cx="58" cy="51" r="2" fill="#fef3c7"/>
+        <!-- 騎手 (シルエット) -->
+        <g transform="translate(80,30)">
+          <ellipse cx="35" cy="20" rx="14" ry="13" fill="#f43f5e"/>
+          <rect x="22" y="20" width="26" height="6" fill="#f43f5e"/>
+          <path d="M22,30 Q30,30 35,30 Q40,30 48,30 L52,55 Q48,68 38,68 L32,68 Q22,68 18,55 Z" fill="#f43f5e"/>
+        </g>
+      </svg>
+      <svg class="hero-horse horse-B" viewBox="0 0 240 200">
+        <defs><linearGradient id="hB" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#475569"/>
+        </linearGradient></defs>
+        <g fill="url(#hB)">
+          <path d="M40,110 Q60,80 100,82 Q140,80 175,90 Q200,98 210,110 Q200,125 180,128 Q170,142 175,158 Q172,162 167,160 Q158,150 158,138 L140,140 Q138,160 132,164 Q126,162 128,148 L112,148 Q108,168 102,172 Q96,168 100,154 L86,154 Q80,170 74,172 Q70,166 76,150 Q60,144 50,132 Q44,122 40,110 Z"/>
+          <path d="M30,90 Q34,72 50,62 Q66,55 76,60 Q70,72 64,80 Q56,90 50,98 Q44,102 38,100 Q32,96 30,90 Z"/>
+          <path d="M40,55 Q48,45 60,42 Q72,40 78,46 Q82,52 78,58 Q70,62 60,62 Q50,60 44,60 Q40,58 40,55 Z"/>
+          <path d="M60,40 L64,30 L70,42 Z"/>
+          <path d="M55,55 Q40,60 30,82 Q40,80 50,75 Q60,68 55,55 Z" opacity="0.85"/>
+          <path d="M205,108 Q230,100 234,112 Q230,124 218,128 Q210,124 205,118 Z"/>
+        </g>
+        <circle cx="58" cy="51" r="2" fill="#0f172a"/>
+        <g transform="translate(80,30)">
+          <ellipse cx="35" cy="20" rx="14" ry="13" fill="#38bdf8"/>
+          <rect x="22" y="20" width="26" height="6" fill="#38bdf8"/>
+          <path d="M22,30 Q30,30 35,30 Q40,30 48,30 L52,55 Q48,68 38,68 L32,68 Q22,68 18,55 Z" fill="#38bdf8"/>
+        </g>
+      </svg>
+      <svg class="hero-horse horse-C" viewBox="0 0 240 200">
+        <defs><linearGradient id="hC" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#b45309"/>
+        </linearGradient></defs>
+        <g fill="url(#hC)">
+          <path d="M40,110 Q60,80 100,82 Q140,80 175,90 Q200,98 210,110 Q200,125 180,128 Q170,142 175,158 Q172,162 167,160 Q158,150 158,138 L140,140 Q138,160 132,164 Q126,162 128,148 L112,148 Q108,168 102,172 Q96,168 100,154 L86,154 Q80,170 74,172 Q70,166 76,150 Q60,144 50,132 Q44,122 40,110 Z"/>
+          <path d="M30,90 Q34,72 50,62 Q66,55 76,60 Q70,72 64,80 Q56,90 50,98 Q44,102 38,100 Q32,96 30,90 Z"/>
+          <path d="M40,55 Q48,45 60,42 Q72,40 78,46 Q82,52 78,58 Q70,62 60,62 Q50,60 44,60 Q40,58 40,55 Z"/>
+          <path d="M60,40 L64,30 L70,42 Z"/>
+          <path d="M55,55 Q40,60 30,82 Q40,80 50,75 Q60,68 55,55 Z" opacity="0.85"/>
+          <path d="M205,108 Q230,100 234,112 Q230,124 218,128 Q210,124 205,118 Z"/>
+        </g>
+        <circle cx="58" cy="51" r="2" fill="#0f172a"/>
+        <g transform="translate(80,30)">
+          <ellipse cx="35" cy="20" rx="14" ry="13" fill="#a78bfa"/>
+          <rect x="22" y="20" width="26" height="6" fill="#a78bfa"/>
+          <path d="M22,30 Q30,30 35,30 Q40,30 48,30 L52,55 Q48,68 38,68 L32,68 Q22,68 18,55 Z" fill="#a78bfa"/>
+        </g>
+      </svg>
+    </div>
+    <!-- 中央コンテンツ -->
+    <div class="hero-content">
+      <div class="hero-eyebrow" id="hero-eyebrow">— TODAY'S TURF —</div>
+      <h2 class="hero-greeting" id="hero-greeting">おはよう、はじめさん</h2>
+      <div class="hero-date" id="hero-date">--月--日 (--)</div>
+      <blockquote class="hero-quote" id="hero-quote">
+        <span class="hq-mark">"</span>
+        <span class="hq-text" id="hero-quote-text">勝つために走るのではない。走るために生まれた。</span>
+        <span class="hq-by" id="hero-quote-by">— 名馬の宿命</span>
+      </blockquote>
+    </div>
+    <!-- 下端のスタンド/フェンス -->
+    <div class="hero-stand" aria-hidden="true">
+      <div class="hs-fence"></div>
+      <div class="hs-shadow"></div>
+    </div>
+  </section>
+
   <!-- 1) ブランドヘッダ (Wave22.2 - リッチ装飾) -->
   <header class="brand-strip">
     <!-- ヘッダの右上に小さく走る馬 (装飾) -->

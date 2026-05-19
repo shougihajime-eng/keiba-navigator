@@ -5094,3 +5094,322 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   .bottom-nav__item.active::before { animation: none; }
 }
+
+/* =====================================================================
+   Wave22.10 — TV OP 風ヒーローセクション (画面最上段)
+   ===================================================================== */
+.hero-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  height: 280px;
+  margin-bottom: 4px;
+  background:
+    linear-gradient(180deg,
+      var(--hero-sky-top, #93c5fd) 0%,
+      var(--hero-sky-mid, #bfdbfe) 60%,
+      var(--hero-sky-bot, #dbeafe) 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.85) inset,
+    0 12px 32px -8px rgba(15,23,42,0.18);
+  isolation: isolate;
+  transition: background 1.2s var(--ease-soft);
+}
+@media (min-width: 1024px) { .hero-stage { height: 340px; } }
+@media (max-width: 480px)  { .hero-stage { height: 220px; border-radius: 18px; } }
+
+/* 時間帯別 背景色 */
+.hero-stage.tod-morning {
+  --hero-sky-top: #fde68a;
+  --hero-sky-mid: #fbbf24;
+  --hero-sky-bot: #fed7aa;
+}
+.hero-stage.tod-day {
+  --hero-sky-top: #93c5fd;
+  --hero-sky-mid: #bae6fd;
+  --hero-sky-bot: #e0f2fe;
+}
+.hero-stage.tod-evening {
+  --hero-sky-top: #fb923c;
+  --hero-sky-mid: #f43f5e;
+  --hero-sky-bot: #be185d;
+}
+.hero-stage.tod-night {
+  --hero-sky-top: #1e293b;
+  --hero-sky-mid: #312e81;
+  --hero-sky-bot: #4c1d95;
+}
+
+/* 空の太陽/月 */
+.hero-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.hero-celestial {
+  position: absolute;
+  top: 22px; right: 28px;
+  font-size: 42px;
+  filter: drop-shadow(0 0 18px rgba(255,255,255,0.65));
+  animation: heroCelestialFloat 6s ease-in-out infinite;
+}
+@keyframes heroCelestialFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* 雲 (流れる) */
+.hero-cloud {
+  position: absolute;
+  background: rgba(255,255,255,0.78);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(15,23,42,0.10);
+  pointer-events: none;
+}
+.hero-cloud::before, .hero-cloud::after {
+  content: "";
+  position: absolute;
+  background: inherit;
+  border-radius: inherit;
+}
+.cloud-1 {
+  top: 18%; left: -15%;
+  width: 90px; height: 22px;
+  animation: cloudDrift 45s linear infinite;
+}
+.cloud-1::before { width: 36px; height: 36px; top: -16px; left: 18px; }
+.cloud-1::after  { width: 28px; height: 28px; top: -10px; left: 50px; }
+.cloud-2 {
+  top: 28%; left: -25%;
+  width: 70px; height: 18px;
+  animation: cloudDrift 60s linear infinite;
+  animation-delay: -20s;
+  opacity: 0.6;
+}
+.cloud-2::before { width: 30px; height: 30px; top: -14px; left: 14px; }
+.cloud-2::after  { width: 22px; height: 22px; top: -8px; left: 40px; }
+.cloud-3 {
+  top: 12%; left: -10%;
+  width: 60px; height: 16px;
+  animation: cloudDrift 55s linear infinite;
+  animation-delay: -35s;
+  opacity: 0.5;
+}
+.cloud-3::before { width: 26px; height: 26px; top: -12px; left: 12px; }
+@keyframes cloudDrift {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(150vw); }
+}
+.hero-stage.tod-night .hero-cloud { opacity: 0.30; background: rgba(255,255,255,0.40); }
+.hero-stage.tod-evening .hero-cloud { background: rgba(255,237,213,0.85); opacity: 0.70; }
+
+/* 馬場 (緑のターフ) — 下端から立ち上がる */
+.hero-turf {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 80px;
+  z-index: 1;
+}
+.hero-grass {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 -2px 4px rgba(15,23,42,0.12));
+}
+@media (max-width: 480px) { .hero-turf { height: 60px; } }
+
+/* スタンド/フェンス */
+.hero-stand {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 5px;
+  z-index: 4;
+  pointer-events: none;
+}
+.hs-fence {
+  position: absolute;
+  bottom: 78px; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.85) 6%,
+    rgba(255,255,255,0.85) 94%,
+    transparent 100%);
+  box-shadow: 0 1px 2px rgba(15,23,42,0.15);
+}
+@media (max-width: 480px) { .hs-fence { bottom: 58px; } }
+
+/* 走る馬 3 頭 */
+.hero-horses {
+  position: absolute;
+  bottom: 18px;
+  left: 0; right: 0;
+  height: 110px;
+  z-index: 3;
+  pointer-events: none;
+}
+.hero-horse {
+  position: absolute;
+  bottom: 0;
+  width: 96px;
+  height: auto;
+  filter: drop-shadow(0 6px 8px rgba(15,23,42,0.20));
+  animation: heroHorseRun 12s linear infinite;
+}
+.horse-A { animation-delay: -2s;  z-index: 3; bottom: 0; }
+.horse-B { animation-delay: -6s;  z-index: 2; bottom: 16px; opacity: 0.85; transform: scale(0.85); }
+.horse-C { animation-delay: -10s; z-index: 1; bottom: 6px; opacity: 0.80; transform: scale(0.75); }
+@keyframes heroHorseRun {
+  0%   { left: -10%; }
+  100% { left: 110%; }
+}
+.horse-A { animation: heroHorseRunA 9s linear infinite; }
+.horse-B { animation: heroHorseRunB 12s linear infinite; }
+.horse-C { animation: heroHorseRunC 14s linear infinite; }
+@keyframes heroHorseRunA {
+  0%   { left: -15%; transform: translateY(0); }
+  20%  { transform: translateY(-3px); }
+  40%  { transform: translateY(0); }
+  60%  { transform: translateY(-3px); }
+  80%  { transform: translateY(0); }
+  100% { left: 115%; transform: translateY(0); }
+}
+@keyframes heroHorseRunB {
+  0%   { left: -20%; transform: scale(0.85) translateY(0); }
+  25%  { transform: scale(0.85) translateY(-3px); }
+  50%  { transform: scale(0.85) translateY(0); }
+  75%  { transform: scale(0.85) translateY(-3px); }
+  100% { left: 120%; transform: scale(0.85) translateY(0); }
+}
+@keyframes heroHorseRunC {
+  0%   { left: -25%; transform: scale(0.75) translateY(0); }
+  30%  { transform: scale(0.75) translateY(-2px); }
+  60%  { transform: scale(0.75) translateY(0); }
+  90%  { transform: scale(0.75) translateY(-2px); }
+  100% { left: 125%; transform: scale(0.75) translateY(0); }
+}
+@media (min-width: 1024px) {
+  .hero-horse { width: 130px; }
+}
+@media (max-width: 480px) {
+  .hero-horse { width: 72px; }
+  .horse-B { transform: scale(0.85); }
+}
+
+/* 中央コンテンツ */
+.hero-content {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  padding: 28px 20px 0;
+  height: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.hero-eyebrow {
+  font-family: "Inter", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.50em;
+  font-weight: 900;
+  color: rgba(255,255,255,0.95);
+  text-shadow: 0 2px 6px rgba(15,23,42,0.30);
+  font-style: italic;
+}
+.hero-greeting {
+  font-family: "Noto Sans JP", serif;
+  font-size: 36px;
+  font-weight: 900;
+  margin: 4px 0 0;
+  color: #ffffff;
+  text-shadow:
+    0 0 30px rgba(15,23,42,0.30),
+    0 4px 14px rgba(15,23,42,0.40);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  animation: heroGreetingIn 0.9s var(--ease-spring);
+}
+@media (min-width: 1024px) {
+  .hero-greeting { font-size: 50px; }
+}
+@media (max-width: 480px) {
+  .hero-greeting { font-size: 26px; }
+  .hero-content { padding: 18px 14px 0; }
+}
+@keyframes heroGreetingIn {
+  0%   { opacity: 0; transform: translateY(-12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.hero-date {
+  font-size: 13px;
+  color: rgba(255,255,255,0.92);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 6px rgba(15,23,42,0.30);
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 1024px) {
+  .hero-date { font-size: 15px; }
+}
+
+/* 名馬の名言 */
+.hero-quote {
+  margin: 10px 0 0;
+  padding: 9px 16px 9px 32px;
+  position: relative;
+  max-width: 560px;
+  background: rgba(15,23,42,0.40);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-family: "Noto Sans JP", serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  transition: opacity 0.5s var(--ease-soft);
+}
+.hero-quote .hq-mark {
+  position: absolute;
+  top: -2px; left: 8px;
+  font-size: 36px;
+  font-weight: 900;
+  font-family: Georgia, serif;
+  color: rgba(255,255,255,0.40);
+  line-height: 1;
+  font-style: normal;
+}
+.hero-quote .hq-by {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  color: rgba(255,255,255,0.70);
+  letter-spacing: 0.10em;
+  text-align: right;
+}
+.hero-quote.is-changing { opacity: 0; }
+@media (min-width: 1024px) {
+  .hero-quote { font-size: 14px; padding: 11px 20px 11px 38px; }
+  .hero-quote .hq-mark { font-size: 44px; left: 10px; }
+}
+@media (max-width: 480px) {
+  .hero-quote { font-size: 10.5px; max-width: 92%; padding: 8px 12px 8px 26px; }
+  .hero-quote .hq-mark { font-size: 28px; }
+  .hero-quote .hq-by { font-size: 9px; }
+}
+
+/* reduced-motion で動きを停止 */
+@media (prefers-reduced-motion: reduce) {
+  .hero-cloud, .hero-horse, .hero-celestial { animation: none !important; }
+  .hero-greeting { animation: none; }
+  .hero-stage { transition: none; }
+  .hero-quote { transition: none; }
+}
+
+/* マウントとブランドの間隔 */
+.hero-stage + .brand-strip {
+  margin-top: 0;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+.section-stack > .hero-stage + * { margin-top: -8px !important; }
