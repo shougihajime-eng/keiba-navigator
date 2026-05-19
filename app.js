@@ -1191,6 +1191,8 @@
   function renderRaceRow(race) {
     const tier = tierOfRace(race);
     const row = el("div", { class: `race-row tier-${tier}`, onclick: () => openDetailModal(race.raceId) });
+
+    // 時刻 + カウントダウン
     const timeBox = el("div", { class: "time" });
     if (race.startTime) {
       const m = String(race.startTime).match(/(\d{1,2}):(\d{2})/);
@@ -1212,6 +1214,8 @@
       timeBox.appendChild(el("div", { class: `left ${cls}` }, txt));
     }
     row.appendChild(timeBox);
+
+    // メタ + 本命馬
     const info = el("div", { class: "info" });
     const meta = el("div", { class: "meta" });
     const vl = parseVenueLabel(race);
@@ -1219,12 +1223,18 @@
     if (vl.raceNo) meta.appendChild(el("span", { class: "race-no" }, `${vl.raceNo}R`));
     if (race.isG1) meta.appendChild(el("span", { class: "pill pill-gold" }, "G1"));
     if (race.surface) meta.appendChild(el("span", null, `${race.surface}${race.distance || ""}m`));
+    // ティアバッジ (★ stars)
+    if (tier === "ultra") meta.appendChild(el("span", { class: "pill pill-gold", style: "background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#fff;font-weight:900" }, "💎✦ ULTRA"));
+    else if (tier === "prime") meta.appendChild(el("span", { class: "pill pill-gold" }, "💎 PRIME"));
+    else if (tier === "go") meta.appendChild(el("span", { class: "pill pill-go" }, "🎯 GO"));
+    else if (tier === "cond") meta.appendChild(el("span", { class: "pill pill-info" }, "⚡ COND"));
     info.appendChild(meta);
     const pick = el("div", { class: "pick" });
     if (race.topPick) {
       pick.appendChild(el("span", { class: "label-small" }, "本命"));
       pick.appendChild(el("span", { class: "horse-num" }, String(race.topPick.number)));
-      if (race.topPick.name) pick.appendChild(el("span", { class: "horse-name" }, race.topPick.name));
+      const horseName = scrubName(race.topPick.name, "");
+      if (horseName) pick.appendChild(el("span", { class: "horse-name" }, horseName));
       const opponents = [];
       if (race.second?.number) opponents.push(race.second.number);
       if (race.third?.number) opponents.push(race.third.number);
@@ -1234,6 +1244,8 @@
     }
     info.appendChild(pick);
     row.appendChild(info);
+
+    // 期待値 + ティアラベル
     const ev = el("div", { class: "ev" });
     if (race.topPick?.ev != null) {
       ev.appendChild(el("div", { class: "num-big" }, `×${race.topPick.ev.toFixed(2)}`));
