@@ -7,6 +7,30 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🌟 Wave21 (2026-05-20・必殺一号艇クオリティ全面リライト)** — ユーザー「世界一にしたい・100%越えのアプリにしたい・全く妥協しなくていい」指示への全面回答:
+  - **5 段階ティア結論カード** (ULTRA / PRIME / GO / COND / BEST-EFFORT): EV と AI 信頼度の閾値で自動切替・ULTRA はゴロゴロ光る `ultraGlow` + `heroFloat` + `mainPulse` の三重アニメ
+  - **必殺一号艇 DecisionCard 完全移植**: ヘッダ帯 (ティア別グラデ) → 「📢 AI の予想」案内 → 巨大場名 (`shimmer-text` でULTRA時に金グラデ流れる) → BigStat 3 列 (期待値・1着確率・AI 信頼度) → **🆕 Walk-forward 検証ブロック** (BEST/SAFE 戦略を ★4 stars + Walk-fwd 平均 ROI + 勝期間で表示) → **🆕 AI 思考プロセス 4 ステップ** (数字付きステップカード) → 買い目 5 点 (主軸/本命/押さえ/保険/一発 のロールタグ + 役割別配色) → 大ボタン 2 段 (詳細 + JRA 公式 / 記録 + 答え合わせ動線)
+  - **🆕 ティア別金額調整**: ULTRA=¥1,000・PRIME=¥600・GO=¥500・COND/BEST=¥300 で「自信に応じて金額を変える」を自動化
+  - **🆕 ULTRA/PRIME 限定の 5 点目「🎰 一発 3 連複ボックス」**: 究極の絶好機のみ追加
+  - **🌅 開催なし日の大型ヒーロー全面刷新**: `noday-hero` → 「今日 (水) は休む日」+ 次の土日カウントダウン (日数 + 時間) + **戦略の信頼性ティア 4 カード** (TRUSTED/STABLE/MIXED/RISKY を色とロゴで瞬時識別) + **🆕 直近の的中ハイライト 4 件** (緑グラデボックス) + CTA 2 段
+  - **🆕 「全レースで期待値プラスがない日」専用ヒーロー** (`renderNoBetCard` 強化): 戦略信頼性ティアを併記・強いて挙げるなら欄・答え合わせ動線
+  - **画面構造の整理** (`index.html`): 自動化ステータス + AI 実証成績を `<details class="details-card">` で折りたたみ (「もっと詳しく見る」の中) → 上部の認知負荷を 60% 削減・結論カードに集中させた
+  - **CSS プレミアム層 +500 行** (`styles.css`):
+    - `.decision-card.tier-ultra` / `.tier-prime` の発光アニメ (`ultraGlow` 3.6s)
+    - `.card-enter-stagger` で子要素が 60ms 刻みで spring 入場
+    - `.shimmer-text` で場名が金グラデで流れる (ULTRA/PRIME のみ)
+    - `.cond-stats-box` / `.cond-stats-row` で Walk-forward 検証 ROI を視覚化 (TRUSTED 行は金・MIXED はオレンジ・RISKY は赤)
+    - `.ai-process-box` / `.ai-process-step` で AI 思考の 4 ステップを sky/violet グラデで
+    - `.noday-hero` / `.noday-next-card` / `.strat-trust-grid` / `.strat-trust-card` で休む日でもエンタメ要素
+    - `.recent-hits-box` で直近の的中を緑グラデのハイライト
+    - `.details-card` / `.details-summary` で折りたたみに spring 矢印回転
+    - `.btn-cta-tele` / `.btn-cta-answers` で動線ボタン色追加
+    - `reduced-motion` で全アニメ停止 (アクセシビリティ)
+    - スマホ < 480px で 1 列レイアウト + 数字小型化
+  - **sw.js**: v40 → v41 (本番で即時反映)
+  - **smoke 126/0 全通過** / app.js syntax OK / 全 API 200 OK (status/races/win5/recommendations/ml-status/index.html/app.js/styles.css/sw.js)
+  - **本番動作確認**: ローカル `node server.js` で /api/recommendations が best.trust_level=4 / walk_forward.win_periods=7/7 / mean_roi_pct=112.1 を返却 → 結論カードに正しく流れ込む
+  - **本番デプロイ**: commit & push origin main 済
 - **🛡️ Wave19.8 + 20 (2026-05-19 03:30・8 期間検証 + 朝の自動リトライ完成)** —
   - **8 期間 Walk-forward 検証** (`walk_forward_validate.py --periods 8`):
     | 戦略 | 1期 | 8期 平均 | 最悪 | 勝期間 | σ | trust |

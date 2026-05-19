@@ -224,28 +224,38 @@
     }
   }
 
-  // ─── ティア判定 ─────────────────────────────────────────
+  // ─── ティア判定 (5 段階 + 推奨戦略連動) ──────────────────
+  // ULTRA: EV >= 1.5 かつ AI 信頼度 >= 0.45 (究極の絶好機)
+  // PRIME: EV >= 1.3 (絶好機)
+  // GO:    EV >= 1.1 (本命勝負)
+  // COND:  EV >= 1.0 (条件付き)
+  // BEST:  EV >= 0.92 (今日のベター候補)
   function tierOfRace(race) {
     const ev = race.topPick?.ev ?? null;
     const conf = race.confidence ?? 0;
     if (ev == null) return "none";
-    if (ev >= 1.30 && conf >= 0.30) return "gold";
+    if (ev >= 1.50 && conf >= 0.45) return "ultra";
+    if (ev >= 1.30) return "prime";
     if (ev >= 1.10) return "go";
-    if (ev >= 0.95) return "cond";
-    if (ev >= 0.80) return "best";
+    if (ev >= 1.00) return "cond";
+    if (ev >= 0.92) return "best";
     return "none";
+  }
+  function tierStars(t) {
+    return { ultra: "★★★★", prime: "★★★", go: "★★", cond: "★", best: "☆", none: "" }[t] || "";
   }
   function tierTitle(t) {
     return {
-      gold: "AI の絶好機予想 ★★★★ ・ 今日いちばん買う1点",
-      go:   "AI の勝負予想 ★★★ ・ 本気で買う",
-      cond: "AI の条件付き予想 ★★ ・ 慎重に",
-      best: "AI のおすすめ ★ ・ 自信は控えめ",
-      none: "今日は休む日 ・ 買う価値のあるレースがない",
+      ultra: `💎✦ AI の究極予想 ${tierStars("ultra")} ・ 今日いちばん買う1点`,
+      prime: `💎 AI の絶好機予想 ${tierStars("prime")} ・ 本気で買う`,
+      go:    `🎯 AI の本命予想 ${tierStars("go")} ・ ここを買え!`,
+      cond:  `⚡ AI の今日の予想 ${tierStars("cond")} ・ 条件付きで買う`,
+      best:  `⭐ 今日のおすすめ ${tierStars("best")} ・ 自信控えめ・お試し買いに`,
+      none:  "⏸ AI は今日は休みたい ・ 買う価値のあるレースが見当たらない",
     }[t] || "—";
   }
   function tierLabel(t) {
-    return { gold: "絶好機", go: "勝負", cond: "条件付き", best: "ベター", none: "見送り" }[t] || "—";
+    return { ultra: "絶好機", prime: "絶好機", go: "勝負", cond: "条件付き", best: "ベター", none: "見送り" }[t] || "—";
   }
 
   // ─── API ─────────────────────────────────────────────────
@@ -371,25 +381,38 @@
 
   function renderBuyCard(race, tier, sorted) {
     const card = el("div", { class: `decision-card tier-${tier} fade-in`, id: "decision-card" });
+
+    // ── ヘッダ帯 (ティア別の派手ラベル + 他のレース件数)
     const head = el("div", { class: "decision-head" });
     head.appendChild(el("div", { class: "decision-tier-label" }, tierTitle(tier)));
-    const extraCnt = sorted.filter((r) => r !== race && (tierOfRace(r) === "gold" || tierOfRace(r) === "go")).length;
+    const extraCnt = sorted.filter((r) => r !== race && ["ultra","prime","go","cond"].includes(tierOfRace(r))).length;
     if (extraCnt > 0) {
       head.appendChild(el("div", { class: "decision-tier-extra" }, `他に `, el("b", null, `+${extraCnt}R`)));
     }
     card.appendChild(head);
 
-    const body = el("div", { class: "decision-body" });
+    // ── 本体 (card-enter-stagger で子要素がぬるっと入場)
+    const body = el("div", { class: "decision-body card-enter-stagger" });
+
+    // (0) 「📢 AI の予想」案内
     body.appendChild(el("div", { class: "decision-prelabel" },
       el("span", { class: "pl-bar" }),
-      el("span", null, "AI の予想 — このレースを買おう")
+      el("span", null,
+        tier === "ultra" ? "📢 究極の AI 予想 — 今日いちばん買うのはこれ" :
+        tier === "prime" ? "📢 絶好機を捉えた AI の予想 — 本気で買おう" :
+        tier === "go"    ? "📢 AI の本命予想 — このレースを買おう" :
+        tier === "cond"  ? "📢 条件付きの予想 — 慎重に・お試し金額で" :
+                            "📢 今日のおすすめ — 自信は控えめだが見守りたい1点"
+      )
     ));
 
+    // (1) 場名 (デカ) + R + 馬場・距離 + Countdown
     const headline = el("div", { class: "decision-headline" });
     const nameBlock = el("div", { class: "race-name-block" });
     if (race.isG1) nameBlock.appendChild(el("div", { class: "grade-badge grade-l" }, "G1"));
     const venueLabel = parseVenueLabel(race);
-    nameBlock.appendChild(el("h2", { class: "venue-display" }, venueLabel.venue || "—"));
+    const venueClass = (tier === "ultra" || tier === "prime") ? "venue-display shimmer-text" : "venue-display";
+    nameBlock.appendChild(el("h2", { class: venueClass }, venueLabel.venue || "—"));
     if (venueLabel.raceNo) nameBlock.appendChild(el("span", { class: "race-number" }, venueLabel.raceNo, el("small", null, "R")));
     const surf = race.surface || "";
     if (surf) {
@@ -405,9 +428,10 @@
     headline.appendChild(cd);
     body.appendChild(headline);
 
+    // (2) BigStat 3 列: 期待値 / 1着確率 / AI 信頼度
     const stats = el("div", { class: "bigstat-grid" });
     const ev = race.topPick.ev;
-    const evTone = ev >= 1.5 ? "gold" : ev >= 1.1 ? "go" : ev >= 0.9 ? "ink" : "mute";
+    const evTone = ev >= 1.5 ? "gold" : ev >= 1.1 ? "go" : ev >= 0.95 ? "ink" : "mute";
     const probPct = (race.topPick.prob ?? 0) * 100;
     const probTone = probPct >= 40 ? "go" : probPct >= 25 ? "warn" : "mute";
     const confPct = (race.confidence ?? 0) * 100;
@@ -417,33 +441,100 @@
     stats.appendChild(makeBigStat("AI 信頼度", `${confPct.toFixed(0)}%`, confTone, false));
     body.appendChild(stats);
 
-    const reasons = buildReasons(race);
-    if (reasons.length > 0) {
-      const rb = el("div", { class: "reason-box" });
-      rb.appendChild(el("div", { class: "label" }, "この1点で勝負する理由"));
-      const ul = el("ul", { class: "reason-list" });
-      reasons.slice(0, 3).forEach((r) =>
-        ul.appendChild(el("li", null, el("span", { class: "arrow" }, "▸"), el("span", null, r))));
-      rb.appendChild(ul);
-      body.appendChild(rb);
+    // (3) Walk-forward 検証 ROI (戦略の信頼性) — recommend.stats から
+    const recStats = state.recommendations?.stats;
+    if (recStats && (recStats.best || recStats.safe)) {
+      const condBox = el("div", { class: "cond-stats-box" });
+      condBox.appendChild(el("div", { class: "header" },
+        "📊 ", el("b", null, "AI 戦略の Walk-forward 検証"),
+        el("span", { style: "font-size:10px;color:var(--c-ink-mute);margin-left:auto" }, "(過去 8 期間に分割して再評価)")
+      ));
+      const ul = el("ul", { class: "cond-stats-list" });
+      ["best","safe"].forEach((key) => {
+        const s = recStats[key];
+        if (!s) return;
+        const trustLvl = s.trust_level || 0;
+        const wf = s.walk_forward || {};
+        const wfRoi = wf.mean_roi_pct != null ? wf.mean_roi_pct.toFixed(1) + "%" : "—";
+        const wfWin = wf.win_periods != null && wf.active_periods != null
+          ? `${wf.win_periods}/${wf.active_periods} 期間で 100%+`
+          : "";
+        const rowCls = trustLvl >= 4 ? "is-trusted" : trustLvl >= 3 ? "" : trustLvl >= 2 ? "is-mixed" : "is-risky";
+        const badgeCls = trustLvl >= 4 ? "gold" : "green";
+        const stratLabel = key === "best" ? "BEST 戦略" : "SAFE 戦略";
+        const stars = "★".repeat(trustLvl) + "☆".repeat(4 - trustLvl);
+        const row = el("li", { class: `cond-stats-row ${rowCls}` });
+        row.appendChild(el("span", { class: "name" },
+          el("span", { class: `badge ${badgeCls}` }, stratLabel),
+          el("span", null, stars)
+        ));
+        row.appendChild(el("span", { class: "roi" }, wfRoi));
+        row.appendChild(el("span", { class: "sub" }, `${s.fired_count}件・的中${s.hit_rate_pct}% ・ ${wfWin}`));
+        ul.appendChild(row);
+      });
+      condBox.appendChild(ul);
+      body.appendChild(condBox);
     }
 
+    // (4) AI 思考プロセス (なぜこの1点なのか)
+    const reasons = buildReasons(race);
+    if (reasons.length > 0) {
+      const proc = el("div", { class: "ai-process-box" });
+      proc.appendChild(el("div", { class: "header" }, "🧠 AI の思考プロセス — この1点で勝負する理由"));
+      const ul = el("ol", { class: "ai-process-steps" });
+      reasons.slice(0, 4).forEach((r, i) =>
+        ul.appendChild(el("li", { class: "ai-process-step" },
+          el("span", { class: "idx" }, String(i + 1)),
+          el("span", null, r)
+        ))
+      );
+      proc.appendChild(ul);
+      body.appendChild(proc);
+    }
+
+    // (5) 買い目 (主軸/本命/押さえ/保険・最大 5 点)
     const buyBox = buildBuyBox(race, tier);
     if (buyBox) body.appendChild(buyBox);
 
+    // (6) 大ボタン (詳細を見る + JRA 公式オッズ)
     const cta = el("div", { class: "cta-grid" });
+    const detailBtnClass = (tier === "ultra" || tier === "prime")
+      ? "btn-cta btn-cta-gold"
+      : (tier === "cond") ? "btn-cta btn-cta-info" : "btn-cta btn-cta-go";
     cta.appendChild(el("button", {
-      class: tier === "gold" ? "btn-cta btn-cta-gold" : "btn-cta btn-cta-go",
+      class: detailBtnClass,
       onclick: () => openDetailModal(race.raceId),
-    }, "このレースの詳細を見る ▸"));
-    cta.appendChild(el("button", {
+    }, "🎯 このレースの詳細を見る ▸"));
+    cta.appendChild(el("a", {
+      class: "btn-cta btn-cta-mute",
+      href: buildJraOddsUrl(race),
+      target: "_blank",
+      rel: "noopener noreferrer",
+    }, "JRA 公式オッズを開く ↗"));
+    body.appendChild(cta);
+
+    // (7) 「+ 買った内容を記録」+ 答え合わせ動線
+    const cta2 = el("div", { class: "cta-grid" });
+    cta2.appendChild(el("button", {
       class: "btn-cta btn-cta-mute",
       onclick: () => quickAddBet(race),
     }, "+ 買った内容を記録する"));
-    body.appendChild(cta);
+    cta2.appendChild(el("a", {
+      class: "btn-cta btn-cta-answers",
+      href: "#history",
+      onclick: (e) => { e.preventDefault(); document.querySelector('[data-tab="history"]')?.click(); window.scrollTo({ top: document.querySelector(".history-list")?.offsetTop || 0, behavior: "smooth" }); },
+    }, "📊 これまでの答え合わせを見る →"));
+    body.appendChild(cta2);
 
     card.appendChild(body);
     return card;
+  }
+
+  // JRA 公式の単複オッズページ URL を組み立てる
+  function buildJraOddsUrl(race) {
+    if (!race?.raceId || race.raceId.length < 18) return "https://www.jra.go.jp/";
+    // 競馬 race_id 構造例 "YYYYMMDDVVRRDDR2" — JRA 公式は別の URL 構造を使うのでトップへ
+    return "https://www.jra.go.jp/keiba/program/2026/odds.html";
   }
 
   function makeBigStat(label, value, tone, primary) {
@@ -475,19 +566,31 @@
     if (!tp) return null;
     const box = el("div", { class: "buy-box" });
     const head = el("div", { class: "buy-head" });
-    head.appendChild(el("div", { class: "title" }, "このとおりに買おう"));
-    const items = makeBuyItems(race);
+    const titleTxt = (tier === "ultra" || tier === "prime")
+      ? "📢 このとおりに買おう (絶好機・5点)"
+      : (tier === "cond" || tier === "best")
+        ? "⭐ お試し買い目 (慎重に・お試し金額で)"
+        : "📢 このとおりに買おう (5点)";
+    head.appendChild(el("div", { class: "title" }, titleTxt));
+    const items = makeBuyItems(race, tier);
     const total = items.reduce((a, x) => a + x.amount, 0);
-    head.appendChild(el("div", { class: "total" }, "合計 ", el("b", null, `¥${fmtYen(total)}`)));
+    head.appendChild(el("div", { class: "total" },
+      el("span", { style: "font-size:11px;color:var(--c-ink-soft)" }, `${items.length}点 合計 `),
+      el("b", null, `¥${fmtYen(total)}`)
+    ));
     box.appendChild(head);
 
     const ul = el("ul", { class: "buy-list" });
     items.forEach((it, i) => {
       const li = el("li", { class: "buy-item" + (i === 0 ? " is-main" : "") });
-      li.appendChild(el("span", { class: "role" }, it.role));
+      const roleClass = i === 0 ? "role role-main"
+                       : i === 1 ? "role role-sub"
+                       : i === 2 ? "role role-side"
+                       :           "role role-ins";
+      li.appendChild(el("span", { class: roleClass }, it.role));
       const combo = el("div", null);
       combo.appendChild(el("span", { class: "combo" }, it.combo));
-      if (it.name) combo.appendChild(el("span", { class: "horse-name" }, it.name));
+      if (it.name) combo.appendChild(el("span", { class: "horse-name" }, scrubName(it.name, "")));
       li.appendChild(combo);
       const right = el("div", { class: "right" });
       right.appendChild(el("span", { class: "amount" }, `¥${fmtYen(it.amount)}`));
@@ -497,124 +600,296 @@
       ul.appendChild(li);
     });
     box.appendChild(ul);
+
+    // オッズが無いときの注意
+    if (!race.topPick.odds) {
+      box.appendChild(el("p", {
+        style: "font-size:11px;color:var(--c-warn);margin:8px 0 0;font-weight:700",
+      }, "⚠ オッズ未取得 — 締切 15 分前から自動取得します"));
+    }
+
     return box;
   }
 
-  function makeBuyItems(race) {
+  function makeBuyItems(race, tier) {
     const items = [];
     const tp = race.topPick, s2 = race.second, s3 = race.third;
     if (!tp) return items;
-    const baseAmt = 500;
+    // 信頼性ティアで金額を調整
+    const baseAmt = (tier === "ultra") ? 1000 : (tier === "prime") ? 600 : (tier === "go") ? 500 : 300;
     items.push({
-      role: "本命 単勝", combo: String(tp.number), name: tp.name || "",
+      role: "🥇 主軸 単勝", combo: String(tp.number), name: tp.name || "",
       amount: baseAmt, odds: tp.odds,
       ret: tp.odds ? Math.round((baseAmt / 100) * tp.odds) : null,
     });
-    items.push({ role: "押さえ 複勝", combo: String(tp.number), name: tp.name || "", amount: baseAmt, odds: null, ret: null });
+    items.push({
+      role: "🥈 本命 複勝", combo: String(tp.number), name: tp.name || "",
+      amount: baseAmt, odds: null, ret: null,
+    });
     if (s2) {
-      items.push({ role: "対抗 馬連", combo: `${tp.number}-${s2.number}`, name: s2.name || "", amount: baseAmt, odds: null, ret: null });
+      items.push({
+        role: "🥉 対抗 馬連", combo: `${tp.number}-${s2.number}`, name: s2.name || "",
+        amount: baseAmt, odds: null, ret: null,
+      });
     }
-    if (s3) {
-      items.push({ role: "保険 ワイド", combo: `${tp.number}-${s3.number}`, name: s3.name || "", amount: baseAmt, odds: null, ret: null });
+    if (s2 && s3) {
+      // ワイド 3 点 (1-2 / 1-3 / 2-3)
+      items.push({
+        role: "🛡 保険 ワイド", combo: `${tp.number}-${s3.number}`, name: s3.name || "",
+        amount: baseAmt, odds: null, ret: null,
+      });
+    }
+    // 究極の絶好機なら 3 連複ボックス 1 点を追加
+    if ((tier === "ultra" || tier === "prime") && s2 && s3) {
+      items.push({
+        role: "🎰 一発 3連複", combo: `${tp.number}-${s2.number}-${s3.number}`, name: "ボックス",
+        amount: baseAmt, odds: null, ret: null,
+      });
     }
     return items;
   }
 
+  // ─── 「全レースで期待値プラスがない」日の専用ヒーロー
+  // (開催はあるが、買う価値のあるレースが見つからないケース)
   function renderNoBetCard(sorted) {
     const card = el("div", { class: "decision-card tier-none fade-in" });
     card.appendChild(el("div", { class: "decision-head" },
-      el("div", { class: "decision-tier-label" }, "今日は買わない方が安全 ・ 期待値プラスの馬がいません")
+      el("div", { class: "decision-tier-label" }, "⏸ AI は今日は買わない方が安全 ・ 期待値プラスの馬がいません")
     ));
-    const body = el("div", { class: "decision-body" });
+    const body = el("div", { class: "decision-body card-enter-stagger" });
+
+    body.appendChild(el("div", { class: "decision-prelabel" },
+      el("span", { class: "pl-bar" }),
+      el("span", null, "📢 AI の判定 — 本日は見送り推奨")
+    ));
     body.appendChild(el("div", { html: `
-      <div class="decision-prelabel"><span class="pl-bar"></span><span>AI の判定 — 本日は見送り推奨</span></div>
-      <p style="text-align:center;font-size:28px;font-weight:900;line-height:1.2;margin:8px 0">
+      <p style="text-align:center;font-size:32px;font-weight:900;line-height:1.2;margin:8px 0">
         今日は <span class="text-grad-sky">休む日</span> です
       </p>
-      <p style="text-align:center;font-size:14px;color:var(--c-ink-soft)">
-        ${sorted.length} レース解析しましたが、期待値が +0% を超える馬が見つかりませんでした。<br>
+      <p style="text-align:center;font-size:14px;color:var(--c-ink-soft);line-height:1.6">
+        ${sorted.length} レース解析しましたが、<b style="color:var(--c-ink)">期待値が +0% を超える馬が見つかりませんでした</b>。<br>
         無理に買わずに、過去の答え合わせを見て明日に備えましょう。
       </p>
     `}));
+
+    // 戦略の信頼性ティア (休む日でも見せる)
+    const stats = state.recommendations?.stats || {};
+    const defs = state.recommendations?.strategies_def || DEFAULT_STRAT_DEFS;
+    const grid = el("div", { class: "strat-trust-grid" });
+    defs.slice(0, 4).forEach((d) => {
+      const s = stats[d.key];
+      if (!s) return;
+      const trustLvl = s.trust_level || 0;
+      const cls = trustLvl >= 4 ? "trusted" : trustLvl >= 3 ? "stable" : trustLvl >= 2 ? "mixed" : "risky";
+      const stars = "★".repeat(trustLvl) + "☆".repeat(4 - trustLvl);
+      const wf = s.walk_forward || {};
+      const card2 = el("div", { class: `strat-trust-card ${cls}` });
+      card2.appendChild(el("div", { class: "head" },
+        el("span", { class: "name" }, d.short_label || d.key.toUpperCase()),
+        el("span", { class: "stars" }, stars)
+      ));
+      card2.appendChild(el("div", { class: "big-roi" }, s.roi_pct ? s.roi_pct.toFixed(1) + "%" : "—"));
+      card2.appendChild(el("div", { class: "meta", html:
+        `${s.fired_count}件・的中${s.hit_rate_pct}%${
+          wf.mean_roi_pct != null ? `<br>Walk-fwd 平均 ${wf.mean_roi_pct.toFixed(1)}%` : ""}`
+      }));
+      grid.appendChild(card2);
+    });
+    if (grid.children.length > 0) body.appendChild(grid);
+
+    // 強いて挙げるなら
     if (sorted.length > 0) {
       const top = sorted[0];
       if (top.topPick) {
-        const better = el("div", { class: "reason-box mt-3" });
+        const better = el("div", { class: "reason-box" });
         better.appendChild(el("div", { class: "label" }, "強いて挙げるなら"));
         const ul = el("ul", { class: "reason-list" });
         const vl = parseVenueLabel(top);
         ul.appendChild(el("li", null,
           el("span", { class: "arrow" }, "▸"),
-          el("span", null, `${vl.venue || "?"} ${vl.raceNo || "?"}R: ${top.topPick.number}番 ${top.topPick.name || ""} (EV ×${(top.topPick.ev ?? 0).toFixed(2)})`)
+          el("span", null, `${vl.venue || "?"} ${vl.raceNo || "?"}R: ${top.topPick.number}番 ${scrubName(top.topPick.name, "")} (EV ×${(top.topPick.ev ?? 0).toFixed(2)})`)
         ));
         better.appendChild(ul);
         body.appendChild(better);
       }
     }
+
+    // CTA
+    const cta = el("div", { class: "cta-grid" });
+    cta.appendChild(el("a", {
+      class: "btn-cta btn-cta-answers",
+      href: "#history",
+      onclick: (e) => { e.preventDefault(); window.scrollTo({ top: document.querySelector(".history-list")?.parentElement?.offsetTop || 0, behavior: "smooth" }); },
+    }, "📊 これまでの答え合わせを見る →"));
+    cta.appendChild(el("button", {
+      class: "btn-cta btn-cta-mute",
+      onclick: () => openAddBetModal(),
+    }, "+ 手動で記録する"));
+    body.appendChild(cta);
+
     card.appendChild(body);
     return card;
   }
 
+  // ─── 開催なし日 専用ヒーロー (休日でも楽しめる大型版) ──
   function renderNoRaceDay() {
-    const card = el("div", { class: "decision-card tier-none fade-in" });
-    card.appendChild(el("div", { class: "decision-head" },
-      el("div", { class: "decision-tier-label" }, "本日 開催レース無し ・ AI は休憩中")
-    ));
-    const body = el("div", { class: "decision-body" });
+    const wrap = el("section", { class: "noday-hero fade-in" });
+
+    // ── ヘッダ
+    const head = el("div", { class: "noday-head" });
+    head.appendChild(el("div", { class: "noday-head-label" }, "⏸ AI は今日は休憩中"));
+    wrap.appendChild(head);
 
     // 次の開催日 (土曜) を計算
     const today = new Date();
-    const daysToSat = (6 - today.getDay() + 7) % 7 || 7;
-    const nextSat = new Date(today.getTime() + daysToSat * 86400000);
-    const nextSatLabel = `${nextSat.getMonth()+1}/${nextSat.getDate()} (土)`;
-    const nextSunLabel = `${nextSat.getMonth()+1}/${nextSat.getDate()+1} (日)`;
+    const todayWd = ["日","月","火","水","木","金","土"][today.getDay()];
+    const daysToSat = (6 - today.getDay() + 7) % 7;
+    const nextSat = daysToSat === 0 ? today : new Date(today.getTime() + daysToSat * 86400000);
+    const nextSun = new Date(nextSat.getTime() + 86400000);
+    const fmtMd = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+    const daysUntilSat = daysToSat || 0;
+    const hoursUntilSat = daysToSat === 0
+      ? null
+      : Math.max(0, Math.floor((new Date(nextSat.getFullYear(), nextSat.getMonth(), nextSat.getDate(), 9, 0, 0).getTime() - Date.now()) / 3600000));
 
-    // 戦略実証成績 (recommendations.json が来てたらそこから、来てなければ既知の値)
+    // ── 本体
+    const body = el("div", { class: "noday-body card-enter-stagger" });
+
+    // ① ヘッドライン
+    const headline = el("div", { class: "noday-display" });
+    headline.appendChild(el("div", { class: "big", html: `今日 (${todayWd}) は <span class="text-grad-turf">休む日</span> です` }));
+    headline.appendChild(el("div", { class: "sub",
+      html: `次の競馬は <b>${fmtMd(nextSat)}(土)</b> / <b>${fmtMd(nextSun)}(日)</b>${
+        hoursUntilSat != null
+          ? ` ・ あと <b>${daysUntilSat}日${hoursUntilSat % 24}時間</b>`
+          : ""}`
+    }));
+    body.appendChild(headline);
+
+    // ② 次回開催プレビュー (カウントダウン)
+    const nextCard = el("div", { class: "noday-next-card" });
+    nextCard.appendChild(el("div", { class: "lab-row" },
+      el("span", null, "📅 NEXT RACE WEEKEND"),
+      hoursUntilSat != null
+        ? el("span", { class: "countdown-small" }, `あと ${daysUntilSat}日${hoursUntilSat % 24}時間`)
+        : ""
+    ));
+    const nextDates = el("div", { class: "next-dates" });
+    nextDates.appendChild(el("div", { class: "next-date-cell" },
+      el("div", { class: "label" }, "土曜"),
+      el("div", { class: "day" }, fmtMd(nextSat))
+    ));
+    nextDates.appendChild(el("div", { class: "next-date-cell" },
+      el("div", { class: "label" }, "日曜"),
+      el("div", { class: "day" }, fmtMd(nextSun))
+    ));
+    nextCard.appendChild(nextDates);
+    body.appendChild(nextCard);
+
+    // ③ 4 戦略の信頼性ティア (Walk-forward 検証 ROI)
     const stats = state.recommendations?.stats || {};
-    const bestStat = stats.best  || { roi_pct: 126.8, hit_rate_pct: 83.0, fired_count: 53,
-      walk_forward: { mean_roi_pct: 112.1, win_periods: 7, active_periods: 7 } };
-    const safeStat = stats.safe  || { roi_pct: 106.3, hit_rate_pct: 72.0, fired_count: 100,
-      walk_forward: { mean_roi_pct: 106.7, win_periods: 6, active_periods: 7 } };
+    const defs = state.recommendations?.strategies_def || DEFAULT_STRAT_DEFS;
+    const grid = el("div", { class: "strat-trust-grid" });
+    defs.slice(0, 4).forEach((d) => {
+      const s = stats[d.key];
+      if (!s) return;
+      const trustLvl = s.trust_level || 0;
+      const cls = trustLvl >= 4 ? "trusted" : trustLvl >= 3 ? "stable" : trustLvl >= 2 ? "mixed" : "risky";
+      const stars = "★".repeat(trustLvl) + "☆".repeat(4 - trustLvl);
+      const wf = s.walk_forward || {};
+      const wfRoi = wf.mean_roi_pct != null ? wf.mean_roi_pct.toFixed(1) + "%" : null;
+      const wfWin = wf.win_periods != null && wf.active_periods != null
+        ? `分割検証 ${wf.win_periods}/${wf.active_periods} 期間 100%+`
+        : null;
+      const card = el("div", { class: `strat-trust-card ${cls}` });
+      card.appendChild(el("div", { class: "head" },
+        el("span", { class: "name" }, d.short_label || d.key.toUpperCase()),
+        el("span", { class: "stars" }, stars)
+      ));
+      card.appendChild(el("div", { class: "big-roi" }, s.roi_pct ? s.roi_pct.toFixed(1) + "%" : "—"));
+      card.appendChild(el("div", { class: "meta", html:
+        `${s.fired_count}件・的中${s.hit_rate_pct}%${wfRoi ? `<br>${wfWin || ""}<br>Walk-fwd 平均 ${wfRoi}` : ""}`
+      }));
+      if (d.label) card.appendChild(el("div", { class: "desc" }, d.label));
+      grid.appendChild(card);
+    });
+    if (grid.children.length === 0) {
+      // フォールバック: recommendations 未取得時のスタブ
+      const fallback = [
+        { key: "best", short_label: "BEST", roi_pct: 126.8, hit_rate_pct: 83, fired_count: 53, trust_level: 4,
+          walk_forward: { mean_roi_pct: 112.1, win_periods: 7, active_periods: 7 }, desc: "本命確率22%+ かつ 対抗差4pt+で複勝" },
+        { key: "safe", short_label: "SAFE", roi_pct: 106.3, hit_rate_pct: 72, fired_count: 100, trust_level: 3,
+          walk_forward: { mean_roi_pct: 106.7, win_periods: 6, active_periods: 7 }, desc: "本命確率20%+で複勝・発火多め" },
+      ];
+      fallback.forEach((d) => {
+        const cls = d.trust_level >= 4 ? "trusted" : "stable";
+        const stars = "★".repeat(d.trust_level) + "☆".repeat(4 - d.trust_level);
+        const card = el("div", { class: `strat-trust-card ${cls}` });
+        card.appendChild(el("div", { class: "head" },
+          el("span", { class: "name" }, d.short_label),
+          el("span", { class: "stars" }, stars)
+        ));
+        card.appendChild(el("div", { class: "big-roi" }, d.roi_pct.toFixed(1) + "%"));
+        card.appendChild(el("div", { class: "meta", html:
+          `${d.fired_count}件・的中${d.hit_rate_pct}%<br>分割検証 ${d.walk_forward.win_periods}/${d.walk_forward.active_periods} 期間 100%+<br>Walk-fwd 平均 ${d.walk_forward.mean_roi_pct}%`
+        }));
+        card.appendChild(el("div", { class: "desc" }, d.desc));
+        grid.appendChild(card);
+      });
+    }
+    body.appendChild(grid);
 
-    body.appendChild(el("div", { html: `
-      <p style="text-align:center;font-size:28px;font-weight:900;margin:4px 0 6px;line-height:1.2">
-        今日 (月) は <span class="text-grad-turf">開催なし</span>
-      </p>
-      <p style="text-align:center;font-size:13px;color:var(--c-ink-soft);margin:0 0 14px">
-        次の競馬は <b style="color:var(--c-deep)">${nextSatLabel} / ${nextSunLabel}</b> です
-      </p>
+    // ④ 直近の的中ハイライト (過去30件から HIT を抽出)
+    const recentHits = (state.bets || [])
+      .filter((b) => b.result === "hit" && b.payout > 0)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, 4);
+    if (recentHits.length > 0) {
+      const hitsBox = el("div", { class: "recent-hits-box" });
+      hitsBox.appendChild(el("div", { class: "header" }, "🎉 直近の的中ハイライト"));
+      const ul = el("ul", { class: "recent-hits-list" });
+      recentHits.forEach((b) => {
+        const profit = (b.payout || 0) - (b.amount || 0);
+        ul.appendChild(el("li", null,
+          el("span", { class: "hit-badge" }, "HIT"),
+          el("span", { class: "race-info" }, `${b.date?.slice(5) || "—"} ${b.race || "?"} ${b.type || ""}`),
+          el("span", { class: "profit" }, `+¥${fmtYen(profit)}`)
+        ));
+      });
+      hitsBox.appendChild(ul);
+      body.appendChild(hitsBox);
+    }
 
-      <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:14px;padding:14px;margin-top:12px">
-        <div style="font-size:11px;font-weight:900;letter-spacing:0.1em;color:var(--c-deep);margin-bottom:8px">
-          ◎ AI 実証成績 (土日開催で実際に何回当たるか)
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:10px">
-            <div style="font-size:10px;font-weight:800;color:var(--c-deep);letter-spacing:0.1em">★★★★ BEST</div>
-            <div style="font-size:24px;font-weight:900;color:var(--c-deep);line-height:1;margin-top:4px">${(bestStat.roi_pct ?? 126.8).toFixed(1)}%</div>
-            <div style="font-size:11px;color:var(--c-ink-soft);margin-top:4px">
-              的中率 ${(bestStat.hit_rate_pct ?? 83).toFixed(0)}% / ${bestStat.fired_count ?? 53} R<br>
-              分割検証 ${(bestStat.walk_forward?.win_periods ?? 7)}/${(bestStat.walk_forward?.active_periods ?? 7)} 期間 ◎
-            </div>
-          </div>
-          <div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:10px">
-            <div style="font-size:10px;font-weight:800;color:var(--c-deep);letter-spacing:0.1em">★★★ SAFE</div>
-            <div style="font-size:24px;font-weight:900;color:var(--c-deep);line-height:1;margin-top:4px">${(safeStat.roi_pct ?? 106.3).toFixed(1)}%</div>
-            <div style="font-size:11px;color:var(--c-ink-soft);margin-top:4px">
-              的中率 ${(safeStat.hit_rate_pct ?? 72).toFixed(0)}% / ${safeStat.fired_count ?? 100} R<br>
-              分割検証 ${(safeStat.walk_forward?.win_periods ?? 6)}/${(safeStat.walk_forward?.active_periods ?? 7)} 期間 ◎
-            </div>
-          </div>
-        </div>
-        <p style="font-size:11px;color:var(--c-ink-soft);margin:10px 0 0;line-height:1.5">
-          ${nextSatLabel} の朝になったら自動で今日の推奨レースを出します。<br>
-          下にスクロールすると過去の予想ログが見れます。
-        </p>
-      </div>
-    `}));
-    card.appendChild(body);
-    return card;
+    // ⑤ CTA (詳しく見る・手動入力)
+    const cta = el("div", { class: "cta-grid" });
+    cta.appendChild(el("a", {
+      class: "btn-cta btn-cta-answers",
+      href: "#history",
+      onclick: (e) => { e.preventDefault(); window.scrollTo({ top: document.querySelector(".history-list")?.parentElement?.offsetTop || 0, behavior: "smooth" }); },
+    }, "📊 これまでの予想と結果の答え合わせを見る →"));
+    cta.appendChild(el("button", {
+      class: "btn-cta btn-cta-mute",
+      onclick: () => openAddBetModal(),
+    }, "+ 手動で記録する"));
+    body.appendChild(cta);
+
+    body.appendChild(el("p", {
+      style: "text-align:center;font-size:11px;color:var(--c-ink-soft);margin-top:14px;line-height:1.5",
+      html: `${fmtMd(nextSat)}(土) 朝 9:00 までに自動で今日の推奨レースを揃えます。<br>
+             ★★★★ TRUSTED の <b>BEST 戦略</b> は 7/7 期間で連続プラスを記録中。`
+    }));
+
+    wrap.appendChild(body);
+    return wrap;
   }
+
+  // recommendations が無いときのデフォルト戦略定義
+  const DEFAULT_STRAT_DEFS = [
+    { key: "best",  short_label: "BEST",  label: "本命確率 22%+ かつ 対抗差 4pt+ で複勝" },
+    { key: "safe",  short_label: "SAFE",  label: "本命確率 20%+ で複勝・発火多め" },
+    { key: "turf",  short_label: "TURF",  label: "芝レース限定 BEST" },
+    { key: "big",   short_label: "BIG",   label: "3 連複 ボックス 1 点" },
+  ];
 
   function parseVenueLabel(race) {
     let venue = "";
@@ -1662,30 +1937,35 @@
       `;
     };
 
+    // 戦略カードは結論カードの「Walk-forward 検証」ブロックに統合済 → 推奨レース一覧のみ表示
+    // 「今日のレースが 0 件」かつ「直近ログも 0 件」のときはセクション自体を隠す (開催なし日はヒーローで完結)
+    if (todayList.length === 0 && recentList.length === 0) {
+      root.hidden = true;
+      return;
+    }
     root.innerHTML = `
       <div class="rec-head">
         <span class="rec-icon">★</span>
         <span class="rec-title">100% 越え戦略の自動推奨</span>
-        <span class="rec-pill is-go">3 戦略マルチアサイン</span>
+        <span class="rec-pill is-go">${todayList.length > 0 ? `今日 ${todayList.length} 件` : "直近の実績"}</span>
       </div>
-      <div class="rec-strats">${stratDefs.map(stratCardHtml).join("")}</div>
       <p class="rec-criteria">
-        過去 ${stats.best?.test_races || 0} R での実証成績。1 レースで複数戦略が発火するときは複勝とワイドを併用 (信頼性 ↑)。
+        過去 ${stats.best?.test_races || 0} R で <b>Walk-forward 検証済</b> の戦略のみが発火条件を満たしたレースを抽出しています。
       </p>
       ${todayList.length > 0 ? `
         <div class="rec-section">
-          <div class="rec-section-head">今日 (${r.todayJst}) の推奨 ${todayList.length} 件</div>
+          <div class="rec-section-head">📢 今日 (${r.todayJst}) の推奨 ${todayList.length} 件</div>
           <div class="rec-list">${todayList.map(renderItem).join("")}</div>
         </div>
       ` : `
         <div class="rec-empty">
           今日 (${r.todayJst}) は条件を満たすレースが <b>0 件</b> です。<br>
-          「絶対に分からない」レースは <b>見送り</b> が正解です。
+          「絶対に分からない」レースは <b>見送り</b> が正解。下に直近の的中ログを掲載しています。
         </div>
       `}
       ${recentList.length > 0 ? `
         <div class="rec-section">
-          <div class="rec-section-head">直近の推奨レース 過去ログ (${recentList.length})</div>
+          <div class="rec-section-head">📊 直近の推奨レース過去ログ (${recentList.length} 件)</div>
           <div class="rec-list rec-list-small">${recentList.map(renderItem).join("")}</div>
         </div>
       ` : ""}

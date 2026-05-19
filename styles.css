@@ -1788,6 +1788,587 @@ a { color: inherit; text-decoration: none; }
 }
 @keyframes spinIt { to { transform: rotate(360deg); } }
 
+/* =====================================================================
+   ★★★ PREMIUM LAYER (世界一の競馬アプリ・必殺一号艇基準) ★★★
+   2026-05-20 ユーザー指示「世界一・100%越え」全面磨き上げ
+   ===================================================================== */
+
+/* ─── 5段階ティア (ultra / prime / go / cond / best) ─── */
+.decision-card.tier-ultra {
+  border-color: rgba(245,158,11,0.65);
+  box-shadow:
+    0 0 0 3px rgba(245,158,11,0.55),
+    0 0 80px -8px rgba(245,158,11,0.75),
+    0 32px 64px -24px rgba(217,119,6,0.50);
+  animation: heroFloat 4.2s ease-in-out infinite, ultraGlow 3.6s ease-in-out infinite;
+}
+@keyframes ultraGlow {
+  0%,100% { box-shadow: 0 0 0 3px rgba(245,158,11,0.55), 0 0 80px -8px rgba(245,158,11,0.75), 0 32px 64px -24px rgba(217,119,6,0.50); }
+  50%     { box-shadow: 0 0 0 4px rgba(245,158,11,0.75), 0 0 120px -8px rgba(245,158,11,0.95), 0 36px 72px -24px rgba(217,119,6,0.65); }
+}
+.decision-card.tier-prime {
+  border-color: rgba(245,158,11,0.55);
+  box-shadow: var(--shadow-gold);
+  animation: heroFloat 4.2s ease-in-out infinite;
+}
+.decision-card.tier-ultra .decision-head,
+.decision-card.tier-prime .decision-head {
+  background: linear-gradient(135deg, rgba(251,191,36,0.40) 0%, rgba(16,185,129,0.20) 60%, rgba(251,191,36,0.30) 100%);
+}
+.decision-card.tier-ultra .decision-tier-label,
+.decision-card.tier-prime .decision-tier-label { color: var(--c-amber); }
+
+/* ─── ヒーローカード入場 (子要素 stagger) ─── */
+.card-enter-stagger > * { animation: cardChildEnter 0.5s var(--ease-spring) both; }
+.card-enter-stagger > *:nth-child(1) { animation-delay: 60ms; }
+.card-enter-stagger > *:nth-child(2) { animation-delay: 120ms; }
+.card-enter-stagger > *:nth-child(3) { animation-delay: 180ms; }
+.card-enter-stagger > *:nth-child(4) { animation-delay: 240ms; }
+.card-enter-stagger > *:nth-child(5) { animation-delay: 300ms; }
+.card-enter-stagger > *:nth-child(6) { animation-delay: 360ms; }
+.card-enter-stagger > *:nth-child(7) { animation-delay: 420ms; }
+.card-enter-stagger > *:nth-child(8) { animation-delay: 480ms; }
+@keyframes cardChildEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── 信頼性ティア表示 (★★★★ TRUSTED / ★★★ STABLE / etc) ─── */
+.trust-row {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 13px; font-weight: 800;
+  padding: 6px 0;
+}
+.trust-row .stars {
+  font-size: 18px; letter-spacing: 0.05em;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+}
+.trust-row.trusted .stars { color: var(--c-gold); filter: drop-shadow(0 0 4px rgba(245,158,11,0.6)); }
+.trust-row.stable  .stars { color: var(--c-deep); }
+.trust-row.mixed   .stars { color: var(--c-warn); }
+.trust-row.risky   .stars { color: var(--c-bad); }
+.trust-row .label { font-weight: 800; letter-spacing: 0.08em; }
+.trust-row.trusted .label { color: var(--c-amber); }
+.trust-row.stable  .label { color: var(--c-deep); }
+.trust-row.mixed   .label { color: var(--c-warn); }
+.trust-row.risky   .label { color: var(--c-bad); }
+.trust-row .meta { color: var(--c-ink-soft); font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ─── 同条件の過去成績ブロック (Walk-forward 検証 ROI) ─── */
+.cond-stats-box {
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: var(--c-bg-soft);
+  border: 1px solid rgba(15,23,42,0.06);
+}
+.cond-stats-box .header {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.10em; color: var(--c-ink-mute);
+  margin-bottom: 8px;
+}
+.cond-stats-box .header b { color: var(--c-deep); font-size: 12px; }
+.cond-stats-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.cond-stats-row {
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+.cond-stats-row .name { font-size: 13px; font-weight: 800; color: var(--c-ink); }
+.cond-stats-row .name .badge {
+  display: inline-block; padding: 1px 6px; border-radius: 4px;
+  font-size: 9px; font-weight: 900; letter-spacing: 0.08em; vertical-align: middle;
+  margin-right: 4px;
+}
+.cond-stats-row .name .badge.gold { background: rgba(245,158,11,0.18); color: var(--c-amber); }
+.cond-stats-row .name .badge.green { background: rgba(16,185,129,0.18); color: var(--c-deep); }
+.cond-stats-row .roi {
+  font-size: 16px; font-weight: 900; color: var(--c-deep);
+}
+.cond-stats-row.is-trusted .roi { color: var(--c-amber); }
+.cond-stats-row.is-mixed   .roi { color: var(--c-warn); }
+.cond-stats-row.is-risky   .roi { color: var(--c-bad); }
+.cond-stats-row .sub {
+  grid-column: 1 / -1;
+  font-size: 10.5px; color: var(--c-ink-soft);
+}
+
+/* ─── AI 思考プロセス・推論ステップ表示 ─── */
+.ai-process-box {
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(125,211,252,0.10), rgba(196,181,253,0.10));
+  border: 1px solid rgba(56,189,248,0.18);
+}
+.ai-process-box .header {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.16em;
+  color: var(--c-sky); margin-bottom: 8px;
+}
+.ai-process-steps {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.ai-process-step {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 8px;
+  font-size: 13px; line-height: 1.4; color: var(--c-ink);
+}
+.ai-process-step .idx {
+  width: 20px; height: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  color: #fff; border-radius: 50%;
+  font-size: 11px; font-weight: 900;
+  flex-shrink: 0;
+}
+
+/* ─── 開催なし日 専用ヒーロー (大型版) ─── */
+.noday-hero {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  box-shadow: var(--shadow-hero);
+}
+.noday-hero::before {
+  content: "";
+  position: absolute; inset: 0 0 auto 0; height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, transparent 100%);
+  pointer-events: none; border-radius: inherit; z-index: 0;
+}
+.noday-head {
+  position: relative; z-index: 1;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(15,23,42,0.06);
+  background: linear-gradient(135deg, rgba(125,211,252,0.30) 0%, rgba(167,243,208,0.30) 100%);
+}
+.noday-head-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.16em; color: var(--c-deep);
+}
+.noday-head-label::before {
+  content: ""; width: 6px; height: 14px; border-radius: 2px;
+  background: var(--c-turf);
+}
+.noday-body {
+  position: relative; z-index: 1;
+  padding: 18px 20px 22px;
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(8px);
+}
+.noday-body > * + * { margin-top: 14px; }
+.noday-display {
+  text-align: center;
+  padding: 8px 0 6px;
+}
+.noday-display .big {
+  font-size: 38px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.05;
+}
+@media (min-width: 640px) { .noday-display .big { font-size: 52px; } }
+.noday-display .sub {
+  font-size: 13px; color: var(--c-ink-soft); margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.noday-display .sub b { color: var(--c-deep); }
+.noday-next-card {
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(16,185,129,0.08));
+  border: 1px solid rgba(245,158,11,0.25);
+}
+.noday-next-card .lab-row {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 10px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--c-amber);
+  margin-bottom: 8px;
+}
+.noday-next-card .lab-row .countdown-small {
+  font-size: 11px; font-weight: 800; color: var(--c-deep);
+  letter-spacing: 0.04em; text-transform: none;
+}
+.noday-next-card .next-dates {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  text-align: center;
+}
+.noday-next-card .next-date-cell {
+  border-radius: 12px;
+  padding: 10px 8px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(15,23,42,0.06);
+}
+.noday-next-card .next-date-cell .label {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.12em; color: var(--c-ink-mute);
+}
+.noday-next-card .next-date-cell .day {
+  font-size: 24px; font-weight: 900; color: var(--c-deep);
+  font-variant-numeric: tabular-nums; line-height: 1; margin-top: 4px;
+}
+
+/* ─── 戦略の信頼性カード (4 段階) ─── */
+.strat-trust-grid {
+  display: grid; gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+@media (min-width: 480px) {
+  .strat-trust-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+}
+.strat-trust-card {
+  position: relative;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.78);
+  border: 2px solid rgba(15,23,42,0.06);
+  transition: transform 0.18s var(--ease-spring), box-shadow 0.18s, border-color 0.18s;
+}
+.strat-trust-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -10px rgba(15,23,42,0.15); }
+.strat-trust-card.trusted {
+  background: linear-gradient(135deg, rgba(254,243,199,0.78), rgba(253,230,138,0.45));
+  border-color: rgba(245,158,11,0.55);
+  box-shadow: 0 0 24px -6px rgba(245,158,11,0.30);
+}
+.strat-trust-card.stable {
+  background: linear-gradient(135deg, rgba(220,252,231,0.78), rgba(167,243,208,0.45));
+  border-color: rgba(16,185,129,0.45);
+}
+.strat-trust-card.mixed {
+  background: linear-gradient(135deg, rgba(255,237,213,0.78), rgba(254,215,170,0.45));
+  border-color: rgba(249,115,22,0.40);
+}
+.strat-trust-card.risky {
+  background: linear-gradient(135deg, rgba(254,226,226,0.78), rgba(254,202,202,0.45));
+  border-color: rgba(244,63,94,0.40);
+}
+.strat-trust-card .head {
+  display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px;
+}
+.strat-trust-card .head .name {
+  font-size: 14px; font-weight: 900; letter-spacing: 0.06em;
+  color: var(--c-ink);
+}
+.strat-trust-card.trusted .head .name { color: var(--c-amber); }
+.strat-trust-card.stable  .head .name { color: var(--c-deep); }
+.strat-trust-card.mixed   .head .name { color: var(--c-warn); }
+.strat-trust-card.risky   .head .name { color: var(--c-bad); }
+.strat-trust-card .head .stars {
+  font-size: 12px; margin-left: auto;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,0.5));
+}
+.strat-trust-card.trusted .head .stars { color: var(--c-gold); filter: drop-shadow(0 0 4px rgba(245,158,11,0.6)); }
+.strat-trust-card.stable  .head .stars { color: var(--c-deep); }
+.strat-trust-card.mixed   .head .stars { color: var(--c-warn); }
+.strat-trust-card.risky   .head .stars { color: var(--c-bad); }
+.strat-trust-card .big-roi {
+  font-size: 28px; font-weight: 900; line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--c-deep);
+  margin: 6px 0 4px;
+}
+.strat-trust-card.trusted .big-roi { color: var(--c-amber); }
+.strat-trust-card.mixed   .big-roi { color: var(--c-warn); }
+.strat-trust-card.risky   .big-roi { color: var(--c-bad); }
+.strat-trust-card .meta {
+  font-size: 11px; color: var(--c-ink-soft); font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+.strat-trust-card .desc {
+  font-size: 11px; color: var(--c-ink); margin-top: 6px; line-height: 1.4;
+}
+
+/* ─── 折りたたみ details カード ─── */
+.details-card {
+  border-radius: 22px;
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.details-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 18px;
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.45);
+  border-bottom: 1px solid rgba(15,23,42,0.04);
+  transition: background 0.18s;
+  user-select: none;
+}
+.details-summary::-webkit-details-marker { display: none; }
+.details-summary:hover { background: rgba(255,255,255,0.65); }
+.details-summary .details-arrow {
+  display: inline-block;
+  font-size: 10px; color: var(--c-ink-mute);
+  transition: transform 0.22s var(--ease-spring);
+}
+details[open] .details-summary .details-arrow { transform: rotate(90deg); }
+.details-summary .details-title {
+  font-size: 14px; font-weight: 900; color: var(--c-ink);
+}
+.details-summary .details-hint {
+  font-size: 11px; color: var(--c-ink-soft);
+  margin-left: auto;
+}
+.details-body {
+  padding: 14px 16px 18px;
+}
+.details-body > section + section { margin-top: 14px; }
+@media (max-width: 480px) {
+  .details-summary .details-hint { display: none; }
+}
+
+/* ─── レース名 / ヘッダーラベル shimmer (ULTRA/PRIME のみ) ─── */
+.shimmer-text {
+  background: linear-gradient(120deg,
+    rgba(245,158,11,1) 0%,
+    rgba(217,119,6,1) 30%,
+    rgba(255,255,255,1) 50%,
+    rgba(217,119,6,1) 70%,
+    rgba(245,158,11,1) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: shimmerText 4.8s linear infinite;
+}
+@keyframes shimmerText {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ─── 推奨買い目: 役割タグ拡張 ─── */
+.buy-item .role.role-main  { background: rgba(16,185,129,0.30); color: var(--c-deep); font-weight: 900; }
+.buy-item .role.role-sub   { background: rgba(56,189,248,0.20); color: #0c4a6e; }
+.buy-item .role.role-side  { background: rgba(167,243,208,0.65); color: #064e3b; }
+.buy-item .role.role-ins   { background: rgba(196,181,253,0.45); color: #5b21b6; }
+.decision-card.tier-ultra .buy-item.is-main,
+.decision-card.tier-prime .buy-item.is-main {
+  background: rgba(245,158,11,0.20);
+  border-color: rgba(245,158,11,0.65);
+  box-shadow: 0 0 36px -4px rgba(245,158,11,0.65);
+  animation: mainPulse 2.8s ease-in-out infinite;
+}
+@keyframes mainPulse {
+  0%,100% { box-shadow: 0 0 36px -4px rgba(245,158,11,0.65); }
+  50%     { box-shadow: 0 0 48px -4px rgba(245,158,11,0.85); }
+}
+
+/* ─── 推奨レース一覧の見やすさ強化 (recommend-mount) ─── */
+.recommend-card {
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(245,250,247,0.78));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(16,185,129,0.20);
+  box-shadow: 0 12px 32px -16px rgba(16,185,129,0.18);
+  padding: 16px 18px;
+}
+.rec-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.rec-icon {
+  font-size: 18px;
+  filter: drop-shadow(0 0 4px rgba(245,158,11,0.5));
+}
+.rec-title {
+  font-size: 14px; font-weight: 900; letter-spacing: 0.04em; color: var(--c-ink);
+}
+.rec-pill {
+  margin-left: auto;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 800;
+}
+.rec-pill.is-go { background: rgba(16,185,129,0.14); color: var(--c-deep); }
+.rec-criteria {
+  font-size: 11px; color: var(--c-ink-soft); margin: 8px 0 12px;
+  line-height: 1.55;
+}
+.rec-empty {
+  font-size: 13px; color: var(--c-ink-soft);
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.6);
+  border: 1px dashed rgba(15,23,42,0.10);
+  text-align: center;
+  line-height: 1.65;
+}
+.rec-empty b { color: var(--c-deep); }
+.rec-section { margin-top: 12px; }
+.rec-section-head {
+  font-size: 11px; font-weight: 900; letter-spacing: 0.10em; color: var(--c-deep);
+  margin-bottom: 8px;
+}
+.rec-list { display: flex; flex-direction: column; gap: 8px; }
+.rec-list-small .rec-item { padding: 8px 10px; }
+.rec-item {
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(15,23,42,0.06);
+  transition: transform 0.18s var(--ease-spring), box-shadow 0.18s, border-color 0.18s;
+}
+.rec-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px -6px rgba(16,185,129,0.25);
+  border-color: rgba(16,185,129,0.30);
+}
+.rec-race {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 12px; margin-bottom: 4px;
+}
+.rec-course {
+  font-size: 13px; font-weight: 900; color: var(--c-ink);
+}
+.rec-g1 {
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+  color: #fff; font-size: 10px; font-weight: 900;
+  padding: 1px 6px; border-radius: 6px; letter-spacing: 0.05em;
+}
+.rec-race-name { color: var(--c-ink-soft); font-size: 12px; }
+.rec-badges {
+  display: inline-flex; gap: 4px; margin-left: auto;
+}
+.rec-badge {
+  font-size: 9px; font-weight: 900; letter-spacing: 0.08em;
+  padding: 2px 6px; border-radius: 4px;
+}
+.rec-b-best  { background: rgba(245,158,11,0.18); color: var(--c-amber); }
+.rec-b-safe  { background: rgba(16,185,129,0.18); color: var(--c-deep); }
+.rec-b-turf  { background: rgba(167,243,208,0.55); color: #064e3b; }
+.rec-b-big   { background: rgba(196,181,253,0.55); color: #5b21b6; }
+.rec-b-ultra {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #fff;
+  box-shadow: 0 1px 4px -1px rgba(245,158,11,0.55);
+}
+.rec-horse {
+  font-size: 14px; font-weight: 800; color: var(--c-ink);
+  font-variant-numeric: tabular-nums;
+}
+.rec-hmeta {
+  display: block;
+  font-size: 11px; font-weight: 600; color: var(--c-ink-soft);
+  margin-top: 2px;
+}
+.rec-action {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-size: 11px; color: var(--c-ink-soft); margin-top: 6px;
+  flex-wrap: wrap; gap: 6px;
+}
+.rec-bet {
+  font-size: 12px; font-weight: 800; color: var(--c-deep);
+  background: rgba(16,185,129,0.10);
+  padding: 2px 8px; border-radius: 6px;
+}
+.rec-date { font-size: 11px; color: var(--c-ink-mute); font-variant-numeric: tabular-nums; }
+
+/* ─── 推奨戦略カード (旧版・小型) は削除して strat-trust-grid を使う ─── */
+.rec-strats { display: none; }
+
+/* ─── 直近の的中ハイライト (休む日でも楽しめる動線) ─── */
+.recent-hits-box {
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(220,252,231,0.55), rgba(167,243,208,0.30));
+  border: 1px solid rgba(16,185,129,0.25);
+}
+.recent-hits-box .header {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.14em; color: var(--c-deep);
+  margin-bottom: 8px;
+}
+.recent-hits-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.recent-hits-list li {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--c-ink);
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.65);
+}
+.recent-hits-list .hit-badge {
+  font-size: 10px; font-weight: 900; color: var(--c-deep);
+}
+.recent-hits-list .race-info { font-weight: 700; }
+.recent-hits-list .profit {
+  margin-left: auto;
+  font-size: 13px; font-weight: 900; color: var(--c-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 結論カードの header ラベル: ティア別演出 ─── */
+.decision-tier-label .stars {
+  font-size: 0.85em;
+  letter-spacing: 0.08em;
+  margin-left: 4px;
+  vertical-align: -1px;
+}
+.decision-tier-label .sub {
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-left: 6px;
+  opacity: 0.78;
+}
+
+/* ─── ボタン: テレボート / 答え合わせ動線 ─── */
+.btn-cta-tele {
+  background: linear-gradient(135deg, #c084fc 0%, #8b5cf6 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px -2px rgba(139,92,246,0.45);
+}
+.btn-cta-answers {
+  background: linear-gradient(135deg, rgba(125,211,252,0.40), rgba(167,243,208,0.40));
+  color: #0c4a6e;
+  border: 1px solid rgba(2,132,199,0.25);
+}
+
+/* ─── reduced-motion: すべて止める ─── */
+@media (prefers-reduced-motion: reduce) {
+  .decision-card.tier-ultra,
+  .decision-card.tier-prime,
+  .decision-card.tier-gold,
+  .hit-glow,
+  .clock-spin,
+  .shimmer-text,
+  .ai-thinking .dot,
+  .live-dot,
+  .stale-dot,
+  .err-dot,
+  .pulseDot,
+  .ctaGoldGlow,
+  .mainPulse,
+  .floaty,
+  .heroFloat,
+  .ultraGlow,
+  .heartbeat,
+  .countdown.urgent .big {
+    animation: none !important;
+  }
+  .stagger > *, .card-enter-stagger > *, .fade-in, .slide-up {
+    animation: none !important;
+  }
+}
+
+/* ─── スマホ最適化 ─── */
+@media (max-width: 480px) {
+  .decision-headline { gap: 8px; }
+  .venue-display { font-size: 36px; }
+  .race-number { font-size: 24px; }
+  .countdown .big { font-size: 28px; }
+  .bigstat .val { font-size: 24px; }
+  .bigstat.primary .val { font-size: 28px; }
+  .buy-item.is-main .combo { font-size: 22px; }
+  .buy-item .combo { font-size: 16px; }
+  .strat-trust-grid { grid-template-columns: 1fr; }
+  .strat-trust-card .big-roi { font-size: 24px; }
+  .rec-badges { width: 100%; margin-left: 0; margin-top: 4px; }
+}
+
 .time-pill {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 3px 8px; border-radius: 999px;

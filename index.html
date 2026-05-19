@@ -17,7 +17,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <!-- Wave15: app.js は self-contained。旧モジュール 8 個は app.js が参照していないので削除 -->
 </head>
 <body>
 
@@ -57,7 +56,7 @@
     </div>
   </header>
 
-  <!-- 2) ライブステータス (本当に予想してる証拠) -->
+  <!-- 2) ライブステータス -->
   <section class="live-strip">
     <span id="live-dot" class="live-dot" aria-hidden="true"></span>
     <span id="live-label" class="live-label is-go">LIVE</span>
@@ -76,47 +75,7 @@
     </span>
   </section>
 
-  <!-- 2.5) 自動化ステータス (Wave16) -->
-  <section id="automation-mount" class="autostatus-card fade-in">
-    <div class="autostatus-head">
-      <span class="autostatus-icon" aria-hidden="true">⚙</span>
-      <span class="autostatus-title">自動化ステータス</span>
-      <span id="autostatus-overall" class="autostatus-pill is-ok">確認中…</span>
-    </div>
-    <div class="autostatus-grid">
-      <div class="autostatus-cell" data-key="fetch">
-        <div class="autostatus-label">データ取得</div>
-        <div class="autostatus-value" id="autostatus-fetch">—</div>
-        <div class="autostatus-sub" id="autostatus-fetch-sub">—</div>
-      </div>
-      <div class="autostatus-cell" data-key="predict">
-        <div class="autostatus-label">予想計算</div>
-        <div class="autostatus-value" id="autostatus-predict">—</div>
-        <div class="autostatus-sub" id="autostatus-predict-sub">—</div>
-      </div>
-      <div class="autostatus-cell" data-key="deploy">
-        <div class="autostatus-label">本番反映</div>
-        <div class="autostatus-value" id="autostatus-deploy">—</div>
-        <div class="autostatus-sub" id="autostatus-deploy-sub">—</div>
-      </div>
-      <div class="autostatus-cell" data-key="finalize">
-        <div class="autostatus-label">結果照合</div>
-        <div class="autostatus-value" id="autostatus-finalize">—</div>
-        <div class="autostatus-sub" id="autostatus-finalize-sub">—</div>
-      </div>
-    </div>
-    <p class="autostatus-note" id="autostatus-note">
-      4 つすべて緑なら手動操作は不要です。
-    </p>
-  </section>
-
-  <!-- 2.7) AI の実証成績 (Wave17: 機械学習モデル LightGBM の過去レース実証) -->
-  <section id="ml-status-mount" class="mlstatus-card fade-in" hidden></section>
-
-  <!-- 2.8) 今日の推奨レース (Wave19: 100% 越え戦略 fuku_top1_prob_020 の自動抽出) -->
-  <section id="recommend-mount" class="recommend-card fade-in" hidden></section>
-
-  <!-- 3) 結論カード (今日いちばん買う1点) -->
+  <!-- 3) 結論カード — 今日いちばん買う1点 (最重要) -->
   <section id="decision-mount" class="fade-in">
     <div class="predict-overlay">
       <span class="spinner"></span>
@@ -124,10 +83,13 @@
     </div>
   </section>
 
-  <!-- 4) WIN5 カード -->
+  <!-- 4) 今日の推奨レース (100%+ 戦略の発火レース) -->
+  <section id="recommend-mount" class="recommend-card fade-in" hidden></section>
+
+  <!-- 5) WIN5 カード -->
   <section id="win5-mount"></section>
 
-  <!-- 5) 全レース 一覧 -->
+  <!-- 6) 全レース 一覧 -->
   <section id="all-races-mount" class="section-card">
     <div class="section-head">
       <div class="title">
@@ -151,7 +113,7 @@
     </div>
   </section>
 
-  <!-- 6) 購入履歴 / 収支 -->
+  <!-- 7) 購入履歴 / 収支 -->
   <section class="section-card">
     <div class="section-head">
       <div class="title">
@@ -163,19 +125,16 @@
       </div>
     </div>
     <div class="section-body">
-      <!-- 収支グリッド -->
       <div class="profit-grid" id="profit-grid">
         <div class="profit-cell"><div class="label">今日 投資</div><div class="val" id="prof-spent-today">—<small>円</small></div><div class="sub" id="prof-bought-today">— R</div></div>
         <div class="profit-cell go"><div class="label">今日 収支</div><div class="val" id="prof-profit-today">—<small>円</small></div><div class="sub" id="prof-hit-today">的中 —</div></div>
         <div class="profit-cell"><div class="label">7日累計 投資</div><div class="val" id="prof-spent-7d">—<small>円</small></div><div class="sub" id="prof-bought-7d">— R</div></div>
         <div class="profit-cell go"><div class="label">7日累計 収支</div><div class="val" id="prof-profit-7d">—<small>円</small></div><div class="sub" id="prof-recovery-7d">回収率 —</div></div>
       </div>
-      <!-- 累計収支グラフ -->
       <div class="profit-chart-wrap mt-3">
         <div class="sec-title"><span class="bar go"></span><h2>累計収支カーブ</h2></div>
         <div id="profit-chart"></div>
       </div>
-      <!-- 履歴リスト -->
       <div class="mt-3">
         <div class="sec-title"><span class="bar gold"></span><h2>最近の購入履歴</h2></div>
         <div id="history-list" class="history-list">
@@ -186,6 +145,55 @@
       </div>
     </div>
   </section>
+
+  <!-- 8) 詳しく見る (折りたたみ・自動化 + ML 詳細) -->
+  <details class="details-card fade-in">
+    <summary class="details-summary">
+      <span class="details-arrow">▶</span>
+      <span class="details-title">もっと詳しく見る</span>
+      <span class="details-hint">自動化ステータス / AI モデル / 過去の検証</span>
+    </summary>
+    <div class="details-body">
+
+      <!-- 自動化ステータス -->
+      <section id="automation-mount" class="autostatus-card fade-in">
+        <div class="autostatus-head">
+          <span class="autostatus-icon" aria-hidden="true">⚙</span>
+          <span class="autostatus-title">自動化ステータス</span>
+          <span id="autostatus-overall" class="autostatus-pill is-ok">確認中…</span>
+        </div>
+        <div class="autostatus-grid">
+          <div class="autostatus-cell" data-key="fetch">
+            <div class="autostatus-label">データ取得</div>
+            <div class="autostatus-value" id="autostatus-fetch">—</div>
+            <div class="autostatus-sub" id="autostatus-fetch-sub">—</div>
+          </div>
+          <div class="autostatus-cell" data-key="predict">
+            <div class="autostatus-label">予想計算</div>
+            <div class="autostatus-value" id="autostatus-predict">—</div>
+            <div class="autostatus-sub" id="autostatus-predict-sub">—</div>
+          </div>
+          <div class="autostatus-cell" data-key="deploy">
+            <div class="autostatus-label">本番反映</div>
+            <div class="autostatus-value" id="autostatus-deploy">—</div>
+            <div class="autostatus-sub" id="autostatus-deploy-sub">—</div>
+          </div>
+          <div class="autostatus-cell" data-key="finalize">
+            <div class="autostatus-label">結果照合</div>
+            <div class="autostatus-value" id="autostatus-finalize">—</div>
+            <div class="autostatus-sub" id="autostatus-finalize-sub">—</div>
+          </div>
+        </div>
+        <p class="autostatus-note" id="autostatus-note">
+          4 つすべて緑なら手動操作は不要です。
+        </p>
+      </section>
+
+      <!-- AI モデル実証成績 -->
+      <section id="ml-status-mount" class="mlstatus-card fade-in" hidden></section>
+
+    </div>
+  </details>
 
 </main>
 
@@ -315,7 +323,6 @@
 
 <script src="app.js"></script>
 <script>
-  // PWA Service Worker
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch(() => {});

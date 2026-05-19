@@ -10,15 +10,13 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v40"; // Wave20.1: 平日「開催なし」表示の大幅強化 + 文字化け馬名のクライアント補正 + 本番再デプロイ
+const CACHE_VERSION = "keiba-nav-v41"; // Wave21: 必殺一号艇クオリティの全面リライト (5段階ティア / Walk-forward 検証統合 / 開催なし日大型ヒーロー)
 const PRECACHE = [
   "/",
   "/index.html",
   "/manifest.json",
   "/icon.svg",
   // ↓静的のうち変更頻度低めのもののみ pre-cache。app.js/styles.css は network-first で別管理
-  "/storage.js",
-  "/config.js",
 ];
 
 // network-first で扱う (デプロイ後に古い版が残らないようにする)
