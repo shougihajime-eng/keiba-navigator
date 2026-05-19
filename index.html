@@ -26,18 +26,62 @@
 <!-- ─── アプリ本体 ─── -->
 <main class="app-root section-stack stagger">
 
-  <!-- 1) ブランドヘッダ -->
+  <!-- 1) ブランドヘッダ (Wave22.2 - リッチ装飾) -->
   <header class="brand-strip">
+    <!-- ヘッダの右上に小さく走る馬 (装飾) -->
+    <svg class="brand-art-horse" viewBox="0 0 240 200" aria-hidden="true">
+      <defs>
+        <linearGradient id="bah" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#34d399" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#047857" stop-opacity="0.30"/>
+        </linearGradient>
+      </defs>
+      <g fill="url(#bah)">
+        <path d="M40,110 Q60,80 100,82 Q140,80 175,90 Q200,98 210,110 Q200,125 180,128 Q170,142 175,158 Q172,162 167,160 Q158,150 158,138 L140,140 Q138,160 132,164 Q126,162 128,148 L112,148 Q108,168 102,172 Q96,168 100,154 L86,154 Q80,170 74,172 Q70,166 76,150 Q60,144 50,132 Q44,122 40,110 Z"/>
+        <path d="M30,90 Q34,72 50,62 Q66,55 76,60 Q70,72 64,80 Q56,90 50,98 Q44,102 38,100 Q32,96 30,90 Z"/>
+        <path d="M40,55 Q48,45 60,42 Q72,40 78,46 Q82,52 78,58 Q70,62 60,62 Q50,60 44,60 Q40,58 40,55 Z"/>
+        <path d="M60,40 L64,30 L70,42 Z"/>
+        <path d="M55,55 Q40,60 30,82 Q40,80 50,75 Q60,68 55,55 Z" opacity="0.85"/>
+        <path d="M205,108 Q230,100 234,112 Q230,124 218,128 Q210,124 205,118 Z"/>
+      </g>
+    </svg>
+    <!-- 上部にカラフルな勝負服ストライプ -->
+    <div class="brand-silks" aria-hidden="true">
+      <span class="silk silk-1"></span>
+      <span class="silk silk-2"></span>
+      <span class="silk silk-3"></span>
+      <span class="silk silk-4"></span>
+      <span class="silk silk-5"></span>
+      <span class="silk silk-6"></span>
+      <span class="silk silk-7"></span>
+      <span class="silk silk-8"></span>
+    </div>
+
     <div class="brand-row">
       <div class="brand-title-block">
-        <span class="brand-tag"><span class="bar"></span>KEIBA / NAVIGATOR</span>
-        <h1 class="brand-title"><span class="accent">競馬</span>ナビゲーター</h1>
-        <p class="brand-sub" id="brand-sub">買わないAI ・ 期待値プラスの場面だけ買う</p>
+        <span class="brand-tag"><span class="bar"></span>KEIBA / NAVIGATOR · 期待値の科学</span>
+        <h1 class="brand-title">
+          <span class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="18" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+              <text x="20" y="26" text-anchor="middle" font-size="18" font-weight="900" fill="#b45309">馬</text>
+            </svg>
+          </span>
+          <span class="accent">競馬</span>ナビゲーター
+        </h1>
+        <p class="brand-sub" id="brand-sub">
+          <span class="sub-pill sub-pill-buy">買わないAI</span>
+          <span class="sub-sep">·</span>
+          <span class="sub-strong">期待値プラスの場面だけ買う</span>
+        </p>
       </div>
       <div class="brand-date">
-        <div class="label">Today</div>
+        <div class="label">TODAY</div>
         <div class="day" id="brand-day">--/--</div>
         <div class="wd" id="brand-wd">--</div>
+        <svg class="brand-date-deco" viewBox="0 0 100 100" aria-hidden="true">
+          <path d="M20,15 Q20,5 50,5 Q80,5 80,15 L80,55 Q80,85 50,90 Q20,85 20,55 Z M32,18 L32,55 Q32,72 50,76 Q68,72 68,55 L68,18 Z" fill="#f59e0b" opacity="0.35"/>
+        </svg>
       </div>
     </div>
     <div class="brand-metrics">

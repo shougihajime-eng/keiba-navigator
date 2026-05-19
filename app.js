@@ -1219,7 +1219,7 @@
     const info = el("div", { class: "info" });
     const meta = el("div", { class: "meta" });
     const vl = parseVenueLabel(race);
-    meta.appendChild(el("span", { class: "venue" }, vl.venue || "—"));
+    meta.appendChild(el("span", { class: "venue", "data-v": vl.venue || "" }, vl.venue || "—"));
     if (vl.raceNo) meta.appendChild(el("span", { class: "race-no" }, `${vl.raceNo}R`));
     if (race.isG1) meta.appendChild(el("span", { class: "pill pill-gold" }, "G1"));
     if (race.surface) meta.appendChild(el("span", null, `${race.surface}${race.distance || ""}m`));

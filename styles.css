@@ -3312,3 +3312,406 @@ details[open] .details-summary .details-arrow { transform: rotate(90deg); }
     animation: none;  /* タッチデバイスは静かに */
   }
 }
+
+/* =====================================================================
+   Wave22.1 — 背景メッシュの彩度UP (白すぎ問題の解消)
+   ===================================================================== */
+body {
+  background:
+    radial-gradient(70% 50% at 50% -10%, rgba(125, 211, 252, 0.75) 0%, transparent 60%),
+    radial-gradient(55% 55% at 5% 80%, rgba(110, 231, 183, 0.70) 0%, transparent 65%),
+    radial-gradient(50% 50% at 95% 10%, rgba(196, 181, 253, 0.65) 0%, transparent 60%),
+    radial-gradient(60% 60% at 100% 100%, rgba(253, 186, 116, 0.60) 0%, transparent 65%),
+    radial-gradient(55% 35% at 50% 110%, rgba(252, 211, 77, 0.50) 0%, transparent 70%),
+    radial-gradient(35% 30% at 80% 50%, rgba(167, 243, 208, 0.45) 0%, transparent 70%),
+    radial-gradient(30% 30% at 15% 35%, rgba(253, 224, 71, 0.40) 0%, transparent 70%),
+    linear-gradient(180deg, #ecfeff 0%, #f0fdf4 35%, #fffbeb 70%, #fef3c7 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/* メッシュにゆっくり呼吸するアニメ (12 秒周期・気付かない程度に) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(50% 50% at 30% 30%, rgba(16,185,129,0.10) 0%, transparent 70%),
+    radial-gradient(50% 50% at 70% 70%, rgba(245,158,11,0.10) 0%, transparent 70%);
+  animation: bodyBreathe 16s ease-in-out infinite;
+  opacity: 0.6;
+}
+@keyframes bodyBreathe {
+  0%, 100% { transform: translate(0,0) scale(1); opacity: 0.45; }
+  50%      { transform: translate(2%, -1%) scale(1.04); opacity: 0.70; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none; }
+}
+
+/* =====================================================================
+   Wave22.1 — Daily Headline (モバイルでも遊び心が見える横スクロール帯)
+   ===================================================================== */
+.daily-headline {
+  margin-top: 12px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 14px;
+  padding: 0;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.40) 0%,
+    rgba(254,243,199,0.55) 30%,
+    rgba(220,252,231,0.55) 60%,
+    rgba(255,255,255,0.40) 100%);
+  border: 1px solid rgba(245,158,11,0.20);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.85) inset,
+    0 4px 16px -6px rgba(15,23,42,0.08);
+}
+.daily-headline::before, .daily-headline::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; width: 28px;
+  z-index: 2;
+  pointer-events: none;
+}
+.daily-headline::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.95) 0%, transparent 100%);
+}
+.daily-headline::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(255,255,255,0.95) 0%, transparent 100%);
+}
+.dh-marquee {
+  overflow: hidden;
+  position: relative;
+}
+.dh-track {
+  display: flex;
+  gap: 14px;
+  padding: 10px 14px;
+  width: max-content;
+  animation: dhScroll 80s linear infinite;
+}
+@keyframes dhScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dh-track { animation: none; }
+}
+.daily-headline:hover .dh-track {
+  animation-play-state: paused;
+}
+
+.dh-card {
+  flex-shrink: 0;
+  display: flex; flex-direction: column;
+  background: rgba(255,255,255,0.85);
+  border-radius: 10px;
+  padding: 8px 12px;
+  min-width: 220px;
+  max-width: 320px;
+  border: 1px solid rgba(15,23,42,0.06);
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+}
+.dh-head {
+  font-size: 9px; letter-spacing: 0.30em; font-weight: 900;
+  color: var(--c-ink-mute); text-transform: uppercase;
+}
+.dh-legend .dh-head { color: var(--c-amber); }
+.dh-quote  .dh-head { color: var(--c-sky); }
+.dh-title {
+  font-size: 13px; font-weight: 900;
+  color: var(--c-ink);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+.dh-legend .dh-title {
+  font-family: "Noto Sans JP", serif;
+  font-size: 15px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.dh-quote .dh-title {
+  font-size: 12px;
+  font-weight: 600;
+  font-style: italic;
+}
+.dh-body {
+  font-size: 10px;
+  color: var(--c-ink-soft);
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* スマホで card を少しコンパクトに */
+@media (max-width: 480px) {
+  .dh-card { min-width: 180px; padding: 7px 10px; }
+  .dh-title { font-size: 12px; }
+  .dh-legend .dh-title { font-size: 14px; }
+}
+
+/* =====================================================================
+   Wave22.2 — ブランドヘッダのリッチ装飾
+   ===================================================================== */
+
+/* 走る馬を右上に半透明配置 */
+.brand-strip { position: relative; overflow: hidden; }
+.brand-art-horse {
+  position: absolute;
+  top: 26px;
+  right: -28px;
+  width: 230px;
+  height: auto;
+  opacity: 0.22;
+  z-index: 0;
+  pointer-events: none;
+  animation: brandHorseTrot 7s ease-in-out infinite;
+}
+@keyframes brandHorseTrot {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  50%      { transform: translateX(-6px) translateY(-4px); }
+}
+@media (max-width: 640px) {
+  .brand-art-horse { width: 150px; top: 8px; right: -40px; opacity: 0.18; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-art-horse { animation: none; }
+}
+
+/* ヘッダ上端に「勝負服ストライプ」帯 */
+.brand-silks {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  height: 4px;
+  z-index: 2;
+}
+.brand-silks .silk { flex: 1; }
+.silk-1 { background: linear-gradient(90deg, #f43f5e, #be123c); }   /* 赤 */
+.silk-2 { background: linear-gradient(90deg, #fbbf24, #f59e0b); }   /* 黄 */
+.silk-3 { background: linear-gradient(90deg, #10b981, #047857); }   /* 緑 */
+.silk-4 { background: linear-gradient(90deg, #38bdf8, #0284c7); }   /* 青 */
+.silk-5 { background: linear-gradient(90deg, #8b5cf6, #6d28d9); }   /* 紫 */
+.silk-6 { background: linear-gradient(90deg, #ec4899, #be185d); }   /* 桃 */
+.silk-7 { background: linear-gradient(90deg, #0f172a, #475569); }   /* 黒 */
+.silk-8 { background: linear-gradient(90deg, #fb923c, #ea580c); }   /* 橙 */
+
+/* タイトルロゴ */
+.brand-title {
+  display: flex; align-items: center; gap: 10px;
+}
+.brand-icon {
+  display: inline-flex;
+  width: 40px; height: 40px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 10px rgba(245,158,11,0.30));
+}
+.brand-icon svg { width: 100%; height: 100%; }
+
+@media (min-width: 1024px) {
+  .brand-icon { width: 52px; height: 52px; }
+}
+
+/* タグの「期待値の科学」サブ表記を控えめに */
+.brand-tag {
+  font-size: 9.5px !important;
+}
+
+/* サブテキストを大型化 + pill 化 */
+.brand-sub {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-top: 8px !important;
+}
+.sub-pill {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 900;
+  letter-spacing: 0.04em;
+}
+.sub-pill-buy {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border: 1px solid rgba(245,158,11,0.40);
+}
+.sub-sep { color: var(--c-ink-dim); font-weight: 900; }
+.sub-strong {
+  font-size: 13px;
+  color: var(--c-deep);
+  font-weight: 800;
+}
+
+/* ブランド日付に幸運の蹄鉄を背景に */
+.brand-date {
+  position: relative;
+}
+.brand-date-deco {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  width: 64px;
+  height: 64px;
+  z-index: -1;
+  pointer-events: none;
+}
+.brand-date .label {
+  font-size: 10px !important;
+}
+.brand-date .day {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 60%, #d97706 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@media (min-width: 1024px) {
+  .brand-date .day { font-size: 28px !important; }
+}
+
+/* ヘッダ内コンテンツを z-index 1 に (装飾の上) */
+.brand-row, .brand-metrics { position: relative; z-index: 1; }
+
+/* メトリクスセルに馬っぽい絵柄装飾 */
+.metric-cell {
+  position: relative;
+  overflow: hidden;
+}
+.metric-cell::after {
+  content: "";
+  position: absolute;
+  right: -10px; top: -10px;
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  opacity: 0.15;
+  z-index: 0;
+  pointer-events: none;
+}
+.metric-cell.metric-turf::after { background: radial-gradient(circle, #34d399, transparent); }
+.metric-cell.metric-gold::after { background: radial-gradient(circle, #fbbf24, transparent); }
+.metric-cell.metric-mute::after { background: radial-gradient(circle, #94a3b8, transparent); }
+.metric-cell .label, .metric-cell .val { position: relative; z-index: 1; }
+
+/* =====================================================================
+   Wave22.3 — race-row の発走時刻を時計風大型タイポ + 会場タグカラフル
+   ===================================================================== */
+.race-row {
+  grid-template-columns: 72px 1fr auto !important;
+  padding: 14px 14px !important;
+}
+.race-row .time {
+  background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(248,250,252,0.55) 100%);
+  border-radius: 10px;
+  padding: 6px 4px;
+  border: 1px solid rgba(15,23,42,0.06);
+}
+.race-row .time .hh {
+  font-size: 20px !important;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.race-row .time .left {
+  font-size: 10px !important;
+  margin-top: 4px !important;
+}
+
+/* 各 tier で時刻の枠色を切替 */
+.race-row.tier-ultra .time {
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+  border-color: rgba(245,158,11,0.50);
+}
+.race-row.tier-ultra .time .hh,
+.race-row.tier-prime .time .hh {
+  color: #b45309;
+}
+.race-row.tier-go .time {
+  background: linear-gradient(180deg, #dcfce7 0%, #bbf7d0 100%);
+  border-color: rgba(16,185,129,0.40);
+}
+.race-row.tier-go .time .hh { color: var(--c-deep); }
+.race-row.tier-cond .time {
+  background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%);
+  border-color: rgba(56,189,248,0.40);
+}
+.race-row.tier-cond .time .hh { color: #0369a1; }
+
+/* 会場名をカラフルなタグに */
+.race-row .info .meta .venue {
+  font-size: 15px !important;
+  background: linear-gradient(135deg, rgba(220,252,231,0.85), rgba(187,247,208,0.55));
+  color: var(--c-deep) !important;
+  padding: 2px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(16,185,129,0.30);
+  font-weight: 900 !important;
+  letter-spacing: 0.01em !important;
+}
+.race-row .info .meta .race-no {
+  font-size: 14px !important;
+  padding: 2px 7px;
+  background: rgba(15,23,42,0.06);
+  border-radius: 6px;
+}
+
+/* 会場ごとの色 (venue 名で識別) */
+.race-row .info .meta .venue[data-v="東京"],
+.race-row .info .meta .venue[data-v="中山"] {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b !important;
+  border-color: rgba(220,38,38,0.30);
+}
+.race-row .info .meta .venue[data-v="京都"],
+.race-row .info .meta .venue[data-v="阪神"] {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e !important;
+  border-color: rgba(245,158,11,0.40);
+}
+.race-row .info .meta .venue[data-v="札幌"],
+.race-row .info .meta .venue[data-v="函館"] {
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+  color: #0c4a6e !important;
+  border-color: rgba(56,189,248,0.40);
+}
+.race-row .info .meta .venue[data-v="新潟"],
+.race-row .info .meta .venue[data-v="福島"] {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  color: #5b21b6 !important;
+  border-color: rgba(139,92,246,0.35);
+}
+.race-row .info .meta .venue[data-v="小倉"],
+.race-row .info .meta .venue[data-v="中京"] {
+  background: linear-gradient(135deg, #ffedd5, #fed7aa);
+  color: #9a3412 !important;
+  border-color: rgba(234,88,12,0.30);
+}
+
+/* 本命馬の馬名を強化 */
+.race-row .info .pick .horse-name {
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  max-width: 14em !important;
+}
+
+/* 期待値の数値をもっと大きく */
+.race-row .ev .num-big {
+  font-size: 22px !important;
+}
+@media (min-width: 1024px) {
+  .race-row .ev .num-big { font-size: 26px !important; }
+  .race-row .time .hh { font-size: 23px !important; }
+  .race-row .info .meta .venue { font-size: 17px !important; }
+}
+
+@media (max-width: 480px) {
+  .race-row { grid-template-columns: 58px 1fr auto !important; padding: 11px 11px !important; }
+  .race-row .time .hh { font-size: 17px !important; }
+  .race-row .info .meta .venue { font-size: 14px !important; }
+  .race-row .ev .num-big { font-size: 20px !important; }
+}
