@@ -2850,3 +2850,465 @@ details[open] .details-summary .details-arrow { transform: rotate(90deg); }
 .runner-item.rank-1 .prob .pct { color: var(--c-gold); }
 .runner-item.rank-2 .prob .pct { color: var(--c-deep); }
 .runner-item.rank-3 .prob .pct { color: var(--c-sky); }
+
+/* =====================================================================
+   Wave22 — 左右余白の名馬アート + 名言 + 蹄跡 + 章区切り
+   (画面 ≥1280px のみ表示 / モバイルでは非表示)
+   ===================================================================== */
+
+/* ─ 左右の装飾エリア (本体カードの外側) ─ */
+.margin-art {
+  display: none;  /* デフォルト非表示 (モバイル) */
+  position: fixed;
+  top: 0; bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  padding: max(20px, var(--sat)) 0 0;
+}
+.margin-art-left  { left: 0; }
+.margin-art-right { right: 0; }
+
+@media (min-width: 1280px) {
+  .margin-art {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+    width: calc((100vw - 960px) / 2 - 12px);
+    padding: 32px 14px 32px;
+  }
+}
+@media (min-width: 1600px) {
+  .margin-art { width: calc((100vw - 1040px) / 2 - 16px); padding-left: 28px; padding-right: 28px; }
+}
+
+.margin-section {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  padding: 14px 14px 16px;
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.85) inset,
+    0 1px 2px 0 rgba(15,23,42,0.04),
+    0 8px 22px -8px rgba(15,23,42,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.margin-section svg { width: 100%; height: auto; display: block; }
+.margin-section .ms-caption {
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.30em;
+  font-weight: 900;
+  color: var(--c-ink-mute);
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* 走る馬 (左サイドのヒーロー) */
+.ms-horse {
+  background: linear-gradient(135deg, rgba(220,252,231,0.7) 0%, rgba(255,255,255,0.7) 70%);
+  border-color: rgba(16,185,129,0.30);
+}
+.ms-horse svg {
+  filter: drop-shadow(0 4px 14px rgba(16,185,129,0.25));
+  animation: msGallop 5.4s ease-in-out infinite;
+}
+@keyframes msGallop {
+  0%, 100% { transform: translateX(0) rotate(-1deg); }
+  35%      { transform: translateX(8px) rotate(0.5deg); }
+  65%      { transform: translateX(-4px) rotate(-0.5deg); }
+}
+
+/* 横顔の馬 */
+.ms-profile {
+  background: linear-gradient(135deg, rgba(254,243,199,0.7) 0%, rgba(255,255,255,0.6) 70%);
+  border-color: rgba(245,158,11,0.30);
+}
+.ms-profile svg {
+  filter: drop-shadow(0 4px 14px rgba(245,158,11,0.30));
+}
+
+/* トロフィー */
+.ms-trophy {
+  background: linear-gradient(160deg, rgba(254,249,195,0.7) 0%, rgba(254,215,170,0.6) 100%);
+  border-color: rgba(245,158,11,0.35);
+}
+.ms-trophy svg {
+  filter: drop-shadow(0 6px 18px rgba(217,119,6,0.35));
+  animation: msTrophyShine 4.8s ease-in-out infinite;
+}
+@keyframes msTrophyShine {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 6px 18px rgba(217,119,6,0.35)) brightness(1); }
+  50%      { transform: scale(1.04); filter: drop-shadow(0 8px 24px rgba(217,119,6,0.50)) brightness(1.10); }
+}
+
+/* フィニッシュフラッグ */
+.ms-finish {
+  background: linear-gradient(135deg, rgba(241,245,249,0.85) 0%, rgba(255,255,255,0.7) 100%);
+  border-color: rgba(71, 85, 105, 0.20);
+}
+.ms-finish svg {
+  filter: drop-shadow(0 4px 12px rgba(15,23,42,0.30));
+  animation: msFlagWave 3.2s ease-in-out infinite;
+  transform-origin: 14px 50%;
+}
+@keyframes msFlagWave {
+  0%, 100% { transform: rotate(0); }
+  50%      { transform: rotate(-3deg); }
+}
+
+/* 蹄鉄 */
+.ms-horseshoe {
+  background: linear-gradient(160deg, rgba(244,232,193,0.7) 0%, rgba(255,255,255,0.7) 100%);
+  border-color: rgba(180, 83, 9, 0.30);
+  color: #b45309;
+}
+.ms-horseshoe svg {
+  width: 70%; margin: 0 auto;
+  filter: drop-shadow(0 4px 14px rgba(180,83,9,0.30));
+  animation: msShoeFloat 6s ease-in-out infinite;
+}
+@keyframes msShoeFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-6px) rotate(2deg); }
+}
+
+/* 騎手 */
+.ms-jockey {
+  background: linear-gradient(160deg, rgba(237,233,254,0.7) 0%, rgba(255,255,255,0.7) 100%);
+  border-color: rgba(139,92,246,0.30);
+}
+.ms-jockey svg {
+  filter: drop-shadow(0 4px 14px rgba(139,92,246,0.30));
+}
+
+/* 蹄跡トレイル */
+.margin-hoof-trail {
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+  padding: 6px 0;
+}
+.margin-hoof {
+  width: 28px; color: #92400e;
+  animation: msHoofAppear 4s ease-in-out infinite;
+}
+@keyframes msHoofAppear {
+  0%, 100% { opacity: 0.15; }
+  50%      { opacity: 0.45; }
+}
+.ms-hooves {
+  background: linear-gradient(180deg, rgba(254,215,170,0.45) 0%, rgba(255,255,255,0.55) 100%);
+  border-color: rgba(180, 83, 9, 0.20);
+  padding: 10px 8px;
+}
+
+/* 名馬ヒーロー (大きめのカード) */
+.margin-legend-hero {
+  padding: 4px 0;
+}
+.mlh-tag {
+  display: inline-block; font-size: 9px; letter-spacing: 0.30em; font-weight: 900;
+  color: var(--c-amber); text-transform: uppercase;
+  padding: 3px 8px;
+  background: rgba(254, 243, 199, 0.85);
+  border-radius: 999px;
+  border: 1px solid rgba(245, 158, 11, 0.30);
+}
+.mlh-name {
+  font-family: "Noto Sans JP", serif;
+  font-size: 24px; font-weight: 900; line-height: 1.1; margin-top: 10px;
+  color: var(--c-ink);
+  letter-spacing: -0.01em;
+}
+.mlh-aka {
+  font-size: 12px; color: var(--c-amber); font-weight: 800; margin-top: 4px;
+  font-style: italic;
+}
+.mlh-year {
+  font-size: 9px; letter-spacing: 0.30em; color: var(--c-ink-mute);
+  font-weight: 800; margin-top: 6px;
+}
+.mlh-story {
+  font-size: 11.5px; color: var(--c-ink-soft);
+  line-height: 1.55; margin-top: 8px;
+}
+.mlh-in {
+  animation: mqFade 0.7s var(--ease-spring);
+}
+
+/* 名言カード */
+.margin-quote-card {
+  position: relative;
+  background: linear-gradient(160deg, rgba(224,242,254,0.7) 0%, rgba(255,255,255,0.7) 100%);
+  border-color: rgba(56,189,248,0.35);
+  margin: 0;
+  padding: 22px 16px 16px;
+}
+.mq-mark {
+  position: absolute;
+  top: -2px; left: 8px;
+  font-family: "Inter", Georgia, serif;
+  font-size: 60px; font-weight: 900; line-height: 1;
+  color: rgba(56,189,248,0.30);
+  pointer-events: none;
+}
+.mq-text {
+  font-family: "Noto Sans JP", serif;
+  font-size: 13.5px; line-height: 1.7; color: var(--c-ink);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.mq-by {
+  margin-top: 10px;
+  font-size: 10px; letter-spacing: 0.16em;
+  color: var(--c-ink-mute); font-weight: 800;
+  text-align: right;
+}
+.mq-in { animation: mqFade 0.65s var(--ease-spring); }
+@keyframes mqFade {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 名馬一覧 (右サイド) */
+.margin-legends-list {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.margin-legend-row {
+  display: grid; grid-template-columns: 38px 1fr; gap: 8px; align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px dashed rgba(15,23,42,0.10);
+}
+.margin-legend-row:last-child { border-bottom: none; }
+.ml-year {
+  font-size: 9px; letter-spacing: 0.10em; font-weight: 900;
+  color: var(--c-amber);
+  background: rgba(254,243,199,0.7);
+  padding: 4px 2px; border-radius: 6px;
+  text-align: center;
+  border: 1px solid rgba(245,158,11,0.25);
+}
+.ml-name {
+  font-size: 13px; font-weight: 900; color: var(--c-ink);
+  letter-spacing: -0.01em;
+}
+.ml-aka {
+  font-size: 10px; color: var(--c-ink-soft);
+  font-weight: 600; margin-top: 2px;
+  font-style: italic;
+}
+.ms-legends-list {
+  background: linear-gradient(180deg, rgba(254,243,199,0.5) 0%, rgba(255,255,255,0.65) 70%);
+  border-color: rgba(245,158,11,0.25);
+}
+
+/* reduced-motion 完全停止 */
+@media (prefers-reduced-motion: reduce) {
+  .ms-horse svg, .ms-trophy svg, .ms-finish svg, .ms-horseshoe svg,
+  .margin-hoof, .mlh-in, .mq-in {
+    animation: none !important;
+  }
+}
+
+/* =====================================================================
+   Wave22 — 章 (Chapter) 区切り (情報密度を下げて呼吸を作る)
+   ===================================================================== */
+.chapter-divider {
+  margin: 26px 0 14px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.chapter-divider .chapter-rail {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(15,23,42,0.10) 30%, rgba(15,23,42,0.10) 70%, transparent);
+}
+.chapter-core {
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 14px;
+}
+.chapter-num {
+  font-family: "Inter", sans-serif;
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  background: linear-gradient(135deg, #fbbf24 0%, #10b981 60%, #047857 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  font-style: italic;
+}
+.chapter-block {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+}
+.chapter-icon {
+  font-size: 20px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.chapter-title {
+  font-family: "Noto Sans JP", serif;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--c-ink);
+}
+.chapter-title em {
+  font-style: normal;
+  background: linear-gradient(135deg, #34d399 0%, #10b981 60%, #047857 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.chapter-sub {
+  font-size: 11.5px;
+  color: var(--c-ink-soft);
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+}
+
+/* 章 02 / 03 のアクセント色変化 */
+.chapter-divider[data-chapter="02"] .chapter-title em {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 60%, #d97706 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.chapter-divider[data-chapter="03"] .chapter-title em {
+  background: linear-gradient(135deg, #c084fc 0%, #8b5cf6 60%, #6d28d9 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.chapter-divider[data-chapter="04"] .chapter-title em {
+  background: linear-gradient(135deg, #38bdf8 0%, #06b6d4 60%, #0284c7 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.chapter-divider[data-chapter="05"] .chapter-title em {
+  background: linear-gradient(135deg, #fda4af 0%, #f43f5e 60%, #be123c 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@media (min-width: 1024px) {
+  .chapter-divider { margin: 36px 0 18px; }
+  .chapter-num    { font-size: 64px; }
+  .chapter-title  { font-size: 28px; }
+  .chapter-sub    { font-size: 13px; }
+}
+
+/* モバイルでは章番号を少し小さく */
+@media (max-width: 480px) {
+  .chapter-divider { margin: 20px 0 10px; }
+  .chapter-num    { font-size: 38px; }
+  .chapter-title  { font-size: 18px; }
+  .chapter-icon   { font-size: 17px; }
+  .chapter-sub    { font-size: 11px; }
+  .chapter-core   { gap: 10px; padding: 0 8px; }
+}
+
+/* =====================================================================
+   Wave22 — 文字階層リファイン (見出し巨大化 + 本文拡大)
+   ===================================================================== */
+
+/* ブランドタイトルを一段大きく + サブを目立つように */
+.brand-title {
+  font-size: 32px !important;
+  letter-spacing: -0.025em !important;
+}
+@media (min-width: 640px) {
+  .brand-title { font-size: 40px !important; }
+}
+@media (min-width: 1024px) {
+  .brand-title { font-size: 48px !important; }
+}
+.brand-sub {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--c-ink-soft) !important;
+  margin-top: 4px !important;
+}
+
+/* セクションヘッダの見出しを大きく */
+.section-head .title {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.005em;
+}
+@media (min-width: 1024px) {
+  .section-head .title { font-size: 20px; }
+}
+
+/* 結論カード reason-list の文字を大きく + ライン高を緩める */
+.reason-list li {
+  font-size: 16px !important;
+  line-height: 1.55 !important;
+  padding: 5px 0 !important;
+}
+@media (min-width: 1024px) {
+  .reason-list li { font-size: 17px !important; }
+}
+
+/* bigstat の数値をもう一段大きく */
+@media (min-width: 1024px) {
+  .bigstat .val { font-size: 60px !important; }
+  .bigstat.primary .val { font-size: 76px !important; }
+}
+
+/* race-row の馬名と会場文字を大きく (情報を読みやすく) */
+.race-row .horse-name,
+.race-row .venue-name {
+  font-size: 15px;
+  font-weight: 800;
+}
+@media (min-width: 1024px) {
+  .race-row .horse-name, .race-row .venue-name { font-size: 16px; }
+}
+
+/* =====================================================================
+   Wave22 — セクションカード余白を増やして "区別" を視覚化
+   ===================================================================== */
+.section-card {
+  padding: 0 !important;
+}
+.section-stack > * + * {
+  margin-top: 22px !important;
+}
+@media (min-width: 1024px) {
+  .section-stack > * + * { margin-top: 28px !important; }
+}
+
+/* section-card の中身に呼吸を持たせる */
+.section-card .section-body {
+  padding-top: 16px;
+  padding-bottom: 18px;
+}
+@media (min-width: 1024px) {
+  .section-card .section-body { padding-top: 20px; padding-bottom: 24px; }
+}
+
+/* 章区切りの上下にカードがあるとき、上のマージンを少し詰める */
+.chapter-divider + section { margin-top: 4px !important; }
+.chapter-divider + .section-card { margin-top: 4px !important; }
+.chapter-divider + details { margin-top: 4px !important; }
+
+/* =====================================================================
+   Wave22 — 余白アートが本文と被らないように本体 z-index 補正
+   ===================================================================== */
+.app-root {
+  position: relative;
+  z-index: 2;  /* margin-art (z=0) と body::before の上に */
+}
+.bottom-nav { z-index: 50; }
+
+/* ホバー時の reduce 効果 */
+@media (hover: none) {
+  .ms-horse svg, .ms-trophy svg, .ms-finish svg, .ms-horseshoe svg {
+    animation: none;  /* タッチデバイスは静かに */
+  }
+}
