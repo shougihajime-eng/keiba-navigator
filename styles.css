@@ -5580,3 +5580,184 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   .h-arrow { transition: none; }
 }
+
+/* =====================================================================
+   Wave24 — ミニブランドヘッダ (1 行・最小化)
+   ===================================================================== */
+.brand-mini {
+  border-radius: 12px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.bm-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.bm-logo {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-weight: 800;
+  color: var(--c-ink);
+}
+.bm-logo-icon {
+  font-size: 18px; line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.15));
+}
+.bm-logo-text {
+  font-size: 13px;
+  letter-spacing: -0.005em;
+}
+.bm-logo-text b {
+  color: var(--c-turf);
+  font-weight: 900;
+}
+.bm-spacer { flex: 1; }
+.bm-metric {
+  display: inline-flex; align-items: baseline; gap: 3px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(241, 245, 249, 0.85);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  font-size: 11px;
+  color: var(--c-ink-soft);
+}
+.bm-metric.bm-go {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.85), rgba(253, 230, 138, 0.55));
+  border-color: rgba(245, 158, 11, 0.30);
+  color: var(--c-amber);
+}
+.bm-metric.bm-mute {
+  background: rgba(241, 245, 249, 0.85);
+  color: var(--c-ink-mute);
+}
+.bm-metric .bm-mlabel { font-size: 10px; opacity: 0.85; letter-spacing: 0.04em; }
+.bm-metric b {
+  font-size: 14px; font-weight: 900;
+  color: var(--c-ink);
+}
+.bm-metric.bm-go b { color: var(--c-amber); }
+.bm-metric.bm-mute b { color: var(--c-ink-mute); }
+.bm-metric .bm-msuf { font-size: 9px; opacity: 0.7; }
+
+.bm-date {
+  display: inline-flex; align-items: baseline; gap: 2px;
+  font-weight: 800; color: var(--c-deep);
+  font-size: 12px;
+}
+.bm-date b {
+  font-size: 14px; color: var(--c-ink);
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@media (max-width: 480px) {
+  .brand-mini { padding: 5px 9px; }
+  .bm-logo-text { font-size: 11px; }
+  .bm-metric { padding: 2px 6px; font-size: 10px; }
+  .bm-metric b { font-size: 12px; }
+  .bm-date b { font-size: 12px; }
+  .bm-row { gap: 6px; }
+}
+
+/* =====================================================================
+   Wave24 — コンパクト ライブステータス (1 行細い)
+   ===================================================================== */
+.live-thin {
+  border-radius: 10px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px;
+  color: var(--c-ink-soft);
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.live-thin .live-dot, .live-thin .stale-dot, .live-thin .err-dot {
+  width: 6px; height: 6px;
+}
+.live-thin .live-label { font-size: 10px; font-weight: 900; letter-spacing: 0.10em; }
+.live-thin .live-meta { font-size: 10px; }
+.live-thin .live-meta b { font-size: 11px; color: var(--c-ink); }
+.live-thin .learning-badge { font-size: 10px; padding: 2px 7px; }
+.live-thin .sound-toggle { padding: 3px 7px; font-size: 10px; }
+.live-thin .sound-toggle span:not(.st-icon) { display: none; }
+.live-thin .sound-toggle .st-icon { font-size: 12px; margin: 0; }
+
+/* =====================================================================
+   Wave24 — 結論カード内の補足折りたたみ (AI 根拠)
+   ===================================================================== */
+.decision-suppl {
+  margin-top: 8px;
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.65);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+.decision-suppl-summary {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-ink-soft);
+  transition: background 0.18s;
+}
+.decision-suppl-summary::-webkit-details-marker { display: none; }
+.decision-suppl-summary:hover {
+  background: rgba(241, 245, 249, 0.85);
+  color: var(--c-ink);
+}
+.decision-suppl .ds-arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  font-size: 9px; font-weight: 900;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.18);
+  color: #0284c7;
+  transition: transform 0.28s var(--ease-spring), background 0.22s;
+}
+.decision-suppl[open] .ds-arrow {
+  transform: rotate(90deg);
+  background: var(--c-sky);
+  color: #fff;
+}
+.decision-suppl .ds-text { letter-spacing: 0.01em; }
+.decision-suppl[open] .decision-suppl-summary {
+  border-bottom: 1px dashed rgba(15, 23, 42, 0.08);
+  color: var(--c-ink);
+}
+.decision-suppl-body {
+  padding: 12px 14px 14px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.decision-suppl-body > .cond-stats-box,
+.decision-suppl-body > .ai-process-box {
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .decision-suppl .ds-arrow { transition: none; }
+}
+
+/* Wave24: silk-pick-row の eyebrow を「本命 3 頭」に簡潔化 (ラベルは JS 側で変更) */
+.silk-pick-row {
+  margin-top: 4px;
+}
+
+/* Wave24: 結論カードの buy-box を最重要部分らしく強化 */
+.buy-box {
+  border: 2px solid rgba(16, 185, 129, 0.30);
+}
+.decision-card.tier-ultra .buy-box,
+.decision-card.tier-prime .buy-box {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.45) 0%, rgba(255, 255, 255, 0.75) 100%);
+  box-shadow: 0 0 24px -8px rgba(245, 158, 11, 0.35);
+}

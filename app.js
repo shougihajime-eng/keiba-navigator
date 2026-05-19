@@ -419,30 +419,23 @@
     // ── 本体 (card-enter-stagger で子要素がぬるっと入場)
     const body = el("div", { class: "decision-body card-enter-stagger" });
 
-    // (0) TODAY'S BEST PICK — 巨大オーバーライン (Wave22.4)
+    // (0) Wave24: 「今日いちばん買う 1 点」+ ティア — 1 行に統合 (重複削除)
     const tierEmoji = tier === "ultra" ? "💎✦" : tier === "prime" ? "💎" : tier === "go" ? "🎯" : tier === "cond" ? "⚡" : "🎲";
     const tierColor = tier === "ultra" ? "gold" : tier === "prime" ? "gold" : tier === "go" ? "turf" : tier === "cond" ? "sky" : "mute";
+    const tierMsg = tier === "ultra" ? "究極の絶好機・今日いちばん買う 1 点" :
+                    tier === "prime" ? "絶好機・本気で買おう" :
+                    tier === "go"    ? "AI の本命・このレースを買おう" :
+                    tier === "cond"  ? "条件付き・慎重に・お試し金額で" :
+                                        "自信は控えめだが見守りたい 1 点";
     const overline = el("div", { class: `today-best-overline today-best-${tierColor}` },
       el("div", { class: "tbo-emoji" }, tierEmoji),
       el("div", { class: "tbo-stack" },
         el("div", { class: "tbo-eyebrow" }, "TODAY'S BEST PICK"),
-        el("div", { class: "tbo-headline" }, "今日いちばん買う 1 点")
+        el("div", { class: "tbo-headline" }, tierMsg)
       ),
       el("div", { class: "tbo-tier-pill" }, tierTitle(tier))
     );
     body.appendChild(overline);
-
-    // (0b) 「📢 AI の予想」案内
-    body.appendChild(el("div", { class: "decision-prelabel" },
-      el("span", { class: "pl-bar" }),
-      el("span", null,
-        tier === "ultra" ? "📢 究極の AI 予想 — 今日いちばん買うのはこれ" :
-        tier === "prime" ? "📢 絶好機を捉えた AI の予想 — 本気で買おう" :
-        tier === "go"    ? "📢 AI の本命予想 — このレースを買おう" :
-        tier === "cond"  ? "📢 条件付きの予想 — 慎重に・お試し金額で" :
-                            "📢 今日のおすすめ — 自信は控えめだが見守りたい1点"
-      )
-    ));
 
     // (1) 場名 (デカ) + R + 馬場・距離 + Countdown
     const headline = el("div", { class: "decision-headline" });
@@ -466,13 +459,20 @@
     headline.appendChild(cd);
     body.appendChild(headline);
 
-    // (1b) 本命馬を「勝負服馬番タグ」で大型表示 (Wave22.4)
+    // Wave24: 順序を「何を買うか最優先」に並び替え
+    //   (1) 本命3頭シルク → (2) 買い目 5 点 → (3) ステータス → (4) 補足 (折りたたみ)
+
+    // (1) 本命馬を「勝負服馬番タグ」で大型表示
     if (race.topPick) {
       const silkRow = renderSilkPickRow(race, tier);
       if (silkRow) body.appendChild(silkRow);
     }
 
-    // (2) BigStat 3 列: 期待値 / 1着確率 (円グラフ) / AI 信頼度
+    // (2) 買い目 (主軸/本命/押さえ/保険・最大 5 点) — 結論カード内で最重要
+    const buyBox = buildBuyBox(race, tier);
+    if (buyBox) body.appendChild(buyBox);
+
+    // (3) BigStat 3 列: 期待値 / 1着確率 (円グラフ) / AI 信頼度
     const stats = el("div", { class: "bigstat-grid" });
     const ev = race.topPick.ev;
     const evTone = ev >= 1.5 ? "gold" : ev >= 1.1 ? "go" : ev >= 0.95 ? "ink" : "mute";
@@ -485,60 +485,70 @@
     stats.appendChild(makeBigStatBars("AI 信頼度", confPct, confTone));
     body.appendChild(stats);
 
-    // (3) Walk-forward 検証 ROI (戦略の信頼性) — recommend.stats から
+    // (4) 補足情報 (Walk-forward 検証 + AI 思考プロセス) を折りたたみに集約
     const recStats = state.recommendations?.stats;
-    if (recStats && (recStats.best || recStats.safe)) {
-      const condBox = el("div", { class: "cond-stats-box" });
-      condBox.appendChild(el("div", { class: "header" },
-        "📊 ", el("b", null, "AI 戦略の Walk-forward 検証"),
-        el("span", { style: "font-size:10px;color:var(--c-ink-mute);margin-left:auto" }, "(過去 8 期間に分割して再評価)")
-      ));
-      const ul = el("ul", { class: "cond-stats-list" });
-      ["best","safe"].forEach((key) => {
-        const s = recStats[key];
-        if (!s) return;
-        const trustLvl = s.trust_level || 0;
-        const wf = s.walk_forward || {};
-        const wfRoi = wf.mean_roi_pct != null ? wf.mean_roi_pct.toFixed(1) + "%" : "—";
-        const wfWin = wf.win_periods != null && wf.active_periods != null
-          ? `${wf.win_periods}/${wf.active_periods} 期間で 100%+`
-          : "";
-        const rowCls = trustLvl >= 4 ? "is-trusted" : trustLvl >= 3 ? "" : trustLvl >= 2 ? "is-mixed" : "is-risky";
-        const badgeCls = trustLvl >= 4 ? "gold" : "green";
-        const stratLabel = key === "best" ? "BEST 戦略" : "SAFE 戦略";
-        const stars = "★".repeat(trustLvl) + "☆".repeat(4 - trustLvl);
-        const row = el("li", { class: `cond-stats-row ${rowCls}` });
-        row.appendChild(el("span", { class: "name" },
-          el("span", { class: `badge ${badgeCls}` }, stratLabel),
-          el("span", null, stars)
-        ));
-        row.appendChild(el("span", { class: "roi" }, wfRoi));
-        row.appendChild(el("span", { class: "sub" }, `${s.fired_count}件・的中${s.hit_rate_pct}% ・ ${wfWin}`));
-        ul.appendChild(row);
-      });
-      condBox.appendChild(ul);
-      body.appendChild(condBox);
-    }
-
-    // (4) AI 思考プロセス (なぜこの1点なのか)
     const reasons = buildReasons(race);
-    if (reasons.length > 0) {
-      const proc = el("div", { class: "ai-process-box" });
-      proc.appendChild(el("div", { class: "header" }, "🧠 AI の思考プロセス — この1点で勝負する理由"));
-      const ul = el("ol", { class: "ai-process-steps" });
-      reasons.slice(0, 4).forEach((r, i) =>
-        ul.appendChild(el("li", { class: "ai-process-step" },
-          el("span", { class: "idx" }, String(i + 1)),
-          el("span", null, r)
-        ))
-      );
-      proc.appendChild(ul);
-      body.appendChild(proc);
-    }
+    const hasWf = recStats && (recStats.best || recStats.safe);
+    if (hasWf || reasons.length > 0) {
+      const det = el("details", { class: "decision-suppl" });
+      const sum = el("summary", { class: "decision-suppl-summary" });
+      sum.appendChild(el("span", { class: "ds-arrow" }, "▶"));
+      sum.appendChild(el("span", { class: "ds-text" }, "AI の根拠を見る (検証データ・思考プロセス)"));
+      det.appendChild(sum);
+      const dbody = el("div", { class: "decision-suppl-body" });
 
-    // (5) 買い目 (主軸/本命/押さえ/保険・最大 5 点)
-    const buyBox = buildBuyBox(race, tier);
-    if (buyBox) body.appendChild(buyBox);
+      // Walk-forward
+      if (hasWf) {
+        const condBox = el("div", { class: "cond-stats-box" });
+        condBox.appendChild(el("div", { class: "header" },
+          "📊 ", el("b", null, "AI 戦略の Walk-forward 検証"),
+          el("span", { style: "font-size:10px;color:var(--c-ink-mute);margin-left:auto" }, "(過去 8 期間に分割して再評価)")
+        ));
+        const ul = el("ul", { class: "cond-stats-list" });
+        ["best","safe"].forEach((key) => {
+          const s = recStats[key];
+          if (!s) return;
+          const trustLvl = s.trust_level || 0;
+          const wf = s.walk_forward || {};
+          const wfRoi = wf.mean_roi_pct != null ? wf.mean_roi_pct.toFixed(1) + "%" : "—";
+          const wfWin = wf.win_periods != null && wf.active_periods != null
+            ? `${wf.win_periods}/${wf.active_periods} 期間で 100%+`
+            : "";
+          const rowCls = trustLvl >= 4 ? "is-trusted" : trustLvl >= 3 ? "" : trustLvl >= 2 ? "is-mixed" : "is-risky";
+          const badgeCls = trustLvl >= 4 ? "gold" : "green";
+          const stratLabel = key === "best" ? "BEST 戦略" : "SAFE 戦略";
+          const stars = "★".repeat(trustLvl) + "☆".repeat(4 - trustLvl);
+          const row = el("li", { class: `cond-stats-row ${rowCls}` });
+          row.appendChild(el("span", { class: "name" },
+            el("span", { class: `badge ${badgeCls}` }, stratLabel),
+            el("span", null, stars)
+          ));
+          row.appendChild(el("span", { class: "roi" }, wfRoi));
+          row.appendChild(el("span", { class: "sub" }, `${s.fired_count}件・的中${s.hit_rate_pct}% ・ ${wfWin}`));
+          ul.appendChild(row);
+        });
+        condBox.appendChild(ul);
+        dbody.appendChild(condBox);
+      }
+
+      // AI 思考プロセス
+      if (reasons.length > 0) {
+        const proc = el("div", { class: "ai-process-box" });
+        proc.appendChild(el("div", { class: "header" }, "🧠 AI の思考プロセス — この1点で勝負する理由"));
+        const ul = el("ol", { class: "ai-process-steps" });
+        reasons.slice(0, 4).forEach((r, i) =>
+          ul.appendChild(el("li", { class: "ai-process-step" },
+            el("span", { class: "idx" }, String(i + 1)),
+            el("span", null, r)
+          ))
+        );
+        proc.appendChild(ul);
+        dbody.appendChild(proc);
+      }
+
+      det.appendChild(dbody);
+      body.appendChild(det);
+    }
 
     // (6) 大ボタン (詳細を見る + JRA 公式オッズ)
     const cta = el("div", { class: "cta-grid" });
@@ -714,7 +724,7 @@
     if (!tp) return null;
     const wrap = el("div", { class: `silk-pick-row silk-tier-${tier}` });
     const head = el("div", { class: "spr-head" });
-    head.appendChild(el("span", { class: "spr-eyebrow" }, "AI が選んだ本命 3 頭"));
+    head.appendChild(el("span", { class: "spr-eyebrow" }, "本命 3 頭"));
     wrap.appendChild(head);
 
     const row = el("div", { class: "spr-horses" });
