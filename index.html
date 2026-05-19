@@ -26,7 +26,14 @@
 <!-- ─── アプリ本体 ─── -->
 <main class="app-root section-stack stagger">
 
-  <!-- 0) ヒーローステージ (Wave22.10 - TV OP風) -->
+  <!-- 0) ヒーローステージ (Wave22.10 - TV OP風) — Wave23: ユーザー指示で完全に閉じた折りたたみへ -->
+  <details class="hideable hideable-hero">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">🌅</span>
+      <span class="h-title">今日の挨拶 / 名馬列伝</span>
+      <span class="h-hint">クリックで開く</span>
+    </summary>
   <section class="hero-stage" id="hero-stage" aria-label="今日の挨拶">
     <!-- 空と背景 (時間帯で色変化) -->
     <div class="hero-sky" id="hero-sky">
@@ -126,6 +133,7 @@
       <div class="hs-shadow"></div>
     </div>
   </section>
+  </details>
 
   <!-- 1) ブランドヘッダ (Wave22.2 - リッチ装飾) -->
   <header class="brand-strip">
@@ -238,74 +246,112 @@
     </div>
   </section>
 
-  <!-- 4) 今日の推奨レース (100%+ 戦略の発火レース) -->
-  <section id="recommend-mount" class="recommend-card fade-in" hidden></section>
+  <!-- 4) 今日の推奨レース (100%+ 戦略の発火レース) — Wave23: 折りたたみ -->
+  <details class="hideable hideable-recommend">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">💎</span>
+      <span class="h-title">100% 越え戦略の推奨レース</span>
+      <span class="h-hint">過去 8 期間検証で信頼性 ★★★ 以上の戦略</span>
+    </summary>
+    <section id="recommend-mount" class="recommend-card fade-in" hidden></section>
+  </details>
 
-  <!-- 5) WIN5 カード -->
-  <section id="win5-mount"></section>
+  <!-- 5) WIN5 カード — Wave23: 折りたたみ (土日中心の機能・平日は隠す) -->
+  <details class="hideable hideable-win5">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">🎰</span>
+      <span class="h-title">WIN5 戦略</span>
+      <span class="h-hint">日曜 5 レース連勝で最大 6 億円</span>
+    </summary>
+    <section id="win5-mount"></section>
+  </details>
 
-  <!-- 6) 全レース 一覧 -->
-  <section id="all-races-mount" class="section-card">
-    <div class="section-head">
-      <div class="title">
-        <span class="brand-tag"><span class="bar"></span></span>
-        本日の全レース
+  <!-- 6) 全レース 一覧 — Wave23: 折りたたみ -->
+  <details class="hideable hideable-all-races">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">🐎</span>
+      <span class="h-title">本日の全レース</span>
+      <span class="h-hint"><span id="all-races-count-hint">—</span> レースを一覧表示</span>
+    </summary>
+    <section id="all-races-mount" class="section-card">
+      <div class="section-head">
+        <div class="title">
+          <span class="brand-tag"><span class="bar"></span></span>
+          本日の全レース
+        </div>
+        <div class="extra"><span id="all-races-count">—</span> レース</div>
       </div>
-      <div class="extra"><span id="all-races-count">—</span> レース</div>
-    </div>
-    <div class="section-body">
-      <div class="all-races-toolbar">
-        <button class="chip-filter is-active" data-filter="all">全て</button>
-        <button class="chip-filter" data-filter="go">勝負レース</button>
-        <button class="chip-filter" data-filter="gold">絶好機 (期待値1.3+)</button>
-        <button class="chip-filter" data-filter="g1">重賞のみ</button>
-        <button class="chip-filter" data-sort="time">発走時刻順</button>
-        <button class="chip-filter" data-sort="ev">期待値順</button>
+      <div class="section-body">
+        <div class="all-races-toolbar">
+          <button class="chip-filter is-active" data-filter="all">全て</button>
+          <button class="chip-filter" data-filter="go">勝負レース</button>
+          <button class="chip-filter" data-filter="gold">絶好機 (期待値1.3+)</button>
+          <button class="chip-filter" data-filter="g1">重賞のみ</button>
+          <button class="chip-filter" data-sort="time">発走時刻順</button>
+          <button class="chip-filter" data-sort="ev">期待値順</button>
+        </div>
+        <div id="all-races-list" class="race-row-list">
+          <div class="predict-overlay" style="padding:20px"><span class="spinner"></span>読み込み中…</div>
+        </div>
       </div>
-      <div id="all-races-list" class="race-row-list">
-        <div class="predict-overlay" style="padding:20px"><span class="spinner"></span>読み込み中…</div>
-      </div>
-    </div>
-  </section>
+    </section>
+  </details>
 
-  <!-- 6.5) 達成バッジ -->
-  <section id="achievements-mount" class="achievements-card fade-in" hidden></section>
+  <!-- 6.5) 達成バッジ + 連勝記録 — Wave23: 折りたたみへ -->
+  <details class="hideable hideable-streak">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">🏆</span>
+      <span class="h-title">達成バッジ と 連勝記録</span>
+      <span class="h-hint">15 種のバッジ・最近の調子</span>
+    </summary>
+    <section id="achievements-mount" class="achievements-card fade-in" hidden></section>
+    <section id="streak-mount" class="streak-card fade-in" hidden></section>
+  </details>
 
-  <!-- 6.6) 連勝記録 / 最近の調子 -->
-  <section id="streak-mount" class="streak-card fade-in" hidden></section>
-
-  <!-- 7) 購入履歴 / 収支 -->
-  <section class="section-card">
-    <div class="section-head">
-      <div class="title">
-        <span class="brand-tag"><span class="bar"></span></span>
-        買ったもの と 収支
+  <!-- 7) 購入履歴 / 収支 — Wave23: 折りたたみ -->
+  <details class="hideable hideable-history">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">💴</span>
+      <span class="h-title">買ったもの と 収支</span>
+      <span class="h-hint">今日 / 7 日累計 / 累計収支カーブ</span>
+    </summary>
+    <section class="section-card">
+      <div class="section-head">
+        <div class="title">
+          <span class="brand-tag"><span class="bar"></span></span>
+          買ったもの と 収支
+        </div>
+        <div class="extra">
+          <button id="btn-add-bet" class="chip-filter is-active" style="margin-right:4px">+ 手動で記録</button>
+        </div>
       </div>
-      <div class="extra">
-        <button id="btn-add-bet" class="chip-filter is-active" style="margin-right:4px">+ 手動で記録</button>
-      </div>
-    </div>
-    <div class="section-body">
-      <div class="profit-grid" id="profit-grid">
-        <div class="profit-cell"><div class="label">今日 投資</div><div class="val" id="prof-spent-today">—<small>円</small></div><div class="sub" id="prof-bought-today">— R</div></div>
-        <div class="profit-cell go"><div class="label">今日 収支</div><div class="val" id="prof-profit-today">—<small>円</small></div><div class="sub" id="prof-hit-today">的中 —</div></div>
-        <div class="profit-cell"><div class="label">7日累計 投資</div><div class="val" id="prof-spent-7d">—<small>円</small></div><div class="sub" id="prof-bought-7d">— R</div></div>
-        <div class="profit-cell go"><div class="label">7日累計 収支</div><div class="val" id="prof-profit-7d">—<small>円</small></div><div class="sub" id="prof-recovery-7d">回収率 —</div></div>
-      </div>
-      <div class="profit-chart-wrap mt-3">
-        <div class="sec-title"><span class="bar go"></span><h2>累計収支カーブ</h2></div>
-        <div id="profit-chart"></div>
-      </div>
-      <div class="mt-3">
-        <div class="sec-title"><span class="bar gold"></span><h2>最近の購入履歴</h2></div>
-        <div id="history-list" class="history-list">
-          <div style="text-align:center;padding:20px;color:var(--c-ink-soft);font-size:13px;">
-            まだ購入記録がありません。「+ 手動で記録」ボタンで追加できます。
+      <div class="section-body">
+        <div class="profit-grid" id="profit-grid">
+          <div class="profit-cell"><div class="label">今日 投資</div><div class="val" id="prof-spent-today">—<small>円</small></div><div class="sub" id="prof-bought-today">— R</div></div>
+          <div class="profit-cell go"><div class="label">今日 収支</div><div class="val" id="prof-profit-today">—<small>円</small></div><div class="sub" id="prof-hit-today">的中 —</div></div>
+          <div class="profit-cell"><div class="label">7日累計 投資</div><div class="val" id="prof-spent-7d">—<small>円</small></div><div class="sub" id="prof-bought-7d">— R</div></div>
+          <div class="profit-cell go"><div class="label">7日累計 収支</div><div class="val" id="prof-profit-7d">—<small>円</small></div><div class="sub" id="prof-recovery-7d">回収率 —</div></div>
+        </div>
+        <div class="profit-chart-wrap mt-3">
+          <div class="sec-title"><span class="bar go"></span><h2>累計収支カーブ</h2></div>
+          <div id="profit-chart"></div>
+        </div>
+        <div class="mt-3">
+          <div class="sec-title"><span class="bar gold"></span><h2>最近の購入履歴</h2></div>
+          <div id="history-list" class="history-list">
+            <div style="text-align:center;padding:20px;color:var(--c-ink-soft);font-size:13px;">
+              まだ購入記録がありません。「+ 手動で記録」ボタンで追加できます。
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </details>
 
   <!-- 8) 詳しく見る (折りたたみ・自動化 + ML 詳細) -->
   <details class="details-card fade-in">

@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v52"; // Wave22.10: TV OP 風ヒーロー (空 + 太陽月 + 雲 + 馬場 + 走る馬3頭 + 朝の挨拶 + 名馬名言)
+const CACHE_VERSION = "keiba-nav-v53"; // Wave23: 結論カード最優先・ヒーロー/推奨/WIN5/全レース/収支/達成を全部折りたたみ化
 const PRECACHE = [
   "/",
   "/index.html",
