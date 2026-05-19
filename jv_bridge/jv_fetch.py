@@ -87,9 +87,16 @@ def jv_read(jv, buf_size: int = 256000):
         rc, buf, _size_out, fname = result
     else:
         raise RuntimeError(f"JVRead returned unexpected tuple of length {len(result)}: {result!r}")
-    # buf を bytes に統一 (Shift-JIS で来るので encode)
+    # buf を bytes に統一。
+    # 重要: JVRead の BSTR は「SJIS バイト列をそのまま 1 バイト = 1 文字 (U+0000-U+00FF)
+    # にマップした疑似 Unicode 文字列」として渡してくる。これを `encode("shift_jis", ...)`
+    # で戻そうとすると、SJIS の高位バイト (0x80+, カタカナ等の第1バイト) が SJIS には
+    # エンコードできずに `?` (0x3F) に置換され、結果として `?A?N?e?B...` のような
+    # 文字化けが発生する (2026-05-19 解明: aggregate_20260510 以降のデータがこれで壊れた)。
+    # 正しくは `latin-1` で encode する。U+0000-U+00FF をそのまま 0x00-0xFF にマップする
+    # ので、JV-Link 本来の SJIS バイト列が完全に復元される。
     if isinstance(buf, str):
-        data = buf.encode("shift_jis", errors="replace")
+        data = buf.encode("latin-1", errors="replace")
     elif isinstance(buf, (bytes, bytearray)):
         data = bytes(buf)
     elif buf is None:

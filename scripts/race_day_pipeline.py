@@ -271,8 +271,10 @@ def run_aggregate_recommendations() -> int:
     py64 = python_exe_64()
     if not py64:
         py64 = python_exe()
+    # --recent-days 60: 直近 2 ヶ月分のレースを「過去ログ」として表示
+    # (短すぎると平日に画面が寂しくなる・長すぎると古い予想が UI を埋める)
     return run_subprocess(
-        [py64, str(JV_BRIDGE / "aggregate_recommendations.py")],
+        [py64, str(JV_BRIDGE / "aggregate_recommendations.py"), "--recent-days", "60"],
         "aggregate_recommendations", timeout=120,
     )
 
