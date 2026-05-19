@@ -32,6 +32,10 @@
     autostatus: null, // ★Wave16-QA: /api/automation-status の結果。初回描画前は null
     mlStatus: null,   // ★Wave17: /api/ml-status の結果 (LightGBM 学習メタ + 過去レース実証回収率)
     recommendations: null,  // ★Wave19: /api/recommendations の結果 (100% 越え戦略の今日の推奨レース)
+    // ★Wave22.8: エフェクト用 (一度しか発火させない)
+    lastClopRaceId: null,        // 結論カードに描いた raceId (重複再生防止)
+    flashedImminentFor: null,    // 「もうすぐ発走」フラッシュ済みの raceId
+    flashedStartFor: null,       // 「発走!」フラッシュ済みの raceId
   };
 
   // ─── Util ───────────────────────────────────────────────
@@ -83,14 +87,29 @@
     const h = Math.floor(m / 60);
     return `${h}時間${m % 60}分`;
   }
-  function toast(msg) {
+  // Wave22.9: toast(msg, type) — type は info(既定) | success | warn | error
+  function toast(msg, type) {
     const t = $("#toast");
-    t.textContent = msg;
+    const safeType = ["success", "warn", "error", "info"].includes(type) ? type : "info";
+    // 既存のメッセージから自動判定 (絵文字含み・「失敗」「不正」「エラー」など)
+    let detectedType = safeType;
+    if (safeType === "info" && typeof msg === "string") {
+      if (/🎉|的中|成功|完了/.test(msg)) detectedType = "success";
+      else if (/失敗|不正|エラー|err/i.test(msg)) detectedType = "error";
+      else if (/注意|warn|⚠/i.test(msg)) detectedType = "warn";
+    }
+    const icon =
+      detectedType === "success" ? "✅" :
+      detectedType === "warn"    ? "⚠️" :
+      detectedType === "error"   ? "🚫" : "💡";
+    t.className = "toast toast-" + detectedType;
+    t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${msg}</span>`;
     t.hidden = false;
     t.style.animation = "none";
     t.offsetHeight;
     t.style.animation = "";
-    setTimeout(() => { t.hidden = true; }, 3000);
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(() => { t.hidden = true; }, 3200);
   }
 
   // ─── 永続化 ────────────────────────────────────────────────
@@ -377,6 +396,12 @@
 
     mount.innerHTML = "";
     mount.appendChild(renderBuyCard(best, tier, sorted));
+
+    // Wave22.8: 新しい best レースになった瞬間だけ蹄音を再生 (毎フレームで鳴らさない)
+    if (window.kbEffects && state.lastClopRaceId !== best.raceId) {
+      state.lastClopRaceId = best.raceId;
+      try { window.kbEffects.playHoofClop(); } catch {}
+    }
   }
 
   function renderBuyCard(race, tier, sorted) {
@@ -1940,8 +1965,13 @@
     state.bets.push(bet);
     saveBets();
     $("#modal-add-bet").hidden = true;
-    toast("購入を記録しました");
+    toast(result === "hit" ? "🎉 的中を記録しました!" : "購入を記録しました");
     renderHistory();
+    // Wave22.8: 的中なら紙吹雪 + ファンファーレ
+    if (result === "hit" && window.kbEffects) {
+      try { window.kbEffects.fireConfetti({ count: 130, duration: 3800 }); } catch {}
+      try { window.kbEffects.playWinFanfare(); } catch {}
+    }
   }
   function openResultPrompt(bet) {
     const choice = prompt(`${bet.race} ${bet.pick}\n\n結果を入力してください\n  当 = 的中  外 = 外れ  キャンセル = やめる`, "");
@@ -1959,8 +1989,12 @@
       return;
     }
     saveBets();
-    toast("結果を記録しました");
+    toast(bet.result === "hit" ? "🎉 的中を記録しました!" : "結果を記録しました");
     renderHistory();
+    if (bet.result === "hit" && window.kbEffects) {
+      try { window.kbEffects.fireConfetti({ count: 130, duration: 3800 }); } catch {}
+      try { window.kbEffects.playWinFanfare(); } catch {}
+    }
   }
 
   // ─── タブ切替 ────────────────────────────────────────────
@@ -2084,6 +2118,32 @@
               ? `${m}<small>分</small>`
               : `${Math.floor(m/60)}<small>時間</small>${m % 60}<small>分</small>`;
             sub.textContent = `${String(s).padStart(2, "0")}秒`;
+          }
+
+          // Wave22.8: 結論カードに発走間近の階層クラスを付与
+          const decisionCard = document.querySelector(".decision-card");
+          if (decisionCard) {
+            decisionCard.classList.remove("is-near", "is-imminent");
+            if (!past) {
+              if (diffSec <= 60) decisionCard.classList.add("is-imminent");
+              else if (diffSec <= 300) decisionCard.classList.add("is-near");
+            }
+          }
+
+          // Wave22.8: 5 分前と発走の瞬間にフルスクリーン演出を 1 回だけ
+          if (window.kbEffects) {
+            // 5 分前 (300 - 285 秒) → 「もうすぐ発走」フラッシュ
+            if (!past && diffSec <= 300 && diffSec > 285 && state.flashedImminentFor !== best.raceId) {
+              state.flashedImminentFor = best.raceId;
+              try { window.kbEffects.flashImminent("もうすぐ発走! あと 5 分"); } catch {}
+            }
+            // 発走の瞬間 (0 ~ -5 秒) → 「発走!」フラッシュ
+            if (!past || (past && abs <= 5)) {
+              if (diffSec <= 0 && diffSec > -5 && state.flashedStartFor !== best.raceId) {
+                state.flashedStartFor = best.raceId;
+                try { window.kbEffects.flashStart(); } catch {}
+              }
+            }
           }
         }
       }
@@ -2742,10 +2802,39 @@
     }
   }
 
+  // Wave22.8: 効果音 ON/OFF トグルバインド
+  function setupSoundToggle() {
+    const btn = $("#sound-toggle");
+    if (!btn || !window.kbEffects) return;
+    const icon = $("#st-icon");
+    const text = $("#st-text");
+    const applyState = () => {
+      const off = window.kbEffects.isSoundOff();
+      btn.classList.toggle("is-on", !off);
+      btn.classList.toggle("is-off", off);
+      if (icon) icon.textContent = off ? "🔇" : "🔊";
+      if (text) text.textContent = off ? "音 OFF" : "音 ON";
+    };
+    applyState();
+    btn.addEventListener("click", () => {
+      const off = window.kbEffects.isSoundOff();
+      window.kbEffects.setSoundOff(!off);
+      applyState();
+      if (off) {
+        // ON にしたとき: テスト用にちょい鳴らす
+        try { window.kbEffects.playHoofClop(); } catch {}
+        toast("効果音 ON にしました");
+      } else {
+        toast("効果音 OFF にしました");
+      }
+    });
+  }
+
   function init() {
     setupTabs();
     setupFilters();
     setupModals();
+    setupSoundToggle();  // Wave22.8
     render();
     refreshAll();
     setInterval(refreshAll, REFRESH_MS);

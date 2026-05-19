@@ -90,7 +90,7 @@
         <div class="val" id="metric-races">—<small>R</small></div>
       </div>
       <div class="metric-cell metric-gold">
-        <div class="label">勝負 R</div>
+        <div class="label" data-gloss="期待値">勝負 R</div>
         <div class="val" id="metric-goes">—<small>R</small></div>
       </div>
       <div class="metric-cell metric-mute">
@@ -117,6 +117,10 @@
     <span class="learning-badge" style="margin-left:auto">
       常時 学習中
     </span>
+    <button class="sound-toggle is-on" id="sound-toggle" type="button" aria-label="効果音 ON/OFF">
+      <span class="st-icon" id="st-icon">🔊</span>
+      <span id="st-text">音 ON</span>
+    </button>
   </section>
 
   <!-- 2.5) 朝の概要トースト (JST 6-12 時の初回・1 日 1 回) -->
@@ -378,8 +382,10 @@
   </div>
 </div>
 
+<script src="lib/effects.js" defer></script>
 <script src="app.js"></script>
 <script src="lib/decorations.js" defer></script>
+<script src="lib/glossary.js" defer></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

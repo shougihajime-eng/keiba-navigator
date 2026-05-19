@@ -4694,3 +4694,403 @@ body::after {
 @media (max-width: 480px) {
   .add-pick-helper .ah-grid { grid-template-columns: repeat(6, 1fr); }
 }
+
+/* =====================================================================
+   Wave22.8 — アニメーション全面強化 (発走間近・フラッシュ・紙吹雪)
+   ===================================================================== */
+
+/* 結論カードが「もうすぐ発走 (5 分以内)」になった時 */
+.decision-card.is-near {
+  border-color: rgba(249,115,22,0.65) !important;
+  box-shadow:
+    0 0 0 2px rgba(249,115,22,0.40),
+    0 0 30px -4px rgba(249,115,22,0.55),
+    0 12px 32px -8px rgba(249,115,22,0.40) !important;
+  animation: nearPulse 2.0s ease-in-out infinite !important;
+}
+@keyframes nearPulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(249,115,22,0.40), 0 0 30px -4px rgba(249,115,22,0.55), 0 12px 32px -8px rgba(249,115,22,0.40); }
+  50%      { box-shadow: 0 0 0 3px rgba(249,115,22,0.55), 0 0 50px -4px rgba(249,115,22,0.75), 0 14px 36px -8px rgba(249,115,22,0.55); }
+}
+
+/* 「発走 60 秒以内」の超派手モード */
+.decision-card.is-imminent {
+  border-color: rgba(220,38,38,0.85) !important;
+  box-shadow:
+    0 0 0 3px rgba(220,38,38,0.55),
+    0 0 40px -2px rgba(220,38,38,0.65),
+    0 12px 32px -8px rgba(220,38,38,0.55) !important;
+  animation: imminentPulse 0.85s ease-in-out infinite !important;
+}
+@keyframes imminentPulse {
+  0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 0 0 3px rgba(220,38,38,0.55), 0 0 40px -2px rgba(220,38,38,0.65), 0 12px 32px -8px rgba(220,38,38,0.55); }
+  50%      { transform: translateY(-2px) scale(1.005); box-shadow: 0 0 0 5px rgba(220,38,38,0.70), 0 0 65px -2px rgba(220,38,38,0.85), 0 16px 40px -8px rgba(220,38,38,0.70); }
+}
+
+/* is-imminent のヘッダ帯に「もうすぐ発走!」プレフィックス */
+.decision-card.is-imminent .decision-head::before {
+  content: "🚨 もうすぐ発走! ";
+  font-weight: 900;
+  color: var(--c-bad);
+  letter-spacing: 0.10em;
+  margin-right: 8px;
+  animation: imminentBlink 0.65s ease-in-out infinite;
+}
+@keyframes imminentBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.97); }
+}
+
+/* 締切カウントダウンが is-imminent の中で激しく光る */
+.decision-card.is-imminent .countdown .big {
+  color: var(--c-bad) !important;
+  text-shadow: 0 0 14px rgba(220,38,38,0.65), 0 0 28px rgba(220,38,38,0.45);
+  font-size: 44px !important;
+  animation: heartbeat 0.7s ease-in-out infinite !important;
+}
+
+/* 「もうすぐ発走!」フルスクリーンフラッシュ */
+.imminent-flash {
+  position: fixed; inset: 0; z-index: 9998;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.30s var(--ease-spring);
+  display: flex; align-items: center; justify-content: center;
+}
+.imminent-flash.if-in  { opacity: 1; }
+.imminent-flash.if-out { opacity: 0; transition: opacity 0.55s var(--ease-soft); }
+.imminent-flash .if-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(249,115,22,0.40) 0%, rgba(249,115,22,0.15) 35%, rgba(249,115,22,0) 70%);
+}
+.imminent-flash .if-content {
+  position: relative; z-index: 1;
+  text-align: center;
+  transform: scale(0.85);
+  transition: transform 0.45s var(--ease-spring);
+}
+.imminent-flash.if-in .if-content { transform: scale(1); }
+.imminent-flash .if-emoji {
+  font-size: 80px;
+  animation: ifBounce 0.55s var(--ease-spring) infinite alternate;
+}
+@keyframes ifBounce {
+  0%   { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-8px) scale(1.08); }
+}
+.imminent-flash .if-text {
+  font-family: "Noto Sans JP", serif;
+  font-size: 44px; font-weight: 900;
+  background: linear-gradient(135deg, #fb923c 0%, #c2410c 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(249,115,22,0.50);
+  margin-top: 10px;
+  letter-spacing: -0.01em;
+}
+@media (max-width: 480px) {
+  .imminent-flash .if-emoji { font-size: 56px; }
+  .imminent-flash .if-text  { font-size: 30px; }
+}
+
+/* 「発走!」フルスクリーンフラッシュ */
+.start-flash {
+  position: fixed; inset: 0; z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.20s var(--ease-spring);
+  display: flex; align-items: center; justify-content: center;
+}
+.start-flash.sf-in  { opacity: 1; }
+.start-flash.sf-out { opacity: 0; transition: opacity 0.65s var(--ease-soft); }
+.start-flash .sf-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(244,63,94,0.55) 0%, rgba(244,63,94,0.20) 30%, rgba(244,63,94,0) 65%);
+  animation: sfBgPulse 1.2s ease-in-out;
+}
+@keyframes sfBgPulse {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  60%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+.start-flash .sf-content {
+  position: relative; z-index: 1;
+  text-align: center;
+  transform: scale(0.6);
+  transition: transform 0.5s var(--ease-spring);
+}
+.start-flash.sf-in .sf-content { transform: scale(1); }
+.start-flash .sf-text {
+  font-family: "Noto Sans JP", serif;
+  font-size: 96px;
+  font-weight: 900;
+  letter-spacing: 0.30em;
+  background: linear-gradient(135deg, #fb7185 0%, #be123c 60%, #831843 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 60px rgba(244,63,94,0.55);
+  line-height: 1;
+  filter: drop-shadow(0 8px 24px rgba(244,63,94,0.50));
+}
+.start-flash .sf-sub {
+  font-size: 14px; letter-spacing: 0.30em;
+  color: var(--c-ink);
+  margin-top: 12px;
+  font-weight: 900;
+  font-style: italic;
+  text-shadow: 0 2px 6px rgba(255,255,255,0.8);
+}
+@media (max-width: 480px) {
+  .start-flash .sf-text { font-size: 56px; letter-spacing: 0.20em; }
+  .start-flash .sf-sub  { font-size: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .decision-card.is-near, .decision-card.is-imminent {
+    animation: none !important;
+  }
+  .imminent-flash, .start-flash { display: none !important; }
+}
+
+/* =====================================================================
+   Wave22.8 — 効果音 ON/OFF トグル (ライブストリップ右上に配置)
+   ===================================================================== */
+.live-strip {
+  position: relative;
+}
+.sound-toggle {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: rgba(255,255,255,0.85);
+  color: var(--c-ink-soft);
+  cursor: pointer;
+  transition: all 0.18s var(--ease-spring);
+  margin-left: 6px;
+}
+.sound-toggle:hover {
+  background: #fff;
+  border-color: rgba(15,23,42,0.20);
+  color: var(--c-ink);
+}
+.sound-toggle.is-on {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  border-color: rgba(16,185,129,0.40);
+  color: var(--c-deep);
+}
+.sound-toggle.is-off {
+  background: rgba(241,245,249,0.85);
+  color: var(--c-ink-mute);
+  border-color: rgba(148,163,184,0.30);
+}
+.sound-toggle .st-icon {
+  font-size: 13px; line-height: 1;
+}
+
+/* =====================================================================
+   Wave22.9 — トーストのカラー化 + アイコン
+   ===================================================================== */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + var(--sab));
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  background: rgba(15,23,42,0.92);
+  color: #fff;
+  font-size: 13px; font-weight: 800;
+  letter-spacing: 0.02em;
+  z-index: 9000;
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.10) inset,
+    0 8px 24px -4px rgba(15,23,42,0.40);
+  animation: toastIn 0.45s var(--ease-spring) both;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-width: calc(100vw - 24px);
+}
+.toast .toast-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.toast .toast-msg {
+  font-size: 13px;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+.toast-info {
+  background: rgba(15,23,42,0.92);
+}
+.toast-success {
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.20) inset,
+    0 8px 24px -4px rgba(16,185,129,0.40);
+}
+.toast-warn {
+  background: linear-gradient(135deg, #fb923c 0%, #c2410c 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.20) inset,
+    0 8px 24px -4px rgba(249,115,22,0.40);
+}
+.toast-error {
+  background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.20) inset,
+    0 8px 24px -4px rgba(220,38,38,0.40);
+}
+@keyframes toastIn {
+  0%   { opacity: 0; transform: translate(-50%, 12px) scale(0.95); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+/* =====================================================================
+   Wave22.9 — 用語ツールチップ
+   ===================================================================== */
+.kb-gloss-anchor {
+  cursor: help;
+  border-bottom: 1px dotted rgba(56,189,248,0.55);
+  transition: border-color 0.18s;
+}
+.kb-gloss-anchor:hover {
+  border-bottom-color: rgba(56,189,248,0.95);
+}
+.kb-gloss-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 3px;
+  width: 13px; height: 13px;
+  font-size: 10px;
+  color: rgba(56,189,248,0.85);
+  background: rgba(56,189,248,0.10);
+  border-radius: 50%;
+  border: 1px solid rgba(56,189,248,0.35);
+  font-style: normal;
+  vertical-align: middle;
+}
+.kb-gloss-anchor:hover .kb-gloss-icon,
+.kb-gloss-anchor:focus .kb-gloss-icon {
+  color: #fff;
+  background: var(--c-sky);
+}
+.kb-gloss-tooltip {
+  position: fixed;
+  z-index: 9500;
+  pointer-events: none;
+  width: 280px;
+  max-width: calc(100vw - 24px);
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(15,23,42,0.94);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: translateY(4px) scale(0.96);
+  transition: opacity 0.2s var(--ease-spring), transform 0.2s var(--ease-spring);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.10) inset,
+    0 14px 32px -6px rgba(15,23,42,0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.kb-gloss-tooltip.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.kb-gloss-tooltip .ktt-title {
+  font-size: 13px; font-weight: 900;
+  color: #7dd3fc;
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+.kb-gloss-tooltip .ktt-body {
+  font-size: 12px;
+  color: rgba(255,255,255,0.88);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-gloss-tooltip { transition: opacity 0.1s; }
+}
+
+/* =====================================================================
+   Wave22.9 — ボトムナビの アクティブ強化 + ホバー反応
+   ===================================================================== */
+.bottom-nav {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-top: 1px solid rgba(15,23,42,0.06);
+  box-shadow: 0 -8px 28px -8px rgba(15,23,42,0.10);
+}
+.bottom-nav__item {
+  position: relative;
+  transition: color 0.20s var(--ease-spring), transform 0.18s var(--ease-spring);
+  color: var(--c-ink-mute);
+}
+.bottom-nav__item:hover {
+  color: var(--c-ink);
+  transform: translateY(-1px);
+}
+.bottom-nav__item.active {
+  color: var(--c-deep);
+}
+/* アクティブ時の上線インジケータ (浮上アニメ付き) */
+.bottom-nav__item.active::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 28px; height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, #34d399, #10b981, #047857);
+  box-shadow: 0 4px 12px -2px rgba(16,185,129,0.55);
+  animation: navIndicatorIn 0.45s var(--ease-spring);
+}
+@keyframes navIndicatorIn {
+  0%   { width: 0; opacity: 0; }
+  60%  { width: 36px; opacity: 1; }
+  100% { width: 28px; opacity: 1; }
+}
+/* アクティブアイコンの放射バックグラウンド */
+.bottom-nav__item.active .nav-icon {
+  filter: drop-shadow(0 0 8px rgba(16,185,129,0.45));
+}
+/* 各タブのアクティブ色を変える */
+.bottom-nav__item[data-tab="win5"].active        { color: #6d28d9; }
+.bottom-nav__item[data-tab="win5"].active::before{ background: linear-gradient(90deg, #c084fc, #8b5cf6, #6d28d9); box-shadow: 0 4px 12px -2px rgba(139,92,246,0.55); }
+.bottom-nav__item[data-tab="win5"].active .nav-icon { filter: drop-shadow(0 0 8px rgba(139,92,246,0.45)); }
+
+.bottom-nav__item[data-tab="history"].active        { color: #0c4a6e; }
+.bottom-nav__item[data-tab="history"].active::before{ background: linear-gradient(90deg, #7dd3fc, #38bdf8, #0284c7); box-shadow: 0 4px 12px -2px rgba(56,189,248,0.55); }
+.bottom-nav__item[data-tab="history"].active .nav-icon { filter: drop-shadow(0 0 8px rgba(56,189,248,0.45)); }
+
+.bottom-nav__item[data-tab="add"].active        { color: #b45309; }
+.bottom-nav__item[data-tab="add"].active::before{ background: linear-gradient(90deg, #fcd34d, #f59e0b, #b45309); box-shadow: 0 4px 12px -2px rgba(245,158,11,0.55); }
+.bottom-nav__item[data-tab="add"].active .nav-icon { filter: drop-shadow(0 0 8px rgba(245,158,11,0.45)); }
+
+.bottom-nav__item[data-tab="settings"].active        { color: #475569; }
+.bottom-nav__item[data-tab="settings"].active::before{ background: linear-gradient(90deg, #cbd5e1, #94a3b8, #475569); box-shadow: 0 4px 12px -2px rgba(100,116,139,0.55); }
+
+.bottom-nav__item .nav-icon {
+  transition: transform 0.22s var(--ease-spring), filter 0.22s;
+}
+.bottom-nav__item:active .nav-icon {
+  transform: scale(0.88);
+}
+.bottom-nav__item.active .nav-icon {
+  transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav__item.active::before { animation: none; }
+}

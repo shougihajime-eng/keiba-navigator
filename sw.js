@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v49"; // Wave22.6-22.7: WIN5 5枚ストーリー + 全レース★狙うべき度 + 詳細モーダル18頭シルク + 手動入力シルクパレット
+const CACHE_VERSION = "keiba-nav-v51"; // Wave22.8-22.9: 蹄音 + 紙吹雪 + 発走フラッシュ + 効果音トグル + トーストカラー + ツールチップ復活 + ボトムナビ強化
 const PRECACHE = [
   "/",
   "/index.html",
