@@ -2372,6 +2372,51 @@ details[open] .details-summary .details-arrow { transform: rotate(90deg); }
   }
 }
 
+/* ─── マイクロインタラクション: Ripple (ボタンタップ波紋) ─── */
+.btn-cta, .chip-filter, .win5-strategy, .bottom-nav__item, .ach-badge, .race-row {
+  position: relative;
+  overflow: hidden;
+}
+.btn-cta::after, .chip-filter::after, .race-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.45) 0%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease-out;
+}
+.btn-cta:active::after, .chip-filter:active::after, .race-row:active::after {
+  opacity: 1;
+  transition: opacity 0s;
+}
+
+/* ─── 3D 浮き上がり (カードホバー) ─── */
+@media (hover: hover) {
+  .strat-trust-card:hover {
+    transform: translateY(-3px) scale(1.01);
+    transition: transform 0.28s var(--ease-spring);
+  }
+  .ach-badge:hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+  .rec-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -10px rgba(16,185,129,0.30);
+  }
+}
+
+/* ─── Count-up 数字 (BigStat / 累計収支) ─── */
+.count-up {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+.count-up.is-running {
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+
 /* ─── 達成バッジ ─── */
 .achievements-card {
   border-radius: 22px;

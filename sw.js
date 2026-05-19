@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v44"; // Wave21.3: 達成バッジ 15 種 + 連勝記録カード + 累積収支グラフ強化 (ピーク/ボトムマーカー)
+const CACHE_VERSION = "keiba-nav-v45"; // Wave21.4: マイクロインタラクション (Ripple 波紋 + 3D ホバー + count-up クラス)
 const PRECACHE = [
   "/",
   "/index.html",
