@@ -7,6 +7,43 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🎭 Wave22.8-22.9 (2026-05-20 朝・「アニメ全面強化 + ボトムナビ・トースト・ツールチップ完成」)** — ユーザー「2 → 3」(アニメ → ナビ等) を両方一気に投入:
+  - **Wave22.8 lib/effects.js 新規** (約 250 行):
+    - Web Audio で蹄音 (カポッカポッ) を JS だけで生成 (ファイル不要)・4 拍 (高 360→低 240→高 350→低 230Hz)・ノイズバースト + 三角波共鳴
+    - Canvas 紙吹雪 (fireConfetti): 2 拠点から 100 個・3.8 秒・7 色 (金/緑/赤/青/紫/白/黄)・四角と円ミックス・DPR 対応
+    - 「もうすぐ発走!」フラッシュ (5 分前・橙ラジアル + ⚡ + 弾性入場)
+    - 「発走!」フラッシュ (0 秒・赤ラジアル + 96px serif + C5-E5-G5 開始音)
+    - 的中ファンファーレ: C5-E5-G5 の 3 音 (triangle)
+    - 効果音 ON/OFF を localStorage で管理
+  - **Wave22.8 app.js 統合**:
+    - tickCountdown で結論カードに is-near (5 分以内) / is-imminent (60 秒以内) クラス自動付与
+    - 5 分前と発走の瞬間にフラッシュを 1 回だけ発火 (state.flashedImminentFor/StartFor)
+    - best.raceId が変わった瞬間だけ蹄音を再生
+    - submitAddBet と openResultPrompt で result==="hit" のとき紙吹雪 + ファンファーレ
+    - ライブストリップに「音 ON/OFF」トグルボタン (緑/灰の pill)
+  - **Wave22.8 CSS 派手化**:
+    - is-near: 橙の 2 秒呼吸グロー
+    - is-imminent: 赤の 0.85 秒激しいパルス + 「🚨 もうすぐ発走!」プレフィックス + 締切 44px 心拍
+    - imminent-flash / start-flash: ラジアル背景 + scale + 弾性入場
+  - **Wave22.9 ボトムナビ全面強化**:
+    - backdrop-blur 24px + saturate 160%
+    - アクティブ時の上線インジケータ (28px 緑グラデ + glow + 入場アニメ)
+    - 各タブで色を変える: 本日=緑 / WIN5=紫 / 履歴=青 / 入力=金 / 設定=灰
+    - アクティブアイコンに drop-shadow グロー + scale 1.08・タップで 0.88
+  - **Wave22.9 トーストのカラー化 + アイコン**:
+    - toast(msg, type) → success / warn / error / info の 4 type
+    - 既存メッセージから自動判定 (🎉/的中/成功 → success / 失敗/エラー → error)
+    - 各 type で緑/橙/赤/濃紺のグラデ + アイコン (✅/⚠️/🚫/💡)
+    - 弾性入場 (toastIn 0.45s spring)・既存呼び出しは後方互換
+  - **Wave22.9 用語ツールチップ復活** (lib/glossary.js 全面リライト):
+    - 28 語の辞書 (EV/Kelly/信頼度/単勝/複勝/馬連/ワイド/3連複/G1/Walk-forward/穴馬 等)
+    - data-gloss="EV" を持つ要素にホバー/タップ/フォーカスで説明表示
+    - ⓘ アイコン自動付与 (青 13px・hover で塗りつぶし)
+    - 280px ダークガラスモーフィズム ツールチップ・画面端で自動位置調整
+    - MutationObserver で動的に追加された要素も自動バインド
+  - **sw.js**: v49 → v51
+  - **smoke 126/0 全通過** / app.js + effects.js + glossary.js 構文 OK / app.js 132→136KB / styles.css 160→174KB / effects.js 9KB / glossary.js 9KB
+  - **本番デプロイ**: commit `43effc3` push origin main 済
 - **🎰 Wave22.6-22.7 (2026-05-20 朝・続々「WIN5 ストーリー化 + 全レース★ + モーダル詳細リッチ + 手動入力リッチ」)** — ユーザー選択肢「2 → 3」 (WIN5・全レース → モーダル詳細・手動入力) を両方一気に投入:
   - **Wave22.6 WIN5 5レースをストーリーカードに**:
     - 第N戦 紫グラデ pill + italic + 会場名カラフルタグ + 馬場/距離 pill
