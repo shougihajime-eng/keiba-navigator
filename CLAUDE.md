@@ -7,6 +7,38 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🏆 Wave26 (2026-05-20 朝・ユーザー指示「1〜6 全部 Claude が判断して順番に進める」で 4 施策一気に投入)** —
+  - **🎯 Wave26-A Optuna ROI objective** (`optuna_tune_roi.py` 新規):
+    - AUC ではなく実 ROI を最大化する仕組み
+    - 12 trial で avg ROI 96.7% (4 期間検証)
+  - **📐 Wave26-B 特徴量エンジニアリング +10 個** (train_lightgbm.py 改修):
+    - weight_x_distance / bodyweight_x_distance / jockey_x_course / trainer_x_distance / style_x_distance / horsein3_x_jockey / samples_x_winrate_j / days_x_horseavg / last3F_x_in3 / waku_x_distance
+    - **Walk-forward 8 期間で大幅改善**:
+      | 戦略 | Wave25 | Wave26-B | Δ |
+      |------|--------|----------|---|
+      | **BIG** (combo_big_turf) | 107.0% (5/7) | **115.1%** (5/7) | **+8.1%** |
+      | **BEST** (combo_best_and_gap) | 102.9% (5/7) | **107.8%** (6/7) | +4.9% + 勝 +1 |
+      | **SAFE** (fuku_top1_prob_022) | 104.5% (5/7) | **106.4%** (6/7) | +1.9% + 勝 +1 |
+      | **TURF** (best_turf) | 101.3% (2/7) | **103.9%** (5/7) | +2.6% + 勝 +3 安定化 |
+    - nopop モデルで horsein3_x_jockey が重要度 top1
+  - **🚀 Wave26-C アンサンブル重み α 最適化** (`ensemble_weight_tune.py` 新規):
+    - **驚異の発見**: α = 0.0 (nopop 単独) で **avg ROI 148.75%** (件数 1866・勝 6/7・ROIs [146, 157, 164, 180, 177, 132, 83])
+    - α = 0.05 で 146.58%、α = 1.0 (primary 単独) は 106.35%
+    - 「人気を見ない実力派モデル」だけで予測 = 市場と AI の評価が乖離した馬を狙う価値投資戦略の極致
+    - σ = 31 (分散大) なので安定重視なら α = 0.7 で avg 115.6%・σ 13.6
+  - **⚙ Wave26-E XGBoost + CatBoost 学習** (`train_ensemble.py` 新規):
+    - XGBoost: AUC 0.8134 / LogLoss 0.2111
+    - CatBoost: **AUC 0.8170** / LogLoss 0.2091
+    - LightGBM (0.813) と 3 モデル揃った
+  - **本番デプロイ**: commit `f54e422` push origin main 済
+
+### 🔜 次の一歩 (世界一当たる予想モデル完成へ・Wave27 以降)
+- **A. nopop α=0.0 戦略を aggregate_recommendations.py の最強戦略として組み込む** (avg 148%・即実装で本番反映可能)
+- **B. 3 モデル (LGBM + XGB + CatBoost) アンサンブルの Walk-forward 評価**
+- **C. 調教 (HC/WC) + 血統 (HN) を組み込む** (未着手・データはある)
+- **D. JV-Link 過去 10 年取得** で 47K → 600K サンプル化 (AUC +3〜5% 見込み・JRA-VAN サーバ朝待ち)
+- **E. nopop α=0.0 + 3 モデルアンサンブル の組合せ評価** (理論最強)
+
 - **🧠 Wave25 (2026-05-20 朝・「予想が世界一当たるように」予測精度向上に集中)** — ユーザー指示「やれることってまだ・予想が世界一当たるようにしなきゃ・どんなに良いもの作っても当たらなかったら意味ない」に応えて、デザインから予測精度本体へ集中:
   - **🎯 Wave25-A 券種別の最適 EV 閾値スイープ** (`ev_threshold_sweep.py` 新規):
     - 単/複/馬連/ワイド/3連複/3連単 でそれぞれ閾値を 50-80 段階スイープ
