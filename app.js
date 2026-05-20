@@ -1137,7 +1137,12 @@
 
   // recommendations が無いときのデフォルト戦略定義
   const DEFAULT_STRAT_DEFS = [
-    // Wave29-B: 馬連 nopop top1-top2 が圧倒的 (avg 222%・全期間 100%+ 165%)
+    // Wave30: 🏆 Stacking メタモデル (4 モデル LR 合成) — 全期間 100%+ で世界一級
+    { key: "value_stack_uren", short_label: "V-STACK",   label: "Stacking 馬連 — avg 244%・worst 105%・全期間 100%+ ⭐" },
+    { key: "value_stack_fuku", short_label: "V-STACK複", label: "Stacking 複勝 — avg 156%・σ 39" },
+    { key: "value_tan3",       short_label: "V-3連単",   label: "3 連単 nopop top1->2->3 — avg 308%・σ 191・勝 6/7" },
+    { key: "value_double",     short_label: "V-DOUBLE",  label: "複勝+馬連 併買 — avg 187.6%・σ 64・最もバランス良い" },
+    // Wave29-B: 馬連 nopop top1-top2
     { key: "value_uren",     short_label: "V-馬連",    label: "馬連 nopop top1-top2 (閾値 30%・全期間 100%+) — avg 165%・勝 7/7" },
     { key: "value_uren_hot", short_label: "V-馬連HOT", label: "馬連 nopop top1-top2 (閾値 16%・積極派) — avg 222%・件数 2673" },
     // Wave27 (強化): nopop モデル単独 (人気を見ない実力派) — 閾値最適化 0.16
@@ -2458,6 +2463,11 @@
     if (!m || !m.ok || !m.modelAvailable) { root.hidden = true; return; }
     root.hidden = false;
     const STRAT_LABELS = {
+      // Wave30: Stacking 戦略 + 併買 + 3 連単
+      value_stack_uren_016: "V-STACK Stacking 馬連 (4 モデル LR) — avg 244%・全期間 100%+ ⭐",
+      value_stack_fuku_016: "V-STACK複 Stacking 複勝 (4 モデル LR) — avg 156%・σ 39",
+      value_tan3_nopop_020: "V-3連単 nopop top1->2->3 (閾値 20%) — avg 308%・σ 191",
+      value_double_nopop_016: "V-DOUBLE 複勝+馬連 併買 (閾値 16%) — avg 187.6%・σ 64",
       // Wave29-B: 馬連 nopop top1-top2
       value_uren_nopop_016: "V-馬連HOT nopop top1-top2 (閾値 16%) — avg 222.57%",
       value_uren_nopop_030: "V-馬連 nopop top1-top2 (閾値 30%・勝 7/7) — avg 165.29%",
