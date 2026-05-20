@@ -153,6 +153,17 @@ FEATURE_NAMES = [
     "horsewin_x_popularity",   # 通算勝率 × 人気 (実力馬の市場評価)
     "last3F_x_distance",       # 直近上がり × 距離 (短距離での切れ / 長距離での持続)
     "prevfinish_x_popularity", # 前走着順 × 人気 (前走から評価がどう動いたか)
+    # ▼▼ Wave26-B: 新規追加 10 個 ▼▼
+    "weight_x_distance",       # 斤量 × 距離 (重い斤量 × 長距離は不利)
+    "bodyweight_x_distance",   # 馬体重 × 距離
+    "jockey_x_course",         # 騎手勝率 × コース勝率 (相性)
+    "trainer_x_distance",      # 調教師勝率 × 距離適性
+    "style_x_distance",        # 脚質 × 距離
+    "horsein3_x_jockey",       # 馬複勝率 × 騎手複勝率
+    "samples_x_winrate_j",     # 騎手経験量 × 勝率
+    "days_x_horseavg",         # 休み明け × 直近成績
+    "last3F_x_in3",            # 上がり 3F × 複勝率
+    "waku_x_distance",         # 枠 × 距離 (内枠 × 短距離は有利)
 ]
 
 
@@ -343,6 +354,28 @@ def extract_horse_features(horse: Dict[str, Any],
         hwr * (1.0 / pop_s),               # horsewin_x_popularity
         (35.0 - h_l3f) * (dist / 1600.0),  # last3F_x_distance: 上がり 3F の良さ × 距離 (小さいほど切れる)
         (1.0 / max(1.0, h_prev)) * (1.0 / pop_s),  # prevfinish_x_popularity
+    ])
+    # ▼▼ Wave26-B: 新規追加 10 個 ▼▼
+    wt_s   = wt if (wt is not None and wt > 0) else 56.0
+    bw_s   = _safe_num(horse.get("body_weight"), 470.0) or 470.0
+    tw     = _safe_num(feat.get("trainerWinRate"), 0.075)
+    style  = _safe_num(feat.get("runStyleId") or feat.get("horseRunStyleMode"), 3.0)
+    h_in3  = _safe_num(feat.get("horseIn3Rate"), 0.30)
+    j_sam  = _safe_num(feat.get("jockeySamples"), 100.0)
+    days   = _safe_num(feat.get("daysFromLastRace") or feat.get("horseDaysSinceLast"), 30.0)
+    h_avg_finish = _safe_num(feat.get("horseAvgFinish"), 8.0)
+    waku   = _safe_num(horse.get("waku") or horse.get("waku_ban"), 5.0)
+    vec.extend([
+        (wt_s / 56.0) * (dist / 1600.0),                           # weight_x_distance
+        (bw_s / 470.0) * (dist / 1600.0),                          # bodyweight_x_distance
+        jw * cw,                                                    # jockey_x_course
+        tw * dwr,                                                   # trainer_x_distance
+        ((6.0 - style) / 5.0) * (dist / 1600.0),                  # style_x_distance: 逃げ (1) ほど短距離有利
+        h_in3 * j3,                                                 # horsein3_x_jockey
+        (j_sam / 500.0) * jw,                                       # samples_x_winrate_j (経験 × 実力)
+        (days / 30.0) * (1.0 / max(1.0, h_avg_finish)),           # days_x_horseavg (休み × 近走)
+        (35.0 - h_l3f) * h_in3,                                    # last3F_x_in3
+        ((9.0 - waku) / 8.0) * (dist / 1600.0),                   # waku_x_distance (内枠 × 短距離)
     ])
     return vec
 
