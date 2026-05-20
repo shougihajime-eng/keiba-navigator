@@ -60,7 +60,7 @@ from jv_bridge.train_lightgbm import (  # noqa: E402
     FEATURE_NAMES, extract_horse_features, _race_context,
 )
 from jv_bridge.predict_lightgbm import (  # noqa: E402
-    _load_model, _predict_one, _normalize_softmax,
+    _load_model, _load_model_nopop, _predict_one, _normalize_softmax, _mask_pop_features,
 )
 from jv_bridge.validate_lightgbm import (  # noqa: E402
     _load_features_index,
@@ -224,12 +224,20 @@ def _winner_from_race_result_pair(race: Dict[str, Any], result: Dict[str, Any]) 
     return None
 
 
-def collect_predictions_and_labels(pairs):
-    """全レースの (prob, label) ペアを集める"""
-    model_tup = _load_model()
-    if model_tup is None or model_tup[0] is None:
-        print("[calibrate] No model. Run train_lightgbm.py first.")
-        return None, None
+def collect_predictions_and_labels(pairs, use_nopop=False):
+    """全レースの (prob, label) ペアを集める
+    use_nopop=True なら nopop モデルで予測 (人気特徴量をマスク)
+    """
+    if use_nopop:
+        model_tup = _load_model_nopop()
+        if model_tup is None or model_tup[0] is None:
+            print("[calibrate] No nopop model.")
+            return None, None
+    else:
+        model_tup = _load_model()
+        if model_tup is None or model_tup[0] is None:
+            print("[calibrate] No model. Run train_lightgbm.py first.")
+            return None, None
     model, kind = model_tup
     features_index = _load_features_index()
 
@@ -241,7 +249,8 @@ def collect_predictions_and_labels(pairs):
     all_probs = []
     all_labels = []
 
-    print(f"[calibrate] Predicting {len(pairs)} races...")
+    label = "nopop" if use_nopop else "primary"
+    print(f"[calibrate-{label}] Predicting {len(pairs)} races...")
     for i, (rid, race, result) in enumerate(pairs):
         if i % 200 == 0:
             print(f"  {i}/{len(pairs)}")
@@ -254,6 +263,8 @@ def collect_predictions_and_labels(pairs):
         try:
             if np is not None:
                 X_arr = np.array(X, dtype="float64")
+                if use_nopop:
+                    X_arr = _mask_pop_features(X_arr, np)
             else:
                 X_arr = X
             raw = list(_predict_one(model, kind, X_arr))
@@ -278,6 +289,8 @@ def main(argv=None):
                         help="後ろから何割を validation/test として校正に使う")
     parser.add_argument("--use-all", action="store_true",
                         help="train/test 分割せず全レースで校正")
+    parser.add_argument("--nopop", action="store_true",
+                        help="nopop モデルを校正対象にする")
     args = parser.parse_args(argv)
 
     pairs = _load_race_results()
@@ -290,7 +303,12 @@ def main(argv=None):
         pairs = pairs[cut:]
     print(f"[calibrate] Using {len(pairs)} race-result pairs.")
 
-    probs, labels = collect_predictions_and_labels(pairs)
+    # --nopop なら出力先も別ファイル
+    global OUT_PATH
+    if args.nopop:
+        OUT_PATH = CACHE / "calibration_nopop.json"
+
+    probs, labels = collect_predictions_and_labels(pairs, use_nopop=args.nopop)
     if not probs:
         print("[calibrate] Nothing to fit.")
         return 1
