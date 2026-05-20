@@ -469,6 +469,17 @@ def main():
         rc = run_aggregate_recommendations()
         if rc == -2: timed_out = True
         if rc != 0: overall |= 0x800
+    # ★Wave33-2: 戦略ライブログ自動 (発火戦略を毎日 log + 過去の結果照合)
+    try:
+        py64 = python_exe_64()
+        log_line("[step4.85] strategy_live_log.py (実運用 log + 結果照合)")
+        rc = run_subprocess(
+            [py64, str(JV_BRIDGE / "strategy_live_log.py")],
+            "strategy_live_log", timeout=120,
+        )
+        if rc == -2: timed_out = True
+    except Exception as e:
+        log_line(f"  strategy_live_log 失敗 (継続): {e}")
     # ★Wave19: 回収率実証 (backtest_result.json 更新)
     if not getattr(args, "skip_validate", False):
         rc = run_validate_lightgbm()
