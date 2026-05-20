@@ -1111,10 +1111,13 @@
 
   // recommendations が無いときのデフォルト戦略定義
   const DEFAULT_STRAT_DEFS = [
-    { key: "best",  short_label: "BEST",  label: "本命確率 22%+ かつ 対抗差 4pt+ で複勝" },
-    { key: "safe",  short_label: "SAFE",  label: "本命確率 20%+ で複勝・発火多め" },
-    { key: "turf",  short_label: "TURF",  label: "芝レース限定 BEST" },
-    { key: "big",   short_label: "BIG",   label: "3 連複 ボックス 1 点" },
+    // Wave27 (強化): nopop モデル単独 (人気を見ない実力派) — 閾値最適化 0.16
+    { key: "value_invest", short_label: "VALUE",  label: "実力派 AI 本命 (人気を見ない) の確率 16%+ で複勝 — Walk-fwd 152.62%" },
+    { key: "value_safe",   short_label: "V-SAFE", label: "実力派 AI 本命 の確率 35%+ で複勝 — 安定 σ17・avg 131%" },
+    { key: "best",         short_label: "BEST",   label: "本命確率 22%+ かつ 対抗差 4pt+ で複勝" },
+    { key: "safe",         short_label: "SAFE",   label: "本命確率 20%+ で複勝・発火多め" },
+    { key: "turf",         short_label: "TURF",   label: "芝レース限定 BEST" },
+    { key: "big",          short_label: "BIG",    label: "3 連複 ボックス 1 点" },
   ];
 
   function parseVenueLabel(race) {
@@ -2426,6 +2429,10 @@
     if (!m || !m.ok || !m.modelAvailable) { root.hidden = true; return; }
     root.hidden = false;
     const STRAT_LABELS = {
+      // Wave27 強化: nopop モデル単独 最強 + 安定派
+      value_invest_nopop_016: "VALUE 実力派 AI 本命 (人気を見ない) 16%+ 複勝 — Walk-fwd 152.62%",
+      value_invest_nopop_022: "VALUE 実力派 AI 本命 (人気を見ない) 22%+ 複勝",
+      value_invest_nopop_035: "V-SAFE 実力派 AI 本命 35%+ 複勝 (安定派・avg 131%)",
       tan_top1_always:        "単勝 本命",
       tan_top1_ev100:         "単勝 EV1.0+",
       tan_top1_ev110:         "単勝 EV1.1+",

@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v54"; // Wave24: ブランドヘッダ最小化(1行) + ライブ帯薄く + 結論カード重複削除 + 主軸馬→買い目を上位に + 補足は折りたたみ
+const CACHE_VERSION = "keiba-nav-v55"; // Wave27: VALUE 戦略 (avg ROI 152.62%) + V-SAFE 戦略 (avg 131%・σ17) 投入
 const PRECACHE = [
   "/",
   "/index.html",

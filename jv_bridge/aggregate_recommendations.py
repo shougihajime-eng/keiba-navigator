@@ -87,7 +87,43 @@ def _is_surface_turf(horses):
     s = horses[0].get("race_surface") or ""
     return "芝" in s
 
+def _nopop_top(horses):
+    """rank_nopop == 1 の馬を返す (= nopop モデルの本命)"""
+    for h in horses:
+        if h.get("rank_nopop") == 1:
+            return h
+    return None
+
 STRATEGY_DEFS = [
+    {
+        # Wave27 強化: 閾値スイープで avg 152.62% / 勝 6/7 / 件数 2673 が最強 (閾値 0.16)
+        # value_threshold_sweep.json 参照
+        "key": "value_invest",
+        "name_in_backtest": "value_invest_nopop_016",
+        "label": "実力派 AI 本命 (人気を見ないモデル) の確率 16%+ で複勝 100 円 — Walk-forward 152.62%",
+        "short_label": "VALUE",
+        "color": "rose",
+        "bet_type": "複勝 (nopop top1)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.16)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave27: 安定派 — 閾値 0.35 で avg 130.89% / σ 17.26 / 勝 6/7 / 件数 574
+        "key": "value_safe",
+        "name_in_backtest": "value_invest_nopop_035",
+        "label": "実力派 AI 本命 (人気を見ない) の確率 35%+ で複勝 100 円 — 安定 σ17・avg 131%",
+        "short_label": "V-SAFE",
+        "color": "emerald",
+        "bet_type": "複勝 (nopop top1・厳選)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.35)(_nopop_top(horses))
+        ),
+    },
     {
         "key": "big",
         "name_in_backtest": "fuku3_top3_conf50",
@@ -303,6 +339,13 @@ def collect(recent_days: int) -> Dict[str, Any]:
              "popularity": h.get("popularity")}
             for h in horses[:3]
         ]
+        # Wave27: value_invest 戦略が発火している場合は use_horse を nopop_top にスワップ
+        #   STRATEGY_DEFS の use_nopop=True 戦略があれば、その馬を horse として記録する
+        use_horse = top
+        if any(d.get("use_nopop") and d["key"] in triggered for d in STRATEGY_DEFS):
+            nt = _nopop_top(horses)
+            if nt is not None:
+                use_horse = nt
         item = {
             "race_id": rid,
             "race_name": meta.get("race_name") or None,
@@ -312,17 +355,17 @@ def collect(recent_days: int) -> Dict[str, Any]:
             "weather": meta.get("weather"),
             "is_g1": meta.get("is_g1"),
             "hassou_time": meta.get("hassou_time"),
-            "strategies": triggered,        # ["best", "safe"] 等
+            "strategies": triggered,        # ["value_invest", "best", "safe"] 等
             "horse": {
-                "number": top.get("number"),
-                "name": top.get("name"),
-                "win_prob": top.get("win_prob"),
-                "nopop_prob": top.get("nopop_prob"),
-                "value_signal": top.get("value_signal"),
-                "odds": top.get("odds"),
-                "popularity": top.get("popularity"),
-                "ev": top.get("ev"),
-                "rank_nopop": top.get("rank_nopop"),
+                "number": use_horse.get("number"),
+                "name": use_horse.get("name"),
+                "win_prob": use_horse.get("win_prob"),
+                "nopop_prob": use_horse.get("nopop_prob"),
+                "value_signal": use_horse.get("value_signal"),
+                "odds": use_horse.get("odds"),
+                "popularity": use_horse.get("popularity"),
+                "ev": use_horse.get("ev"),
+                "rank_nopop": use_horse.get("rank_nopop"),
             },
             "top3": top3_info,
             "top3_prob_sum": sum((h.get("win_prob") or 0) for h in horses[:3]),

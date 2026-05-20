@@ -7,6 +7,30 @@
   "model_logloss": 0.22874425075113708,
   "strategies": [
     {
+      "name": "value_invest_nopop_035",
+      "bets": 574,
+      "invested": 57400,
+      "returned": 75130,
+      "profit": 17730,
+      "roi": 1.3088850174216027,
+      "roi_pct": 130.89,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
+      "name": "value_invest_nopop_016",
+      "bets": 2673,
+      "invested": 267300,
+      "returned": 407953,
+      "profit": 140653,
+      "roi": 1.5261990273101385,
+      "roi_pct": 152.62,
+      "hit_rate": 0.0,
+      "hits": 0,
+      "max_payout": 0
+    },
+    {
       "name": "tan_top1_value3",
       "bets": 6,
       "invested": 600,
@@ -1687,6 +1711,6 @@
       "max_payout": 0
     }
   ],
-  "best_strategy": "tan_top1_value3",
-  "best_roi_pct": 216.7
+  "best_strategy": "value_invest_nopop_016",
+  "best_roi_pct": 152.62
 }
