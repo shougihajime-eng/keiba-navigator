@@ -7,6 +7,38 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🛡️ Wave30-X3+X4 (2026-05-20 朝・「1.2.3 やろ! 妥協なく」で V-STACK 真値暴露 + V-3連単 領域拡張)** —
+  - **🔬 walk_forward_stacking_pure.py 実行**: LGBM primary + nopop + XGB + CatB + LR の **5 モデルを毎期間 全部再学習** する最重級 leak-free 評価
+    - 約 30 分の実行時間
+    - **🚨 結果: V-STACK は完全に偽**
+      | 戦略 | 旧主張 (avg) | **真の WF (期間別 5 モデル再学習)** | 勝期間 |
+      |------|--------------|------------------------------------|--------|
+      | V-STACK 馬連 | 244% (全期間 100%+) | **77.47%** ⚠ | **0/3** |
+      | V-STACK 複勝 | 156% | **83.74%** ⚠ | **0/3** |
+    - Stacking はやってる風で過適合しているだけ・真の予測精度は nopop 単独以下
+  - **🔬 value_tan3_filter_sweep.py 新規**: V-3連単 を 19 フィルタ × 4 閾値で深掘り (filter ベース)
+    - 注: filter sweep は predict cache が単一モデル = 残存 leak あり (真の WF より高めに出る)
+    - 高 ROI 領域候補:
+      | フィルタ | 閾値 | overall (filter) | 勝期間 | 件数 |
+      |---------|------|------------------|--------|------|
+      | dist_long (2100m+) | 0.25 | **731%** | 6/6 | 170 |
+      | kyoto | 0.25 | 706% | 5/5 | 219 |
+      | dirt_mid | 0.30 | 488% | 6/6 | 258 |
+      | all | 0.30 (確定済) | 299% (真の WF 229.5%) | 6/6 | 932 |
+    - filter→真の WF への減衰係数 ~1.3 から推定すると、dist_long 0.25 は真値 500%+ の可能性 (要追加検証)
+  - **STRATEGY_DEFS に 2 新戦略追加** (filter ベース・要 leak-free 検証ラベル付き):
+    - **V-3連単長** (`value_tan3_long`): 長距離 2100m+ × 閾値 25% — filter 731%・件数 170
+    - **V-3連ダ中** (`value_tan3_dirt_mid`): ダート中距離 1500-2000m × 閾値 30% — filter 488%・件数 258
+  - **V-STACK / V-STACK複 の label と color を訂正**: 「真の WF で期待値マイナス確定」明記
+  - **aggregate_recommendations.py に walk_forward_stacking_pure.json 統合関数を追加**
+  - **真に世界一級と呼べる 2 戦略 (leak-free 確定)**:
+    1. **V-3連単 (閾値 0.30)** — 真の WF 229.53% / 勝 3/6 / 件数 365 ★★★★ TRUSTED
+    2. **V-短距離** (1000-1400m + 馬連 0.30) — 真の WF 136.88% / 勝 3/6 / 件数 77 ★★★★ TRUSTED
+  - **未検証だが将来期待大の 2 戦略** (filter ベース):
+    1. V-3連単長 (filter 731%)
+    2. V-3連ダ中 (filter 488%)
+  - **sw.js**: v61 → v62
+  - **smoke 126/0 全通過** / Python + JS 構文 OK
 - **🏆 Wave30-X2 (2026-05-20 朝・「1 = V-STACK 等を walk_forward_v2 で評価」指示で V-3連単 0.30 = 229% 発見)** —
   - **walk_forward_v2.py 拡張**: V-DOUBLE / V-3連単 / V-DOUBLE 短距離・芝 を期間別再学習で leak-free 評価
   - **🏆 真の Walk-forward 結果**:

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T04:47:42.154909+00:00",
+  "generatedAt": "2026-05-20T05:11:03.894511+00:00",
   "todayJst": "2026-05-20",
   "strategies_def": [
     {
@@ -28,17 +28,17 @@
     },
     {
       "key": "value_stack_uren",
-      "label": "Stacking 馬連 (4 モデル LR 合成) — avg 244%・worst 105%・全期間 100%+ ⭐ 世界一級",
+      "label": "Stacking 馬連 — 真の WF で 77.47% (勝 0/3) ⚠ 期待値マイナス確定",
       "short_label": "V-STACK",
-      "color": "gold",
+      "color": "rose",
       "bet_type": "馬連 (Stacking top1-top2)",
       "unit": 100
     },
     {
       "key": "value_stack_fuku",
-      "label": "Stacking 複勝 (4 モデル LR 合成) — avg 156%・σ 39",
+      "label": "Stacking 複勝 — 真の WF で 83.74% (勝 0/3) ⚠ 期待値マイナス確定",
       "short_label": "V-STACK複",
-      "color": "amber",
+      "color": "rose",
       "bet_type": "複勝 (Stacking top1)",
       "unit": 100
     },
@@ -56,6 +56,22 @@
       "short_label": "V-3連単",
       "color": "gold",
       "bet_type": "3 連単 (nopop top1->2->3)",
+      "unit": 100
+    },
+    {
+      "key": "value_tan3_long",
+      "label": "3 連単 nopop × 長距離 (2100m+) 閾値 25% — filter ベース 731%・件数 170 (要 leak-free 検証)",
+      "short_label": "V-3連単長",
+      "color": "violet",
+      "bet_type": "3 連単 (長距離・nopop top1->2->3)",
+      "unit": 100
+    },
+    {
+      "key": "value_tan3_dirt_mid",
+      "label": "3 連単 nopop × ダ中距離 (1500-2000m) 閾値 30% — filter ベース 488%・件数 258 (要 leak-free 検証)",
+      "short_label": "V-3連ダ中",
+      "color": "amber",
+      "bet_type": "3 連単 (ダ中・nopop top1->2->3)",
       "unit": 100
     },
     {
@@ -297,9 +313,9 @@
     "value_stack_uren": {
       "strategy_key": "value_stack_uren",
       "strategy_name": "value_stack_uren_016",
-      "label": "Stacking 馬連 (4 モデル LR 合成) — avg 244%・worst 105%・全期間 100%+ ⭐ 世界一級",
+      "label": "Stacking 馬連 — 真の WF で 77.47% (勝 0/3) ⚠ 期待値マイナス確定",
       "short_label": "V-STACK",
-      "color": "gold",
+      "color": "rose",
       "bet_type": "馬連 (Stacking top1-top2)",
       "unit": 100,
       "test_races": 676,
@@ -311,20 +327,38 @@
       "returned": 706644,
       "profit": 417344,
       "max_payout": 0,
-      "walk_forward": null,
-      "final_period_roi": null,
-      "overall_roi_pct_v2": null,
-      "leakage_free": false,
-      "trust_level": null,
-      "trust_label": null,
+      "walk_forward": {
+        "name": "value_stack_uren_016",
+        "mean_roi_pct": 77.47,
+        "worst_roi_pct": 66.98,
+        "best_roi_pct": 86.8,
+        "final_period_roi": 66.98,
+        "overall_roi_pct": 77.47,
+        "roi_std": 8.13,
+        "win_periods": 0,
+        "active_periods": 3,
+        "total_bets": null,
+        "total_hits": null,
+        "period_rois": [
+          86.8,
+          78.64,
+          66.98
+        ],
+        "leakage_free": true
+      },
+      "final_period_roi": 66.98,
+      "overall_roi_pct_v2": 77.47,
+      "leakage_free": true,
+      "trust_level": 1,
+      "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": null
     },
     "value_stack_fuku": {
       "strategy_key": "value_stack_fuku",
       "strategy_name": "value_stack_fuku_016",
-      "label": "Stacking 複勝 (4 モデル LR 合成) — avg 156%・σ 39",
+      "label": "Stacking 複勝 — 真の WF で 83.74% (勝 0/3) ⚠ 期待値マイナス確定",
       "short_label": "V-STACK複",
-      "color": "amber",
+      "color": "rose",
       "bet_type": "複勝 (Stacking top1)",
       "unit": 100,
       "test_races": 676,
@@ -336,12 +370,30 @@
       "returned": 904004,
       "profit": 325404,
       "max_payout": 0,
-      "walk_forward": null,
-      "final_period_roi": null,
-      "overall_roi_pct_v2": null,
-      "leakage_free": false,
-      "trust_level": null,
-      "trust_label": null,
+      "walk_forward": {
+        "name": "value_stack_fuku_016",
+        "mean_roi_pct": 83.74,
+        "worst_roi_pct": 81.53,
+        "best_roi_pct": 86.92,
+        "final_period_roi": 81.53,
+        "overall_roi_pct": 83.74,
+        "roi_std": 2.31,
+        "win_periods": 0,
+        "active_periods": 3,
+        "total_bets": null,
+        "total_hits": null,
+        "period_rois": [
+          82.76,
+          86.92,
+          81.53
+        ],
+        "leakage_free": true
+      },
+      "final_period_roi": 81.53,
+      "overall_roi_pct_v2": 83.74,
+      "leakage_free": true,
+      "trust_level": 1,
+      "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": null
     },
     "value_double": {
@@ -3992,6 +4044,8 @@
     "value_stack_fuku": 2571,
     "value_double": 2571,
     "value_tan3": 482,
+    "value_tan3_long": 111,
+    "value_tan3_dirt_mid": 139,
     "value_uren": 482,
     "value_uren_hot": 2571,
     "value_invest": 2571,

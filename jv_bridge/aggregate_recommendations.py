@@ -158,14 +158,13 @@ STRATEGY_DEFS = [
         ),
     },
     {
-        # Wave30-C: 🏆 Stacking メタモデル — 馬連で全期間 100%+ 達成 (avg 244%・勝 7/7)
-        # 4 モデル (LGBM + nopop + XGB + CatB) を LR で合成・nopop 重み 23.3 が圧倒
-        # CatB は逆向きシグナル (-5.6)
+        # Wave30-X4: ⚠ Stacking は真の期間別再学習で馬連 77.47% / 勝 0/3 = 期待値マイナス確定
+        # 旧主張「avg 244%・全期間 100%+」は look-ahead 由来の偽値
         "key": "value_stack_uren",
         "name_in_backtest": "value_stack_uren_016",
-        "label": "Stacking 馬連 (4 モデル LR 合成) — avg 244%・worst 105%・全期間 100%+ ⭐ 世界一級",
+        "label": "Stacking 馬連 — 真の WF で 77.47% (勝 0/3) ⚠ 期待値マイナス確定",
         "short_label": "V-STACK",
-        "color": "gold",
+        "color": "rose",
         "bet_type": "馬連 (Stacking top1-top2)",
         "unit": 100,
         "use_nopop": True,
@@ -174,12 +173,12 @@ STRATEGY_DEFS = [
         ),
     },
     {
-        # Wave30-C: Stacking 複勝 avg 156%・σ 39・件数 2893
+        # Wave30-X4: ⚠ Stacking 複勝も真の期間別再学習で 83.74% / 勝 0/3 = 期待値マイナス
         "key": "value_stack_fuku",
         "name_in_backtest": "value_stack_fuku_016",
-        "label": "Stacking 複勝 (4 モデル LR 合成) — avg 156%・σ 39",
+        "label": "Stacking 複勝 — 真の WF で 83.74% (勝 0/3) ⚠ 期待値マイナス確定",
         "short_label": "V-STACK複",
-        "color": "amber",
+        "color": "rose",
         "bet_type": "複勝 (Stacking top1)",
         "unit": 100,
         "use_nopop": True,
@@ -215,6 +214,38 @@ STRATEGY_DEFS = [
         "unit": 100,
         "use_nopop": True,
         "trigger": lambda top, horses: (
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.30)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave30-X3: V-3連単 長距離 (2100m+) × 閾値 0.25 — filter sweep で overall 731% / 勝 6/6 / 件数 170
+        # ⚠ filter sweep ベース (predict cache は単一モデル・残存 leak あり) → 真の WF 未検証
+        "key": "value_tan3_long",
+        "name_in_backtest": "value_tan3_dist_long_025",
+        "label": "3 連単 nopop × 長距離 (2100m+) 閾値 25% — filter ベース 731%・件数 170 (要 leak-free 検証)",
+        "short_label": "V-3連単長",
+        "color": "violet",
+        "bet_type": "3 連単 (長距離・nopop top1->2->3)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            _race_distance(horses) >= 2100 and
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.25)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave30-X3: V-3連単 ダート中距離 (1500-2000m) × 閾値 0.30 — filter sweep で overall 488% / 勝 6/6 / 件数 258
+        "key": "value_tan3_dirt_mid",
+        "name_in_backtest": "value_tan3_dirt_mid_030",
+        "label": "3 連単 nopop × ダ中距離 (1500-2000m) 閾値 30% — filter ベース 488%・件数 258 (要 leak-free 検証)",
+        "short_label": "V-3連ダ中",
+        "color": "amber",
+        "bet_type": "3 連単 (ダ中・nopop top1->2->3)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            "ダ" in _race_surface(horses) and
+            1500 <= _race_distance(horses) <= 2000 and
             (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.30)(_nopop_top(horses))
         ),
     },
@@ -349,7 +380,9 @@ STRATEGY_DEFS = [
 VALUE_MULTI_BET_PATH = CACHE / "value_multi_bet.json"
 VALUE_THRESHOLD_SWEEP_PATH = CACHE / "value_threshold_sweep.json"
 VALUE_UREN_FILTER_PATH = CACHE / "value_uren_filter_sweep.json"
+VALUE_TAN3_FILTER_PATH = CACHE / "value_tan3_filter_sweep.json"  # Wave30-X3: 3連単 フィルタ別
 WALK_FORWARD_V2_PATH = CACHE / "walk_forward_v2_result.json"  # Wave30: 期間別再学習 (真の look-ahead 無し)
+WALK_FORWARD_STACK_PURE_PATH = CACHE / "walk_forward_stacking_pure.json"  # Wave30-X4: Stacking 期間別再学習
 RISK_ANALYSIS_PATH = CACHE / "strategy_risk_analysis.json"      # Wave31-C: Kelly + ドローダウン
 
 RISK_NAME_TO_BACKTEST = {
@@ -436,6 +469,46 @@ def _load_value_multi_bet_stats() -> Dict[str, Dict[str, Any]]:
             if final_roi is not None:
                 entry["final_period_roi"] = round(final_roi, 2)
             out[key] = entry
+    return out
+
+
+def _load_walk_forward_stacking_pure_stats() -> Dict[str, Dict[str, Any]]:
+    """walk_forward_stacking_pure.json (Wave30-X4: Stacking の真の期間別再学習) を統合。
+    各 period で LGBM primary + nopop + XGB + CatB + LR の 5 モデルを再学習。
+    結果は fuku_summary / uren_summary に格納。"""
+    out: Dict[str, Dict[str, Any]] = {}
+    if not WALK_FORWARD_STACK_PURE_PATH.exists():
+        return out
+    try:
+        d = json.loads(WALK_FORWARD_STACK_PURE_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return out
+    th = d.get("threshold", 0.16)
+    th_str = f"{int(round(th * 100)):03d}"
+    for kind, name_suffix in [("fuku", "fuku"), ("uren", "uren")]:
+        summary = d.get(f"{kind}_summary") or {}
+        if not summary:
+            continue
+        rois = summary.get("rois") or []
+        valid = [r for r in rois if r is not None]
+        # Stacking pure は「期間別再学習」なので全期間が pure test = overall = mean
+        overall_roi = round(sum(valid) / len(valid), 2) if valid else None
+        key = f"value_stack_{name_suffix}_{th_str}"
+        out[key] = {
+            "name": key,
+            "mean_roi_pct": summary.get("mean_roi_pct"),
+            "worst_roi_pct": summary.get("worst_roi_pct"),
+            "best_roi_pct": summary.get("best_roi_pct"),
+            "final_period_roi": rois[-1] if rois else None,
+            "overall_roi_pct": overall_roi,
+            "roi_std": summary.get("roi_std"),
+            "win_periods": summary.get("win_periods"),
+            "active_periods": summary.get("active_periods"),
+            "total_bets": None,
+            "total_hits": None,
+            "period_rois": rois,
+            "leakage_free": True,  # Wave30-X4: 5 モデル全部期間別再学習で真の leak-free
+        }
     return out
 
 
@@ -591,6 +664,9 @@ def _load_walk_forward() -> Dict[str, Dict[str, Any]]:
     # Wave30: walk_forward_v2 (期間別再学習・真の look-ahead 無し) を「最優先」マージ
     # これがある戦略は他の sweep 結果より信頼できる (上書きしてよい)
     for k, v in _load_walk_forward_v2_stats().items():
+        out[k] = v
+    # Wave30-X4: Stacking の真の期間別再学習 (5 モデル) も leak-free として統合
+    for k, v in _load_walk_forward_stacking_pure_stats().items():
         out[k] = v
     return out
 

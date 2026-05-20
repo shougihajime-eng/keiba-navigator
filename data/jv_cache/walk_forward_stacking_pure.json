@@ -1,0 +1,83 @@
+{
+  "evaluated_at": "2026-05-20T05:07:52.609869+00:00",
+  "periods_total": 5,
+  "threshold": 0.16,
+  "leakage_free": true,
+  "method": "期間別再学習 Stacking (LGBM + nopop + XGB + CatB + LR)",
+  "fuku_summary": {
+    "mean_roi_pct": 83.74,
+    "worst_roi_pct": 81.53,
+    "best_roi_pct": 86.92,
+    "roi_std": 2.31,
+    "win_periods": 0,
+    "active_periods": 3,
+    "rois": [
+      82.76,
+      86.92,
+      81.53
+    ]
+  },
+  "uren_summary": {
+    "mean_roi_pct": 77.47,
+    "worst_roi_pct": 66.98,
+    "best_roi_pct": 86.8,
+    "roi_std": 8.13,
+    "win_periods": 0,
+    "active_periods": 3,
+    "rois": [
+      86.8,
+      78.64,
+      66.98
+    ]
+  },
+  "per_period": [
+    {
+      "period": 2,
+      "train_rows": 17987,
+      "test_rows": 9383,
+      "fuku_roi_pct": 82.76,
+      "fuku_bets": 662,
+      "uren_roi_pct": 86.8,
+      "uren_bets": 662,
+      "lr_weights": [
+        17.931,
+        13.9475,
+        1.3604,
+        -7.8227
+      ],
+      "lr_intercept": -5.2559
+    },
+    {
+      "period": 3,
+      "train_rows": 27370,
+      "test_rows": 9724,
+      "fuku_roi_pct": 86.92,
+      "fuku_bets": 611,
+      "uren_roi_pct": 78.64,
+      "uren_bets": 611,
+      "lr_weights": [
+        25.4057,
+        6.1693,
+        -3.6542,
+        -11.9748
+      ],
+      "lr_intercept": -2.8686
+    },
+    {
+      "period": 4,
+      "train_rows": 37094,
+      "test_rows": 10584,
+      "fuku_roi_pct": 81.53,
+      "fuku_bets": 613,
+      "uren_roi_pct": 66.98,
+      "uren_bets": 613,
+      "lr_weights": [
+        18.0277,
+        17.0454,
+        3.2373,
+        -11.8639
+      ],
+      "lr_intercept": -5.3266
+    }
+  ]
+}
