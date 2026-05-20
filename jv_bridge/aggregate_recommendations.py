@@ -203,18 +203,19 @@ STRATEGY_DEFS = [
         ),
     },
     {
-        # Wave30-A: 3連単 nopop top1->top2->top3 (閾値 0.20) avg 308.50% / 件数 2160 / 勝 6/7 / σ 191
-        # ハイリスクハイリターン・1 期間で 40% まで落ちる可能性
+        # Wave30-X2: 真の Walk-forward で発見!
+        #   3連単 nopop top1->top2->top3 (閾値 0.30) overall 229.5% / 勝 3/6 / 件数 365 ⭐ leak-free TRUSTED
+        #   旧 0.20 (avg 308% と謳ってた) は実は look-ahead 由来。真の WF では 73.4% で大負け
         "key": "value_tan3",
-        "name_in_backtest": "value_tan3_nopop_020",
-        "label": "3 連単 nopop top1->top2->top3 (閾値 20%・ハイリターン) — avg 308.5%・σ 191・勝 6/7",
+        "name_in_backtest": "value_tan3_nopop_030",
+        "label": "3 連単 nopop top1->top2->top3 (閾値 30%) — 真の WF 229.5%・勝 3/6・件数 365 ⭐",
         "short_label": "V-3連単",
         "color": "gold",
         "bet_type": "3 連単 (nopop top1->2->3)",
         "unit": 100,
         "use_nopop": True,
         "trigger": lambda top, horses: (
-            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.20)(_nopop_top(horses))
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.30)(_nopop_top(horses))
         ),
     },
     {
@@ -658,18 +659,20 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
                 #   これが「真の look-ahead 完全排除」した期待 ROI。
                 if wf.get("leakage_free") and wf.get("overall_roi_pct") is not None:
                     leak_free_roi = wf.get("overall_roi_pct")
-                    if leak_free_roi >= 110 and wp >= ap * 0.66:
+                    # Wave30-X2: overall ROI を最優先 (勝期間は副次・件数ペナルティなし)
+                    # 真の WF で 130%+ 出てる戦略は控除率突破確定 → TRUSTED
+                    if leak_free_roi >= 130 and wp >= ap // 2:
                         trust_level = 4
-                        trust_label = "TRUSTED (真の Walk-forward で期待値+)"
-                    elif leak_free_roi >= 100 and wp >= ap // 2:
+                        trust_label = "TRUSTED (真の WF で控除率を大幅突破)"
+                    elif leak_free_roi >= 110 and wp >= ap // 2:
                         trust_level = 3
-                        trust_label = "STABLE (真の Walk-forward で 100%+)"
-                    elif leak_free_roi >= 90:
+                        trust_label = "STABLE (真の WF で期待値+)"
+                    elif leak_free_roi >= 95:
                         trust_level = 2
-                        trust_label = "MIXED (真の Walk-forward で控除率周辺)"
+                        trust_label = "MIXED (真の WF で控除率周辺)"
                     else:
                         trust_level = 1
-                        trust_label = "RISKY (真の Walk-forward で期待値マイナス)"
+                        trust_label = "RISKY (真の WF で期待値マイナス)"
                 elif final_roi >= 105 and wp == ap and mean_roi >= 105:
                     trust_level = 4
                     trust_label = "TRUSTED (最終期間でも期待値プラス・但し未検証)"

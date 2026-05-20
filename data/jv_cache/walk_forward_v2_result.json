@@ -1,5 +1,5 @@
 {
-  "evaluated_at": "2026-05-20T04:12:38.765243+00:00",
+  "evaluated_at": "2026-05-20T04:45:19.033984+00:00",
   "periods": 7,
   "num_boost": 300,
   "total_pairs": 3377,
@@ -7,6 +7,39 @@
   "leakage_free": true,
   "method": "期間別再学習 (各 period i で pairs[0:start_i] のみで nopop モデルを学習)",
   "strategies": [
+    {
+      "name": "value_tan3_nopop_030",
+      "mean_roi_pct": 184.84,
+      "worst_roi_pct": 63.43,
+      "best_roi_pct": 432.41,
+      "final_period_roi": 82.5,
+      "roi_std": 138.74,
+      "win_periods": 3,
+      "active_periods": 6,
+      "total_bets": 365,
+      "total_hits": 14,
+      "hit_rate": 0.038,
+      "total_invested": 36500,
+      "total_returned": 83780,
+      "overall_roi_pct": 229.53,
+      "period_rois": [
+        432.41,
+        314.62,
+        63.43,
+        94.84,
+        121.25,
+        82.5
+      ],
+      "period_bets": [
+        79,
+        104,
+        35,
+        31,
+        56,
+        60
+      ],
+      "leakage_free": true
+    },
     {
       "name": "value_uren_short_030",
       "mean_roi_pct": 102.48,
@@ -29,6 +62,39 @@
         0.0,
         101.67,
         17.27
+      ],
+      "period_bets": [
+        22,
+        24,
+        10,
+        4,
+        6,
+        11
+      ],
+      "leakage_free": true
+    },
+    {
+      "name": "value_double_short_030",
+      "mean_roi_pct": 96.05,
+      "worst_roi_pct": 22.5,
+      "best_roi_pct": 215.68,
+      "final_period_roi": 54.55,
+      "roi_std": 61.33,
+      "win_periods": 3,
+      "active_periods": 6,
+      "total_bets": 77,
+      "total_hits": 55,
+      "hit_rate": 0.714,
+      "total_invested": 15400,
+      "total_returned": 17610,
+      "overall_roi_pct": 114.35,
+      "period_rois": [
+        215.68,
+        67.71,
+        112.5,
+        22.5,
+        103.33,
+        54.55
       ],
       "period_bets": [
         22,
@@ -107,6 +173,39 @@
       "leakage_free": true
     },
     {
+      "name": "value_double_turf_030",
+      "mean_roi_pct": 83.0,
+      "worst_roi_pct": 68.44,
+      "best_roi_pct": 117.37,
+      "final_period_roi": 70.21,
+      "roi_std": 17.74,
+      "win_periods": 1,
+      "active_periods": 6,
+      "total_bets": 200,
+      "total_hits": 130,
+      "hit_rate": 0.65,
+      "total_invested": 40000,
+      "total_returned": 36570,
+      "overall_roi_pct": 91.42,
+      "period_rois": [
+        117.37,
+        93.85,
+        79.21,
+        68.44,
+        68.91,
+        70.21
+      ],
+      "period_bets": [
+        57,
+        61,
+        19,
+        16,
+        23,
+        24
+      ],
+      "leakage_free": true
+    },
+    {
       "name": "value_uren_nopop_030",
       "mean_roi_pct": 89.62,
       "worst_roi_pct": 64.67,
@@ -128,6 +227,39 @@
         79.35,
         70.0,
         64.67
+      ],
+      "period_bets": [
+        79,
+        104,
+        35,
+        31,
+        56,
+        60
+      ],
+      "leakage_free": true
+    },
+    {
+      "name": "value_double_nopop_030",
+      "mean_roi_pct": 87.31,
+      "worst_roi_pct": 73.0,
+      "best_roi_pct": 108.86,
+      "final_period_roi": 73.0,
+      "roi_std": 14.29,
+      "win_periods": 2,
+      "active_periods": 6,
+      "total_bets": 365,
+      "total_hits": 253,
+      "hit_rate": 0.693,
+      "total_invested": 73000,
+      "total_returned": 62980,
+      "overall_roi_pct": 86.27,
+      "period_rois": [
+        104.87,
+        76.11,
+        108.86,
+        76.61,
+        84.38,
+        73.0
       ],
       "period_bets": [
         79,
@@ -173,6 +305,39 @@
       "leakage_free": true
     },
     {
+      "name": "value_double_nopop_016",
+      "mean_roi_pct": 77.9,
+      "worst_roi_pct": 70.99,
+      "best_roi_pct": 82.96,
+      "final_period_roi": 82.96,
+      "roi_std": 4.51,
+      "win_periods": 0,
+      "active_periods": 6,
+      "total_bets": 2234,
+      "total_hits": 1249,
+      "hit_rate": 0.559,
+      "total_invested": 446800,
+      "total_returned": 347080,
+      "overall_roi_pct": 77.68,
+      "period_rois": [
+        82.95,
+        74.29,
+        75.88,
+        80.32,
+        70.99,
+        82.96
+      ],
+      "period_bets": [
+        395,
+        432,
+        354,
+        328,
+        390,
+        335
+      ],
+      "leakage_free": true
+    },
+    {
       "name": "value_uren_nopop_016",
       "mean_roi_pct": 74.06,
       "worst_roi_pct": 64.15,
@@ -202,6 +367,39 @@
         328,
         390,
         335
+      ],
+      "leakage_free": true
+    },
+    {
+      "name": "value_tan3_nopop_020",
+      "mean_roi_pct": 63.63,
+      "worst_roi_pct": 21.24,
+      "best_roi_pct": 134.16,
+      "final_period_roi": 30.81,
+      "roi_std": 45.16,
+      "win_periods": 2,
+      "active_periods": 6,
+      "total_bets": 1443,
+      "total_hits": 23,
+      "hit_rate": 0.016,
+      "total_invested": 144300,
+      "total_returned": 105980,
+      "overall_roi_pct": 73.44,
+      "period_rois": [
+        117.79,
+        134.16,
+        21.24,
+        28.17,
+        49.64,
+        30.81
+      ],
+      "period_bets": [
+        290,
+        334,
+        209,
+        175,
+        225,
+        210
       ],
       "leakage_free": true
     },
@@ -315,6 +513,54 @@
           "hits": 0,
           "roi_pct": null,
           "hit_rate": null
+        },
+        "value_double_nopop_016": {
+          "bets": 395,
+          "invested": 79000,
+          "returned": 65530,
+          "hits": 195,
+          "roi_pct": 82.95,
+          "hit_rate": 0.494
+        },
+        "value_double_nopop_030": {
+          "bets": 79,
+          "invested": 15800,
+          "returned": 16570,
+          "hits": 51,
+          "roi_pct": 104.87,
+          "hit_rate": 0.646
+        },
+        "value_tan3_nopop_020": {
+          "bets": 290,
+          "invested": 29000,
+          "returned": 34160,
+          "hits": 3,
+          "roi_pct": 117.79,
+          "hit_rate": 0.01
+        },
+        "value_tan3_nopop_030": {
+          "bets": 79,
+          "invested": 7900,
+          "returned": 34160,
+          "hits": 3,
+          "roi_pct": 432.41,
+          "hit_rate": 0.038
+        },
+        "value_double_turf_030": {
+          "bets": 57,
+          "invested": 11400,
+          "returned": 13380,
+          "hits": 36,
+          "roi_pct": 117.37,
+          "hit_rate": 0.632
+        },
+        "value_double_short_030": {
+          "bets": 22,
+          "invested": 4400,
+          "returned": 9490,
+          "hits": 16,
+          "roi_pct": 215.68,
+          "hit_rate": 0.727
         }
       }
     },
@@ -393,6 +639,54 @@
           "hits": 0,
           "roi_pct": null,
           "hit_rate": null
+        },
+        "value_double_nopop_016": {
+          "bets": 432,
+          "invested": 86400,
+          "returned": 64190,
+          "hits": 245,
+          "roi_pct": 74.29,
+          "hit_rate": 0.567
+        },
+        "value_double_nopop_030": {
+          "bets": 104,
+          "invested": 20800,
+          "returned": 15830,
+          "hits": 71,
+          "roi_pct": 76.11,
+          "hit_rate": 0.683
+        },
+        "value_tan3_nopop_020": {
+          "bets": 334,
+          "invested": 33400,
+          "returned": 44810,
+          "hits": 6,
+          "roi_pct": 134.16,
+          "hit_rate": 0.018
+        },
+        "value_tan3_nopop_030": {
+          "bets": 104,
+          "invested": 10400,
+          "returned": 32720,
+          "hits": 3,
+          "roi_pct": 314.62,
+          "hit_rate": 0.029
+        },
+        "value_double_turf_030": {
+          "bets": 61,
+          "invested": 12200,
+          "returned": 11450,
+          "hits": 42,
+          "roi_pct": 93.85,
+          "hit_rate": 0.689
+        },
+        "value_double_short_030": {
+          "bets": 24,
+          "invested": 4800,
+          "returned": 3250,
+          "hits": 15,
+          "roi_pct": 67.71,
+          "hit_rate": 0.625
         }
       }
     },
@@ -471,6 +765,54 @@
           "hits": 0,
           "roi_pct": null,
           "hit_rate": null
+        },
+        "value_double_nopop_016": {
+          "bets": 354,
+          "invested": 70800,
+          "returned": 53720,
+          "hits": 202,
+          "roi_pct": 75.88,
+          "hit_rate": 0.571
+        },
+        "value_double_nopop_030": {
+          "bets": 35,
+          "invested": 7000,
+          "returned": 7620,
+          "hits": 26,
+          "roi_pct": 108.86,
+          "hit_rate": 0.743
+        },
+        "value_tan3_nopop_020": {
+          "bets": 209,
+          "invested": 20900,
+          "returned": 4440,
+          "hits": 3,
+          "roi_pct": 21.24,
+          "hit_rate": 0.014
+        },
+        "value_tan3_nopop_030": {
+          "bets": 35,
+          "invested": 3500,
+          "returned": 2220,
+          "hits": 2,
+          "roi_pct": 63.43,
+          "hit_rate": 0.057
+        },
+        "value_double_turf_030": {
+          "bets": 19,
+          "invested": 3800,
+          "returned": 3010,
+          "hits": 12,
+          "roi_pct": 79.21,
+          "hit_rate": 0.632
+        },
+        "value_double_short_030": {
+          "bets": 10,
+          "invested": 2000,
+          "returned": 2250,
+          "hits": 10,
+          "roi_pct": 112.5,
+          "hit_rate": 1.0
         }
       }
     },
@@ -549,6 +891,54 @@
           "hits": 0,
           "roi_pct": null,
           "hit_rate": null
+        },
+        "value_double_nopop_016": {
+          "bets": 328,
+          "invested": 65600,
+          "returned": 52690,
+          "hits": 199,
+          "roi_pct": 80.32,
+          "hit_rate": 0.607
+        },
+        "value_double_nopop_030": {
+          "bets": 31,
+          "invested": 6200,
+          "returned": 4750,
+          "hits": 20,
+          "roi_pct": 76.61,
+          "hit_rate": 0.645
+        },
+        "value_tan3_nopop_020": {
+          "bets": 175,
+          "invested": 17500,
+          "returned": 4930,
+          "hits": 3,
+          "roi_pct": 28.17,
+          "hit_rate": 0.017
+        },
+        "value_tan3_nopop_030": {
+          "bets": 31,
+          "invested": 3100,
+          "returned": 2940,
+          "hits": 2,
+          "roi_pct": 94.84,
+          "hit_rate": 0.065
+        },
+        "value_double_turf_030": {
+          "bets": 16,
+          "invested": 3200,
+          "returned": 2190,
+          "hits": 9,
+          "roi_pct": 68.44,
+          "hit_rate": 0.562
+        },
+        "value_double_short_030": {
+          "bets": 4,
+          "invested": 800,
+          "returned": 180,
+          "hits": 1,
+          "roi_pct": 22.5,
+          "hit_rate": 0.25
         }
       }
     },
@@ -627,6 +1017,54 @@
           "hits": 0,
           "roi_pct": null,
           "hit_rate": null
+        },
+        "value_double_nopop_016": {
+          "bets": 390,
+          "invested": 78000,
+          "returned": 55370,
+          "hits": 205,
+          "roi_pct": 70.99,
+          "hit_rate": 0.526
+        },
+        "value_double_nopop_030": {
+          "bets": 56,
+          "invested": 11200,
+          "returned": 9450,
+          "hits": 43,
+          "roi_pct": 84.38,
+          "hit_rate": 0.768
+        },
+        "value_tan3_nopop_020": {
+          "bets": 225,
+          "invested": 22500,
+          "returned": 11170,
+          "hits": 6,
+          "roi_pct": 49.64,
+          "hit_rate": 0.027
+        },
+        "value_tan3_nopop_030": {
+          "bets": 56,
+          "invested": 5600,
+          "returned": 6790,
+          "hits": 3,
+          "roi_pct": 121.25,
+          "hit_rate": 0.054
+        },
+        "value_double_turf_030": {
+          "bets": 23,
+          "invested": 4600,
+          "returned": 3170,
+          "hits": 16,
+          "roi_pct": 68.91,
+          "hit_rate": 0.696
+        },
+        "value_double_short_030": {
+          "bets": 6,
+          "invested": 1200,
+          "returned": 1240,
+          "hits": 5,
+          "roi_pct": 103.33,
+          "hit_rate": 0.833
         }
       }
     },
@@ -705,6 +1143,54 @@
           "hits": 0,
           "roi_pct": null,
           "hit_rate": null
+        },
+        "value_double_nopop_016": {
+          "bets": 335,
+          "invested": 67000,
+          "returned": 55580,
+          "hits": 203,
+          "roi_pct": 82.96,
+          "hit_rate": 0.606
+        },
+        "value_double_nopop_030": {
+          "bets": 60,
+          "invested": 12000,
+          "returned": 8760,
+          "hits": 42,
+          "roi_pct": 73.0,
+          "hit_rate": 0.7
+        },
+        "value_tan3_nopop_020": {
+          "bets": 210,
+          "invested": 21000,
+          "returned": 6470,
+          "hits": 2,
+          "roi_pct": 30.81,
+          "hit_rate": 0.01
+        },
+        "value_tan3_nopop_030": {
+          "bets": 60,
+          "invested": 6000,
+          "returned": 4950,
+          "hits": 1,
+          "roi_pct": 82.5,
+          "hit_rate": 0.017
+        },
+        "value_double_turf_030": {
+          "bets": 24,
+          "invested": 4800,
+          "returned": 3370,
+          "hits": 15,
+          "roi_pct": 70.21,
+          "hit_rate": 0.625
+        },
+        "value_double_short_030": {
+          "bets": 11,
+          "invested": 2200,
+          "returned": 1200,
+          "hits": 8,
+          "roi_pct": 54.55,
+          "hit_rate": 0.727
         }
       }
     }

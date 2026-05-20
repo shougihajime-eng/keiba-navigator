@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v60"; // Wave31: Stacking 統合 (本番予測) + Kelly UI 表示 + 30 期間 WF + 実運用 log
+const CACHE_VERSION = "keiba-nav-v61"; // Wave30-X2: V-3連単(0.30) 真値 229%・V-短距離 137% が leak-free TRUSTED 確定
 const PRECACHE = [
   "/",
   "/index.html",

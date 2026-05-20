@@ -56,7 +56,7 @@ from jv_bridge.predict_lightgbm import (  # noqa: E402
     _predict_one, _mask_pop_features,
 )
 from jv_bridge.validate_lightgbm import (  # noqa: E402
-    _payout_fuku, _payout_uren, _load_features_index,
+    _payout_fuku, _payout_uren, _payout_tan3, _load_features_index,
 )
 
 
@@ -184,7 +184,10 @@ def _race_filter_g1(race):
 
 def _strategies_for_evaluation():
     """評価する戦略一覧 (key, filter_func, threshold, bet_type)。
-    bet_type ∈ {"fuku", "uren"} で _payout_* を切替。"""
+    bet_type ∈ {"fuku", "uren", "double", "tan3"} で _payout_* を切替。
+    - "double": 複勝 100 + 馬連 100 を併買 (¥200/R)
+    - "tan3": 3連単 nopop top1->top2->top3 (¥100/R)
+    """
     return [
         # V 系 (nopop モデル評価)
         ("value_invest_nopop_016", lambda r: True, 0.16, "fuku"),
@@ -196,6 +199,13 @@ def _strategies_for_evaluation():
         ("value_uren_turf_025",    _race_filter_turf, 0.25, "uren"),
         ("value_uren_g1_020",      _race_filter_g1, 0.20, "uren"),
         ("value_uren_g1_030",      _race_filter_g1, 0.30, "uren"),
+        # Wave30-X 拡張: 併買・3連単
+        ("value_double_nopop_016", lambda r: True, 0.16, "double"),
+        ("value_double_nopop_030", lambda r: True, 0.30, "double"),
+        ("value_tan3_nopop_020",   lambda r: True, 0.20, "tan3"),
+        ("value_tan3_nopop_030",   lambda r: True, 0.30, "tan3"),
+        ("value_double_turf_030",  _race_filter_turf, 0.30, "double"),
+        ("value_double_short_030", _race_filter_short, 0.30, "double"),
     ]
 
 
@@ -211,6 +221,8 @@ def _evaluate_period(cache_slice, strategies, np):
             continue
         sorted_idx = sorted(range(len(probs)), key=lambda i: -probs[i])
         top1_i, top2_i = sorted_idx[0], sorted_idx[1]
+        # top3 も用意 (3連単・併買用)
+        top3_i = sorted_idx[2] if len(sorted_idx) >= 3 else None
         for name, filter_fn, th, bet_type in strategies:
             if probs[top1_i] < th:
                 continue
@@ -230,6 +242,25 @@ def _evaluate_period(cache_slice, strategies, np):
                     continue
                 out[name]["invested"] += 100
                 pay = _payout_uren(payouts, a, b)
+            elif bet_type == "double":
+                # 複勝 100 + 馬連 100 を併買 (¥200/R)
+                try:
+                    b = int(horses[top2_i].get("number"))
+                except (TypeError, ValueError):
+                    continue
+                out[name]["invested"] += 200
+                pay = _payout_fuku(payouts, a) + _payout_uren(payouts, a, b)
+            elif bet_type == "tan3":
+                # 3 連単 top1 -> top2 -> top3 (¥100/R)
+                if top3_i is None:
+                    continue
+                try:
+                    b = int(horses[top2_i].get("number"))
+                    c = int(horses[top3_i].get("number"))
+                except (TypeError, ValueError):
+                    continue
+                out[name]["invested"] += 100
+                pay = _payout_tan3(payouts, a, b, c)
             else:
                 continue
             out[name]["returned"] += pay

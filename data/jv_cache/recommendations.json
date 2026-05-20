@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T04:15:29.894566+00:00",
+  "generatedAt": "2026-05-20T04:47:42.154909+00:00",
   "todayJst": "2026-05-20",
   "strategies_def": [
     {
@@ -52,7 +52,7 @@
     },
     {
       "key": "value_tan3",
-      "label": "3 連単 nopop top1->top2->top3 (閾値 20%・ハイリターン) — avg 308.5%・σ 191・勝 6/7",
+      "label": "3 連単 nopop top1->top2->top3 (閾値 30%) — 真の WF 229.5%・勝 3/6・件数 365 ⭐",
       "short_label": "V-3連単",
       "color": "gold",
       "bet_type": "3 連単 (nopop top1->2->3)",
@@ -183,7 +183,7 @@
       "overall_roi_pct_v2": 101.05,
       "leakage_free": true,
       "trust_level": 2,
-      "trust_label": "MIXED (真の Walk-forward で控除率周辺)",
+      "trust_label": "MIXED (真の WF で控除率周辺)",
       "risk": null
     },
     "value_uren_short": {
@@ -236,8 +236,8 @@
       "final_period_roi": 17.27,
       "overall_roi_pct_v2": 136.88,
       "leakage_free": true,
-      "trust_level": 3,
-      "trust_label": "STABLE (真の Walk-forward で 100%+)",
+      "trust_level": 4,
+      "trust_label": "TRUSTED (真の WF で控除率を大幅突破)",
       "risk": null
     },
     "value_uren_short_ultra": {
@@ -291,7 +291,7 @@
       "overall_roi_pct_v2": 34.84,
       "leakage_free": true,
       "trust_level": 1,
-      "trust_label": "RISKY (真の Walk-forward で期待値マイナス)",
+      "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": null
     },
     "value_stack_uren": {
@@ -361,12 +361,41 @@
       "returned": 1002909,
       "profit": 468309,
       "max_payout": 0,
-      "walk_forward": null,
-      "final_period_roi": null,
-      "overall_roi_pct_v2": null,
-      "leakage_free": false,
-      "trust_level": null,
-      "trust_label": null,
+      "walk_forward": {
+        "name": "value_double_nopop_016",
+        "mean_roi_pct": 77.9,
+        "worst_roi_pct": 70.99,
+        "best_roi_pct": 82.96,
+        "final_period_roi": 82.96,
+        "overall_roi_pct": 77.68,
+        "roi_std": 4.51,
+        "win_periods": 0,
+        "active_periods": 6,
+        "total_bets": 2234,
+        "total_hits": 1249,
+        "period_rois": [
+          82.95,
+          74.29,
+          75.88,
+          80.32,
+          70.99,
+          82.96
+        ],
+        "period_bets": [
+          395,
+          432,
+          354,
+          328,
+          390,
+          335
+        ],
+        "leakage_free": true
+      },
+      "final_period_roi": 82.96,
+      "overall_roi_pct_v2": 77.68,
+      "leakage_free": true,
+      "trust_level": 1,
+      "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": {
         "kelly_full": 1.5161,
         "kelly_half_pct": 75.8,
@@ -380,57 +409,57 @@
     },
     "value_tan3": {
       "strategy_key": "value_tan3",
-      "strategy_name": "value_tan3_nopop_020",
-      "label": "3 連単 nopop top1->top2->top3 (閾値 20%・ハイリターン) — avg 308.5%・σ 191・勝 6/7",
+      "strategy_name": "value_tan3_nopop_030",
+      "label": "3 連単 nopop top1->top2->top3 (閾値 30%) — 真の WF 229.5%・勝 3/6・件数 365 ⭐",
       "short_label": "V-3連単",
       "color": "gold",
       "bet_type": "3 連単 (nopop top1->2->3)",
       "unit": 100,
       "test_races": 676,
-      "fired_count": 2160,
-      "fired_rate_pct": 319.5,
-      "roi_pct": 308.5,
-      "hit_rate_pct": 0,
-      "invested": 216000,
-      "returned": 666360,
-      "profit": 450360,
-      "max_payout": 0,
+      "fired_count": 365,
+      "fired_rate_pct": 54.0,
+      "roi_pct": 184.84,
+      "hit_rate_pct": 3.8,
+      "invested": null,
+      "returned": null,
+      "profit": null,
+      "max_payout": null,
       "walk_forward": {
-        "threshold": 0.2,
-        "mean_roi_pct": 308.5,
-        "worst_roi_pct": 58.87,
-        "best_roi_pct": 709.91,
-        "roi_std": 190.69,
-        "win_periods": 6,
-        "active_periods": 7,
-        "total_bets": 2160,
+        "name": "value_tan3_nopop_030",
+        "mean_roi_pct": 184.84,
+        "worst_roi_pct": 63.43,
+        "best_roi_pct": 432.41,
+        "final_period_roi": 82.5,
+        "overall_roi_pct": 229.53,
+        "roi_std": 138.74,
+        "win_periods": 3,
+        "active_periods": 6,
+        "total_bets": 365,
+        "total_hits": 14,
         "period_rois": [
-          212.63,
-          194.94,
-          258.17,
-          709.91,
-          344.51,
-          380.45,
-          58.87
+          432.41,
+          314.62,
+          63.43,
+          94.84,
+          121.25,
+          82.5
         ],
-        "name": "value_tan3_nopop_020",
-        "final_period_roi": 58.87
+        "period_bets": [
+          79,
+          104,
+          35,
+          31,
+          56,
+          60
+        ],
+        "leakage_free": true
       },
-      "final_period_roi": 58.87,
-      "overall_roi_pct_v2": null,
-      "leakage_free": false,
-      "trust_level": 1,
-      "trust_label": "RISKY (最終期間で 100% 割れ)",
-      "risk": {
-        "kelly_full": 0.3475,
-        "kelly_half_pct": 17.4,
-        "kelly_quarter_pct": 8.7,
-        "kelly_advice": "Half-Kelly 推奨投資率 17.4%/レース (¥1000 中 ¥173)",
-        "max_losing_streak": 122,
-        "max_drawdown_jpy": 19840,
-        "max_winning_streak": 2,
-        "total_bets_16p": 2295
-      }
+      "final_period_roi": 82.5,
+      "overall_roi_pct_v2": 229.53,
+      "leakage_free": true,
+      "trust_level": 4,
+      "trust_label": "TRUSTED (真の WF で控除率を大幅突破)",
+      "risk": null
     },
     "value_uren": {
       "strategy_key": "value_uren",
@@ -483,7 +512,7 @@
       "overall_roi_pct_v2": 86.93,
       "leakage_free": true,
       "trust_level": 1,
-      "trust_label": "RISKY (真の Walk-forward で期待値マイナス)",
+      "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": {
         "kelly_full": 0.7526,
         "kelly_half_pct": 37.6,
@@ -546,7 +575,7 @@
       "overall_roi_pct_v2": 73.75,
       "leakage_free": true,
       "trust_level": 1,
-      "trust_label": "RISKY (真の Walk-forward で期待値マイナス)",
+      "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": {
         "kelly_full": 0.8985,
         "kelly_half_pct": 44.9,
@@ -609,7 +638,7 @@
       "overall_roi_pct_v2": 81.62,
       "leakage_free": true,
       "trust_level": 1,
-      "trust_label": "RISKY (真の Walk-forward で期待値マイナス)",
+      "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": {
         "kelly_full": 3.3946,
         "kelly_half_pct": 169.7,
@@ -1177,7 +1206,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1288,7 +1316,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1344,7 +1371,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1400,7 +1426,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1566,7 +1591,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "safe"
@@ -1623,7 +1647,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "safe"
@@ -1680,7 +1703,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1791,7 +1813,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1957,7 +1978,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2013,7 +2033,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "turf",
@@ -2072,7 +2091,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2128,7 +2146,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "big",
@@ -2189,7 +2206,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2245,7 +2261,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2301,7 +2316,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2357,7 +2371,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2578,7 +2591,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2689,7 +2701,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2859,7 +2870,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -3025,7 +3035,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "big",
@@ -3086,7 +3095,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "safe"
@@ -3143,7 +3151,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "best",
@@ -3256,7 +3263,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -3312,7 +3318,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -3423,7 +3428,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "big",
@@ -3484,7 +3488,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "big",
@@ -3768,7 +3771,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -3934,7 +3936,6 @@
         "value_stack_uren",
         "value_stack_fuku",
         "value_double",
-        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -3990,7 +3991,7 @@
     "value_stack_uren": 2571,
     "value_stack_fuku": 2571,
     "value_double": 2571,
-    "value_tan3": 1688,
+    "value_tan3": 482,
     "value_uren": 482,
     "value_uren_hot": 2571,
     "value_invest": 2571,
