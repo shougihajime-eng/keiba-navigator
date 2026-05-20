@@ -488,31 +488,56 @@ def train(min_races: int, test_ratio: float, no_pop: bool = False) -> int:
     # LightGBM があれば優先
     if lgb is not None:
         try:
-            train_data = lgb.Dataset(Xtr, label=ytr, feature_name=FEATURE_NAMES)
-            valid_data = lgb.Dataset(Xte, label=yte, reference=train_data, feature_name=FEATURE_NAMES)
-            # AUC 0.85+ を狙うチューニング
-            #   - num_leaves 63: 表現力↑ (過学習リスクは regularization で抑える)
-            #   - learning_rate 0.025: より細かい学習 (補完: num_boost_round↑)
-            #   - num_boost_round 600 + early_stopping 30: 必要な深さで自動停止
-            #   - min_data_in_leaf 20 / lambda_l1 0.1 / lambda_l2 0.1: 過学習防止
-            #   - feature_fraction 0.85 + bagging: ノイズ耐性
-            params = {
-                "objective": "binary",
-                "metric": ["binary_logloss", "auc"],
-                "num_leaves": 63,
-                "max_depth": -1,
-                "learning_rate": 0.02,
-                "min_data_in_leaf": 25,
-                "lambda_l1": 0.15,
-                "lambda_l2": 0.15,
-                "feature_fraction": 0.8,
-                "bagging_fraction": 0.8,
-                "bagging_freq": 5,
-                "verbosity": -1,
-            }
+            # Wave25-C: optuna_best_params.json があれば優先使用
+            optuna_path = CACHE / "optuna_best_params.json"
+            optuna_params = None
+            optuna_boost = 1200
+            if optuna_path.exists():
+                try:
+                    op = json.loads(optuna_path.read_text(encoding="utf-8"))
+                    optuna_params = op.get("best_params") or {}
+                    optuna_boost = int(optuna_params.pop("num_boost_round", 1200))
+                    print(f"[info] Optuna ベストパラメータを使用 (AUC {op.get('best_auc'):.4f})", flush=True)
+                except Exception as e:
+                    print(f"[warn] optuna_best_params 読込失敗: {e}", flush=True)
+
+            # Wave25-C: optuna_best_params があれば feature_pre_filter=False が必要 (再 fit のため)
+            #            無ければ元の動作 (Wave19.8 時点) を維持
+            ds_params = {"feature_pre_filter": False} if optuna_params else None
+            train_data = lgb.Dataset(Xtr, label=ytr, feature_name=FEATURE_NAMES,
+                                      params=ds_params)
+            valid_data = lgb.Dataset(Xte, label=yte, reference=train_data, feature_name=FEATURE_NAMES,
+                                      params=ds_params)
+
+            if optuna_params:
+                params = {
+                    "objective": "binary",
+                    "metric": ["binary_logloss", "auc"],
+                    "verbosity": -1,
+                    "feature_pre_filter": False,
+                    **optuna_params,
+                }
+                num_boost = optuna_boost
+            else:
+                # 手書きデフォルト (Wave19.8 と同じ・feature_pre_filter は付けない)
+                params = {
+                    "objective": "binary",
+                    "metric": ["binary_logloss", "auc"],
+                    "num_leaves": 63,
+                    "max_depth": -1,
+                    "learning_rate": 0.02,
+                    "min_data_in_leaf": 25,
+                    "lambda_l1": 0.15,
+                    "lambda_l2": 0.15,
+                    "feature_fraction": 0.8,
+                    "bagging_fraction": 0.8,
+                    "bagging_freq": 5,
+                    "verbosity": -1,
+                }
+                num_boost = 1200
             booster = lgb.train(
                 params, train_data,
-                num_boost_round=1200,
+                num_boost_round=num_boost,
                 valid_sets=[train_data, valid_data],
                 valid_names=["train", "valid"],
                 callbacks=[
