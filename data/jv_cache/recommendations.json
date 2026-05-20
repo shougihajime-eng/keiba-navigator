@@ -1,83 +1,83 @@
 {
-  "generatedAt": "2026-05-20T06:30:59.247336+00:00",
+  "generatedAt": "2026-05-20T07:02:55.986626+00:00",
   "todayJst": "2026-05-20",
   "strategies_def": [
     {
       "key": "value_tan3",
-      "label": "3 連単 nopop top1->top2->top3 (閾値 30%) — 真の WF 229.5%・勝 3/6・件数 365 ⭐",
-      "short_label": "V-3連単",
+      "label": "金の3連単 (人気を見ない AI の 1着→2着→3着・自信あるとき限定で1点 100円)",
+      "short_label": "金の3連単",
       "color": "gold",
       "bet_type": "3 連単 (nopop top1->2->3)",
       "unit": 100
     },
     {
       "key": "value_uren_short",
-      "label": "短距離 (1000-1400m) × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 277%・勝 6/7・件数 279",
-      "short_label": "V-短距離",
+      "label": "短距離 (1000-1400m)・馬連 (人気無視 AI で 1-2 着候補・実力派が勝ちやすい)",
+      "short_label": "短距離・実力派",
       "color": "violet",
       "bet_type": "馬連 (短距離・nopop top1-top2)",
       "unit": 100
     },
     {
       "key": "value_uren_turf",
-      "label": "芝 限定 × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 164.6%・勝 7/7・件数 448",
-      "short_label": "V-芝馬連",
+      "label": "芝コース・馬連 (人気を見ない AI が選ぶ 1-2着候補で勝負)",
+      "short_label": "芝の馬連",
       "color": "emerald",
       "bet_type": "馬連 (芝・nopop top1-top2)",
       "unit": 100
     },
     {
       "key": "value_uren",
-      "label": "実力派 AI 本命+対抗 (人気を見ない) で馬連 100 円・全期間 100% 越え (勝 7/7)・avg 165%",
-      "short_label": "V-馬連",
+      "label": "実力派 AI の馬連 (人気を見ない・全部のレース版)",
+      "short_label": "馬連 (実力派)",
       "color": "rose",
       "bet_type": "馬連 (nopop top1-top2)",
       "unit": 100
     },
     {
       "key": "value_stack_fuku",
-      "label": "Stacking 複勝 — 真の WF で 83.74% (勝 0/3) ⚠ 期待値マイナス確定",
-      "short_label": "V-STACK複",
+      "label": "合成 AI 複勝 (4 つの AI を組合せ・しかし厳しい検証で損が確定)",
+      "short_label": "合成AI複勝",
       "color": "rose",
       "bet_type": "複勝 (Stacking top1)",
       "unit": 100
     },
     {
       "key": "value_invest",
-      "label": "実力派 AI 本命 (人気を見ないモデル) の確率 16%+ で複勝 100 円 — Walk-forward 152.62%",
-      "short_label": "VALUE",
+      "label": "実力派 AI 本命の複勝 (基準ゆるめ・厳しい検証で損確定)",
+      "short_label": "複勝 (実力派)",
       "color": "rose",
       "bet_type": "複勝 (nopop top1)",
       "unit": 100
     },
     {
       "key": "value_double",
-      "label": "複勝+馬連 併買 (200 円) — avg 187.6% / σ 64・最もバランス良い・worst 72%",
-      "short_label": "V-DOUBLE",
+      "label": "複勝と馬連を両方買う (200 円・厳しい検証で損が確定)",
+      "short_label": "両買い",
       "color": "rose",
       "bet_type": "複勝+馬連 (nopop top1-top2)",
       "unit": 200
     },
     {
       "key": "value_stack_uren",
-      "label": "Stacking 馬連 — 真の WF で 77.47% (勝 0/3) ⚠ 期待値マイナス確定",
-      "short_label": "V-STACK",
+      "label": "合成 AI 馬連 (4 つの AI を組合せ・しかし厳しい検証で損が確定)",
+      "short_label": "合成AI馬連",
       "color": "rose",
       "bet_type": "馬連 (Stacking top1-top2)",
       "unit": 100
     },
     {
       "key": "value_uren_hot",
-      "label": "馬連 nopop top1-top2 (閾値 16%・積極派) — avg 222%・件数 2673・勝 6/7",
-      "short_label": "V-馬連HOT",
+      "label": "馬連 ねらい多め (基準を緩めて毎レース買う・厳しい検証で損確定)",
+      "short_label": "馬連ねらい多め",
       "color": "violet",
       "bet_type": "馬連 (nopop top1-top2)",
       "unit": 100
     },
     {
       "key": "value_uren_short_ultra",
-      "label": "短距離 × 馬連 nopop (閾値 35%・厳選) — 真の期待 381%・勝 5/7・件数 165",
-      "short_label": "V-短距離Σ",
+      "label": "短距離・馬連 (厳選版・自信ある時だけ買う)",
+      "short_label": "短距離・厳選",
       "color": "gold",
       "bet_type": "馬連 (短距離・厳選・nopop)",
       "unit": 100
@@ -100,8 +100,8 @@
     },
     {
       "key": "value_safe",
-      "label": "実力派 AI 本命 (人気を見ない) の確率 35%+ で複勝 100 円 — 安定 σ17・avg 131%",
-      "short_label": "V-SAFE",
+      "label": "実力派 AI 本命の複勝 (厳しめ・厳しい検証では損)",
+      "short_label": "複勝・厳選",
       "color": "emerald",
       "bet_type": "複勝 (nopop top1・厳選)",
       "unit": 100
@@ -132,16 +132,16 @@
     },
     {
       "key": "value_tan3_long",
-      "label": "3 連単 nopop × 長距離 (2100m+) 閾値 25% — filter ベース 731%・件数 170 (要 leak-free 検証)",
-      "short_label": "V-3連単長",
+      "label": "長距離 (2100m+)・3連単 (まだ厳しい検証は未完了・参考)",
+      "short_label": "長距離3連単",
       "color": "violet",
       "bet_type": "3 連単 (長距離・nopop top1->2->3)",
       "unit": 100
     },
     {
       "key": "value_tan3_dirt_mid",
-      "label": "3 連単 nopop × ダ中距離 (1500-2000m) 閾値 30% — filter ベース 488%・件数 258 (要 leak-free 検証)",
-      "short_label": "V-3連ダ中",
+      "label": "ダート中距離・3連単 (まだ厳しい検証は未完了・参考)",
+      "short_label": "ダート3連単",
       "color": "amber",
       "bet_type": "3 連単 (ダ中・nopop top1->2->3)",
       "unit": 100
@@ -151,8 +151,8 @@
     "value_uren_turf": {
       "strategy_key": "value_uren_turf",
       "strategy_name": "value_uren_turf_030",
-      "label": "芝 限定 × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 164.6%・勝 7/7・件数 448",
-      "short_label": "V-芝馬連",
+      "label": "芝コース・馬連 (人気を見ない AI が選ぶ 1-2着候補で勝負)",
+      "short_label": "芝の馬連",
       "color": "emerald",
       "bet_type": "馬連 (芝・nopop top1-top2)",
       "unit": 100,
@@ -217,14 +217,14 @@
         "leakage_free": true
       },
       "trust_level": 2,
-      "trust_label": "MIXED (真の WF で控除率周辺)",
+      "trust_label": "ふつう (検証ではトントン・判断保留)",
       "risk": null
     },
     "value_uren_short": {
       "strategy_key": "value_uren_short",
       "strategy_name": "value_uren_short_030",
-      "label": "短距離 (1000-1400m) × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 277%・勝 6/7・件数 279",
-      "short_label": "V-短距離",
+      "label": "短距離 (1000-1400m)・馬連 (人気無視 AI で 1-2 着候補・実力派が勝ちやすい)",
+      "short_label": "短距離・実力派",
       "color": "violet",
       "bet_type": "馬連 (短距離・nopop top1-top2)",
       "unit": 100,
@@ -289,14 +289,14 @@
         "leakage_free": true
       },
       "trust_level": 4,
-      "trust_label": "TRUSTED (真の WF で控除率を大幅突破)",
+      "trust_label": "信頼 (厳しい検証で大きく勝てると確認済)",
       "risk": null
     },
     "value_uren_short_ultra": {
       "strategy_key": "value_uren_short_ultra",
       "strategy_name": "value_uren_short_ultra_035",
-      "label": "短距離 × 馬連 nopop (閾値 35%・厳選) — 真の期待 381%・勝 5/7・件数 165",
-      "short_label": "V-短距離Σ",
+      "label": "短距離・馬連 (厳選版・自信ある時だけ買う)",
+      "short_label": "短距離・厳選",
       "color": "gold",
       "bet_type": "馬連 (短距離・厳選・nopop)",
       "unit": 100,
@@ -355,14 +355,14 @@
         "edge_pct": -65.16
       },
       "trust_level": 1,
-      "trust_label": "RISKY (真の WF で期待値マイナス)",
+      "trust_label": "危険 (検証では平均で損する)",
       "risk": null
     },
     "value_stack_uren": {
       "strategy_key": "value_stack_uren",
       "strategy_name": "value_stack_uren_016",
-      "label": "Stacking 馬連 — 真の WF で 77.47% (勝 0/3) ⚠ 期待値マイナス確定",
-      "short_label": "V-STACK",
+      "label": "合成 AI 馬連 (4 つの AI を組合せ・しかし厳しい検証で損が確定)",
+      "short_label": "合成AI馬連",
       "color": "rose",
       "bet_type": "馬連 (Stacking top1-top2)",
       "unit": 100,
@@ -399,14 +399,14 @@
       "leakage_free": true,
       "kelly_true": null,
       "trust_level": 1,
-      "trust_label": "RISKY (真の WF で期待値マイナス)",
+      "trust_label": "危険 (検証では平均で損する)",
       "risk": null
     },
     "value_stack_fuku": {
       "strategy_key": "value_stack_fuku",
       "strategy_name": "value_stack_fuku_016",
-      "label": "Stacking 複勝 — 真の WF で 83.74% (勝 0/3) ⚠ 期待値マイナス確定",
-      "short_label": "V-STACK複",
+      "label": "合成 AI 複勝 (4 つの AI を組合せ・しかし厳しい検証で損が確定)",
+      "short_label": "合成AI複勝",
       "color": "rose",
       "bet_type": "複勝 (Stacking top1)",
       "unit": 100,
@@ -443,14 +443,14 @@
       "leakage_free": true,
       "kelly_true": null,
       "trust_level": 1,
-      "trust_label": "RISKY (真の WF で期待値マイナス)",
+      "trust_label": "危険 (検証では平均で損する)",
       "risk": null
     },
     "value_double": {
       "strategy_key": "value_double",
       "strategy_name": "value_double_nopop_016",
-      "label": "複勝+馬連 併買 (200 円) — avg 187.6% / σ 64・最もバランス良い・worst 72%",
-      "short_label": "V-DOUBLE",
+      "label": "複勝と馬連を両方買う (200 円・厳しい検証で損が確定)",
+      "short_label": "両買い",
       "color": "rose",
       "bet_type": "複勝+馬連 (nopop top1-top2)",
       "unit": 200,
@@ -509,7 +509,7 @@
         "edge_pct": -22.32
       },
       "trust_level": 1,
-      "trust_label": "RISKY (真の WF で期待値マイナス)",
+      "trust_label": "危険 (検証では平均で損する)",
       "risk": {
         "kelly_full": 1.5161,
         "kelly_half_pct": 75.8,
@@ -524,8 +524,8 @@
     "value_tan3": {
       "strategy_key": "value_tan3",
       "strategy_name": "value_tan3_nopop_030",
-      "label": "3 連単 nopop top1->top2->top3 (閾値 30%) — 真の WF 229.5%・勝 3/6・件数 365 ⭐",
-      "short_label": "V-3連単",
+      "label": "金の3連単 (人気を見ない AI の 1着→2着→3着・自信あるとき限定で1点 100円)",
+      "short_label": "金の3連単",
       "color": "gold",
       "bet_type": "3 連単 (nopop top1->2->3)",
       "unit": 100,
@@ -590,14 +590,14 @@
         "leakage_free": true
       },
       "trust_level": 4,
-      "trust_label": "TRUSTED (真の WF で控除率を大幅突破)",
+      "trust_label": "信頼 (厳しい検証で大きく勝てると確認済)",
       "risk": null
     },
     "value_uren": {
       "strategy_key": "value_uren",
       "strategy_name": "value_uren_nopop_030",
-      "label": "実力派 AI 本命+対抗 (人気を見ない) で馬連 100 円・全期間 100% 越え (勝 7/7)・avg 165%",
-      "short_label": "V-馬連",
+      "label": "実力派 AI の馬連 (人気を見ない・全部のレース版)",
+      "short_label": "馬連 (実力派)",
       "color": "rose",
       "bet_type": "馬連 (nopop top1-top2)",
       "unit": 100,
@@ -656,7 +656,7 @@
         "edge_pct": -13.07
       },
       "trust_level": 1,
-      "trust_label": "RISKY (真の WF で期待値マイナス)",
+      "trust_label": "危険 (検証では平均で損する)",
       "risk": {
         "kelly_full": 0.7526,
         "kelly_half_pct": 37.6,
@@ -671,8 +671,8 @@
     "value_uren_hot": {
       "strategy_key": "value_uren_hot",
       "strategy_name": "value_uren_nopop_016",
-      "label": "馬連 nopop top1-top2 (閾値 16%・積極派) — avg 222%・件数 2673・勝 6/7",
-      "short_label": "V-馬連HOT",
+      "label": "馬連 ねらい多め (基準を緩めて毎レース買う・厳しい検証で損確定)",
+      "short_label": "馬連ねらい多め",
       "color": "violet",
       "bet_type": "馬連 (nopop top1-top2)",
       "unit": 100,
@@ -731,7 +731,7 @@
         "edge_pct": -26.25
       },
       "trust_level": 1,
-      "trust_label": "RISKY (真の WF で期待値マイナス)",
+      "trust_label": "危険 (検証では平均で損する)",
       "risk": {
         "kelly_full": 0.8985,
         "kelly_half_pct": 44.9,
@@ -746,8 +746,8 @@
     "value_invest": {
       "strategy_key": "value_invest",
       "strategy_name": "value_invest_nopop_016",
-      "label": "実力派 AI 本命 (人気を見ないモデル) の確率 16%+ で複勝 100 円 — Walk-forward 152.62%",
-      "short_label": "VALUE",
+      "label": "実力派 AI 本命の複勝 (基準ゆるめ・厳しい検証で損確定)",
+      "short_label": "複勝 (実力派)",
       "color": "rose",
       "bet_type": "複勝 (nopop top1)",
       "unit": 100,
@@ -806,7 +806,7 @@
         "edge_pct": -18.38
       },
       "trust_level": 1,
-      "trust_label": "RISKY (真の WF で期待値マイナス)",
+      "trust_label": "危険 (検証では平均で損する)",
       "risk": {
         "kelly_full": 3.3946,
         "kelly_half_pct": 169.7,
@@ -821,8 +821,8 @@
     "value_safe": {
       "strategy_key": "value_safe",
       "strategy_name": "value_invest_nopop_035",
-      "label": "実力派 AI 本命 (人気を見ない) の確率 35%+ で複勝 100 円 — 安定 σ17・avg 131%",
-      "short_label": "V-SAFE",
+      "label": "実力派 AI 本命の複勝 (厳しめ・厳しい検証では損)",
+      "short_label": "複勝・厳選",
       "color": "emerald",
       "bet_type": "複勝 (nopop top1・厳選)",
       "unit": 100,
@@ -861,7 +861,7 @@
       "leakage_free": false,
       "kelly_true": null,
       "trust_level": 1,
-      "trust_label": "RISKY (最終期間で 100% 割れ)",
+      "trust_label": "危険 (検証で平均的に損)",
       "risk": null
     },
     "big": {
@@ -961,7 +961,7 @@
       "leakage_free": false,
       "kelly_true": null,
       "trust_level": 2,
-      "trust_label": "MIXED (最終期間 ぎりぎり)",
+      "trust_label": "ふつう (検証で勝ったり負けたり)",
       "risk": null
     },
     "turf": {
@@ -1061,7 +1061,7 @@
       "leakage_free": false,
       "kelly_true": null,
       "trust_level": 2,
-      "trust_label": "MIXED (最終期間 ぎりぎり)",
+      "trust_label": "ふつう (検証で勝ったり負けたり)",
       "risk": null
     },
     "ultra": {
@@ -1161,7 +1161,7 @@
       "leakage_free": false,
       "kelly_true": null,
       "trust_level": 1,
-      "trust_label": "RISKY (最終期間で 100% 割れ)",
+      "trust_label": "危険 (検証で平均的に損)",
       "risk": null
     },
     "best": {
@@ -1261,7 +1261,7 @@
       "leakage_free": false,
       "kelly_true": null,
       "trust_level": 1,
-      "trust_label": "RISKY (最終期間で 100% 割れ)",
+      "trust_label": "危険 (検証で平均的に損)",
       "risk": null
     },
     "safe": {
@@ -1361,7 +1361,7 @@
       "leakage_free": false,
       "kelly_true": null,
       "trust_level": 1,
-      "trust_label": "RISKY (最終期間で 100% 割れ)",
+      "trust_label": "危険 (検証で平均的に損)",
       "risk": null
     }
   },

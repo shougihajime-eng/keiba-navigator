@@ -782,16 +782,16 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
             if final_roi is None:
                 if wp == ap and sigma < 15 and mean_roi >= 105:
                     trust_level = 4
-                    trust_label = "TRUSTED (look-ahead 未補正)"
+                    trust_label = "信頼 (緩い検証では合格・要厳しい検証)"
                 elif wp >= ap * 0.8 and sigma < 20 and mean_roi >= 100:
                     trust_level = 3
-                    trust_label = "STABLE (look-ahead 未補正)"
+                    trust_label = "安定 (緩い検証では合格)"
                 elif wp >= ap // 2 and mean_roi >= 100:
                     trust_level = 2
-                    trust_label = "MIXED (look-ahead 未補正)"
+                    trust_label = "ふつう (緩い検証では勝ったり負けたり)"
                 else:
                     trust_level = 1
-                    trust_label = "RISKY"
+                    trust_label = "危険"
             else:
                 # Wave28: 最終期間 ROI (pure test) を信頼判定の核に据える
                 # Wave30: walk_forward_v2 (期間別再学習) が利用可能なら overall_roi_pct を優先
@@ -814,16 +814,16 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
                         trust_label = "危険 (検証では平均で損する)"
                 elif final_roi >= 105 and wp == ap and mean_roi >= 105:
                     trust_level = 4
-                    trust_label = "TRUSTED (最終期間でも期待値プラス・但し未検証)"
+                    trust_label = "信頼 (検証で勝ち・ただ厳しい検証はまだ)"
                 elif final_roi >= 100 and wp >= ap * 0.8 and mean_roi >= 100:
                     trust_level = 3
-                    trust_label = "STABLE (最終期間で 100%+)"
+                    trust_label = "安定 (検証で勝てる)"
                 elif final_roi >= 95 and wp >= ap // 2 and mean_roi >= 100:
                     trust_level = 2
-                    trust_label = "MIXED (最終期間 ぎりぎり)"
+                    trust_label = "ふつう (検証で勝ったり負けたり)"
                 else:
                     trust_level = 1
-                    trust_label = "RISKY (最終期間で 100% 割れ)"
+                    trust_label = "危険 (検証で平均的に損)"
 
         out[defn["key"]] = {
             "strategy_key": defn["key"],

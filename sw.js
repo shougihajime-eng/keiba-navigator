@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v64"; // Wave32: 真の Kelly (leak-free WF 由来) 反映・V-3連単 ¥330/R・V-短距離 ¥516/R
+const CACHE_VERSION = "keiba-nav-v65"; // Wave32-X: UX 全文 8 歳でも分かる日本語化 (戦略名/判定/Kelly 解説 全部)
 const PRECACHE = [
   "/",
   "/index.html",

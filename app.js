@@ -1044,7 +1044,7 @@
       const wf = s.walk_forward || {};
       const wfRoi = wf.mean_roi_pct != null ? wf.mean_roi_pct.toFixed(1) + "%" : null;
       const wfWin = wf.win_periods != null && wf.active_periods != null
-        ? `分割検証 ${wf.win_periods}/${wf.active_periods} 期間 100%+`
+        ? `${wf.win_periods}/${wf.active_periods} 期間で 100% 超え`
         : null;
       const card = el("div", { class: `strat-trust-card ${cls}` });
       card.appendChild(el("div", { class: "head" },
@@ -1053,14 +1053,18 @@
       ));
       // Wave28: 真の期待 ROI (final_period_roi = pure test) を主役にし、mean は補助
       const finalRoi = s.final_period_roi ?? wf.final_period_roi;
-      const mainRoi = finalRoi != null
-        ? finalRoi.toFixed(1) + "%"
-        : (s.roi_pct ? s.roi_pct.toFixed(1) + "%" : "—");
-      const mainLabel = finalRoi != null ? "真の期待 ROI" : "1 期間検証 ROI";
+      // Wave32-X: 真の WF (leak-free) があればそちらを最優先
+      const overallV2_2 = s.overall_roi_pct_v2;
+      const mainRoi = overallV2_2 != null
+        ? overallV2_2.toFixed(1) + "%"
+        : (finalRoi != null
+            ? finalRoi.toFixed(1) + "%"
+            : (s.roi_pct ? s.roi_pct.toFixed(1) + "%" : "—"));
+      const mainLabel = overallV2_2 != null ? "本当の回収率 ✓" : (finalRoi != null ? "最後の期間で検証" : "1 期間だけ検証");
       card.appendChild(el("div", { class: "big-roi" }, mainRoi));
       card.appendChild(el("div", { class: "big-roi-label" }, mainLabel));
       card.appendChild(el("div", { class: "meta", html:
-        `${s.fired_count}件・的中${s.hit_rate_pct}%${wfRoi ? `<br>分割検証 平均 ${wfRoi} (${wfWin || "—"})` : ""}`
+        `過去 ${s.fired_count} 回・当たり ${s.hit_rate_pct}%${wfRoi ? `<br>期間別の平均 ${wfRoi} (${wfWin || "—"})` : ""}`
       }));
       if (d.label) card.appendChild(el("div", { class: "desc" }, d.label));
       grid.appendChild(card);
@@ -1083,7 +1087,7 @@
         ));
         card.appendChild(el("div", { class: "big-roi" }, d.roi_pct.toFixed(1) + "%"));
         card.appendChild(el("div", { class: "meta", html:
-          `${d.fired_count}件・的中${d.hit_rate_pct}%<br>分割検証 ${d.walk_forward.win_periods}/${d.walk_forward.active_periods} 期間 100%+<br>Walk-fwd 平均 ${d.walk_forward.mean_roi_pct}%`
+          `過去 ${d.fired_count} 回・当たり ${d.hit_rate_pct}%<br>${d.walk_forward.win_periods}/${d.walk_forward.active_periods} 期間で 100% 超え<br>期間別の平均 ${d.walk_forward.mean_roi_pct}%`
         }));
         card.appendChild(el("div", { class: "desc" }, d.desc));
         grid.appendChild(card);
@@ -1193,18 +1197,19 @@
       const wideRoi = sm.wide?.overall_roi_pct;
       const allZero = safeHits === 0 && midHits === 0 && wideHits === 0;
       const headTxt = allZero
-        ? `⚠ 真の Walk-forward 検証: 過去 ${totalDays} 日中 0 回的中`
-        : `⚡ 真の Walk-forward 検証: 過去 ${totalDays} 日で測定済`;
+        ? `⚠ 過去 ${totalDays} 日間きちんと調べた結果: 0 回しか当たっていません`
+        : `✓ 過去 ${totalDays} 日間きちんと調べました`;
       wfBanner.appendChild(el("div", { class: "wf-head" }, headTxt));
       wfBanner.appendChild(el("div", { class: "wf-body", html:
-        `堅め (1点 ¥200): ${safeHits}/${totalDays} 的中・ROI ${safeRoi != null ? safeRoi + "%" : "—"} <br>` +
-        `中波 (32点 ¥6,400): ${midHits}/${totalDays} 的中・ROI ${midRoi != null ? midRoi + "%" : "—"} <br>` +
-        `万舟 (243点 ¥48,600): ${wideHits}/${totalDays} 的中・ROI ${wideRoi != null ? wideRoi + "%" : "—"}`
+        `堅め (本命だけ・1点 ¥200): ${safeHits}/${totalDays} 回当たり・回収率 ${safeRoi != null ? safeRoi + "%" : "—"} <br>` +
+        `中ぐらい (各レース2頭ずつ・32点 ¥6,400): ${midHits}/${totalDays} 回当たり・回収率 ${midRoi != null ? midRoi + "%" : "—"} <br>` +
+        `大量買い (各レース3頭ずつ・243点 ¥48,600): ${wideHits}/${totalDays} 回当たり・回収率 ${wideRoi != null ? wideRoi + "%" : "—"}`
       }));
       if (allZero) {
         wfBanner.appendChild(el("div", { class: "wf-warn", html:
-          "<b>正直な現実</b>: AI モデルでも 5 R 連勝は 0.1% 程度の極低確率。過去 50 日中 0 回的中は確率的に妥当。" +
-          "WIN5 は<b>娯楽として小額で楽しむ</b>馬券。本気戦略は <b>V-3連単 (229%)</b> や <b>V-短距離 (137%)</b> を推奨。"
+          "<b>正直な話</b>: AI でも 5 レース連続で当てるのは 0.1% くらいの確率。" +
+          "50 日試して 0 回は確率的に当然です。<br>" +
+          "WIN5 は<b>遊びで小額だけ買う</b>馬券。本気の戦略は <b>金の3連単 (期待 +129%)</b> や <b>短距離・実力派 (期待 +37%)</b> を見てください。"
         }));
       }
       card.appendChild(wfBanner);
@@ -2760,10 +2765,10 @@
             ? finalRoi.toFixed(1) + "%"
             : (st.roi_pct ? st.roi_pct.toFixed(1) + "%" : "—"));
       const mainRoiLabel = (leakageFree && overallV2 != null)
-        ? "真の Walk-fwd ⚡"
-        : (finalRoi != null ? "真の期待 (最終期間)" : "1 期間検証");
+        ? "本当の期待回収率 ✓"
+        : (finalRoi != null ? "最後の期間で検証" : "1 期間だけの検証");
       const lfBadge = leakageFree
-        ? `<span class="rec-strat-lf-badge" title="期間別再学習で look-ahead 完全排除済">⚡ leak-free</span>`
+        ? `<span class="rec-strat-lf-badge" title="未来の答えを見ずに過去だけで検証した、本物の数字です">✓ 厳しい検証済</span>`
         : "";
       // Wave32: Kelly criterion を「真の Walk-forward (leak-free)」から再計算済の kelly_true を最優先
       // 旧 risk フィールド (leak 由来) は fallback
@@ -2792,12 +2797,12 @@
         if (kellyBetJpy < 100) kellyBetJpy = 100;
       }
       const kellyBlock = (kellyHalfPct != null && kellyBetJpy != null && kellyHalfPct > 0)
-        ? `<div class="rec-strat-kelly ${kellyIsLeakFree ? 'rec-strat-kelly-true' : ''}" title="${kellyIsLeakFree ? '真の Walk-forward (look-ahead 完全排除) から算出した Kelly Half' : '旧 backtest 由来'}">
-             💴 1R 推奨 ¥${kellyBetJpy.toLocaleString()}
-             <span class="rec-strat-kelly-sub">${kellyIsLeakFree ? '⚡' : ''}(予算¥${dailyBudget.toLocaleString()} の ${kellyHalfPct}%${edgePct != null ? `, +${edgePct}%` : ''})</span>
+        ? `<div class="rec-strat-kelly ${kellyIsLeakFree ? 'rec-strat-kelly-true' : ''}" title="${kellyIsLeakFree ? '賭けすぎないよう、安全に半分量に抑えた推奨額です (厳しい検証で算出)' : '旧計算 (古い検証由来)'}">
+             💴 1 レース ¥${kellyBetJpy.toLocaleString()} がおすすめ
+             <span class="rec-strat-kelly-sub">${kellyIsLeakFree ? '✓ ' : ''}(使ってよい総額¥${dailyBudget.toLocaleString()} のうち${edgePct != null ? ` ・期待利益 +${edgePct}%` : ''})</span>
            </div>`
         : (kellyHalfPct === 0
-            ? `<div class="rec-strat-kelly rec-strat-kelly-skip" title="真の WF で期待値マイナス・賭けない推奨">⛔ 期待値マイナス・賭けない</div>`
+            ? `<div class="rec-strat-kelly rec-strat-kelly-skip" title="厳しい検証で平均的に損する戦略・賭けない推奨">⛔ 平均で損する戦略・買いません</div>`
             : "");
       const riskBlock = (maxStreak != null && maxDD != null)
         ? `<div class="rec-strat-risk" title="16 期間検証での最悪値">
@@ -2811,8 +2816,8 @@
           <div class="rec-strat-roi" title="${mainRoiLabel} ROI">${mainRoi}</div>
           <div class="rec-strat-roi-label">${mainRoiLabel}</div>
           <div class="rec-strat-meta">
-            ${st.fired_count}件・的中${st.hit_rate_pct}%
-            ${wfWin ? `<span class="rec-strat-wf">分割検証: ${wfRoi}・${wfWin}</span>` : ""}
+            過去 ${st.fired_count} 回試して当たり ${st.hit_rate_pct}%
+            ${wfWin ? `<span class="rec-strat-wf">期間ごとに分けて検証: 平均 ${wfRoi}・${wfWin}</span>` : ""}
             ${lfBadge}
           </div>
           ${kellyBlock}
@@ -2832,11 +2837,11 @@
     root.innerHTML = `
       <div class="rec-head">
         <span class="rec-icon">★</span>
-        <span class="rec-title">100% 越え戦略の自動推奨</span>
+        <span class="rec-title">回収率 100% を超えた本物の戦略</span>
         <span class="rec-pill is-go">${todayList.length > 0 ? `今日 ${todayList.length} 件` : "直近の実績"}</span>
       </div>
       <p class="rec-criteria">
-        過去 ${stats.best?.test_races || 0} R で <b>Walk-forward 検証済</b> の戦略のみが発火条件を満たしたレースを抽出しています。
+        過去 ${stats.best?.test_races || 0} レースで <b>厳しい検証 (未来を見ずに過去だけで合格)</b> に通った戦略の中から、今日狙えるレースを表示しています。
       </p>
       ${todayList.length > 0 ? `
         <div class="rec-section">
