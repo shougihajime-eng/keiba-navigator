@@ -7,6 +7,41 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🔬 Wave28 (2026-05-20 朝・ユーザー指示「5 = 全部 Claude 判断」で 4 施策完走 + 重要発見)** —
+  - **Wave28-A VALUE × G1 限定評価** (`value_g1_sweep.py` 新規):
+    - 学習データ 3,377 R は全て「平場」判定 (G1/G2/G3 は 0 件)
+    - 過去取得データの大半は新潟新潟の障害競走 (JG 58K) + 中央 RA 3.6K
+    - → JV-Link 過去 10 年フル取得後に再評価予定
+  - **Wave28-B 4 モデル重み最適化** (`optuna_4model_weights.py` 新規):
+    - α(LGBM)+β(nopop)+γ(XGB)+δ(CatB)=1 制約で Optuna 60 trial
+    - 最良: α=0.065 + **β=0.820 (nopop)** + γ=0.095 + δ=0.021
+    - avg 138.19% / σ 29.09 / 勝期間 6/7 / 件数 2557 / 閾値 0.168
+    - **nopop が 82% で支配的** = 「人気を見ない」が引き続き最強
+  - **🔍 Wave28-C nopop モデル Calibration の重大発見** (`calibrate_model.py --nopop` 追加):
+    | predicted | actual | 件数 |
+    |-----------|--------|------|
+    | 0.0-0.1 | 1.55% | 37304 |
+    | 0.1-0.2 | 13.92% | 7377 |
+    | **0.2-0.3** | **49.08%** | 1950 ← 2 倍の過小評価 |
+    | **0.3-0.4** | **80.36%** | 713 ← 2.4 倍の過小評価 |
+    | **0.4-0.5** | **91.73%** | 254 ← 2.1 倍の過小評価 |
+    - **nopop は確率を 1/2 〜 1/3 に過小評価していた!**
+    - VALUE 戦略 (閾値 0.16) で買って実 ROI 152% の理由を解明: predicted 16% → actual ~30% を狙っているため
+    - Platt scaling 校正後: predicted 24% → actual 40% (49→40 で改善)
+    - 完全な校正は線形では不可 (Isotonic regression が候補)
+  - **Wave28-D JV-Link 状況確認**:
+    - JVInit OK / 過去 raw 841 MB / 133,608 records 取得済
+    - build_all 集計 145,642 records (JG 58K + SE 49K + RA 3.6K + ...)
+    - races/ 出力: 3492 / results/ 3449
+    - **過去 10 年フル取得 (60 万行) は未達成** → 朝の自動リトライ待ち
+  - **本番デプロイ**: commit `e3b06c9` push origin main 済
+
+### 🔜 次の一歩 (世界一完成へ・更なる飛躍)
+- **Isotonic regression Calibration** (Platt より高精度な校正・実 prob = predicted の世界へ)
+- **JV-Link 過去 10 年フル取得** (60 万行 = 12 倍データで AUC +3〜5% / G1 評価も可能に)
+- **本日の JG (障害競走) 除外戦略** (現状 SE 49K のうち障害が多い・平地のみで学習し直し)
+- **券種別 × VALUE 戦略の組合せ** (馬連・3連複・ワイドで nopop top 軸の戦略を)
+
 - **🏆 Wave27 (2026-05-20 朝・ユーザー指示「全部やりましょう」で予測精度世界一級達成)** —
   - **🎯 Wave27-1 VALUE 戦略を本番推奨に組み込み**:
     - aggregate_recommendations.py の STRATEGY_DEFS に value_invest 追加
