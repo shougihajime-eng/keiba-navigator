@@ -5762,6 +5762,32 @@ body::after {
   box-shadow: 0 0 24px -8px rgba(245, 158, 11, 0.35);
 }
 
+/* Wave28: 真の期待 ROI バッジ (look-ahead leakage 無しの最終期間 ROI = pure test) */
+.rec-strat-final, .strat-final-roi {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08));
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.rec-strat-card.rec-strat-risky .rec-strat-final,
+.strat-trust-card.risky .strat-final-roi {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.08));
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.rec-strat-card.rec-strat-trusted .rec-strat-final,
+.strat-trust-card.trusted .strat-final-roi {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(217, 119, 6, 0.08));
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 8px -2px rgba(245, 158, 11, 0.45);
+}
+
 /* Wave28: キーボード操作時のフォーカスリング (アクセシビリティ・タブ移動で迷子防止) */
 .btn-cta:focus-visible,
 .btn-bn:focus-visible,

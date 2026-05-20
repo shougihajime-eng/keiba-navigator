@@ -247,9 +247,16 @@ def _load_value_multi_bet_stats() -> Dict[str, Dict[str, Any]]:
     }
     for label, items in (d.get("results") or {}).items():
         prefix = label_to_prefix.get(label)
-        if not prefix or not isinstance(items, list):
+        if not prefix:
             continue
-        for r in items:
+        # items は dict (キー "th_0.16" 等) or list の可能性
+        if isinstance(items, dict):
+            iterable = items.values()
+        elif isinstance(items, list):
+            iterable = items
+        else:
+            continue
+        for r in iterable:
             if not isinstance(r, dict):
                 continue
             th = r.get("threshold")
@@ -267,9 +274,38 @@ def _load_value_multi_bet_stats() -> Dict[str, Dict[str, Any]]:
     return out
 
 
+def _load_value_threshold_sweep_stats() -> Dict[str, Dict[str, Any]]:
+    """value_threshold_sweep.json (複勝 nopop 単独・閾値細かいスイープ) を統合。
+    Wave28: V-SAFE (閾値 0.35) など、value_multi_bet にない閾値もカバーする。"""
+    out: Dict[str, Dict[str, Any]] = {}
+    if not VALUE_THRESHOLD_SWEEP_PATH.exists():
+        return out
+    try:
+        d = json.loads(VALUE_THRESHOLD_SWEEP_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return out
+    prefix = "value_invest_nopop"
+    for r in d.get("results") or []:
+        if not isinstance(r, dict):
+            continue
+        th = r.get("threshold")
+        if th is None or r.get("total_bets", 0) == 0:
+            continue
+        key = f"{prefix}_{int(round(th * 100)):03d}"
+        pr = r.get("period_rois") or []
+        valid_pr = [x for x in pr if x is not None]
+        final_roi = valid_pr[-1] if valid_pr else None
+        entry = dict(r)
+        entry["name"] = key
+        if final_roi is not None:
+            entry["final_period_roi"] = round(final_roi, 2)
+        out[key] = entry
+    return out
+
+
 def _load_walk_forward() -> Dict[str, Dict[str, Any]]:
     """Walk-forward 検証結果を {strategy_name: stats} で返す。
-    Wave28: value_multi_bet.json の戦略 (value_uren_nopop_030 等) も統合 +
+    Wave28: value_multi_bet.json / value_threshold_sweep.json も統合 +
             既存 entries に final_period_roi (= 最終期間 ROI = pure test) を補完。"""
     out: Dict[str, Dict[str, Any]] = {}
     if WALK_FORWARD_PATH.exists():
@@ -286,9 +322,11 @@ def _load_walk_forward() -> Dict[str, Dict[str, Any]]:
                 out[s.get("name")] = s
         except Exception:
             pass
-    # value_multi_bet.json を統合
-    value_stats = _load_value_multi_bet_stats()
-    for k, v in value_stats.items():
+    # value_threshold_sweep.json を統合 (これで閾値 0.35 などもカバー)
+    for k, v in _load_value_threshold_sweep_stats().items():
+        out[k] = v
+    # value_multi_bet.json を統合 (馬連・ワイド・3連複・3連単 + 複勝の細かい閾値)
+    for k, v in _load_value_multi_bet_stats().items():
         out[k] = v
     return out
 
@@ -351,16 +389,18 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
                     trust_level = 1
                     trust_label = "RISKY"
             else:
-                # 最終期間 (pure test) 必須条件付き
-                if final_roi >= 105 and wp == ap and sigma < 15 and mean_roi >= 105:
+                # Wave28: 最終期間 ROI (pure test) を信頼判定の核に据える
+                #   look-ahead leakage により mean は過大評価されがち。
+                #   学習に含まれない最終期間で「期待値プラス + 全期間勝」が本物の証。
+                if final_roi >= 105 and wp == ap and mean_roi >= 105:
                     trust_level = 4
-                    trust_label = "TRUSTED"
-                elif final_roi >= 100 and wp >= ap * 0.8 and sigma < 20 and mean_roi >= 100:
+                    trust_label = "TRUSTED (最終期間でも期待値プラス)"
+                elif final_roi >= 100 and wp >= ap * 0.8 and mean_roi >= 100:
                     trust_level = 3
-                    trust_label = "STABLE"
+                    trust_label = "STABLE (最終期間で 100%+)"
                 elif final_roi >= 95 and wp >= ap // 2 and mean_roi >= 100:
                     trust_level = 2
-                    trust_label = "MIXED"
+                    trust_label = "MIXED (最終期間 ぎりぎり)"
                 else:
                     trust_level = 1
                     trust_label = "RISKY (最終期間で 100% 割れ)"

@@ -1052,8 +1052,13 @@
         el("span", { class: "stars" }, stars)
       ));
       card.appendChild(el("div", { class: "big-roi" }, s.roi_pct ? s.roi_pct.toFixed(1) + "%" : "—"));
+      // Wave28: 最終期間 ROI (look-ahead 無し・真の期待 ROI) を併記
+      const finalRoi = s.final_period_roi ?? wf.final_period_roi;
+      const finalRoiHtml = finalRoi != null
+        ? `<br><span class="strat-final-roi">真の期待 ${finalRoi.toFixed(1)}%</span>`
+        : "";
       card.appendChild(el("div", { class: "meta", html:
-        `${s.fired_count}件・的中${s.hit_rate_pct}%${wfRoi ? `<br>${wfWin || ""}<br>Walk-fwd 平均 ${wfRoi}` : ""}`
+        `${s.fired_count}件・的中${s.hit_rate_pct}%${wfRoi ? `<br>${wfWin || ""}<br>Walk-fwd 平均 ${wfRoi}` : ""}${finalRoiHtml}`
       }));
       if (d.label) card.appendChild(el("div", { class: "desc" }, d.label));
       grid.appendChild(card);
@@ -2697,6 +2702,11 @@
       const wfWin = wf.win_periods != null && wf.active_periods != null
         ? `${wf.win_periods}/${wf.active_periods} 期間 ◎`
         : null;
+      // Wave28: 最終期間 ROI (look-ahead 無しの真の期待 ROI) を併記
+      const finalRoi = st.final_period_roi ?? wf.final_period_roi;
+      const finalRoiBadge = finalRoi != null
+        ? `<span class="rec-strat-final" title="学習に含まれない最終期間で算出した、真の期待 ROI">真の期待 ${finalRoi.toFixed(1)}%</span>`
+        : "";
       return `
         <div class="rec-strat-card ${cls}">
           <div class="rec-strat-badge">${defn.short_label}</div>
@@ -2705,6 +2715,7 @@
           <div class="rec-strat-meta">
             ${st.fired_count}件・的中${st.hit_rate_pct}%
             ${wfWin ? `<span class="rec-strat-wf">分割検証: ${wfRoi}・${wfWin}</span>` : ""}
+            ${finalRoiBadge}
           </div>
           <div class="rec-strat-label">${defn.label}</div>
         </div>
