@@ -1,0 +1,415 @@
+{
+  "evaluated_at": "2026-05-20T03:06:47.569528+00:00",
+  "results": {
+    "複勝 nopop top1": {
+      "th_0.16": {
+        "threshold": 0.16,
+        "mean_roi_pct": 152.62,
+        "worst_roi_pct": 77.9,
+        "best_roi_pct": 203.08,
+        "roi_std": 37.47,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2673,
+        "period_rois": [
+          149.65,
+          161.21,
+          164.05,
+          203.08,
+          183.23,
+          129.23,
+          77.9
+        ]
+      },
+      "th_0.2": {
+        "threshold": 0.2,
+        "mean_roi_pct": 148.99,
+        "worst_roi_pct": 78.82,
+        "best_roi_pct": 184.45,
+        "roi_std": 33.87,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2160,
+        "period_rois": [
+          150.09,
+          157.16,
+          161.61,
+          183.14,
+          184.45,
+          127.67,
+          78.82
+        ]
+      },
+      "th_0.25": {
+        "threshold": 0.25,
+        "mean_roi_pct": 142.96,
+        "worst_roi_pct": 83.65,
+        "best_roi_pct": 175.3,
+        "roi_std": 28.55,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 1473,
+        "period_rois": [
+          140.28,
+          146.64,
+          156.24,
+          170.09,
+          175.3,
+          128.52,
+          83.65
+        ]
+      },
+      "th_0.3": {
+        "threshold": 0.3,
+        "mean_roi_pct": 137.4,
+        "worst_roi_pct": 85.94,
+        "best_roi_pct": 162.13,
+        "roi_std": 23.94,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 956,
+        "period_rois": [
+          140.82,
+          144.02,
+          148.47,
+          156.93,
+          162.13,
+          123.51,
+          85.94
+        ]
+      }
+    },
+    "馬連 nopop top1-top2": {
+      "th_0.16": {
+        "threshold": 0.16,
+        "mean_roi_pct": 222.57,
+        "worst_roi_pct": 66.46,
+        "best_roi_pct": 369.41,
+        "roi_std": 92.89,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2673,
+        "period_rois": [
+          188.32,
+          199.85,
+          303.13,
+          369.41,
+          270.99,
+          159.82,
+          66.46
+        ]
+      },
+      "th_0.2": {
+        "threshold": 0.2,
+        "mean_roi_pct": 216.71,
+        "worst_roi_pct": 84.75,
+        "best_roi_pct": 354.69,
+        "roi_std": 81.43,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2160,
+        "period_rois": [
+          203.63,
+          203.79,
+          271.24,
+          354.69,
+          254.48,
+          144.39,
+          84.75
+        ]
+      },
+      "th_0.25": {
+        "threshold": 0.25,
+        "mean_roi_pct": 174.53,
+        "worst_roi_pct": 92.09,
+        "best_roi_pct": 311.76,
+        "roi_std": 68.35,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 1473,
+        "period_rois": [
+          127.52,
+          208.67,
+          186.15,
+          311.76,
+          180.39,
+          115.13,
+          92.09
+        ]
+      },
+      "th_0.3": {
+        "threshold": 0.3,
+        "mean_roi_pct": 165.29,
+        "worst_roi_pct": 108.75,
+        "best_roi_pct": 311.17,
+        "roi_std": 66.65,
+        "win_periods": 7,
+        "active_periods": 7,
+        "total_bets": 956,
+        "period_rois": [
+          118.95,
+          170.63,
+          194.72,
+          311.17,
+          142.97,
+          109.82,
+          108.75
+        ]
+      }
+    },
+    "ワイド 3点 nopop top123": {
+      "th_0.16": {
+        "threshold": 0.16,
+        "mean_roi_pct": 123.14,
+        "worst_roi_pct": 67.01,
+        "best_roi_pct": 150.7,
+        "roi_std": 26.59,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2673,
+        "period_rois": [
+          123.27,
+          133.89,
+          128.02,
+          149.75,
+          150.7,
+          109.36,
+          67.01
+        ]
+      },
+      "th_0.2": {
+        "threshold": 0.2,
+        "mean_roi_pct": 119.11,
+        "worst_roi_pct": 76.79,
+        "best_roi_pct": 141.11,
+        "roi_std": 21.1,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2160,
+        "period_rois": [
+          129.6,
+          124.2,
+          119.71,
+          141.11,
+          139.85,
+          102.5,
+          76.79
+        ]
+      },
+      "th_0.25": {
+        "threshold": 0.25,
+        "mean_roi_pct": 110.28,
+        "worst_roi_pct": 86.75,
+        "best_roi_pct": 123.64,
+        "roi_std": 12.84,
+        "win_periods": 5,
+        "active_periods": 7,
+        "total_bets": 1473,
+        "period_rois": [
+          106.63,
+          113.07,
+          119.65,
+          123.6,
+          123.64,
+          98.64,
+          86.75
+        ]
+      },
+      "th_0.3": {
+        "threshold": 0.3,
+        "mean_roi_pct": 104.51,
+        "worst_roi_pct": 89.43,
+        "best_roi_pct": 119.54,
+        "roi_std": 12.75,
+        "win_periods": 4,
+        "active_periods": 7,
+        "total_bets": 956,
+        "period_rois": [
+          89.43,
+          109.85,
+          119.54,
+          113.28,
+          118.28,
+          91.74,
+          89.43
+        ]
+      }
+    },
+    "3連複 ボックス nopop top123": {
+      "th_0.16": {
+        "threshold": 0.16,
+        "mean_roi_pct": 124.49,
+        "worst_roi_pct": 49.97,
+        "best_roi_pct": 233.05,
+        "roi_std": 57.98,
+        "win_periods": 5,
+        "active_periods": 7,
+        "total_bets": 2673,
+        "period_rois": [
+          100.53,
+          136.78,
+          70.29,
+          233.05,
+          172.21,
+          108.61,
+          49.97
+        ]
+      },
+      "th_0.2": {
+        "threshold": 0.2,
+        "mean_roi_pct": 121.9,
+        "worst_roi_pct": 72.13,
+        "best_roi_pct": 200.94,
+        "roi_std": 39.46,
+        "win_periods": 5,
+        "active_periods": 7,
+        "total_bets": 2160,
+        "period_rois": [
+          118.32,
+          112.49,
+          83.6,
+          200.94,
+          146.42,
+          119.41,
+          72.13
+        ]
+      },
+      "th_0.25": {
+        "threshold": 0.25,
+        "mean_roi_pct": 109.34,
+        "worst_roi_pct": 78.26,
+        "best_roi_pct": 148.33,
+        "roi_std": 21.8,
+        "win_periods": 5,
+        "active_periods": 7,
+        "total_bets": 1473,
+        "period_rois": [
+          84.15,
+          110.2,
+          107.42,
+          148.33,
+          114.43,
+          122.59,
+          78.26
+        ]
+      },
+      "th_0.3": {
+        "threshold": 0.3,
+        "mean_roi_pct": 108.43,
+        "worst_roi_pct": 61.05,
+        "best_roi_pct": 153.58,
+        "roi_std": 33.21,
+        "win_periods": 4,
+        "active_periods": 7,
+        "total_bets": 956,
+        "period_rois": [
+          61.05,
+          104.48,
+          149.24,
+          153.58,
+          126.52,
+          86.67,
+          77.5
+        ]
+      }
+    },
+    "3連単 nopop top1->2->3": {
+      "th_0.16": {
+        "threshold": 0.16,
+        "mean_roi_pct": 285.49,
+        "worst_roi_pct": 40.78,
+        "best_roi_pct": 795.83,
+        "roi_std": 224.03,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2673,
+        "period_rois": [
+          180.65,
+          165.97,
+          217.05,
+          795.83,
+          317.43,
+          280.69,
+          40.78
+        ]
+      },
+      "th_0.2": {
+        "threshold": 0.2,
+        "mean_roi_pct": 308.5,
+        "worst_roi_pct": 58.87,
+        "best_roi_pct": 709.91,
+        "roi_std": 190.69,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2160,
+        "period_rois": [
+          212.63,
+          194.94,
+          258.17,
+          709.91,
+          344.51,
+          380.45,
+          58.87
+        ]
+      },
+      "th_0.25": {
+        "threshold": 0.25,
+        "mean_roi_pct": 242.3,
+        "worst_roi_pct": 78.05,
+        "best_roi_pct": 437.69,
+        "roi_std": 133.71,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 1473,
+        "period_rois": [
+          78.05,
+          150.27,
+          358.1,
+          437.69,
+          182.78,
+          376.08,
+          113.13
+        ]
+      },
+      "th_0.3": {
+        "threshold": 0.3,
+        "mean_roi_pct": 292.78,
+        "worst_roi_pct": 48.01,
+        "best_roi_pct": 596.64,
+        "roi_std": 185.34,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 956,
+        "period_rois": [
+          48.01,
+          221.09,
+          462.08,
+          596.64,
+          204.65,
+          407.3,
+          109.69
+        ]
+      }
+    }
+  },
+  "best": {
+    "threshold": 0.2,
+    "mean_roi_pct": 308.5,
+    "worst_roi_pct": 58.87,
+    "best_roi_pct": 709.91,
+    "roi_std": 190.69,
+    "win_periods": 6,
+    "active_periods": 7,
+    "total_bets": 2160,
+    "period_rois": [
+      212.63,
+      194.94,
+      258.17,
+      709.91,
+      344.51,
+      380.45,
+      58.87
+    ],
+    "bet_type": "3連単 nopop top1->2->3"
+  }
+}

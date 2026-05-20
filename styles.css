@@ -1676,6 +1676,36 @@ a { color: inherit; text-decoration: none; }
   margin-top: 6px; line-height: 1.4;
   border-top: 1px solid rgba(0,0,0,0.05); padding-top: 6px;
 }
+/* Wave31-C: Kelly + リスク表示 */
+.rec-strat-kelly {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--c-deep);
+  background: linear-gradient(135deg, rgba(220,252,231,0.85), rgba(187,247,208,0.55));
+  border: 1px solid rgba(16,185,129,0.30);
+  border-radius: 8px;
+  padding: 5px 8px;
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.rec-strat-kelly-sub {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--c-ink-mute);
+  letter-spacing: 0.01em;
+}
+.rec-strat-risk {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--c-warn);
+  background: rgba(254, 215, 170, 0.30);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin-top: 4px;
+}
 
 /* バッジ (各推奨レース内で発火戦略を示す) */
 .rec-badges {
@@ -5760,6 +5790,27 @@ body::after {
   border-color: rgba(245, 158, 11, 0.55);
   background: linear-gradient(135deg, rgba(254, 243, 199, 0.45) 0%, rgba(255, 255, 255, 0.75) 100%);
   box-shadow: 0 0 24px -8px rgba(245, 158, 11, 0.35);
+}
+
+/* Wave30: leakage-free バッジ (真の Walk-forward = 期間別再学習で検証済) */
+.rec-strat-lf-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.20), rgba(67, 56, 202, 0.10));
+  color: #4338ca;
+  font-size: 10px;
+  font-weight: 800;
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+.rec-strat-card.rec-strat-trusted .rec-strat-lf-badge {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.20), rgba(217, 119, 6, 0.10));
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 0 10px -2px rgba(245, 158, 11, 0.45);
 }
 
 /* Wave28: ROI 主役切替 — 真の期待 ROI ラベル (戦略カード下に小さく "真の期待" or "1 期間検証" と表示) */

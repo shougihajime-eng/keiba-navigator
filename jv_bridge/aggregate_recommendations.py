@@ -348,6 +348,47 @@ STRATEGY_DEFS = [
 VALUE_MULTI_BET_PATH = CACHE / "value_multi_bet.json"
 VALUE_THRESHOLD_SWEEP_PATH = CACHE / "value_threshold_sweep.json"
 VALUE_UREN_FILTER_PATH = CACHE / "value_uren_filter_sweep.json"
+WALK_FORWARD_V2_PATH = CACHE / "walk_forward_v2_result.json"  # Wave30: 期間別再学習 (真の look-ahead 無し)
+RISK_ANALYSIS_PATH = CACHE / "strategy_risk_analysis.json"      # Wave31-C: Kelly + ドローダウン
+
+RISK_NAME_TO_BACKTEST = {
+    "V-複勝 (閾値 0.16)": "value_invest_nopop_016",
+    "V-馬連 (閾値 0.16)": "value_uren_nopop_016",
+    "V-馬連 厳選 (閾値 0.30)": "value_uren_nopop_030",
+    "V-3連単 (閾値 0.20)": "value_tan3_nopop_020",
+    "V-DOUBLE 複勝+馬連 (閾値 0.16)": "value_double_nopop_016",
+}
+
+
+def _load_risk_analysis() -> Dict[str, Dict[str, Any]]:
+    """strategy_risk_analysis.json から Kelly + ドローダウン情報"""
+    out: Dict[str, Dict[str, Any]] = {}
+    if not RISK_ANALYSIS_PATH.exists():
+        return out
+    try:
+        ra = json.loads(RISK_ANALYSIS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return out
+    for risk_name, by_per in (ra.get("strategies") or {}).items():
+        backtest_name = RISK_NAME_TO_BACKTEST.get(risk_name)
+        if not backtest_name:
+            continue
+        r = by_per.get("16_periods") or by_per.get("8_periods")
+        if not r:
+            continue
+        kelly = r.get("kelly") or {}
+        dd = r.get("drawdown") or {}
+        out[backtest_name] = {
+            "kelly_full": kelly.get("kelly_full"),
+            "kelly_half_pct": round((kelly.get("kelly_half") or 0) * 100, 1),
+            "kelly_quarter_pct": round((kelly.get("kelly_quarter") or 0) * 100, 1),
+            "kelly_advice": kelly.get("advice"),
+            "max_losing_streak": dd.get("max_losing_streak"),
+            "max_drawdown_jpy": dd.get("max_drawdown_jpy"),
+            "max_winning_streak": dd.get("max_winning_streak"),
+            "total_bets_16p": dd.get("total_bets"),
+        }
+    return out
 
 
 def _load_value_multi_bet_stats() -> Dict[str, Dict[str, Any]]:
@@ -394,6 +435,45 @@ def _load_value_multi_bet_stats() -> Dict[str, Dict[str, Any]]:
             if final_roi is not None:
                 entry["final_period_roi"] = round(final_roi, 2)
             out[key] = entry
+    return out
+
+
+def _load_walk_forward_v2_stats() -> Dict[str, Dict[str, Any]]:
+    """walk_forward_v2_result.json (期間別再学習・真の look-ahead 無し) を統合。
+    Wave30: これが「真の Walk-forward」。他の walk_forward_*.json には残存 leakage がある。
+    各 period で nopop モデルを再学習しているため、すべての期間が pure test。
+    `overall_roi_pct` (全期間の総合 ROI) と `win_periods` を信頼判定の核に。"""
+    out: Dict[str, Dict[str, Any]] = {}
+    if not WALK_FORWARD_V2_PATH.exists():
+        return out
+    try:
+        d = json.loads(WALK_FORWARD_V2_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return out
+    for s in (d.get("strategies") or []):
+        if not isinstance(s, dict):
+            continue
+        name = s.get("name")
+        if not name:
+            continue
+        # walk_forward 互換形式に変換
+        entry = {
+            "name": name,
+            "mean_roi_pct": s.get("mean_roi_pct"),
+            "worst_roi_pct": s.get("worst_roi_pct"),
+            "best_roi_pct": s.get("best_roi_pct"),
+            "final_period_roi": s.get("final_period_roi"),
+            "overall_roi_pct": s.get("overall_roi_pct"),  # Wave30: これが真の期待 ROI
+            "roi_std": s.get("roi_std"),
+            "win_periods": s.get("win_periods"),
+            "active_periods": s.get("active_periods"),
+            "total_bets": s.get("total_bets"),
+            "total_hits": s.get("total_hits"),
+            "period_rois": s.get("period_rois"),
+            "period_bets": s.get("period_bets"),
+            "leakage_free": True,  # 真の Walk-forward 由来
+        }
+        out[name] = entry
     return out
 
 
@@ -507,6 +587,10 @@ def _load_walk_forward() -> Dict[str, Dict[str, Any]]:
     # value_uren_filter_sweep.json を統合 (Wave29: G1/芝/距離別 で final ROI 高い領域)
     for k, v in _load_value_uren_filter_stats().items():
         out[k] = v
+    # Wave30: walk_forward_v2 (期間別再学習・真の look-ahead 無し) を「最優先」マージ
+    # これがある戦略は他の sweep 結果より信頼できる (上書きしてよい)
+    for k, v in _load_walk_forward_v2_stats().items():
+        out[k] = v
     return out
 
 
@@ -523,6 +607,7 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
     test_races = bt.get("test_races")
     by_name = {s.get("name"): s for s in (bt.get("strategies") or [])}
     wf_by_name = _load_walk_forward()
+    risk_by_name = _load_risk_analysis()  # Wave31-C
 
     for defn in STRATEGY_DEFS:
         s = by_name.get(defn["name_in_backtest"])
@@ -569,11 +654,25 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
                     trust_label = "RISKY"
             else:
                 # Wave28: 最終期間 ROI (pure test) を信頼判定の核に据える
-                #   look-ahead leakage により mean は過大評価されがち。
-                #   学習に含まれない最終期間で「期待値プラス + 全期間勝」が本物の証。
-                if final_roi >= 105 and wp == ap and mean_roi >= 105:
+                # Wave30: walk_forward_v2 (期間別再学習) が利用可能なら overall_roi_pct を優先
+                #   これが「真の look-ahead 完全排除」した期待 ROI。
+                if wf.get("leakage_free") and wf.get("overall_roi_pct") is not None:
+                    leak_free_roi = wf.get("overall_roi_pct")
+                    if leak_free_roi >= 110 and wp >= ap * 0.66:
+                        trust_level = 4
+                        trust_label = "TRUSTED (真の Walk-forward で期待値+)"
+                    elif leak_free_roi >= 100 and wp >= ap // 2:
+                        trust_level = 3
+                        trust_label = "STABLE (真の Walk-forward で 100%+)"
+                    elif leak_free_roi >= 90:
+                        trust_level = 2
+                        trust_label = "MIXED (真の Walk-forward で控除率周辺)"
+                    else:
+                        trust_level = 1
+                        trust_label = "RISKY (真の Walk-forward で期待値マイナス)"
+                elif final_roi >= 105 and wp == ap and mean_roi >= 105:
                     trust_level = 4
-                    trust_label = "TRUSTED (最終期間でも期待値プラス)"
+                    trust_label = "TRUSTED (最終期間でも期待値プラス・但し未検証)"
                 elif final_roi >= 100 and wp >= ap * 0.8 and mean_roi >= 100:
                     trust_level = 3
                     trust_label = "STABLE (最終期間で 100%+)"
@@ -603,8 +702,12 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
             "max_payout": s.get("max_payout"),
             "walk_forward": wf,        # 期間別 ROI 配列 / 統計
             "final_period_roi": (wf or {}).get("final_period_roi"),  # Wave28: pure test ROI を直接 UI へ
+            "overall_roi_pct_v2": (wf or {}).get("overall_roi_pct"),  # Wave30: 真の look-ahead 無し ROI
+            "leakage_free": bool((wf or {}).get("leakage_free")),
             "trust_level": trust_level,
             "trust_label": trust_label,
+            # Wave31-C: Kelly criterion + ドローダウン
+            "risk": risk_by_name.get(defn["name_in_backtest"]),
         }
     return out
 

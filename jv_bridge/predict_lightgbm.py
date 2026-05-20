@@ -119,6 +119,77 @@ def _load_model_nopop():
     return _load_model_at(MODEL_NOPOP_TXT, MODEL_NOPOP_JSON)
 
 
+# Wave31-A: XGBoost / CatBoost / Stacking LR ロード
+def _load_xgb_model():
+    """XGBoost モデル → booster or None"""
+    p = CACHE / "model_xgb.json"
+    if not p.exists():
+        return None
+    try:
+        import xgboost as xgb  # type: ignore
+        bst = xgb.Booster()
+        bst.load_model(str(p))
+        return bst
+    except Exception as e:
+        print(f"[warn] xgb load 失敗: {e}", flush=True)
+        return None
+
+
+def _load_catb_model():
+    """CatBoost モデル → CatBoostClassifier or None"""
+    p = CACHE / "model_catb.cbm"
+    if not p.exists():
+        return None
+    try:
+        import catboost as cb  # type: ignore
+        m = cb.CatBoostClassifier()
+        m.load_model(str(p))
+        return m
+    except Exception as e:
+        print(f"[warn] catb load 失敗: {e}", flush=True)
+        return None
+
+
+def _load_stacking_weights():
+    """Stacking LR の重み + intercept をロード。
+    入力順: [lgbm_prob, nopop_prob, xgb_prob, catb_prob]
+    出力: dict {weights: [4 floats], intercept: float} or None
+    """
+    p = CACHE / "model_stacking.json"
+    if not p.exists():
+        return None
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        return {
+            "weights": d.get("weights") or [],
+            "intercept": float(d.get("intercept") or 0.0),
+            "input_features": d.get("input_features") or [],
+        }
+    except Exception as e:
+        print(f"[warn] stacking weights load 失敗: {e}", flush=True)
+        return None
+
+
+def _stacking_predict(stack_meta, p_lgbm, p_nopop, p_xgb, p_catb):
+    """各馬の 4 prob を LR で合成 → stacking prob (sigmoid 経由) のリストを返す
+    p_lgbm 等は各馬の softmax 正規化済 prob (リスト)
+    """
+    if not stack_meta or len(stack_meta["weights"]) < 4:
+        return None
+    w = stack_meta["weights"]
+    b = stack_meta["intercept"]
+    import math as _m
+    out = []
+    for plgb, pln, pxg, pcb in zip(p_lgbm, p_nopop, p_xgb, p_catb):
+        z = w[0]*plgb + w[1]*pln + w[2]*pxg + w[3]*pcb + b
+        # sigmoid
+        if z > 30: p = 1.0
+        elif z < -30: p = 0.0
+        else: p = 1.0 / (1.0 + _m.exp(-z))
+        out.append(p)
+    return out
+
+
 def _mask_pop_features(X, np):
     """X (2D array) の人気系 column を -1 で上書きしたコピーを返す。"""
     if np is None or not _POP_IDX:
@@ -273,6 +344,41 @@ def predict_race(race: Dict[str, Any],
         except Exception as e:
             print(f"[warn] nopop 推論失敗: {e}", flush=True)
 
+    # Wave31-A: XGBoost / CatBoost / Stacking 推論
+    xgb_normalized = None
+    catb_normalized = None
+    stack_normalized = None
+    if np is not None:
+        try:
+            xgb_bst = _load_xgb_model()
+            if xgb_bst is not None:
+                import xgboost as xgb  # type: ignore
+                dmat = xgb.DMatrix(X_arr, feature_names=FEATURE_NAMES)
+                raw_xgb = [float(p) for p in xgb_bst.predict(dmat)]
+                xgb_normalized = _normalize_softmax(raw_xgb)
+        except Exception as e:
+            print(f"[warn] xgb 推論失敗: {e}", flush=True)
+        try:
+            catb_m = _load_catb_model()
+            if catb_m is not None:
+                raw_catb = [float(p) for p in catb_m.predict_proba(X_arr)[:, 1]]
+                catb_normalized = _normalize_softmax(raw_catb)
+        except Exception as e:
+            print(f"[warn] catb 推論失敗: {e}", flush=True)
+
+        # Stacking LR で 4 モデルを合成
+        if all(x is not None for x in [nopop_normalized, xgb_normalized, catb_normalized]):
+            stack_meta = _load_stacking_weights()
+            if stack_meta:
+                try:
+                    stack_raw = _stacking_predict(
+                        stack_meta, normalized, nopop_normalized, xgb_normalized, catb_normalized
+                    )
+                    if stack_raw is not None:
+                        stack_normalized = _normalize_softmax(stack_raw)
+                except Exception as e:
+                    print(f"[warn] stacking 推論失敗: {e}", flush=True)
+
     # rank: 確率高い順 (primary)
     indexed = sorted(enumerate(normalized), key=lambda x: -x[1])
     ranks = [0] * len(normalized)
@@ -285,6 +391,13 @@ def predict_race(race: Dict[str, Any],
         idx_nopop = sorted(enumerate(nopop_normalized), key=lambda x: -x[1])
         for rank, (i, _) in enumerate(idx_nopop, 1):
             ranks_nopop[i] = rank
+
+    # Wave31-A: stack rank (Stacking メタモデルの本命順)
+    ranks_stack = [0] * len(horses)
+    if stack_normalized is not None:
+        idx_stack = sorted(enumerate(stack_normalized), key=lambda x: -x[1])
+        for rank, (i, _) in enumerate(idx_stack, 1):
+            ranks_stack[i] = rank
 
     # Wave19.6: race の meta を各 horse に注入 (季節・コース・場別戦略で使う)
     rmcourse = race.get("course") or ""
@@ -321,18 +434,24 @@ def predict_race(race: Dict[str, Any],
             value_signal = nopop_prob - win_prob
             if odds and float(odds) > 0:
                 ev_nopop = nopop_prob * float(odds)
+        # Wave31-A: Stacking メタモデル prob
+        stack_prob = stack_normalized[i] if stack_normalized is not None else None
+        ev_stack = (stack_prob * float(odds)) if (stack_prob is not None and odds and float(odds) > 0) else None
         pred_horses.append({
             "number": h.get("number"),
             "name": h.get("name"),
             "raw_win_prob": round(raw[i], 6),
             "win_prob": round(win_prob, 6),
             "nopop_prob": round(nopop_prob, 6) if nopop_prob is not None else None,
+            "stack_prob": round(stack_prob, 6) if stack_prob is not None else None,
             "value_signal": round(value_signal, 6) if value_signal is not None else None,
             "rank": ranks[i],
             "rank_nopop": ranks_nopop[i] if nopop_normalized is not None else None,
+            "rank_stack": ranks_stack[i] if stack_normalized is not None else None,
             "odds": odds,
             "ev": round(ev, 4) if ev is not None else None,
             "ev_nopop": round(ev_nopop, 4) if ev_nopop is not None else None,
+            "ev_stack": round(ev_stack, 4) if ev_stack is not None else None,
             "popularity": h.get("popularity"),
             # Wave19.6: race meta
             "race_course": rmcourse,

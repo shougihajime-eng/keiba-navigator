@@ -2719,12 +2719,52 @@
       const finalRoiBadge = finalRoi != null
         ? `<span class="rec-strat-final" title="学習に含まれない最終期間で算出した、真の期待 ROI">真の期待 ${finalRoi.toFixed(1)}%</span>`
         : "";
-      // Wave28: 主役を「真の期待 ROI (final_period_roi)」に切替。
-      // mean / 1 期間 roi_pct は look-ahead leakage で過大評価される傾向があるためサブ表示に。
-      const mainRoi = finalRoi != null
-        ? finalRoi.toFixed(1) + "%"
-        : (st.roi_pct ? st.roi_pct.toFixed(1) + "%" : "—");
-      const mainRoiLabel = finalRoi != null ? "真の期待" : "1 期間検証";
+      // Wave30: leakage_free フラグ (真の Walk-forward = 期間別再学習) が最高権威。
+      // overall_roi_pct_v2 が「look-ahead 完全排除」した本物の期待値。これを最優先で表示。
+      const overallV2 = st.overall_roi_pct_v2;
+      const leakageFree = st.leakage_free;
+      const mainRoi = (leakageFree && overallV2 != null)
+        ? overallV2.toFixed(1) + "%"
+        : (finalRoi != null
+            ? finalRoi.toFixed(1) + "%"
+            : (st.roi_pct ? st.roi_pct.toFixed(1) + "%" : "—"));
+      const mainRoiLabel = (leakageFree && overallV2 != null)
+        ? "真の Walk-fwd ⚡"
+        : (finalRoi != null ? "真の期待 (最終期間)" : "1 期間検証");
+      const lfBadge = leakageFree
+        ? `<span class="rec-strat-lf-badge" title="期間別再学習で look-ahead 完全排除済">⚡ leak-free</span>`
+        : "";
+      // Wave31-C: Kelly criterion + ドローダウン (リスク管理情報)
+      const risk = st.risk || {};
+      const kellyHalfPct = risk.kelly_half_pct;
+      const maxStreak = risk.max_losing_streak;
+      const maxDD = risk.max_drawdown_jpy;
+      // ユーザーの 1 日予算から「1 R 推奨投資額」を計算
+      // localStorage の keiba_kelly_budget があれば使う・無ければ ¥10,000 をデフォルト
+      let dailyBudget = 10000;
+      try {
+        const b = parseInt(localStorage.getItem("keiba_kelly_budget"), 10);
+        if (Number.isFinite(b) && b >= 1000) dailyBudget = b;
+      } catch {}
+      // Kelly Half % を予算の % として 1 ベットあたり推奨額を計算
+      // Kelly が極端な値 (>100%) のときは「全額」と解釈・100 円単位 floor
+      let kellyBetJpy = null;
+      if (kellyHalfPct != null && kellyHalfPct > 0) {
+        const f = Math.min(kellyHalfPct / 100, 1.0); // 上限 100%
+        kellyBetJpy = Math.floor(dailyBudget * f / 100) * 100;
+        if (kellyBetJpy < 100) kellyBetJpy = 100;
+      }
+      const kellyBlock = (kellyHalfPct != null && kellyBetJpy != null)
+        ? `<div class="rec-strat-kelly" title="Half Kelly に基づく 1 R あたりの推奨投資額">
+             💴 1R 推奨 ¥${kellyBetJpy.toLocaleString()}
+             <span class="rec-strat-kelly-sub">(予算¥${dailyBudget.toLocaleString()} の ${kellyHalfPct}%)</span>
+           </div>`
+        : "";
+      const riskBlock = (maxStreak != null && maxDD != null)
+        ? `<div class="rec-strat-risk" title="16 期間検証での最悪値">
+             ⚠ 最大連敗 ${maxStreak} 回・最大ドローダウン ¥${maxDD.toLocaleString()}
+           </div>`
+        : "";
       return `
         <div class="rec-strat-card ${cls}">
           <div class="rec-strat-badge">${defn.short_label}</div>
@@ -2734,7 +2774,10 @@
           <div class="rec-strat-meta">
             ${st.fired_count}件・的中${st.hit_rate_pct}%
             ${wfWin ? `<span class="rec-strat-wf">分割検証: ${wfRoi}・${wfWin}</span>` : ""}
+            ${lfBadge}
           </div>
+          ${kellyBlock}
+          ${riskBlock}
           <div class="rec-strat-label">${defn.label}</div>
         </div>
       `;

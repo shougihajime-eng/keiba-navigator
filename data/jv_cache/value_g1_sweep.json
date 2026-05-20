@@ -1,0 +1,252 @@
+{
+  "evaluated_at": "2026-05-20T02:46:26.569780+00:00",
+  "race_class_counts": {
+    "平場": 3377
+  },
+  "thresholds": [
+    0.16,
+    0.2,
+    0.22,
+    0.25,
+    0.3,
+    0.35
+  ],
+  "results": {
+    "全レース": {
+      "th_0.16": {
+        "mean_roi_pct": 152.62,
+        "worst_roi_pct": 77.9,
+        "best_roi_pct": 203.08,
+        "roi_std": 37.47,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2673,
+        "period_rois": [
+          149.65,
+          161.21,
+          164.05,
+          203.08,
+          183.23,
+          129.23,
+          77.9
+        ]
+      },
+      "th_0.2": {
+        "mean_roi_pct": 148.99,
+        "worst_roi_pct": 78.82,
+        "best_roi_pct": 184.45,
+        "roi_std": 33.87,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2160,
+        "period_rois": [
+          150.09,
+          157.16,
+          161.61,
+          183.14,
+          184.45,
+          127.67,
+          78.82
+        ]
+      },
+      "th_0.22": {
+        "mean_roi_pct": 148.75,
+        "worst_roi_pct": 83.17,
+        "best_roi_pct": 180.29,
+        "roi_std": 30.96,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 1866,
+        "period_rois": [
+          146.1,
+          157.36,
+          164.51,
+          180.29,
+          177.37,
+          132.44,
+          83.17
+        ]
+      },
+      "th_0.25": {
+        "mean_roi_pct": 142.96,
+        "worst_roi_pct": 83.65,
+        "best_roi_pct": 175.3,
+        "roi_std": 28.55,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 1473,
+        "period_rois": [
+          140.28,
+          146.64,
+          156.24,
+          170.09,
+          175.3,
+          128.52,
+          83.65
+        ]
+      },
+      "th_0.3": {
+        "mean_roi_pct": 137.4,
+        "worst_roi_pct": 85.94,
+        "best_roi_pct": 162.13,
+        "roi_std": 23.94,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 956,
+        "period_rois": [
+          140.82,
+          144.02,
+          148.47,
+          156.93,
+          162.13,
+          123.51,
+          85.94
+        ]
+      },
+      "th_0.35": {
+        "mean_roi_pct": 130.89,
+        "worst_roi_pct": 93.75,
+        "best_roi_pct": 147.29,
+        "roi_std": 17.26,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 574,
+        "period_rois": [
+          137.78,
+          144.12,
+          133.6,
+          140.0,
+          147.29,
+          119.71,
+          93.75
+        ]
+      }
+    },
+    "G1 のみ": {
+      "th_0.16": null,
+      "th_0.2": null,
+      "th_0.22": null,
+      "th_0.25": null,
+      "th_0.3": null,
+      "th_0.35": null
+    },
+    "G1/G2/G3 重賞": {
+      "th_0.16": null,
+      "th_0.2": null,
+      "th_0.22": null,
+      "th_0.25": null,
+      "th_0.3": null,
+      "th_0.35": null
+    },
+    "平場 のみ": {
+      "th_0.16": {
+        "mean_roi_pct": 152.62,
+        "worst_roi_pct": 77.9,
+        "best_roi_pct": 203.08,
+        "roi_std": 37.47,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2673,
+        "period_rois": [
+          149.65,
+          161.21,
+          164.05,
+          203.08,
+          183.23,
+          129.23,
+          77.9
+        ]
+      },
+      "th_0.2": {
+        "mean_roi_pct": 148.99,
+        "worst_roi_pct": 78.82,
+        "best_roi_pct": 184.45,
+        "roi_std": 33.87,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2160,
+        "period_rois": [
+          150.09,
+          157.16,
+          161.61,
+          183.14,
+          184.45,
+          127.67,
+          78.82
+        ]
+      },
+      "th_0.22": {
+        "mean_roi_pct": 148.75,
+        "worst_roi_pct": 83.17,
+        "best_roi_pct": 180.29,
+        "roi_std": 30.96,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 1866,
+        "period_rois": [
+          146.1,
+          157.36,
+          164.51,
+          180.29,
+          177.37,
+          132.44,
+          83.17
+        ]
+      },
+      "th_0.25": {
+        "mean_roi_pct": 142.96,
+        "worst_roi_pct": 83.65,
+        "best_roi_pct": 175.3,
+        "roi_std": 28.55,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 1473,
+        "period_rois": [
+          140.28,
+          146.64,
+          156.24,
+          170.09,
+          175.3,
+          128.52,
+          83.65
+        ]
+      },
+      "th_0.3": {
+        "mean_roi_pct": 137.4,
+        "worst_roi_pct": 85.94,
+        "best_roi_pct": 162.13,
+        "roi_std": 23.94,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 956,
+        "period_rois": [
+          140.82,
+          144.02,
+          148.47,
+          156.93,
+          162.13,
+          123.51,
+          85.94
+        ]
+      },
+      "th_0.35": {
+        "mean_roi_pct": 130.89,
+        "worst_roi_pct": 93.75,
+        "best_roi_pct": 147.29,
+        "roi_std": 17.26,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 574,
+        "period_rois": [
+          137.78,
+          144.12,
+          133.6,
+          140.0,
+          147.29,
+          119.71,
+          93.75
+        ]
+      }
+    }
+  }
+}

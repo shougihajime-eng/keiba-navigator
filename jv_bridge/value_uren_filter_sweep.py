@@ -109,24 +109,63 @@ def _course_kyoto(race: Dict[str, Any]) -> bool:
     return "京都" in (race.get("course") or "")
 
 
+def _course_nakayama(race): return "中山" in (race.get("course") or "")
+def _course_chukyo(race): return "中京" in (race.get("course") or "")
+def _course_niigata(race): return "新潟" in (race.get("course") or "")
+def _course_fukushima(race): return "福島" in (race.get("course") or "")
+
+
+def _month_in(race, months):
+    """race_id (YYYYMMDD...) から月を取り出して months set に含まれるか"""
+    rid = race.get("race_id") or ""
+    if len(rid) < 6: return False
+    try:
+        return int(rid[4:6]) in months
+    except (TypeError, ValueError):
+        return False
+
+
 FILTERS: List[Tuple[str, Callable[[Dict[str, Any]], bool]]] = [
+    # 全体
     ("all",       lambda r: True),
-    ("g1",        _is_g1),
-    ("graded",    _is_graded),
+    # サーフェス
     ("turf",      _surface_is_turf),
     ("dirt",      _surface_is_dirt),
+    # グレード
+    ("g1",        _is_g1),
+    ("graded",    _is_graded),
     ("turf_g1",   lambda r: _surface_is_turf(r) and _is_g1(r)),
-    ("dist_short", _dist_short),
-    ("dist_mid",  _dist_mid),
-    ("dist_long", _dist_long),
+    ("turf_graded", lambda r: _surface_is_turf(r) and _is_graded(r)),
+    # 距離
+    ("dist_short", _dist_short),                     # 1000-1400m
+    ("dist_mid",  _dist_mid),                         # 1500-2000m
+    ("dist_long", _dist_long),                        # 2100m+
+    # 距離 × サーフェス
+    ("turf_short", lambda r: _surface_is_turf(r) and _dist_short(r)),
     ("turf_mid",  lambda r: _surface_is_turf(r) and _dist_mid(r)),
     ("turf_long", lambda r: _surface_is_turf(r) and _dist_long(r)),
     ("dirt_short", lambda r: _surface_is_dirt(r) and _dist_short(r)),
+    ("dirt_mid",  lambda r: _surface_is_dirt(r) and _dist_mid(r)),
+    # コース (主要 10 場)
     ("tokyo",     _course_tokyo),
     ("hanshin",   _course_hanshin),
     ("kyoto",     _course_kyoto),
+    ("nakayama",  _course_nakayama),
+    ("chukyo",    _course_chukyo),
+    ("niigata",   _course_niigata),
+    ("fukushima", _course_fukushima),
+    # コース × サーフェス
     ("turf_tokyo", lambda r: _surface_is_turf(r) and _course_tokyo(r)),
     ("turf_hanshin", lambda r: _surface_is_turf(r) and _course_hanshin(r)),
+    ("turf_kyoto", lambda r: _surface_is_turf(r) and _course_kyoto(r)),
+    ("turf_nakayama", lambda r: _surface_is_turf(r) and _course_nakayama(r)),
+    # 季節 (Wave29 拡張)
+    ("spring",    lambda r: _month_in(r, {3, 4, 5})),
+    ("summer",    lambda r: _month_in(r, {6, 7, 8})),
+    ("autumn",    lambda r: _month_in(r, {9, 10, 11})),
+    ("winter",    lambda r: _month_in(r, {12, 1, 2})),
+    ("turf_spring", lambda r: _surface_is_turf(r) and _month_in(r, {3, 4, 5})),
+    ("turf_autumn", lambda r: _surface_is_turf(r) and _month_in(r, {9, 10, 11})),
 ]
 
 THRESHOLDS = [0.16, 0.20, 0.25, 0.30, 0.35]
