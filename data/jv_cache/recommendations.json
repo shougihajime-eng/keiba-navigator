@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-05-20T05:58:50.730415+00:00",
+  "generatedAt": "2026-05-20T06:04:17.024022+00:00",
   "todayJst": "2026-05-20",
   "strategies_def": [
     {
-      "key": "value_uren_turf",
-      "label": "芝 限定 × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 164.6%・勝 7/7・件数 448",
-      "short_label": "V-芝馬連",
-      "color": "emerald",
-      "bet_type": "馬連 (芝・nopop top1-top2)",
+      "key": "value_tan3",
+      "label": "3 連単 nopop top1->top2->top3 (閾値 30%) — 真の WF 229.5%・勝 3/6・件数 365 ⭐",
+      "short_label": "V-3連単",
+      "color": "gold",
+      "bet_type": "3 連単 (nopop top1->2->3)",
       "unit": 100
     },
     {
@@ -19,19 +19,19 @@
       "unit": 100
     },
     {
-      "key": "value_uren_short_ultra",
-      "label": "短距離 × 馬連 nopop (閾値 35%・厳選) — 真の期待 381%・勝 5/7・件数 165",
-      "short_label": "V-短距離Σ",
-      "color": "gold",
-      "bet_type": "馬連 (短距離・厳選・nopop)",
+      "key": "value_uren_turf",
+      "label": "芝 限定 × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 164.6%・勝 7/7・件数 448",
+      "short_label": "V-芝馬連",
+      "color": "emerald",
+      "bet_type": "馬連 (芝・nopop top1-top2)",
       "unit": 100
     },
     {
-      "key": "value_stack_uren",
-      "label": "Stacking 馬連 — 真の WF で 77.47% (勝 0/3) ⚠ 期待値マイナス確定",
-      "short_label": "V-STACK",
+      "key": "value_uren",
+      "label": "実力派 AI 本命+対抗 (人気を見ない) で馬連 100 円・全期間 100% 越え (勝 7/7)・avg 165%",
+      "short_label": "V-馬連",
       "color": "rose",
-      "bet_type": "馬連 (Stacking top1-top2)",
+      "bet_type": "馬連 (nopop top1-top2)",
       "unit": 100
     },
     {
@@ -43,6 +43,14 @@
       "unit": 100
     },
     {
+      "key": "value_invest",
+      "label": "実力派 AI 本命 (人気を見ないモデル) の確率 16%+ で複勝 100 円 — Walk-forward 152.62%",
+      "short_label": "VALUE",
+      "color": "rose",
+      "bet_type": "複勝 (nopop top1)",
+      "unit": 100
+    },
+    {
       "key": "value_double",
       "label": "複勝+馬連 併買 (200 円) — avg 187.6% / σ 64・最もバランス良い・worst 72%",
       "short_label": "V-DOUBLE",
@@ -51,11 +59,75 @@
       "unit": 200
     },
     {
-      "key": "value_tan3",
-      "label": "3 連単 nopop top1->top2->top3 (閾値 30%) — 真の WF 229.5%・勝 3/6・件数 365 ⭐",
-      "short_label": "V-3連単",
+      "key": "value_stack_uren",
+      "label": "Stacking 馬連 — 真の WF で 77.47% (勝 0/3) ⚠ 期待値マイナス確定",
+      "short_label": "V-STACK",
+      "color": "rose",
+      "bet_type": "馬連 (Stacking top1-top2)",
+      "unit": 100
+    },
+    {
+      "key": "value_uren_hot",
+      "label": "馬連 nopop top1-top2 (閾値 16%・積極派) — avg 222%・件数 2673・勝 6/7",
+      "short_label": "V-馬連HOT",
+      "color": "violet",
+      "bet_type": "馬連 (nopop top1-top2)",
+      "unit": 100
+    },
+    {
+      "key": "value_uren_short_ultra",
+      "label": "短距離 × 馬連 nopop (閾値 35%・厳選) — 真の期待 381%・勝 5/7・件数 165",
+      "short_label": "V-短距離Σ",
       "color": "gold",
-      "bet_type": "3 連単 (nopop top1->2->3)",
+      "bet_type": "馬連 (短距離・厳選・nopop)",
+      "unit": 100
+    },
+    {
+      "key": "turf",
+      "label": "芝レース で BEST 条件 (本命確率 22%+ かつ 対抗差 4pt+) → 複勝 100 円",
+      "short_label": "TURF",
+      "color": "emerald",
+      "bet_type": "複勝",
+      "unit": 100
+    },
+    {
+      "key": "big",
+      "label": "AI 上位 3 頭の合計確率 50%+ で「3 連複 ボックス 1 点」(100 円)",
+      "short_label": "BIG",
+      "color": "violet",
+      "bet_type": "3連複ボックス",
+      "unit": 100
+    },
+    {
+      "key": "value_safe",
+      "label": "実力派 AI 本命 (人気を見ない) の確率 35%+ で複勝 100 円 — 安定 σ17・avg 131%",
+      "short_label": "V-SAFE",
+      "color": "emerald",
+      "bet_type": "複勝 (nopop top1・厳選)",
+      "unit": 100
+    },
+    {
+      "key": "best",
+      "label": "AI 本命確率 22%+ かつ 対抗との差 4pt+ で複勝 100 円",
+      "short_label": "BEST",
+      "color": "go",
+      "bet_type": "複勝",
+      "unit": 100
+    },
+    {
+      "key": "ultra",
+      "label": "BEST+WIDE 両方発火時に「複勝 100 + ワイド 3 点 300」併買 (400 円)",
+      "short_label": "ULTRA",
+      "color": "gold",
+      "bet_type": "複勝+ワイド3点",
+      "unit": 400
+    },
+    {
+      "key": "safe",
+      "label": "AI 本命確率 20%+ で複勝 100 円 (発火多め・安定)",
+      "short_label": "SAFE",
+      "color": "turf",
+      "bet_type": "複勝",
       "unit": 100
     },
     {
@@ -72,78 +144,6 @@
       "short_label": "V-3連ダ中",
       "color": "amber",
       "bet_type": "3 連単 (ダ中・nopop top1->2->3)",
-      "unit": 100
-    },
-    {
-      "key": "value_uren",
-      "label": "実力派 AI 本命+対抗 (人気を見ない) で馬連 100 円・全期間 100% 越え (勝 7/7)・avg 165%",
-      "short_label": "V-馬連",
-      "color": "rose",
-      "bet_type": "馬連 (nopop top1-top2)",
-      "unit": 100
-    },
-    {
-      "key": "value_uren_hot",
-      "label": "馬連 nopop top1-top2 (閾値 16%・積極派) — avg 222%・件数 2673・勝 6/7",
-      "short_label": "V-馬連HOT",
-      "color": "violet",
-      "bet_type": "馬連 (nopop top1-top2)",
-      "unit": 100
-    },
-    {
-      "key": "value_invest",
-      "label": "実力派 AI 本命 (人気を見ないモデル) の確率 16%+ で複勝 100 円 — Walk-forward 152.62%",
-      "short_label": "VALUE",
-      "color": "rose",
-      "bet_type": "複勝 (nopop top1)",
-      "unit": 100
-    },
-    {
-      "key": "value_safe",
-      "label": "実力派 AI 本命 (人気を見ない) の確率 35%+ で複勝 100 円 — 安定 σ17・avg 131%",
-      "short_label": "V-SAFE",
-      "color": "emerald",
-      "bet_type": "複勝 (nopop top1・厳選)",
-      "unit": 100
-    },
-    {
-      "key": "big",
-      "label": "AI 上位 3 頭の合計確率 50%+ で「3 連複 ボックス 1 点」(100 円)",
-      "short_label": "BIG",
-      "color": "violet",
-      "bet_type": "3連複ボックス",
-      "unit": 100
-    },
-    {
-      "key": "turf",
-      "label": "芝レース で BEST 条件 (本命確率 22%+ かつ 対抗差 4pt+) → 複勝 100 円",
-      "short_label": "TURF",
-      "color": "emerald",
-      "bet_type": "複勝",
-      "unit": 100
-    },
-    {
-      "key": "ultra",
-      "label": "BEST+WIDE 両方発火時に「複勝 100 + ワイド 3 点 300」併買 (400 円)",
-      "short_label": "ULTRA",
-      "color": "gold",
-      "bet_type": "複勝+ワイド3点",
-      "unit": 400
-    },
-    {
-      "key": "best",
-      "label": "AI 本命確率 22%+ かつ 対抗との差 4pt+ で複勝 100 円",
-      "short_label": "BEST",
-      "color": "go",
-      "bet_type": "複勝",
-      "unit": 100
-    },
-    {
-      "key": "safe",
-      "label": "AI 本命確率 20%+ で複勝 100 円 (発火多め・安定)",
-      "short_label": "SAFE",
-      "color": "turf",
-      "bet_type": "複勝",
       "unit": 100
     }
   ],

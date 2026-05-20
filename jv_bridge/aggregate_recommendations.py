@@ -1043,13 +1043,33 @@ def collect(recent_days: int) -> Dict[str, Any]:
         all_fired.sort(key=lambda x: x["race_id"], reverse=True)
         fallback_picks = all_fired
 
+    # Wave35-B: 戦略を「真値 ROI 降順」でソート (leak-free TRUSTED 最優先)
+    # 信頼性 (leakage_free + trust_level + 真値 ROI) でランク付け
+    def _strategy_priority(d):
+        s = stats_by_key.get(d["key"]) or {}
+        # 真の Walk-forward ROI を優先 (leak-free)
+        true_roi = s.get("overall_roi_pct_v2") if s.get("leakage_free") else None
+        # leak-free が無い場合は final_period_roi (look-ahead 無し最終期間)
+        if true_roi is None:
+            true_roi = s.get("final_period_roi")
+        # それも無い場合は roi_pct (旧基準・leak 由来の可能性)
+        if true_roi is None:
+            true_roi = s.get("roi_pct") or 0
+        trust_lvl = s.get("trust_level") or 0
+        is_leak_free = bool(s.get("leakage_free"))
+        # スコア: leak_free + 真値 ROI + trust_level の総合
+        score = (10000 if is_leak_free else 0) + (true_roi or 0) + trust_lvl * 100
+        return -score  # 降順
+
+    sorted_defs = sorted(STRATEGY_DEFS, key=_strategy_priority)
+
     return {
         "generatedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
         "todayJst": today.isoformat(),
         "strategies_def": [
             {"key": d["key"], "label": d["label"], "short_label": d["short_label"],
              "color": d["color"], "bet_type": d["bet_type"], "unit": d["unit"]}
-            for d in STRATEGY_DEFS
+            for d in sorted_defs
         ],
         "stats": stats_by_key,
         "recommendations_today": today_picks,
