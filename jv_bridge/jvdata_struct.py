@@ -254,6 +254,40 @@ HR_PAYOUT_LAYOUT = {
 }
 
 
+# ─── WF レコード (重勝式・WIN5 払戻) 7215 バイト ────────────
+# 仕様書 4.9.0.1 30. 重勝式(WIN5) より転記 (2026-05-20)
+#   各位置は 1-origin なので 0-origin offset = 位置 - 1。
+#   重勝式払戻情報は 243 通り × 29 バイト (組番 10 + 払戻金 9 + 的中票数 10)。
+#   ただし 1 開催あたり的中組合せは通常 1 つだけで、残りは空白埋め。
+WF_FIELDS: List[Field] = [
+    Field("record_id",            0, 2,  F_ascii, "'WF'"),
+    Field("data_kbn",             2, 1,  F_ascii, "1=詳細発表 2=対象1R確定 3=払戻発表 7=月曜成績 9=中止"),
+    Field("make_date",            3, 8,  F_ascii, "yyyymmdd"),
+    Field("year",                11, 4,  F_ascii, "施行年"),
+    Field("month_day",           15, 4,  F_ascii, "施行月日 mmdd"),
+    # 対象レース 5 R 分 (8 bytes/R) は parse_loop で別途処理
+    Field("hassyu_hyousu",       67, 11, F_ascii, "重勝式発売票数"),
+    Field("kaeshi_flag",        133, 1,  F_ascii, "返還フラグ 1=返還有"),
+    Field("husei_flag",         134, 1,  F_ascii, "不成立フラグ 1=不成立有"),
+    Field("tekityu_nashi_flag", 135, 1,  F_ascii, "的中無フラグ 1=的中無"),
+    Field("carryover_init",     136, 15, F_ascii, "キャリーオーバー金額初期 (円)"),
+    Field("carryover_balance",  151, 15, F_ascii, "キャリーオーバー金額残高 (円)"),
+]
+
+# WF 対象レース情報 (5 R × 8 bytes): offset=21
+WF_TAISYO_LOOP = {"offset": 21, "count": 5, "elem_len": 8}
+# 場 2 + 回 2 + 日目 2 + R 2
+
+# WF 重勝式払戻情報 (243 通り × 29 bytes): offset=166
+WF_PAYOUT_LOOP = {"offset": 166, "count": 243, "elem_len": 29}
+# 組番 10 + 払戻金 9 + 的中票数 10
+
+
+# ─── H1 レコード (確定票数 3連単以外) ────────────────────
+# 仕様書 13.票数1 より。SDK で取れる H1 はオッズ確定後の票数集計。
+# WF (WIN5) とは別物。誤解防止のため明示。
+
+
 # ─── TK レコード (特別登録馬) 21657 バイト ────────────────
 # SDK JV_TK_TOKUUMA より転記。レース前の登録馬一覧 (最大 300 頭/レース)。
 # ヘッダ部分のみ Field 定義。300 頭の TOKUUMA_INFO ループは TK_TOKUUMA_LOOP 経由で parse。
@@ -882,6 +916,7 @@ RECORD_REGISTRY: Dict[str, List[Field]] = {
     "DM": DM_FIELDS,
     "BT": BT_FIELDS,
     "CS": CS_FIELDS,
+    "WF": WF_FIELDS,  # Wave31: WIN5 払戻
 }
 
 
@@ -920,6 +955,7 @@ RECORD_COMPLETED: Dict[str, bool] = {
     "DM": True,
     "BT": True,
     "CS": True,
+    "WF": True,  # Wave31: WIN5 払戻
 }
 
 
