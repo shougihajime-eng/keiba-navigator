@@ -5792,6 +5792,37 @@ body::after {
   box-shadow: 0 0 24px -8px rgba(245, 158, 11, 0.35);
 }
 
+/* Wave31: WIN5 真の Walk-forward 検証バナー (50 日 0 回的中の正直開示) */
+.win5-wf-banner {
+  margin: 10px 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.10), rgba(67, 56, 202, 0.06));
+  border: 1px solid rgba(99, 102, 241, 0.30);
+}
+.win5-wf-banner .wf-head {
+  font-size: 12px;
+  font-weight: 800;
+  color: #4338ca;
+  margin-bottom: 4px;
+}
+.win5-wf-banner .wf-body {
+  font-size: 11px;
+  color: var(--c-ink-soft);
+  line-height: 1.6;
+  font-family: ui-monospace, monospace;
+}
+.win5-wf-banner .wf-warn {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.10), rgba(217, 119, 6, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.30);
+  color: #92400e;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
 /* Wave30: leakage-free バッジ (真の Walk-forward = 期間別再学習で検証済) */
 .rec-strat-lf-badge {
   display: inline-block;

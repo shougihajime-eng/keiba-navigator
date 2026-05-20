@@ -286,7 +286,24 @@ module.exports = async (req, res) => {
         if (arr.length === 5 && arr.every(n => n >= 1 && n <= 8)) opts.customPlan = arr;
       }
       const win5 = buildWin5(candidates, opts);
-      return ok(res, { ok: true, ...formatWin5(win5), candidateRaceIds: candidates.map(r => r.race_id || null) });
+      // Wave31: 真の Walk-forward (期間別 nopop 再学習) 結果を併載
+      let win5WfResult = null;
+      try {
+        const fs = require("fs");
+        const path = require("path");
+        const wfPath = path.join(process.cwd(), "data", "jv_cache", "walk_forward_win5_v1_result.json");
+        if (fs.existsSync(wfPath)) {
+          const wf = JSON.parse(fs.readFileSync(wfPath, "utf8"));
+          win5WfResult = {
+            leakage_free: !!wf.leakage_free,
+            evaluated_at: wf.evaluated_at,
+            total_days_evaluated: wf.total_days_evaluated,
+            summary: wf.summary,
+            method: wf.method,
+          };
+        }
+      } catch (e) { /* fallback: 検証結果なし */ }
+      return ok(res, { ok: true, ...formatWin5(win5), wf: win5WfResult, candidateRaceIds: candidates.map(r => r.race_id || null) });
     }
     if (path === "/news-annotated") {
       const { annotateRaceWithNews } = require("../lib/news_sentiment");

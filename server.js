@@ -332,7 +332,22 @@ async function serve(req, res) {
         if (arr.length === 5 && arr.every(n => n >= 1 && n <= 8)) opts.customPlan = arr;
       }
       const win5 = buildWin5(candidates, opts);
-      return jsonRes(res, 200, { ok: true, ...formatWin5(win5), candidateRaceIds: candidates.map(r => r.race_id || null) });
+      // Wave31: 真の Walk-forward 結果を併載
+      let win5WfResult = null;
+      try {
+        const wfPath = path.join(__dirname, "data", "jv_cache", "walk_forward_win5_v1_result.json");
+        if (fs.existsSync(wfPath)) {
+          const wf = JSON.parse(fs.readFileSync(wfPath, "utf8"));
+          win5WfResult = {
+            leakage_free: !!wf.leakage_free,
+            evaluated_at: wf.evaluated_at,
+            total_days_evaluated: wf.total_days_evaluated,
+            summary: wf.summary,
+            method: wf.method,
+          };
+        }
+      } catch (e) { /* fallback */ }
+      return jsonRes(res, 200, { ok: true, ...formatWin5(win5), wf: win5WfResult, candidateRaceIds: candidates.map(r => r.race_id || null) });
     }
     if (p === "/api/news-annotated") {
       const { annotateRaceWithNews } = require("./lib/news_sentiment");

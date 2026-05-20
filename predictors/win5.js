@@ -103,7 +103,7 @@
     return {
       cells,
       desc: detail.join(" × "),
-      cost: cells * 100,  // WIN5 は 1 点 100 円
+      cost: cells * 200,  // Wave31 修正: WIN5 は 1 点 200 円 (旧 100 円表記はバグ)
     };
   }
 

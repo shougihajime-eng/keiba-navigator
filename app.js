@@ -1179,6 +1179,37 @@
       el("div", { class: "title" }, "WIN5 — 土19:30〜 日曜・祝日レースを的中 (200円で最大6億円)"),
       el("div", { class: "day" }, w5.ok ? `信頼度 ${(w5.avgConfidence * 100).toFixed(0)}%` : "データ準備中")
     ));
+
+    // Wave31: 真の Walk-forward 検証バナー (look-ahead 完全排除)
+    if (w5.wf && w5.wf.leakage_free && w5.wf.summary) {
+      const wfBanner = el("div", { class: "win5-wf-banner" });
+      const sm = w5.wf.summary;
+      const totalDays = w5.wf.total_days_evaluated || 0;
+      const safeHits = sm.safe?.total_hits || 0;
+      const midHits = sm.mid?.total_hits || 0;
+      const wideHits = sm.wide?.total_hits || 0;
+      const safeRoi = sm.safe?.overall_roi_pct;
+      const midRoi = sm.mid?.overall_roi_pct;
+      const wideRoi = sm.wide?.overall_roi_pct;
+      const allZero = safeHits === 0 && midHits === 0 && wideHits === 0;
+      const headTxt = allZero
+        ? `⚠ 真の Walk-forward 検証: 過去 ${totalDays} 日中 0 回的中`
+        : `⚡ 真の Walk-forward 検証: 過去 ${totalDays} 日で測定済`;
+      wfBanner.appendChild(el("div", { class: "wf-head" }, headTxt));
+      wfBanner.appendChild(el("div", { class: "wf-body", html:
+        `堅め (1点 ¥200): ${safeHits}/${totalDays} 的中・ROI ${safeRoi != null ? safeRoi + "%" : "—"} <br>` +
+        `中波 (32点 ¥6,400): ${midHits}/${totalDays} 的中・ROI ${midRoi != null ? midRoi + "%" : "—"} <br>` +
+        `万舟 (243点 ¥48,600): ${wideHits}/${totalDays} 的中・ROI ${wideRoi != null ? wideRoi + "%" : "—"}`
+      }));
+      if (allZero) {
+        wfBanner.appendChild(el("div", { class: "wf-warn", html:
+          "<b>正直な現実</b>: AI モデルでも 5 R 連勝は 0.1% 程度の極低確率。過去 50 日中 0 回的中は確率的に妥当。" +
+          "WIN5 は<b>娯楽として小額で楽しむ</b>馬券。本気戦略は <b>V-3連単 (229%)</b> や <b>V-短距離 (137%)</b> を推奨。"
+        }));
+      }
+      card.appendChild(wfBanner);
+    }
+
     const body = el("div", { class: "win5-body" });
 
     // ── Toolbar: モード切替 + 予算入力 ──
