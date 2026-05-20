@@ -5761,3 +5761,18 @@ body::after {
   background: linear-gradient(135deg, rgba(254, 243, 199, 0.45) 0%, rgba(255, 255, 255, 0.75) 100%);
   box-shadow: 0 0 24px -8px rgba(245, 158, 11, 0.35);
 }
+
+/* Wave28: キーボード操作時のフォーカスリング (アクセシビリティ・タブ移動で迷子防止) */
+.btn-cta:focus-visible,
+.btn-bn:focus-visible,
+.chip-filter:focus-visible,
+.tab:focus-visible,
+button:focus-visible,
+a:focus-visible,
+[data-gloss]:focus-visible {
+  outline: 2px solid rgba(16, 185, 129, 0.85);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.btn-cta:focus:not(:focus-visible),
+button:focus:not(:focus-visible) { outline: none; }

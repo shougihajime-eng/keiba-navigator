@@ -103,7 +103,7 @@
       detectedType === "warn"    ? "⚠️" :
       detectedType === "error"   ? "🚫" : "💡";
     t.className = "toast toast-" + detectedType;
-    t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${msg}</span>`;
+    t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${escapeHtml(msg)}</span>`;
     t.hidden = false;
     t.style.animation = "none";
     t.offsetHeight;
@@ -593,7 +593,13 @@
 
   function makeBigStat(label, value, tone, primary) {
     const wrap = el("div", { class: "bigstat" + (primary ? " primary" : "") });
-    wrap.appendChild(el("div", { class: "label" }, label));
+    // Wave28: 用語ツールチップを結論カードに自動付与 (小学生でも分かるように)
+    const labelAttrs = { class: "label" };
+    if (label && /期待値|EV/.test(label)) labelAttrs["data-gloss"] = "期待値";
+    else if (label && /1着確率|勝率/.test(label)) labelAttrs["data-gloss"] = "1着確率";
+    else if (label && /信頼度/.test(label)) labelAttrs["data-gloss"] = "信頼度";
+    else if (label && /回収/.test(label)) labelAttrs["data-gloss"] = "回収率";
+    wrap.appendChild(el("div", labelAttrs, label));
     wrap.appendChild(el("div", { class: `val tone-${tone}` }, value));
     return wrap;
   }
@@ -601,7 +607,7 @@
   // Wave22.4: 1 着確率を SVG conic-gradient 円グラフで表示
   function makeBigStatDonut(label, pct, tone) {
     const wrap = el("div", { class: `bigstat bigstat-donut tone-${tone}` });
-    wrap.appendChild(el("div", { class: "label" }, label));
+    wrap.appendChild(el("div", { class: "label", "data-gloss": "1着確率" }, label));
     const ring = el("div", { class: "donut-ring" });
     // CSS conic-gradient 用に pct (0-100) を CSS 変数で渡す
     const clamped = Math.max(0, Math.min(100, pct));
@@ -617,7 +623,7 @@
   // Wave22.4: AI 信頼度を 5 段ハート + パーセント表記で表示
   function makeBigStatBars(label, pct, tone) {
     const wrap = el("div", { class: `bigstat bigstat-bars tone-${tone}` });
-    wrap.appendChild(el("div", { class: "label" }, label));
+    wrap.appendChild(el("div", { class: "label", "data-gloss": "信頼度" }, label));
     // 5 段階に量子化 (0-20=1, 20-40=2, 40-60=3, 60-80=4, 80-100=5)
     const lvl = Math.max(1, Math.min(5, Math.ceil(pct / 20)));
     const heartsRow = el("div", { class: "hearts-row" });
@@ -945,7 +951,7 @@
     cta.appendChild(el("a", {
       class: "btn-cta btn-cta-answers",
       href: "#history",
-      onclick: (e) => { e.preventDefault(); window.scrollTo({ top: document.querySelector(".history-list")?.parentElement?.offsetTop || 0, behavior: "smooth" }); },
+      onclick: (e) => { e.preventDefault(); openHistoryAndScroll(); },
     }, "📊 これまでの答え合わせを見る →"));
     cta.appendChild(el("button", {
       class: "btn-cta btn-cta-mute",
@@ -955,6 +961,19 @@
 
     card.appendChild(body);
     return card;
+  }
+
+  // 折りたたみ history を開いてスクロールする (Wave28: details closed のとき動かないバグ修正)
+  function openHistoryAndScroll() {
+    const det = document.querySelector(".hideable-history, details.history-card, #card-history");
+    if (det && det.tagName === "DETAILS" && !det.open) det.open = true;
+    const tgt = document.querySelector(".history-list")?.closest("details, section") ||
+                document.querySelector(".history-list");
+    if (tgt) {
+      setTimeout(() => tgt.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }
 
   // ─── 開催なし日 専用ヒーロー (休日でも楽しめる大型版) ──
@@ -1091,7 +1110,7 @@
     cta.appendChild(el("a", {
       class: "btn-cta btn-cta-answers",
       href: "#history",
-      onclick: (e) => { e.preventDefault(); window.scrollTo({ top: document.querySelector(".history-list")?.parentElement?.offsetTop || 0, behavior: "smooth" }); },
+      onclick: (e) => { e.preventDefault(); openHistoryAndScroll(); },
     }, "📊 これまでの予想と結果の答え合わせを見る →"));
     cta.appendChild(el("button", {
       class: "btn-cta btn-cta-mute",
@@ -1111,13 +1130,16 @@
 
   // recommendations が無いときのデフォルト戦略定義
   const DEFAULT_STRAT_DEFS = [
+    // Wave29-B: 馬連 nopop top1-top2 が圧倒的 (avg 222%・全期間 100%+ 165%)
+    { key: "value_uren",     short_label: "V-馬連",    label: "馬連 nopop top1-top2 (閾値 30%・全期間 100%+) — avg 165%・勝 7/7" },
+    { key: "value_uren_hot", short_label: "V-馬連HOT", label: "馬連 nopop top1-top2 (閾値 16%・積極派) — avg 222%・件数 2673" },
     // Wave27 (強化): nopop モデル単独 (人気を見ない実力派) — 閾値最適化 0.16
-    { key: "value_invest", short_label: "VALUE",  label: "実力派 AI 本命 (人気を見ない) の確率 16%+ で複勝 — Walk-fwd 152.62%" },
-    { key: "value_safe",   short_label: "V-SAFE", label: "実力派 AI 本命 の確率 35%+ で複勝 — 安定 σ17・avg 131%" },
-    { key: "best",         short_label: "BEST",   label: "本命確率 22%+ かつ 対抗差 4pt+ で複勝" },
-    { key: "safe",         short_label: "SAFE",   label: "本命確率 20%+ で複勝・発火多め" },
-    { key: "turf",         short_label: "TURF",   label: "芝レース限定 BEST" },
-    { key: "big",          short_label: "BIG",    label: "3 連複 ボックス 1 点" },
+    { key: "value_invest",   short_label: "VALUE",     label: "実力派 AI 本命 (人気を見ない) の確率 16%+ で複勝 — Walk-fwd 152.62%" },
+    { key: "value_safe",     short_label: "V-SAFE",    label: "実力派 AI 本命 の確率 35%+ で複勝 — 安定 σ17・avg 131%" },
+    { key: "best",           short_label: "BEST",      label: "本命確率 22%+ かつ 対抗差 4pt+ で複勝" },
+    { key: "safe",           short_label: "SAFE",      label: "本命確率 20%+ で複勝・発火多め" },
+    { key: "turf",           short_label: "TURF",      label: "芝レース限定 BEST" },
+    { key: "big",            short_label: "BIG",       label: "3 連複 ボックス 1 点" },
   ];
 
   function parseVenueLabel(race) {
@@ -1391,9 +1413,9 @@
     }
     let races = [...state.races];
     if (state.allRacesFilter === "go") {
-      races = races.filter((r) => ["go", "gold"].includes(tierOfRace(r)));
+      races = races.filter((r) => ["ultra", "prime", "go"].includes(tierOfRace(r)));
     } else if (state.allRacesFilter === "gold") {
-      races = races.filter((r) => tierOfRace(r) === "gold");
+      races = races.filter((r) => ["ultra", "prime"].includes(tierOfRace(r)));
     } else if (state.allRacesFilter === "g1") {
       races = races.filter((r) => !!r.isG1);
     }
@@ -2429,6 +2451,9 @@
     if (!m || !m.ok || !m.modelAvailable) { root.hidden = true; return; }
     root.hidden = false;
     const STRAT_LABELS = {
+      // Wave29-B: 馬連 nopop top1-top2
+      value_uren_nopop_016: "V-馬連HOT nopop top1-top2 (閾値 16%) — avg 222.57%",
+      value_uren_nopop_030: "V-馬連 nopop top1-top2 (閾値 30%・勝 7/7) — avg 165.29%",
       // Wave27 強化: nopop モデル単独 最強 + 安定派
       value_invest_nopop_016: "VALUE 実力派 AI 本命 (人気を見ない) 16%+ 複勝 — Walk-fwd 152.62%",
       value_invest_nopop_022: "VALUE 実力派 AI 本命 (人気を見ない) 22%+ 複勝",
@@ -2605,6 +2630,7 @@
     const recentList = (r.recommendations_recent || []).filter(
       (x) => x.race_date !== r.todayJst,
     ).slice(0, 8);
+    const fallbackList = (r.recommendations_fallback || []).slice(0, 12);
     root.hidden = false;
 
     const fmtHorse = (h) => {
@@ -2687,7 +2713,8 @@
 
     // 戦略カードは結論カードの「Walk-forward 検証」ブロックに統合済 → 推奨レース一覧のみ表示
     // 「今日のレースが 0 件」かつ「直近ログも 0 件」のときはセクション自体を隠す (開催なし日はヒーローで完結)
-    if (todayList.length === 0 && recentList.length === 0) {
+    // Wave28: fallback (最新の AI 推奨) があるならそれを表示する
+    if (todayList.length === 0 && recentList.length === 0 && fallbackList.length === 0) {
       root.hidden = true;
       return;
     }
@@ -2715,6 +2742,15 @@
         <div class="rec-section">
           <div class="rec-section-head">📊 直近の推奨レース過去ログ (${recentList.length} 件)</div>
           <div class="rec-list rec-list-small">${recentList.map(renderItem).join("")}</div>
+        </div>
+      ` : ""}
+      ${(todayList.length === 0 && recentList.length === 0 && fallbackList.length > 0) ? `
+        <div class="rec-section">
+          <div class="rec-section-head">🗂 AI の最新の推奨レース ${fallbackList.length} 件 (取り込み済の過去レース)</div>
+          <p class="rec-criteria" style="font-size:12px;color:var(--c-ink-soft)">
+            ※ 今週末のレースデータは土曜朝に取り込まれます。下記は直近に AI が推奨を出した過去レースです。
+          </p>
+          <div class="rec-list rec-list-small">${fallbackList.map(renderItem).join("")}</div>
         </div>
       ` : ""}
     `;

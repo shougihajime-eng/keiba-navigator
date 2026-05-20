@@ -14,8 +14,15 @@ Walk-forward 検証は、データを N 期間に分割して、それぞれを�
       test  = 期間 [i, i+1)
     (i=0 は train 空でテスト不可なのでスキップ・i=1..N-1 のみ評価)
   - 各 test 期間で全戦略の発火・回収率を測定
-  - 各戦略について「期間別 ROI」「ROI 標準偏差」「最悪期間 ROI」を集計
+  - 各戦略について「期間別 ROI」「ROI 標準偏差」「最悪期間 ROI」「最終期間 ROI」を集計
   - 結果: data/jv_cache/walk_forward_result.json
+
+⚠️ Wave28 重要な制約 (look-ahead leakage):
+  現在の実装は「全データの前 80% で学習した 1 つのモデル」を全期間に適用しているため、
+  最終期間以外の period_rois は train データに含まれる = look-ahead bias あり。
+  **真に学習データを見ていないのは最終期間 (period N-1) のみ。**
+  集約結果の `final_period_roi` がその「pure test ROI」。これが真の期待値判定の根拠。
+  trust_label の判定 (aggregate_recommendations.py) では `final_period_roi >= 100` を必須条件とする。
 
 使い方:
   py -3 jv_bridge\\walk_forward_validate.py --periods 5
@@ -161,6 +168,9 @@ def run_walk_forward(periods: int, strategies_filter: Optional[List[str]]) -> in
         std = var ** 0.5
         # 期間ごとの 100% 越え回数
         wins = sum(1 for r in period_rois if r >= 100)
+        # Wave28: 最終期間 ROI (= pure test = 学習データに含まれない真の評価)
+        final_period_roi = round(period_rois[-1], 1) if period_rois else None
+        final_period_bets = period_bets[-1] if period_bets else 0
         aggregated.append({
             "name": name,
             "active_periods": len(period_rois),
@@ -169,6 +179,8 @@ def run_walk_forward(periods: int, strategies_filter: Optional[List[str]]) -> in
             "mean_roi_pct": round(mean_roi, 1),
             "worst_roi_pct": round(worst_roi, 1),
             "best_roi_pct": round(best_roi, 1),
+            "final_period_roi": final_period_roi,  # ⚠ pure test (これが真の期待 ROI)
+            "final_period_bets": final_period_bets,
             "roi_std": round(std, 1),
             "win_periods": wins,  # 100% 越えた期間数
             "period_rois": [round(r, 1) for r in period_rois],

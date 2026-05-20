@@ -380,9 +380,10 @@ def extract_horse_features(horse: Dict[str, Any],
     return vec
 
 
-def load_races_and_labels() -> Tuple[List[List[float]], List[int], List[str]]:
+def load_races_and_labels(skip_shougai: bool = False) -> Tuple[List[List[float]], List[int], List[str]]:
     """races/<id>.json + results/<id>.json を全部読んで (X, y, race_ids) を返す。
     y[i] = 1 if 当該馬が 1 着, else 0
+    skip_shougai=True なら障害レースを除外 (Wave29-A: 平地特化モデル用)
     """
     if not RACES_DIR.exists() or not RESULTS_DIR.exists():
         return [], [], []
@@ -399,12 +400,19 @@ def load_races_and_labels() -> Tuple[List[List[float]], List[int], List[str]]:
     race_ids: List[str] = []
     skipped_no_result = 0
     skipped_no_horses = 0
+    skipped_shougai = 0
 
     for race_path in sorted(RACES_DIR.glob("*.json")):
         try:
             race = json.loads(race_path.read_text(encoding="utf-8"))
         except Exception:
             continue
+        # Wave29-A: 障害レーススキップ
+        if skip_shougai:
+            course = race.get("course") or ""
+            if "障" in str(course):
+                skipped_shougai += 1
+                continue
         race_id = race.get("race_id") or race_path.stem
         result_path = RESULTS_DIR / f"{race_id}.json"
         if not result_path.exists():
@@ -458,7 +466,7 @@ def _mask_pop_columns(X_arr, np):
     return out, pop_idx
 
 
-def train(min_races: int, test_ratio: float, no_pop: bool = False) -> int:
+def train(min_races: int, test_ratio: float, no_pop: bool = False, skip_shougai: bool = False) -> int:
     np = _try_import_numpy()
     lgb = _try_import_lightgbm()
     sk_ens = _try_import_sklearn()
@@ -469,7 +477,7 @@ def train(min_races: int, test_ratio: float, no_pop: bool = False) -> int:
         print("[NG] numpy が必要です: pip install numpy", flush=True)
         return 2
 
-    X, y, race_ids = load_races_and_labels()
+    X, y, race_ids = load_races_and_labels(skip_shougai=skip_shougai)
     n_races = len(set(race_ids))
     n_rows = len(X)
 
@@ -697,8 +705,10 @@ def main():
     ap.add_argument("--no-pop", action="store_true",
                     help="人気系特徴量 (オッズ・人気・人気交差項) を -1 でマスクして学習。"
                          "model_lgbm_nopop.txt として出力。primary との差分で「市場が見落としてる馬」を発見する用。")
+    ap.add_argument("--skip-shougai", action="store_true",
+                    help="Wave29-A: 障害競走を除外して平地特化モデルを学習")
     args = ap.parse_args()
-    return train(args.min_races, args.test_ratio, no_pop=args.no_pop)
+    return train(args.min_races, args.test_ratio, no_pop=args.no_pop, skip_shougai=args.skip_shougai)
 
 
 if __name__ == "__main__":

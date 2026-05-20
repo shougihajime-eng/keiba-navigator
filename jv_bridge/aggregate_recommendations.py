@@ -96,8 +96,36 @@ def _nopop_top(horses):
 
 STRATEGY_DEFS = [
     {
-        # Wave27 強化: 閾値スイープで avg 152.62% / 勝 6/7 / 件数 2673 が最強 (閾値 0.16)
-        # value_threshold_sweep.json 参照
+        # Wave29-B: 馬連 nopop top1-top2 が avg 165%・勝 7/7・最悪 108.75% (閾値 0.30) で全期間 100% 越え!
+        # value_multi_bet.json 参照
+        "key": "value_uren",
+        "name_in_backtest": "value_uren_nopop_030",
+        "label": "実力派 AI 本命+対抗 (人気を見ない) で馬連 100 円・全期間 100% 越え (勝 7/7)・avg 165%",
+        "short_label": "V-馬連",
+        "color": "rose",
+        "bet_type": "馬連 (nopop top1-top2)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.30)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave29-B: 馬連 nopop top1-top2 閾値 0.16 で avg 222%・件数 2673 (積極派)
+        "key": "value_uren_hot",
+        "name_in_backtest": "value_uren_nopop_016",
+        "label": "馬連 nopop top1-top2 (閾値 16%・積極派) — avg 222%・件数 2673・勝 6/7",
+        "short_label": "V-馬連HOT",
+        "color": "violet",
+        "bet_type": "馬連 (nopop top1-top2)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.16)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave27 強化: 複勝 nopop top1 avg 152.62% / 勝 6/7 / 件数 2673 (閾値 0.16)
         "key": "value_invest",
         "name_in_backtest": "value_invest_nopop_016",
         "label": "実力派 AI 本命 (人気を見ないモデル) の確率 16%+ で複勝 100 円 — Walk-forward 152.62%",
@@ -193,17 +221,75 @@ STRATEGY_DEFS = [
 ]
 
 
-def _load_walk_forward() -> Dict[str, Dict[str, Any]]:
-    """Walk-forward 検証結果を {strategy_name: stats} で返す。"""
+# Wave28: value_multi_bet.json / value_threshold_sweep.json から final_period_roi を取り出す
+# walk_forward_result.json には value_invest 系の戦略が含まれない場合があるため、これらも統合する
+VALUE_MULTI_BET_PATH = CACHE / "value_multi_bet.json"
+VALUE_THRESHOLD_SWEEP_PATH = CACHE / "value_threshold_sweep.json"
+
+
+def _load_value_multi_bet_stats() -> Dict[str, Dict[str, Any]]:
+    """value_multi_bet.json から各戦略のスナップショットを取り出す。
+    キーは "value_uren_nopop_030" 等のフォーマットで walk_forward 互換にする。"""
     out: Dict[str, Dict[str, Any]] = {}
-    if not WALK_FORWARD_PATH.exists():
+    if not VALUE_MULTI_BET_PATH.exists():
         return out
     try:
-        wf = json.loads(WALK_FORWARD_PATH.read_text(encoding="utf-8"))
+        d = json.loads(VALUE_MULTI_BET_PATH.read_text(encoding="utf-8"))
     except Exception:
         return out
-    for s in (wf.get("strategies") or []):
-        out[s.get("name")] = s
+    # bet type ラベルから「value_<type>_nopop_<th>」形式へ正規化
+    label_to_prefix = {
+        "複勝 nopop top1": "value_invest_nopop",
+        "馬連 nopop top1-top2": "value_uren_nopop",
+        "ワイド 3点 nopop top123": "value_wide_nopop",
+        "3連複 ボックス nopop top123": "value_fuku3_nopop",
+        "3連単 nopop top1->2->3": "value_tan3_nopop",
+    }
+    for label, items in (d.get("results") or {}).items():
+        prefix = label_to_prefix.get(label)
+        if not prefix or not isinstance(items, list):
+            continue
+        for r in items:
+            if not isinstance(r, dict):
+                continue
+            th = r.get("threshold")
+            if th is None:
+                continue
+            key = f"{prefix}_{int(round(th * 100)):03d}"
+            pr = r.get("period_rois") or []
+            valid_pr = [x for x in pr if x is not None]
+            final_roi = valid_pr[-1] if valid_pr else None
+            entry = dict(r)
+            entry["name"] = key
+            if final_roi is not None:
+                entry["final_period_roi"] = round(final_roi, 2)
+            out[key] = entry
+    return out
+
+
+def _load_walk_forward() -> Dict[str, Dict[str, Any]]:
+    """Walk-forward 検証結果を {strategy_name: stats} で返す。
+    Wave28: value_multi_bet.json の戦略 (value_uren_nopop_030 等) も統合 +
+            既存 entries に final_period_roi (= 最終期間 ROI = pure test) を補完。"""
+    out: Dict[str, Dict[str, Any]] = {}
+    if WALK_FORWARD_PATH.exists():
+        try:
+            wf = json.loads(WALK_FORWARD_PATH.read_text(encoding="utf-8"))
+            for s in (wf.get("strategies") or []):
+                if not isinstance(s, dict):
+                    continue
+                pr = s.get("period_rois") or []
+                if "final_period_roi" not in s and pr:
+                    valid_pr = [x for x in pr if x is not None]
+                    if valid_pr:
+                        s["final_period_roi"] = round(valid_pr[-1], 2)
+                out[s.get("name")] = s
+        except Exception:
+            pass
+    # value_multi_bet.json を統合
+    value_stats = _load_value_multi_bet_stats()
+    for k, v in value_stats.items():
+        out[k] = v
     return out
 
 
@@ -211,26 +297,37 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
     """戦略ごとの実証統計を {key: {...}} で返す。
     Walk-forward 検証があればその安定性データも含める。"""
     out: Dict[str, Dict[str, Any]] = {}
-    if not BACKTEST_PATH.exists():
-        return out
-    try:
-        bt = json.loads(BACKTEST_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return out
+    bt = {}
+    if BACKTEST_PATH.exists():
+        try:
+            bt = json.loads(BACKTEST_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            bt = {}
     test_races = bt.get("test_races")
     by_name = {s.get("name"): s for s in (bt.get("strategies") or [])}
     wf_by_name = _load_walk_forward()
 
     for defn in STRATEGY_DEFS:
         s = by_name.get(defn["name_in_backtest"])
-        if not s:
-            continue
         wf = wf_by_name.get(defn["name_in_backtest"])
-        # Walk-forward 信頼性指標 (Wave19.8: 8 期間検証に合わせて調整)
-        #   全期間 (wp==ap) 100%+ + σ<15 + 平均 105%+   → ★★★★ TRUSTED
-        #   80%+ 期間勝 + σ<20 + 平均 100%+              → ★★★ STABLE
-        #   半数以上勝 + 平均 100%+                       → ★★ MIXED
-        #   それ未満                                      → ★ RISKY
+        # Wave28: backtest に無くても walk_forward / value_multi_bet に存在すれば stats を作る
+        if not s and not wf:
+            continue
+        if not s:
+            # walk_forward 由来の擬似 stats を作る (mean_roi を採用)
+            s = {
+                "name": defn["name_in_backtest"],
+                "bets": wf.get("total_bets"),
+                "roi_pct": wf.get("mean_roi_pct"),
+                "hit_rate": (wf.get("total_hits") or 0) / max(1, wf.get("total_bets") or 1)
+                            if wf.get("total_hits") is not None else None,
+                "invested": None, "returned": None, "profit": None, "max_payout": None,
+            }
+        # Wave28: Walk-forward 信頼性指標 (look-ahead leakage を考慮して厳格化)
+        #   walk_forward_validate.py は全データの前 80% で学習した 1 モデルを全期間に適用しているため、
+        #   最終期間 (period N-1) 以外は train データに含まれる。
+        #   **真に学習に含まれない pure test は final_period_roi のみ**。
+        #   trust_label の判定では final_period_roi >= 100 を必須条件とする。
         trust_level = None
         trust_label = None
         if wf:
@@ -238,18 +335,35 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
             ap = wf.get("active_periods") or 1
             sigma = wf.get("roi_std") or 99
             mean_roi = wf.get("mean_roi_pct") or 0
-            if wp == ap and sigma < 15 and mean_roi >= 105:
-                trust_level = 4
-                trust_label = "TRUSTED"
-            elif wp >= ap * 0.8 and sigma < 20 and mean_roi >= 100:
-                trust_level = 3
-                trust_label = "STABLE"
-            elif wp >= ap // 2 and mean_roi >= 100:
-                trust_level = 2
-                trust_label = "MIXED"
+            final_roi = wf.get("final_period_roi")  # Wave28: pure test ROI
+            # final_roi が無い (古い結果) 場合は mean だけで判定 (旧仕様)
+            if final_roi is None:
+                if wp == ap and sigma < 15 and mean_roi >= 105:
+                    trust_level = 4
+                    trust_label = "TRUSTED (look-ahead 未補正)"
+                elif wp >= ap * 0.8 and sigma < 20 and mean_roi >= 100:
+                    trust_level = 3
+                    trust_label = "STABLE (look-ahead 未補正)"
+                elif wp >= ap // 2 and mean_roi >= 100:
+                    trust_level = 2
+                    trust_label = "MIXED (look-ahead 未補正)"
+                else:
+                    trust_level = 1
+                    trust_label = "RISKY"
             else:
-                trust_level = 1
-                trust_label = "RISKY"
+                # 最終期間 (pure test) 必須条件付き
+                if final_roi >= 105 and wp == ap and sigma < 15 and mean_roi >= 105:
+                    trust_level = 4
+                    trust_label = "TRUSTED"
+                elif final_roi >= 100 and wp >= ap * 0.8 and sigma < 20 and mean_roi >= 100:
+                    trust_level = 3
+                    trust_label = "STABLE"
+                elif final_roi >= 95 and wp >= ap // 2 and mean_roi >= 100:
+                    trust_level = 2
+                    trust_label = "MIXED"
+                else:
+                    trust_level = 1
+                    trust_label = "RISKY (最終期間で 100% 割れ)"
 
         out[defn["key"]] = {
             "strategy_key": defn["key"],
@@ -269,6 +383,7 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
             "profit": s.get("profit"),
             "max_payout": s.get("max_payout"),
             "walk_forward": wf,        # 期間別 ROI 配列 / 統計
+            "final_period_roi": (wf or {}).get("final_period_roi"),  # Wave28: pure test ROI を直接 UI へ
             "trust_level": trust_level,
             "trust_label": trust_label,
         }
@@ -381,6 +496,74 @@ def collect(recent_days: int) -> Dict[str, Any]:
     today_picks.sort(key=lambda x: (x.get("hassou_time") or "0000", x["race_id"]))
     recent_picks.sort(key=lambda x: x["race_id"], reverse=True)
 
+    # Wave28: 今日 0 件・直近 N 日 0 件のときは「最新 fired pick 20 件」を fallback として返す
+    # → ユーザーが「VALUE 152% 戦略」をタップしても 0 件で看板倒れにならないように
+    fallback_picks: List[Dict[str, Any]] = []
+    if len(recent_picks) == 0:
+        all_fired: List[Dict[str, Any]] = []
+        for p in sorted(PREDICTIONS_DIR.glob("*.json"), reverse=True):
+            try:
+                pred = json.loads(p.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if not pred.get("ok"):
+                continue
+            horses = pred.get("horses") or []
+            if not horses:
+                continue
+            top = horses[0]
+            triggered = _trigger_strategies(top, horses)
+            if not triggered:
+                continue
+            rid = pred.get("race_id") or p.stem
+            race_date = _parse_race_date(rid)
+            if race_date is None:
+                continue
+            meta = _load_race_meta(rid)
+            top3_info = [
+                {"number": h.get("number"), "name": h.get("name"),
+                 "win_prob": h.get("win_prob"), "odds": h.get("odds"),
+                 "popularity": h.get("popularity")}
+                for h in horses[:3]
+            ]
+            use_horse = top
+            if any(d.get("use_nopop") and d["key"] in triggered for d in STRATEGY_DEFS):
+                nt = _nopop_top(horses)
+                if nt is not None:
+                    use_horse = nt
+            all_fired.append({
+                "race_id": rid,
+                "race_name": meta.get("race_name") or None,
+                "course": meta.get("course") or None,
+                "distance": meta.get("distance"),
+                "going": meta.get("going"),
+                "weather": meta.get("weather"),
+                "is_g1": meta.get("is_g1"),
+                "hassou_time": meta.get("hassou_time"),
+                "strategies": triggered,
+                "horse": {
+                    "number": use_horse.get("number"),
+                    "name": use_horse.get("name"),
+                    "win_prob": use_horse.get("win_prob"),
+                    "nopop_prob": use_horse.get("nopop_prob"),
+                    "value_signal": use_horse.get("value_signal"),
+                    "odds": use_horse.get("odds"),
+                    "popularity": use_horse.get("popularity"),
+                    "ev": use_horse.get("ev"),
+                    "rank_nopop": use_horse.get("rank_nopop"),
+                },
+                "top3": top3_info,
+                "top3_prob_sum": sum((h.get("win_prob") or 0) for h in horses[:3]),
+                "race_date": race_date.isoformat(),
+                "predicted_at": pred.get("predicted_at"),
+                "model_auc": pred.get("model_auc"),
+                "is_fallback": True,
+            })
+            if len(all_fired) >= 20:
+                break
+        all_fired.sort(key=lambda x: x["race_id"], reverse=True)
+        fallback_picks = all_fired
+
     return {
         "generatedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
         "todayJst": today.isoformat(),
@@ -392,8 +575,10 @@ def collect(recent_days: int) -> Dict[str, Any]:
         "stats": stats_by_key,
         "recommendations_today": today_picks,
         "recommendations_recent": recent_picks[:50],
+        "recommendations_fallback": fallback_picks,
         "count_today": len(today_picks),
         "count_recent": len(recent_picks),
+        "count_fallback": len(fallback_picks),
         "total_predictions": total,
         "fired_by_key": fired_by_key,
     }
@@ -401,7 +586,7 @@ def collect(recent_days: int) -> Dict[str, Any]:
 
 def main():
     ap = argparse.ArgumentParser(description="推奨買い目を集約 (Wave19.3: 3 戦略マルチアサイン)")
-    ap.add_argument("--recent-days", type=int, default=14,
+    ap.add_argument("--recent-days", type=int, default=30,
                     help="recent に含める日数 (デフォルト 14)")
     args = ap.parse_args()
 

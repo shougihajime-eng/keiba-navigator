@@ -153,11 +153,16 @@ def main(argv=None):
         if valid:
             avg = sum(valid) / len(valid)
             sigma = (sum((r - avg) ** 2 for r in valid) / len(valid)) ** 0.5
+            # Wave28: 最終期間 ROI (pure test = 学習に含まれない・真の期待 ROI)
+            final_roi = period_rois[-1]
+            final_bets = period_bets[-1] if period_bets else 0
             results.append({
                 "threshold": th,
                 "mean_roi_pct": round(avg, 2),
                 "worst_roi_pct": round(min(valid), 2),
                 "best_roi_pct": round(max(valid), 2),
+                "final_period_roi": round(final_roi, 2) if final_roi is not None else None,
+                "final_period_bets": final_bets,
                 "roi_std": round(sigma, 2),
                 "win_periods": sum(1 for r in valid if r >= 100),
                 "active_periods": len(valid),
