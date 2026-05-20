@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T05:11:03.894511+00:00",
+  "generatedAt": "2026-05-20T05:58:50.730415+00:00",
   "todayJst": "2026-05-20",
   "strategies_def": [
     {
@@ -177,6 +177,9 @@
         "active_periods": 6,
         "total_bets": 200,
         "total_hits": 39,
+        "total_invested": 20000,
+        "total_returned": 20210,
+        "hit_rate": 0.195,
         "period_rois": [
           152.46,
           101.31,
@@ -198,6 +201,21 @@
       "final_period_roi": 67.92,
       "overall_roi_pct_v2": 101.05,
       "leakage_free": true,
+      "kelly_true": {
+        "kelly_full": 0.0025,
+        "kelly_half": 0.0013,
+        "kelly_quarter": 0.0006,
+        "kelly_half_pct": 0.13,
+        "kelly_quarter_pct": 0.06,
+        "advice": "bankroll ¥30,000 なら Half Kelly = 1 R あたり ¥37 (期待 +1.05%)",
+        "hit_rate": 0.195,
+        "avg_payout": 518.2,
+        "edge_pct": 1.05,
+        "unit_bet": 100,
+        "bankroll_yen": 30000,
+        "half_kelly_yen": 37,
+        "leakage_free": true
+      },
       "trust_level": 2,
       "trust_label": "MIXED (真の WF で控除率周辺)",
       "risk": null
@@ -231,6 +249,9 @@
         "active_periods": 6,
         "total_bets": 77,
         "total_hits": 9,
+        "total_invested": 7700,
+        "total_returned": 10540,
+        "hit_rate": 0.117,
         "period_rois": [
           325.45,
           62.5,
@@ -252,6 +273,21 @@
       "final_period_roi": 17.27,
       "overall_roi_pct_v2": 136.88,
       "leakage_free": true,
+      "kelly_true": {
+        "kelly_full": 0.0344,
+        "kelly_half": 0.0172,
+        "kelly_quarter": 0.0086,
+        "kelly_half_pct": 1.72,
+        "kelly_quarter_pct": 0.86,
+        "advice": "bankroll ¥30,000 なら Half Kelly = 1 R あたり ¥516 (期待 +36.88%)",
+        "hit_rate": 0.1169,
+        "avg_payout": 1171.1,
+        "edge_pct": 36.88,
+        "unit_bet": 100,
+        "bankroll_yen": 30000,
+        "half_kelly_yen": 516,
+        "leakage_free": true
+      },
       "trust_level": 4,
       "trust_label": "TRUSTED (真の WF で控除率を大幅突破)",
       "risk": null
@@ -285,6 +321,9 @@
         "active_periods": 6,
         "total_bets": 31,
         "total_hits": 3,
+        "total_invested": 3100,
+        "total_returned": 1080,
+        "hit_rate": 0.097,
         "period_rois": [
           0.0,
           72.5,
@@ -306,6 +345,15 @@
       "final_period_roi": 0.0,
       "overall_roi_pct_v2": 34.84,
       "leakage_free": true,
+      "kelly_true": {
+        "kelly_full": 0.0,
+        "kelly_half": 0.0,
+        "kelly_quarter": 0.0,
+        "advice": "期待値マイナス・賭けない",
+        "hit_rate": 0.0967741935483871,
+        "avg_payout": 360.0,
+        "edge_pct": -65.16
+      },
       "trust_level": 1,
       "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": null
@@ -349,6 +397,7 @@
       "final_period_roi": 66.98,
       "overall_roi_pct_v2": 77.47,
       "leakage_free": true,
+      "kelly_true": null,
       "trust_level": 1,
       "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": null
@@ -392,6 +441,7 @@
       "final_period_roi": 81.53,
       "overall_roi_pct_v2": 83.74,
       "leakage_free": true,
+      "kelly_true": null,
       "trust_level": 1,
       "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": null
@@ -425,6 +475,9 @@
         "active_periods": 6,
         "total_bets": 2234,
         "total_hits": 1249,
+        "total_invested": 446800,
+        "total_returned": 347080,
+        "hit_rate": 0.559,
         "period_rois": [
           82.95,
           74.29,
@@ -446,6 +499,15 @@
       "final_period_roi": 82.96,
       "overall_roi_pct_v2": 77.68,
       "leakage_free": true,
+      "kelly_true": {
+        "kelly_full": 0.0,
+        "kelly_half": 0.0,
+        "kelly_quarter": 0.0,
+        "advice": "期待値マイナス・賭けない",
+        "hit_rate": 0.5590868397493286,
+        "avg_payout": 277.8863090472378,
+        "edge_pct": -22.32
+      },
       "trust_level": 1,
       "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": {
@@ -488,6 +550,9 @@
         "active_periods": 6,
         "total_bets": 365,
         "total_hits": 14,
+        "total_invested": 36500,
+        "total_returned": 83780,
+        "hit_rate": 0.038,
         "period_rois": [
           432.41,
           314.62,
@@ -509,6 +574,21 @@
       "final_period_roi": 82.5,
       "overall_roi_pct_v2": 229.53,
       "leakage_free": true,
+      "kelly_true": {
+        "kelly_full": 0.022,
+        "kelly_half": 0.011,
+        "kelly_quarter": 0.0055,
+        "kelly_half_pct": 1.1,
+        "kelly_quarter_pct": 0.55,
+        "advice": "bankroll ¥30,000 なら Half Kelly = 1 R あたり ¥330 (期待 +129.53%)",
+        "hit_rate": 0.0384,
+        "avg_payout": 5984.3,
+        "edge_pct": 129.53,
+        "unit_bet": 100,
+        "bankroll_yen": 30000,
+        "half_kelly_yen": 330,
+        "leakage_free": true
+      },
       "trust_level": 4,
       "trust_label": "TRUSTED (真の WF で控除率を大幅突破)",
       "risk": null
@@ -542,6 +622,9 @@
         "active_periods": 6,
         "total_bets": 365,
         "total_hits": 67,
+        "total_invested": 36500,
+        "total_returned": 31730,
+        "hit_rate": 0.184,
         "period_rois": [
           124.18,
           67.79,
@@ -563,6 +646,15 @@
       "final_period_roi": 64.67,
       "overall_roi_pct_v2": 86.93,
       "leakage_free": true,
+      "kelly_true": {
+        "kelly_full": 0.0,
+        "kelly_half": 0.0,
+        "kelly_quarter": 0.0,
+        "advice": "期待値マイナス・賭けない",
+        "hit_rate": 0.18356164383561643,
+        "avg_payout": 473.5820895522388,
+        "edge_pct": -13.07
+      },
       "trust_level": 1,
       "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": {
@@ -605,6 +697,9 @@
         "active_periods": 6,
         "total_bets": 2234,
         "total_hits": 248,
+        "total_invested": 223400,
+        "total_returned": 164750,
+        "hit_rate": 0.111,
         "period_rois": [
           87.42,
           64.63,
@@ -626,6 +721,15 @@
       "final_period_roi": 82.66,
       "overall_roi_pct_v2": 73.75,
       "leakage_free": true,
+      "kelly_true": {
+        "kelly_full": 0.0,
+        "kelly_half": 0.0,
+        "kelly_quarter": 0.0,
+        "advice": "期待値マイナス・賭けない",
+        "hit_rate": 0.11101163831692032,
+        "avg_payout": 664.3145161290323,
+        "edge_pct": -26.25
+      },
       "trust_level": 1,
       "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": {
@@ -668,6 +772,9 @@
         "active_periods": 6,
         "total_bets": 2234,
         "total_hits": 1249,
+        "total_invested": 223400,
+        "total_returned": 182330,
+        "hit_rate": 0.559,
         "period_rois": [
           78.48,
           83.96,
@@ -689,6 +796,15 @@
       "final_period_roi": 83.25,
       "overall_roi_pct_v2": 81.62,
       "leakage_free": true,
+      "kelly_true": {
+        "kelly_full": 0.0,
+        "kelly_half": 0.0,
+        "kelly_quarter": 0.0,
+        "advice": "期待値マイナス・賭けない",
+        "hit_rate": 0.5590868397493286,
+        "avg_payout": 145.98078462770215,
+        "edge_pct": -18.38
+      },
       "trust_level": 1,
       "trust_label": "RISKY (真の WF で期待値マイナス)",
       "risk": {
@@ -743,6 +859,7 @@
       "final_period_roi": 93.75,
       "overall_roi_pct_v2": null,
       "leakage_free": false,
+      "kelly_true": null,
       "trust_level": 1,
       "trust_label": "RISKY (最終期間で 100% 割れ)",
       "risk": null
@@ -842,6 +959,7 @@
       "final_period_roi": 95.0,
       "overall_roi_pct_v2": null,
       "leakage_free": false,
+      "kelly_true": null,
       "trust_level": 2,
       "trust_label": "MIXED (最終期間 ぎりぎり)",
       "risk": null
@@ -941,6 +1059,7 @@
       "final_period_roi": 102.9,
       "overall_roi_pct_v2": null,
       "leakage_free": false,
+      "kelly_true": null,
       "trust_level": 2,
       "trust_label": "MIXED (最終期間 ぎりぎり)",
       "risk": null
@@ -1040,6 +1159,7 @@
       "final_period_roi": 77.5,
       "overall_roi_pct_v2": null,
       "leakage_free": false,
+      "kelly_true": null,
       "trust_level": 1,
       "trust_label": "RISKY (最終期間で 100% 割れ)",
       "risk": null
@@ -1139,6 +1259,7 @@
       "final_period_roi": 92.2,
       "overall_roi_pct_v2": null,
       "leakage_free": false,
+      "kelly_true": null,
       "trust_level": 1,
       "trust_label": "RISKY (最終期間で 100% 割れ)",
       "risk": null
@@ -1238,6 +1359,7 @@
       "final_period_roi": 75.5,
       "overall_roi_pct_v2": null,
       "leakage_free": false,
+      "kelly_true": null,
       "trust_level": 1,
       "trust_label": "RISKY (最終期間で 100% 割れ)",
       "risk": null
@@ -4038,14 +4160,14 @@
   "total_predictions": 3420,
   "fired_by_key": {
     "value_uren_turf": 249,
-    "value_uren_short": 113,
+    "value_uren_short": 112,
     "value_uren_short_ultra": 42,
     "value_stack_uren": 2571,
     "value_stack_fuku": 2571,
     "value_double": 2571,
     "value_tan3": 482,
     "value_tan3_long": 111,
-    "value_tan3_dirt_mid": 139,
+    "value_tan3_dirt_mid": 138,
     "value_uren": 482,
     "value_uren_hot": 2571,
     "value_invest": 2571,

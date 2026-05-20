@@ -472,6 +472,66 @@ def _load_value_multi_bet_stats() -> Dict[str, Dict[str, Any]]:
     return out
 
 
+def _kelly_from_wf(wf: Dict[str, Any], unit_bet: int = 100) -> Optional[Dict[str, Any]]:
+    """walk_forward_v2 由来の (leak-free) 統計から真の Kelly 比率を算出 (Wave32)。
+
+    Kelly 公式: f* = (b*p - q) / b
+      where:
+        b = (平均払戻 / 1単位投資額) - 1  (= 純益倍率)
+        p = 的中率
+        q = 1 - p
+
+    Returns: { kelly_full, kelly_half, kelly_quarter, advice, hit_rate, avg_payout, edge_pct } | None
+    """
+    if not wf or not wf.get("leakage_free"):
+        return None
+    bets = wf.get("total_bets") or 0
+    hits = wf.get("total_hits") or 0
+    if bets < 30 or hits < 1:
+        # サンプル不足 (30 件未満 or 0 hit) は信頼できない
+        return None
+    overall_roi = wf.get("overall_roi_pct")
+    if overall_roi is None or overall_roi <= 100:
+        # 期待値マイナス領域は Kelly = 0 (賭けない)
+        return {"kelly_full": 0.0, "kelly_half": 0.0, "kelly_quarter": 0.0,
+                "advice": "期待値マイナス・賭けない", "hit_rate": hits / bets,
+                "avg_payout": (wf.get("total_returned") or 0) / hits if hits else 0,
+                "edge_pct": round(overall_roi - 100, 2) if overall_roi else None}
+    total_ret = wf.get("total_returned") or 0
+    avg_payout = total_ret / hits if hits > 0 else 0
+    p = hits / bets
+    if avg_payout <= unit_bet:
+        # 平均払戻が投資額以下 = 損失確定領域
+        return {"kelly_full": 0.0, "kelly_half": 0.0, "kelly_quarter": 0.0,
+                "advice": "平均払戻が投資額以下", "hit_rate": p, "avg_payout": avg_payout,
+                "edge_pct": round(overall_roi - 100, 2)}
+    b = (avg_payout / unit_bet) - 1
+    q = 1 - p
+    kelly_f = max(0.0, (b * p - q) / b)
+    # 推奨は Half Kelly (破産確率半減・実運用標準)
+    kelly_half = kelly_f / 2
+    kelly_quarter = kelly_f / 4
+    edge_pct = round(overall_roi - 100, 2)
+    bankroll_yen = 30000  # デフォルト ¥3 万円 bankroll
+    half_yen = int(bankroll_yen * kelly_half)
+    advice = f"bankroll ¥{bankroll_yen:,} なら Half Kelly = 1 R あたり ¥{half_yen:,} (期待 +{edge_pct}%)"
+    return {
+        "kelly_full": round(kelly_f, 4),
+        "kelly_half": round(kelly_half, 4),
+        "kelly_quarter": round(kelly_quarter, 4),
+        "kelly_half_pct": round(kelly_half * 100, 2),
+        "kelly_quarter_pct": round(kelly_quarter * 100, 2),
+        "advice": advice,
+        "hit_rate": round(p, 4),
+        "avg_payout": round(avg_payout, 1),
+        "edge_pct": edge_pct,
+        "unit_bet": unit_bet,
+        "bankroll_yen": bankroll_yen,
+        "half_kelly_yen": half_yen,
+        "leakage_free": True,
+    }
+
+
 def _load_walk_forward_stacking_pure_stats() -> Dict[str, Dict[str, Any]]:
     """walk_forward_stacking_pure.json (Wave30-X4: Stacking の真の期間別再学習) を統合。
     各 period で LGBM primary + nopop + XGB + CatB + LR の 5 モデルを再学習。
@@ -543,6 +603,9 @@ def _load_walk_forward_v2_stats() -> Dict[str, Dict[str, Any]]:
             "active_periods": s.get("active_periods"),
             "total_bets": s.get("total_bets"),
             "total_hits": s.get("total_hits"),
+            "total_invested": s.get("total_invested"),    # Wave32: Kelly 計算で必要
+            "total_returned": s.get("total_returned"),    # Wave32: Kelly 計算で必要
+            "hit_rate": s.get("hit_rate"),
             "period_rois": s.get("period_rois"),
             "period_bets": s.get("period_bets"),
             "leakage_free": True,  # 真の Walk-forward 由来
@@ -783,6 +846,7 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
             "final_period_roi": (wf or {}).get("final_period_roi"),  # Wave28: pure test ROI を直接 UI へ
             "overall_roi_pct_v2": (wf or {}).get("overall_roi_pct"),  # Wave30: 真の look-ahead 無し ROI
             "leakage_free": bool((wf or {}).get("leakage_free")),
+            "kelly_true": _kelly_from_wf(wf, unit_bet=defn.get("unit", 100)),  # Wave32: 真の Kelly
             "trust_level": trust_level,
             "trust_label": trust_label,
             # Wave31-C: Kelly criterion + ドローダウン

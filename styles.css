@@ -5792,6 +5792,26 @@ body::after {
   box-shadow: 0 0 24px -8px rgba(245, 158, 11, 0.35);
 }
 
+/* Wave32: Kelly true バッジ (真の Walk-forward から算出した leak-free Kelly) */
+.rec-strat-kelly-true {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(67, 56, 202, 0.10)) !important;
+  border: 1px solid rgba(99, 102, 241, 0.45) !important;
+  color: #4338ca !important;
+  font-weight: 700;
+  box-shadow: 0 0 8px -2px rgba(99, 102, 241, 0.35);
+}
+.rec-strat-kelly-skip {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.10), rgba(220, 38, 38, 0.05)) !important;
+  border: 1px solid rgba(239, 68, 68, 0.30) !important;
+  color: #b91c1c !important;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
 /* Wave31: WIN5 真の Walk-forward 検証バナー (50 日 0 回的中の正直開示) */
 .win5-wf-banner {
   margin: 10px 14px;

@@ -2765,32 +2765,40 @@
       const lfBadge = leakageFree
         ? `<span class="rec-strat-lf-badge" title="期間別再学習で look-ahead 完全排除済">⚡ leak-free</span>`
         : "";
-      // Wave31-C: Kelly criterion + ドローダウン (リスク管理情報)
+      // Wave32: Kelly criterion を「真の Walk-forward (leak-free)」から再計算済の kelly_true を最優先
+      // 旧 risk フィールド (leak 由来) は fallback
+      const kellyTrue = st.kelly_true;
       const risk = st.risk || {};
-      const kellyHalfPct = risk.kelly_half_pct;
+      // 真の Kelly があればそれを採用 (V-3連単 1.1% / V-短距離 1.72% など現実的な数値)
+      const kellyHalfPct = (kellyTrue && kellyTrue.kelly_half_pct != null)
+        ? kellyTrue.kelly_half_pct
+        : risk.kelly_half_pct;
+      const kellyIsLeakFree = !!(kellyTrue && kellyTrue.leakage_free);
+      const edgePct = kellyTrue ? kellyTrue.edge_pct : null;
       const maxStreak = risk.max_losing_streak;
       const maxDD = risk.max_drawdown_jpy;
-      // ユーザーの 1 日予算から「1 R 推奨投資額」を計算
+      // ユーザーの 1 日予算 (実際は bankroll) から「1 R あたり推奨投資額」を計算
       // localStorage の keiba_kelly_budget があれば使う・無ければ ¥10,000 をデフォルト
       let dailyBudget = 10000;
       try {
         const b = parseInt(localStorage.getItem("keiba_kelly_budget"), 10);
         if (Number.isFinite(b) && b >= 1000) dailyBudget = b;
       } catch {}
-      // Kelly Half % を予算の % として 1 ベットあたり推奨額を計算
-      // Kelly が極端な値 (>100%) のときは「全額」と解釈・100 円単位 floor
       let kellyBetJpy = null;
       if (kellyHalfPct != null && kellyHalfPct > 0) {
-        const f = Math.min(kellyHalfPct / 100, 1.0); // 上限 100%
+        // 1 R あたり推奨 = bankroll × Half Kelly fraction
+        const f = Math.min(kellyHalfPct / 100, 1.0);
         kellyBetJpy = Math.floor(dailyBudget * f / 100) * 100;
         if (kellyBetJpy < 100) kellyBetJpy = 100;
       }
-      const kellyBlock = (kellyHalfPct != null && kellyBetJpy != null)
-        ? `<div class="rec-strat-kelly" title="Half Kelly に基づく 1 R あたりの推奨投資額">
+      const kellyBlock = (kellyHalfPct != null && kellyBetJpy != null && kellyHalfPct > 0)
+        ? `<div class="rec-strat-kelly ${kellyIsLeakFree ? 'rec-strat-kelly-true' : ''}" title="${kellyIsLeakFree ? '真の Walk-forward (look-ahead 完全排除) から算出した Kelly Half' : '旧 backtest 由来'}">
              💴 1R 推奨 ¥${kellyBetJpy.toLocaleString()}
-             <span class="rec-strat-kelly-sub">(予算¥${dailyBudget.toLocaleString()} の ${kellyHalfPct}%)</span>
+             <span class="rec-strat-kelly-sub">${kellyIsLeakFree ? '⚡' : ''}(予算¥${dailyBudget.toLocaleString()} の ${kellyHalfPct}%${edgePct != null ? `, +${edgePct}%` : ''})</span>
            </div>`
-        : "";
+        : (kellyHalfPct === 0
+            ? `<div class="rec-strat-kelly rec-strat-kelly-skip" title="真の WF で期待値マイナス・賭けない推奨">⛔ 期待値マイナス・賭けない</div>`
+            : "");
       const riskBlock = (maxStreak != null && maxDD != null)
         ? `<div class="rec-strat-risk" title="16 期間検証での最悪値">
              ⚠ 最大連敗 ${maxStreak} 回・最大ドローダウン ¥${maxDD.toLocaleString()}
