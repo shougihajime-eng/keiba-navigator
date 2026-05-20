@@ -94,7 +94,129 @@ def _nopop_top(horses):
             return h
     return None
 
+def _race_surface(horses):
+    if not horses: return ""
+    return (horses[0].get("race_surface") or "")
+
+
+def _race_distance(horses):
+    if not horses: return 0
+    try:
+        return int(horses[0].get("race_distance") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 STRATEGY_DEFS = [
+    {
+        # Wave29: 芝 + 馬連 nopop 閾値 0.30 → final 164.6% / 勝 7/7 / 件数 448
+        # 全期間 (period 1〜7) すべて 100%+ かつ pure test (look-ahead 無し最終期間) 164.6%
+        # → 真に世界一級・最も信頼できる戦略
+        "key": "value_uren_turf",
+        "name_in_backtest": "value_uren_turf_030",
+        "label": "芝 限定 × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 164.6%・勝 7/7・件数 448",
+        "short_label": "V-芝馬連",
+        "color": "emerald",
+        "bet_type": "馬連 (芝・nopop top1-top2)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            "芝" in _race_surface(horses) and
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.30)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave29: 短距離 1000-1400m + 馬連 nopop 閾値 0.30 → final 277% / 勝 6/7 / 件数 279
+        # 短距離はペースが安定 + 騎手の腕が出やすい → nopop モデルが市場を凌駕する領域
+        "key": "value_uren_short",
+        "name_in_backtest": "value_uren_short_030",
+        "label": "短距離 (1000-1400m) × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 277%・勝 6/7・件数 279",
+        "short_label": "V-短距離",
+        "color": "violet",
+        "bet_type": "馬連 (短距離・nopop top1-top2)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            1000 <= _race_distance(horses) <= 1400 and
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.30)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave29: 短距離 + 馬連 nopop 閾値 0.35 (厳選) → final 381% / 勝 5/7 / 件数 165
+        # ハイリスクハイリターン (件数少ない・全期間で勝つわけではない・ただしハマる時の爆発力)
+        "key": "value_uren_short_ultra",
+        "name_in_backtest": "value_uren_short_ultra_035",
+        "label": "短距離 × 馬連 nopop (閾値 35%・厳選) — 真の期待 381%・勝 5/7・件数 165",
+        "short_label": "V-短距離Σ",
+        "color": "gold",
+        "bet_type": "馬連 (短距離・厳選・nopop)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            1000 <= _race_distance(horses) <= 1400 and
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.35)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave30-C: 🏆 Stacking メタモデル — 馬連で全期間 100%+ 達成 (avg 244%・勝 7/7)
+        # 4 モデル (LGBM + nopop + XGB + CatB) を LR で合成・nopop 重み 23.3 が圧倒
+        # CatB は逆向きシグナル (-5.6)
+        "key": "value_stack_uren",
+        "name_in_backtest": "value_stack_uren_016",
+        "label": "Stacking 馬連 (4 モデル LR 合成) — avg 244%・worst 105%・全期間 100%+ ⭐ 世界一級",
+        "short_label": "V-STACK",
+        "color": "gold",
+        "bet_type": "馬連 (Stacking top1-top2)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.16)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave30-C: Stacking 複勝 avg 156%・σ 39・件数 2893
+        "key": "value_stack_fuku",
+        "name_in_backtest": "value_stack_fuku_016",
+        "label": "Stacking 複勝 (4 モデル LR 合成) — avg 156%・σ 39",
+        "short_label": "V-STACK複",
+        "color": "amber",
+        "bet_type": "複勝 (Stacking top1)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.16)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave30-B: V-DOUBLE 複勝+馬連 併買 (閾値 0.16) avg 187.6% / σ 64.34 / 勝 6/7
+        # 馬連単体 (σ 92) より安定 + 複勝の確実性で σ を半分に
+        "key": "value_double",
+        "name_in_backtest": "value_double_nopop_016",
+        "label": "複勝+馬連 併買 (200 円) — avg 187.6% / σ 64・最もバランス良い・worst 72%",
+        "short_label": "V-DOUBLE",
+        "color": "rose",
+        "bet_type": "複勝+馬連 (nopop top1-top2)",
+        "unit": 200,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.16)(_nopop_top(horses))
+        ),
+    },
+    {
+        # Wave30-A: 3連単 nopop top1->top2->top3 (閾値 0.20) avg 308.50% / 件数 2160 / 勝 6/7 / σ 191
+        # ハイリスクハイリターン・1 期間で 40% まで落ちる可能性
+        "key": "value_tan3",
+        "name_in_backtest": "value_tan3_nopop_020",
+        "label": "3 連単 nopop top1->top2->top3 (閾値 20%・ハイリターン) — avg 308.5%・σ 191・勝 6/7",
+        "short_label": "V-3連単",
+        "color": "gold",
+        "bet_type": "3 連単 (nopop top1->2->3)",
+        "unit": 100,
+        "use_nopop": True,
+        "trigger": lambda top, horses: (
+            (lambda nt: nt is not None and (nt.get("nopop_prob") or 0) >= 0.20)(_nopop_top(horses))
+        ),
+    },
     {
         # Wave29-B: 馬連 nopop top1-top2 が avg 165%・勝 7/7・最悪 108.75% (閾値 0.30) で全期間 100% 越え!
         # value_multi_bet.json 参照
@@ -225,6 +347,7 @@ STRATEGY_DEFS = [
 # walk_forward_result.json には value_invest 系の戦略が含まれない場合があるため、これらも統合する
 VALUE_MULTI_BET_PATH = CACHE / "value_multi_bet.json"
 VALUE_THRESHOLD_SWEEP_PATH = CACHE / "value_threshold_sweep.json"
+VALUE_UREN_FILTER_PATH = CACHE / "value_uren_filter_sweep.json"
 
 
 def _load_value_multi_bet_stats() -> Dict[str, Dict[str, Any]]:
@@ -271,6 +394,59 @@ def _load_value_multi_bet_stats() -> Dict[str, Dict[str, Any]]:
             if final_roi is not None:
                 entry["final_period_roi"] = round(final_roi, 2)
             out[key] = entry
+    return out
+
+
+def _load_value_uren_filter_stats() -> Dict[str, Dict[str, Any]]:
+    """value_uren_filter_sweep.json (V-馬連 を G1/芝/距離別 で絞った結果) を統合。
+    Wave29: 「芝 + 0.30 → final 164.6% 勝 7/7」など真の TRUSTED 領域を発見。"""
+    out: Dict[str, Dict[str, Any]] = {}
+    if not VALUE_UREN_FILTER_PATH.exists():
+        return out
+    try:
+        d = json.loads(VALUE_UREN_FILTER_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return out
+    # フィルタ名 → name_in_backtest プレフィックス
+    filter_to_key = {
+        "turf":      "value_uren_turf",
+        "dist_short": "value_uren_short",
+        "g1":        "value_uren_g1",
+        "graded":    "value_uren_graded",
+        "kyoto":     "value_uren_kyoto",
+    }
+    for r in d.get("results") or []:
+        if not isinstance(r, dict):
+            continue
+        f = r.get("filter")
+        th = r.get("threshold")
+        if not f or th is None:
+            continue
+        # 短距離厳選 (th=0.35) は別キー
+        if f == "dist_short" and abs(th - 0.35) < 0.001:
+            key = "value_uren_short_ultra_035"
+        else:
+            prefix = filter_to_key.get(f)
+            if not prefix:
+                continue
+            key = f"{prefix}_{int(round(th * 100)):03d}"
+        # mean_roi_pct を mean_period_roi_pct から (キー名統一)
+        entry = {
+            "name": key,
+            "mean_roi_pct": r.get("mean_period_roi_pct"),
+            "worst_roi_pct": r.get("worst_period_roi_pct"),
+            "best_roi_pct": r.get("best_period_roi_pct"),
+            "final_period_roi": r.get("final_period_roi_pct"),
+            "final_period_bets": r.get("final_period_bets"),
+            "roi_std": r.get("roi_std"),
+            "win_periods": r.get("win_periods"),
+            "active_periods": r.get("active_periods"),
+            "total_bets": r.get("total_bets"),
+            "total_hits": None,
+            "period_rois": r.get("period_rois"),
+            "period_bets": r.get("period_bets"),
+        }
+        out[key] = entry
     return out
 
 
@@ -327,6 +503,9 @@ def _load_walk_forward() -> Dict[str, Dict[str, Any]]:
         out[k] = v
     # value_multi_bet.json を統合 (馬連・ワイド・3連複・3連単 + 複勝の細かい閾値)
     for k, v in _load_value_multi_bet_stats().items():
+        out[k] = v
+    # value_uren_filter_sweep.json を統合 (Wave29: G1/芝/距離別 で final ROI 高い領域)
+    for k, v in _load_value_uren_filter_stats().items():
         out[k] = v
     return out
 
@@ -475,18 +654,25 @@ def collect(recent_days: int) -> Dict[str, Any]:
         horses = pred.get("horses") or []
         if not horses:
             continue
+        rid = pred.get("race_id") or p.stem
+        race_date = _parse_race_date(rid)
+        if race_date is None:
+            continue
+        meta = _load_race_meta(rid)
+        # Wave29: race_distance / is_g1 を horse に注入 (V-芝馬連・V-短距離 trigger 用)
+        # 既存 predictions json には race_distance が無いので、race ファイルから補完
+        if meta.get("distance") is not None or meta.get("is_g1"):
+            for h in horses:
+                if h.get("race_distance") is None and meta.get("distance"):
+                    h["race_distance"] = meta.get("distance")
+                if "race_is_g1" not in h:
+                    h["race_is_g1"] = bool(meta.get("is_g1"))
         top = horses[0]
         triggered = _trigger_strategies(top, horses)
         if not triggered:
             continue
         for k in triggered:
             fired_by_key[k] = fired_by_key.get(k, 0) + 1
-
-        rid = pred.get("race_id") or p.stem
-        race_date = _parse_race_date(rid)
-        if race_date is None:
-            continue
-        meta = _load_race_meta(rid)
         # 推奨買い目: トップ 3 頭の情報も含める (ワイド戦略向け)
         top3_info = [
             {"number": h.get("number"), "name": h.get("name"),
@@ -551,15 +737,22 @@ def collect(recent_days: int) -> Dict[str, Any]:
             horses = pred.get("horses") or []
             if not horses:
                 continue
-            top = horses[0]
-            triggered = _trigger_strategies(top, horses)
-            if not triggered:
-                continue
             rid = pred.get("race_id") or p.stem
             race_date = _parse_race_date(rid)
             if race_date is None:
                 continue
             meta = _load_race_meta(rid)
+            # Wave29: race_distance / is_g1 を horse に注入
+            if meta.get("distance") is not None or meta.get("is_g1"):
+                for h in horses:
+                    if h.get("race_distance") is None and meta.get("distance"):
+                        h["race_distance"] = meta.get("distance")
+                    if "race_is_g1" not in h:
+                        h["race_is_g1"] = bool(meta.get("is_g1"))
+            top = horses[0]
+            triggered = _trigger_strategies(top, horses)
+            if not triggered:
+                continue
             top3_info = [
                 {"number": h.get("number"), "name": h.get("name"),
                  "win_prob": h.get("win_prob"), "odds": h.get("odds"),

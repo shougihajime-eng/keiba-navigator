@@ -5762,6 +5762,27 @@ body::after {
   box-shadow: 0 0 24px -8px rgba(245, 158, 11, 0.35);
 }
 
+/* Wave28: ROI 主役切替 — 真の期待 ROI ラベル (戦略カード下に小さく "真の期待" or "1 期間検証" と表示) */
+.rec-strat-roi-label,
+.big-roi-label {
+  display: block;
+  text-align: center;
+  margin-top: -4px;
+  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.55);
+  letter-spacing: 0.04em;
+}
+.rec-strat-card.rec-strat-trusted .rec-strat-roi-label,
+.strat-trust-card.trusted .big-roi-label {
+  color: rgba(180, 83, 9, 0.85);
+}
+.rec-strat-card.rec-strat-risky .rec-strat-roi-label,
+.strat-trust-card.risky .big-roi-label {
+  color: rgba(185, 28, 28, 0.65);
+}
+
 /* Wave28: 真の期待 ROI バッジ (look-ahead leakage 無しの最終期間 ROI = pure test) */
 .rec-strat-final, .strat-final-roi {
   display: inline-block;

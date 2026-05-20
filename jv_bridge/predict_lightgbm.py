@@ -299,6 +299,14 @@ def predict_race(race: Dict[str, Any],
         "06": "中山", "07": "中京", "08": "京都", "09": "阪神", "10": "小倉",
     }
     rmvenue = _VENUE_NAMES.get(rmrid[8:10] if len(rmrid) >= 10 else "", "")
+    # Wave29: race_distance を horse に注入 (短距離戦略の trigger で使用)
+    rmdistance = None
+    try:
+        rmdistance = int(race.get("distance") or 0) or None
+    except (TypeError, ValueError):
+        rmdistance = None
+    # Wave29: is_g1 も注入
+    rmisg1 = bool(race.get("is_g1"))
 
     pred_horses = []
     for i, h in enumerate(horses):
@@ -331,6 +339,9 @@ def predict_race(race: Dict[str, Any],
             "race_surface": rmsurface,
             "race_month": rmmonth,
             "race_venue": rmvenue,
+            # Wave29: 距離・G1 フラグ (V-芝馬連 / V-短距離 戦略の trigger 用)
+            "race_distance": rmdistance,
+            "race_is_g1": rmisg1,
         })
     pred_horses.sort(key=lambda x: x["rank"])
 

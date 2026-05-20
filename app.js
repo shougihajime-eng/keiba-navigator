@@ -1051,14 +1051,16 @@
         el("span", { class: "name" }, d.short_label || d.key.toUpperCase()),
         el("span", { class: "stars" }, stars)
       ));
-      card.appendChild(el("div", { class: "big-roi" }, s.roi_pct ? s.roi_pct.toFixed(1) + "%" : "—"));
-      // Wave28: 最終期間 ROI (look-ahead 無し・真の期待 ROI) を併記
+      // Wave28: 真の期待 ROI (final_period_roi = pure test) を主役にし、mean は補助
       const finalRoi = s.final_period_roi ?? wf.final_period_roi;
-      const finalRoiHtml = finalRoi != null
-        ? `<br><span class="strat-final-roi">真の期待 ${finalRoi.toFixed(1)}%</span>`
-        : "";
+      const mainRoi = finalRoi != null
+        ? finalRoi.toFixed(1) + "%"
+        : (s.roi_pct ? s.roi_pct.toFixed(1) + "%" : "—");
+      const mainLabel = finalRoi != null ? "真の期待 ROI" : "1 期間検証 ROI";
+      card.appendChild(el("div", { class: "big-roi" }, mainRoi));
+      card.appendChild(el("div", { class: "big-roi-label" }, mainLabel));
       card.appendChild(el("div", { class: "meta", html:
-        `${s.fired_count}件・的中${s.hit_rate_pct}%${wfRoi ? `<br>${wfWin || ""}<br>Walk-fwd 平均 ${wfRoi}` : ""}${finalRoiHtml}`
+        `${s.fired_count}件・的中${s.hit_rate_pct}%${wfRoi ? `<br>分割検証 平均 ${wfRoi} (${wfWin || "—"})` : ""}`
       }));
       if (d.label) card.appendChild(el("div", { class: "desc" }, d.label));
       grid.appendChild(card);
@@ -2707,15 +2709,21 @@
       const finalRoiBadge = finalRoi != null
         ? `<span class="rec-strat-final" title="学習に含まれない最終期間で算出した、真の期待 ROI">真の期待 ${finalRoi.toFixed(1)}%</span>`
         : "";
+      // Wave28: 主役を「真の期待 ROI (final_period_roi)」に切替。
+      // mean / 1 期間 roi_pct は look-ahead leakage で過大評価される傾向があるためサブ表示に。
+      const mainRoi = finalRoi != null
+        ? finalRoi.toFixed(1) + "%"
+        : (st.roi_pct ? st.roi_pct.toFixed(1) + "%" : "—");
+      const mainRoiLabel = finalRoi != null ? "真の期待" : "1 期間検証";
       return `
         <div class="rec-strat-card ${cls}">
           <div class="rec-strat-badge">${defn.short_label}</div>
           <div class="rec-strat-stars" title="${trustLabel}">${stars}</div>
-          <div class="rec-strat-roi">${st.roi_pct ? st.roi_pct.toFixed(1) + "%" : "—"}</div>
+          <div class="rec-strat-roi" title="${mainRoiLabel} ROI">${mainRoi}</div>
+          <div class="rec-strat-roi-label">${mainRoiLabel}</div>
           <div class="rec-strat-meta">
             ${st.fired_count}件・的中${st.hit_rate_pct}%
             ${wfWin ? `<span class="rec-strat-wf">分割検証: ${wfRoi}・${wfWin}</span>` : ""}
-            ${finalRoiBadge}
           </div>
           <div class="rec-strat-label">${defn.label}</div>
         </div>

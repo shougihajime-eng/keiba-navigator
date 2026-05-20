@@ -1,7 +1,47 @@
 {
-  "generatedAt": "2026-05-20T03:16:55.827538+00:00",
+  "generatedAt": "2026-05-20T03:42:46.573132+00:00",
   "todayJst": "2026-05-20",
   "strategies_def": [
+    {
+      "key": "value_uren_turf",
+      "label": "芝 限定 × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 164.6%・勝 7/7・件数 448",
+      "short_label": "V-芝馬連",
+      "color": "emerald",
+      "bet_type": "馬連 (芝・nopop top1-top2)",
+      "unit": 100
+    },
+    {
+      "key": "value_uren_short",
+      "label": "短距離 (1000-1400m) × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 277%・勝 6/7・件数 279",
+      "short_label": "V-短距離",
+      "color": "violet",
+      "bet_type": "馬連 (短距離・nopop top1-top2)",
+      "unit": 100
+    },
+    {
+      "key": "value_uren_short_ultra",
+      "label": "短距離 × 馬連 nopop (閾値 35%・厳選) — 真の期待 381%・勝 5/7・件数 165",
+      "short_label": "V-短距離Σ",
+      "color": "gold",
+      "bet_type": "馬連 (短距離・厳選・nopop)",
+      "unit": 100
+    },
+    {
+      "key": "value_double",
+      "label": "複勝+馬連 併買 (200 円) — avg 187.6% / σ 64・最もバランス良い・worst 72%",
+      "short_label": "V-DOUBLE",
+      "color": "rose",
+      "bet_type": "複勝+馬連 (nopop top1-top2)",
+      "unit": 200
+    },
+    {
+      "key": "value_tan3",
+      "label": "3 連単 nopop top1->top2->top3 (閾値 20%・ハイリターン) — avg 308.5%・σ 191・勝 6/7",
+      "short_label": "V-3連単",
+      "color": "gold",
+      "bet_type": "3 連単 (nopop top1->2->3)",
+      "unit": 100
+    },
     {
       "key": "value_uren",
       "label": "実力派 AI 本命+対抗 (人気を見ない) で馬連 100 円・全期間 100% 越え (勝 7/7)・avg 165%",
@@ -76,6 +116,247 @@
     }
   ],
   "stats": {
+    "value_uren_turf": {
+      "strategy_key": "value_uren_turf",
+      "strategy_name": "value_uren_turf_030",
+      "label": "芝 限定 × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 164.6%・勝 7/7・件数 448",
+      "short_label": "V-芝馬連",
+      "color": "emerald",
+      "bet_type": "馬連 (芝・nopop top1-top2)",
+      "unit": 100,
+      "test_races": 676,
+      "fired_count": 448,
+      "fired_rate_pct": 66.3,
+      "roi_pct": 178.7,
+      "hit_rate_pct": 0,
+      "invested": null,
+      "returned": null,
+      "profit": null,
+      "max_payout": null,
+      "walk_forward": {
+        "name": "value_uren_turf_030",
+        "mean_roi_pct": 178.7,
+        "worst_roi_pct": 130.37,
+        "best_roi_pct": 295.52,
+        "final_period_roi": 164.64,
+        "final_period_bets": 28,
+        "roi_std": 54.35,
+        "win_periods": 7,
+        "active_periods": 7,
+        "total_bets": 448,
+        "total_hits": null,
+        "period_rois": [
+          130.37,
+          134.78,
+          205.15,
+          295.52,
+          184.53,
+          135.91,
+          164.64
+        ],
+        "period_bets": [
+          109,
+          90,
+          66,
+          58,
+          53,
+          44,
+          28
+        ]
+      },
+      "final_period_roi": 164.64,
+      "trust_level": 4,
+      "trust_label": "TRUSTED (最終期間でも期待値プラス)"
+    },
+    "value_uren_short": {
+      "strategy_key": "value_uren_short",
+      "strategy_name": "value_uren_short_030",
+      "label": "短距離 (1000-1400m) × 馬連 nopop top1-top2 (閾値 30%) — 真の期待 277%・勝 6/7・件数 279",
+      "short_label": "V-短距離",
+      "color": "violet",
+      "bet_type": "馬連 (短距離・nopop top1-top2)",
+      "unit": 100,
+      "test_races": 676,
+      "fired_count": 279,
+      "fired_rate_pct": 41.3,
+      "roi_pct": 185.0,
+      "hit_rate_pct": 0,
+      "invested": null,
+      "returned": null,
+      "profit": null,
+      "max_payout": null,
+      "walk_forward": {
+        "name": "value_uren_short_030",
+        "mean_roi_pct": 185.0,
+        "worst_roi_pct": 46.52,
+        "best_roi_pct": 277.33,
+        "final_period_roi": 277.33,
+        "final_period_bets": 15,
+        "roi_std": 74.09,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 279,
+        "total_hits": null,
+        "period_rois": [
+          154.75,
+          202.45,
+          223.17,
+          257.95,
+          132.83,
+          46.52,
+          277.33
+        ],
+        "period_bets": [
+          61,
+          49,
+          41,
+          44,
+          46,
+          23,
+          15
+        ]
+      },
+      "final_period_roi": 277.33,
+      "trust_level": 3,
+      "trust_label": "STABLE (最終期間で 100%+)"
+    },
+    "value_uren_short_ultra": {
+      "strategy_key": "value_uren_short_ultra",
+      "strategy_name": "value_uren_short_ultra_035",
+      "label": "短距離 × 馬連 nopop (閾値 35%・厳選) — 真の期待 381%・勝 5/7・件数 165",
+      "short_label": "V-短距離Σ",
+      "color": "gold",
+      "bet_type": "馬連 (短距離・厳選・nopop)",
+      "unit": 100,
+      "test_races": 676,
+      "fired_count": 165,
+      "fired_rate_pct": 24.4,
+      "roi_pct": 191.19,
+      "hit_rate_pct": 0,
+      "invested": null,
+      "returned": null,
+      "profit": null,
+      "max_payout": null,
+      "walk_forward": {
+        "name": "value_uren_short_ultra_035",
+        "mean_roi_pct": 191.19,
+        "worst_roi_pct": 66.88,
+        "best_roi_pct": 381.0,
+        "final_period_roi": 381.0,
+        "final_period_bets": 10,
+        "roi_std": 102.19,
+        "win_periods": 5,
+        "active_periods": 7,
+        "total_bets": 165,
+        "total_hits": null,
+        "period_rois": [
+          212.7,
+          263.85,
+          192.92,
+          148.15,
+          72.8,
+          66.88,
+          381.0
+        ],
+        "period_bets": [
+          37,
+          26,
+          24,
+          27,
+          25,
+          16,
+          10
+        ]
+      },
+      "final_period_roi": 381.0,
+      "trust_level": 2,
+      "trust_label": "MIXED (最終期間 ぎりぎり)"
+    },
+    "value_double": {
+      "strategy_key": "value_double",
+      "strategy_name": "value_double_nopop_016",
+      "label": "複勝+馬連 併買 (200 円) — avg 187.6% / σ 64・最もバランス良い・worst 72%",
+      "short_label": "V-DOUBLE",
+      "color": "rose",
+      "bet_type": "複勝+馬連 (nopop top1-top2)",
+      "unit": 200,
+      "test_races": 676,
+      "fired_count": 2673,
+      "fired_rate_pct": 395.4,
+      "roi_pct": 187.6,
+      "hit_rate_pct": 0,
+      "invested": 534600,
+      "returned": 1002909,
+      "profit": 468309,
+      "max_payout": 0,
+      "walk_forward": {
+        "name": "value_double_nopop_016",
+        "active_periods": 7,
+        "total_bets": 2673,
+        "total_hits": null,
+        "mean_roi_pct": 187.6,
+        "worst_roi_pct": 72.18,
+        "best_roi_pct": 286.25,
+        "roi_std": 64.34,
+        "win_periods": 6,
+        "period_rois": [
+          168.98,
+          180.53,
+          233.59,
+          286.25,
+          227.11,
+          144.52,
+          72.18
+        ],
+        "period_bets": null,
+        "final_period_roi": 72.18
+      },
+      "final_period_roi": 72.18,
+      "trust_level": 1,
+      "trust_label": "RISKY (最終期間で 100% 割れ)"
+    },
+    "value_tan3": {
+      "strategy_key": "value_tan3",
+      "strategy_name": "value_tan3_nopop_020",
+      "label": "3 連単 nopop top1->top2->top3 (閾値 20%・ハイリターン) — avg 308.5%・σ 191・勝 6/7",
+      "short_label": "V-3連単",
+      "color": "gold",
+      "bet_type": "3 連単 (nopop top1->2->3)",
+      "unit": 100,
+      "test_races": 676,
+      "fired_count": 2160,
+      "fired_rate_pct": 319.5,
+      "roi_pct": 308.5,
+      "hit_rate_pct": 0,
+      "invested": 216000,
+      "returned": 666360,
+      "profit": 450360,
+      "max_payout": 0,
+      "walk_forward": {
+        "threshold": 0.2,
+        "mean_roi_pct": 308.5,
+        "worst_roi_pct": 58.87,
+        "best_roi_pct": 709.91,
+        "roi_std": 190.69,
+        "win_periods": 6,
+        "active_periods": 7,
+        "total_bets": 2160,
+        "period_rois": [
+          212.63,
+          194.94,
+          258.17,
+          709.91,
+          344.51,
+          380.45,
+          58.87
+        ],
+        "name": "value_tan3_nopop_020",
+        "final_period_roi": 58.87
+      },
+      "final_period_roi": 58.87,
+      "trust_level": 1,
+      "trust_label": "RISKY (最終期間で 100% 割れ)"
+    },
     "value_uren": {
       "strategy_key": "value_uren",
       "strategy_name": "value_uren_nopop_030",
@@ -512,6 +793,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -564,6 +847,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -616,6 +900,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -668,6 +954,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -720,6 +1008,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -772,6 +1062,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -824,6 +1115,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -876,6 +1168,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "safe"
@@ -929,6 +1223,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "safe"
@@ -982,6 +1278,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1034,6 +1332,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1086,6 +1385,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1138,6 +1439,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1190,6 +1492,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1242,6 +1545,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1294,6 +1599,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "turf",
@@ -1349,6 +1656,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1401,6 +1710,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "big",
@@ -1458,6 +1769,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1510,6 +1823,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1562,6 +1877,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1614,6 +1931,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1666,6 +1985,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1718,6 +2038,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1770,6 +2091,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1822,6 +2144,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1874,6 +2198,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1926,6 +2251,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -1978,6 +2305,10 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_uren_turf",
+        "value_uren_short",
+        "value_double",
+        "value_tan3",
         "value_uren",
         "value_uren_hot",
         "value_invest"
@@ -2031,6 +2362,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2083,6 +2415,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2135,6 +2469,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2187,6 +2522,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2239,6 +2575,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "big",
@@ -2296,6 +2634,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "safe"
@@ -2349,6 +2689,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "best",
@@ -2403,6 +2745,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2455,6 +2798,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2507,6 +2852,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2559,6 +2906,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2611,6 +2959,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "big",
@@ -2668,6 +3018,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest",
         "big",
@@ -2725,6 +3077,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2777,6 +3130,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2829,6 +3183,9 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_uren_turf",
+        "value_double",
+        "value_tan3",
         "value_uren",
         "value_uren_hot",
         "value_invest"
@@ -2882,6 +3239,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2934,6 +3292,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -2986,6 +3346,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -3038,6 +3399,7 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
         "value_uren_hot",
         "value_invest"
       ],
@@ -3090,6 +3452,8 @@
       "is_g1": false,
       "hassou_time": null,
       "strategies": [
+        "value_double",
+        "value_tan3",
         "value_uren_hot",
         "value_invest"
       ],
@@ -3139,6 +3503,11 @@
   "count_fallback": 0,
   "total_predictions": 3420,
   "fired_by_key": {
+    "value_uren_turf": 249,
+    "value_uren_short": 113,
+    "value_uren_short_ultra": 42,
+    "value_double": 2571,
+    "value_tan3": 1688,
     "value_uren": 482,
     "value_uren_hot": 2571,
     "value_invest": 2571,

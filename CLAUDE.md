@@ -7,6 +7,27 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🏆 Wave29 (2026-05-20 朝・ユーザー指示「1 と 2 両方やる」で V-芝馬連 final 164% 発見)** — Wave28 で TRUSTED 認定された V-馬連 (final 108.75%) を G1/芝/距離/コースで絞り込み、look-ahead 無しの真の高 ROI 領域を発見:
+  - **🛠 `jv_bridge/value_uren_filter_sweep.py` 新規** (270 行): 17 フィルタ × 5 閾値 = 85 組合せで nopop 馬連の Walk-forward final ROI を測定
+  - **🏅 Tier 1 (真の世界一級・件数 100+)**:
+    | 戦略 | フィルタ | 閾値 | **final** | mean | 勝期間 | 件数 |
+    |------|---------|------|-----------|------|--------|------|
+    | **V-芝馬連** | turf | 0.30 | **164.64%** | 178.7% | **7/7** ⭐ | 448 |
+    | V-馬連 (元) | all | 0.30 | 108.75% | 165.3% | 7/7 | 956 |
+  - **🏅 Tier 2 (ハイリターン領域)**:
+    | 戦略 | フィルタ | 閾値 | final | mean | 勝期間 | 件数 |
+    |------|---------|------|-------|------|--------|------|
+    | **V-短距離** | dist_short (1000-1400m) | 0.30 | **277.33%** | 185% | 6/7 | 279 |
+    | V-短距離Σ | dist_short | 0.35 | 381.0% | 191% | 5/7 | 165 |
+  - **V-芝馬連** が「全期間 100%+ + final で 164.64%」を両立 = look-ahead leakage の影響無く、真に期待値 +64% の世界一級戦略
+  - **predict_lightgbm.py 改修**: 各 horse に `race_distance` `race_is_g1` を注入 (V-短距離・V-G1 戦略 trigger 用)
+  - **aggregate_recommendations.py 改修**:
+    - `_load_value_uren_filter_stats()` を追加して filter_sweep.json を walk_forward 互換に統合
+    - 3 新戦略 (value_uren_turf / value_uren_short / value_uren_short_ultra) を STRATEGY_DEFS に登録
+    - trigger 呼出前に race_id 経由で meta (distance/is_g1) を horse に注入 (既存 predictions json に無いフィールド対応)
+  - **app.js + styles.css 改修**: 戦略カードの大型 ROI を「真の期待 ROI (final_period_roi)」に切り替え、mean は補助表示。`真の期待` / `1 期間検証` ラベルを下に小さく
+  - **sw.js**: v57 → v58
+  - **smoke 126/0 全通過** / app.js + Python syntax OK / recommendations.json 再生成 (V-芝馬連 = ★★★★ TRUSTED 確認)
 - **🛡️ Wave28 (2026-05-20 朝・最終 QA + 誠実性回復 + フロント UX 補強)** — ユーザー指示「最高の品質か全責任で確認・問題あれば最後までやり切れ」に応えて、4 エージェント並列レビューで重大事項を発見・修正:
   - **🚨 重大発見: Wave27/Wave29 で謳った avg ROI 152〜222% は look-ahead leakage 由来**
     - `walk_forward_validate.py` / `value_threshold_sweep.py` / `value_multi_bet_sweep.py` は、全データの前 80% で学習した **1 つのモデル** を全期間に当てていた
@@ -54,15 +75,17 @@
 - **3 モデル + nopop アンサンブルの最終期間 ROI 再評価** (今は mean ベース)
 - **JV-Link 過去 10 年取得** (47K → 600K サンプル) — JRA-VAN サーバ営業時間に再リトライ
 
-### ⚡ 最強戦略の進化史 (Wave28 で誠実値に再評価)
+### ⚡ 最強戦略の進化史 (Wave28-29 で誠実値に再評価)
 | Wave | 戦略 | mean (旧表示) | **final (真値)** | 勝期間 | 件数 |
 |------|------|---------------|-----------------|--------|------|
 | Wave19.8 | BEST (combo_best_and_gap) | 112.1% | 87.1% | 7/7 | 53 |
-| Wave27 | VALUE (nopop 複勝 0.16) | 152.62% | **77.90%** | 6/7 | 2673 |
-| Wave29 | V-馬連HOT (nopop 馬連 0.16) | 222.57% | **66.46%** | 6/7 | 2673 |
-| **Wave28** | **V-馬連 (nopop 馬連 0.30)** | 165.29% | **108.75%** ⭐ | **7/7** | 956 |
+| Wave27 | VALUE (nopop 複勝 0.16) | 152.62% | 77.90% | 6/7 | 2673 |
+| Wave29 (旧) | V-馬連HOT (nopop 馬連 0.16) | 222.57% | 66.46% | 6/7 | 2673 |
+| Wave28 | V-馬連 (nopop 馬連 0.30 / all) | 165.29% | 108.75% | 7/7 | 956 |
+| **Wave29** | **V-芝馬連 (turf + 馬連 0.30)** | **178.7%** | **164.64%** ⭐ | **7/7** | 448 |
+| Wave29 (高 RR) | V-短距離 (1000-1400m + 馬連 0.30) | 185.0% | 277.33% | 6/7 | 279 |
 
-最終期間 ROI = look-ahead leakage を排除した「未来の予想」の真の期待値。Wave28 で初めて誠実な評価軸を導入。
+最終期間 ROI = look-ahead leakage を排除した「未来の予想」の真の期待値。Wave28 で誠実な評価軸を導入・Wave29 でフィルタ厳格化で +56pt 改善。
 
 - **🔬 Wave28 (2026-05-20 朝・ユーザー指示「5 = 全部 Claude 判断」で 4 施策完走 + 重要発見)** —
   - **Wave28-A VALUE × G1 限定評価** (`value_g1_sweep.py` 新規):

@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v57"; // Wave28: look-ahead leakage 排除 + 真の期待 ROI 表示 + フロント 3 件修正
+const CACHE_VERSION = "keiba-nav-v58"; // Wave29: V-芝馬連 final 164% / V-短距離 277% / V-短距離Σ 381% 新発見
 const PRECACHE = [
   "/",
   "/index.html",
