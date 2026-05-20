@@ -201,31 +201,47 @@ def main(argv=None):
             "fuku_bets": bets_fk,
         })
 
-    def _stat(rois):
+    def _stat(rois, bets=None):
         if not rois: return None
         avg = sum(rois) / len(rois)
         sigma = (sum((r - avg) ** 2 for r in rois) / len(rois)) ** 0.5
+        # QA-2 FIX: 件数加重平均 (各期間の bet 数で重み付け) = 真の期待 ROI
+        weighted_roi = None
+        if bets and len(bets) == len(rois):
+            total_inv = sum(b * 100 for b in bets)
+            total_ret = sum(b * 100 * r / 100 for b, r in zip(bets, rois))
+            if total_inv > 0:
+                weighted_roi = total_ret / total_inv * 100
         return {
-            "mean_roi_pct": round(avg, 2),
+            "mean_roi_pct": round(avg, 2),  # 算術平均 (期間別 ROI の単純平均・サンプル数差を無視)
+            "weighted_roi_pct": round(weighted_roi, 2) if weighted_roi is not None else None,
             "worst_roi_pct": round(min(rois), 2),
             "best_roi_pct": round(max(rois), 2),
             "roi_std": round(sigma, 2),
             "win_periods": sum(1 for r in rois if r >= 100),
             "active_periods": len(rois),
+            "total_bets": sum(bets) if bets else None,
             "rois": rois,
+            "bets_per_period": list(bets) if bets else None,
         }
 
     t3_rois = [p["tan3_roi_pct"] for p in period_results if p["tan3_roi_pct"] is not None]
+    t3_bets = [p["tan3_bets"] for p in period_results if p["tan3_roi_pct"] is not None]
     ur_rois = [p["uren_roi_pct"] for p in period_results if p["uren_roi_pct"] is not None]
+    ur_bets = [p["uren_bets"] for p in period_results if p["uren_roi_pct"] is not None]
     fk_rois = [p["fuku_roi_pct"] for p in period_results if p["fuku_roi_pct"] is not None]
+    fk_bets = [p["fuku_bets"] for p in period_results if p["fuku_roi_pct"] is not None]
 
     print()
     print(f"=== 真の Walk-forward 結果 (look-ahead 完全排除・閾値 {args.threshold}) ===")
-    for name, st in [("3連単 V-3連単 0.30", _stat(t3_rois)),
-                       ("馬連 V-馬連 0.30", _stat(ur_rois)),
-                       ("複勝 V-複勝 0.30", _stat(fk_rois))]:
+    print(f"  算術平均: 期間別 ROI の単純平均 (件数差を無視)")
+    print(f"  件数加重: 総払戻 / 総投資 × 100 (= 真の期待 ROI)")
+    for name, st in [("3連単 V-3連単 0.30", _stat(t3_rois, t3_bets)),
+                       ("馬連 V-馬連 0.30", _stat(ur_rois, ur_bets)),
+                       ("複勝 V-複勝 0.30", _stat(fk_rois, fk_bets))]:
         if st:
-            print(f"{name}: avg {st['mean_roi_pct']}% / worst {st['worst_roi_pct']} / σ {st['roi_std']} / 勝 {st['win_periods']}/{st['active_periods']}")
+            print(f"{name}:")
+            print(f"  算術平均 {st['mean_roi_pct']}% / 件数加重 {st['weighted_roi_pct']}% / worst {st['worst_roi_pct']} / σ {st['roi_std']} / 勝 {st['win_periods']}/{st['active_periods']} / 件数 {st['total_bets']}")
 
     out = {
         "evaluated_at": datetime.now(timezone.utc).isoformat(),
@@ -233,9 +249,9 @@ def main(argv=None):
         "threshold": args.threshold,
         "leakage_free": True,
         "method": "期間別 nopop モデル再学習 (本物の look-ahead 完全排除)",
-        "tan3_summary": _stat(t3_rois),
-        "uren_summary": _stat(ur_rois),
-        "fuku_summary": _stat(fk_rois),
+        "tan3_summary": _stat(t3_rois, t3_bets),
+        "uren_summary": _stat(ur_rois, ur_bets),
+        "fuku_summary": _stat(fk_rois, fk_bets),
         "per_period": period_results,
     }
     OUT_PATH.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -38,7 +38,17 @@ if (-not $fromtime -or $fromtime.Length -lt 8) {
 Write-Log ("fromtime = " + $fromtime)
 
 # Run JV-Link fetch
+# QA-1 FIX: Detect new records via filesystem (raw_*.bin newest mtime),
+# not by parsing cp932-mangled stdout from jv_fetch.py.
 $JV_FETCH = Join-Path $KEIBA_ROOT "jv_bridge\jv_fetch.py"
+$AGG_DIR_PREFIX = Join-Path $KEIBA_ROOT "data\jv_cache"
+$pre_max_mtime = $null
+$pre_files = Get-ChildItem -Path $AGG_DIR_PREFIX -Recurse -Filter "raw_*.bin" -ErrorAction SilentlyContinue
+if ($pre_files) {
+    $pre_max_mtime = ($pre_files | Sort-Object LastWriteTime -Descending | Select-Object -First 1).LastWriteTime
+}
+Write-Log ("Pre-fetch newest raw_*.bin mtime = " + $pre_max_mtime)
+
 Write-Log "JV-Link aggregate option=2 starting..."
 $fetchOutput = & py -3.12-32 $JV_FETCH aggregate --dataspec RACE --option 2 --fromtime $fromtime 2>&1
 $fetchExit = $LASTEXITCODE
@@ -49,20 +59,20 @@ if ($fetchExit -ne 0) {
     exit 1
 }
 
-# Check if new records were captured
+# Check if a new raw_*.bin appeared (filesystem-based detection)
+$post_files = Get-ChildItem -Path $AGG_DIR_PREFIX -Recurse -Filter "raw_*.bin" -ErrorAction SilentlyContinue
+$post_max_mtime = $null
+if ($post_files) {
+    $post_max_mtime = ($post_files | Sort-Object LastWriteTime -Descending | Select-Object -First 1).LastWriteTime
+}
 $capturedNew = $false
-foreach ($line in $fetchOutput) {
-    if ($line -match "(\d+)\s*record") {
-        $rec = [int]$matches[1]
-        if ($rec -gt 0) {
-            $capturedNew = $true
-            break
-        }
-    }
+if ($post_max_mtime -and ($pre_max_mtime -eq $null -or $post_max_mtime -gt $pre_max_mtime)) {
+    $capturedNew = $true
+    Write-Log ("New raw_*.bin detected (mtime " + $post_max_mtime + ")")
 }
 
 if (-not $capturedNew) {
-    Write-Log "No new records. Updating timestamp only."
+    Write-Log "No new records detected via filesystem. Updating timestamp only."
     (Get-Date).ToString("yyyyMMddHHmmss") | Set-Content -Path $LAST_PATH -Encoding ASCII
     exit 0
 }
@@ -102,11 +112,13 @@ Write-Log "Running aggregate_recommendations..."
 (Get-Date).ToString("yyyyMMddHHmmss") | Set-Content -Path $LAST_PATH -Encoding ASCII
 
 # git commit + push (silently)
+# QA-1 FIX: use git diff --cached --quiet (exit code) instead of broken Measure-Object
 Push-Location $KEIBA_ROOT
 try {
     git add -A 2>&1 | Out-Null
-    $diffCount = (git diff --cached --stat 2>&1 | Measure-Object).Count
-    if ($diffCount -gt 0) {
+    git diff --cached --quiet
+    $hasDiff = ($LASTEXITCODE -ne 0)
+    if ($hasDiff) {
         git commit -m ("Wave35-A: hourly diff fetch (" + (Get-Date -Format "yyyy-MM-dd HH:mm") + ")") 2>&1 | Out-Null
         git push origin main 2>&1 | Out-Null
         Write-Log "git commit + push completed"
