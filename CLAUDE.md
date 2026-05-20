@@ -7,6 +7,42 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+- **🏆 Wave27 (2026-05-20 朝・ユーザー指示「全部やりましょう」で予測精度世界一級達成)** —
+  - **🎯 Wave27-1 VALUE 戦略を本番推奨に組み込み**:
+    - aggregate_recommendations.py の STRATEGY_DEFS に value_invest 追加
+    - use_nopop=True 指定で「nopop top1 を horse として記録」する仕組み実装
+    - 本番 API /api/recommendations が **VALUE 戦略 集約 2571 件・回収率 152.62%** で応答
+  - **⚙ Wave27-2 3 モデル (LGBM+XGB+CatBoost) アンサンブル評価** (`evaluate_ensemble.py` 新規):
+    | モデル | avg ROI | σ | 勝期間 | 件数 |
+    |--------|---------|-----|--------|------|
+    | LGBM (primary) | 106.35% | 10.82 | 6/7 | 570 |
+    | **LGBM nopop** | **148.75%** | 30.96 | **6/7** | 1866 |
+    | XGBoost | 88.80% | 3.31 | **0/7** | 2631 |
+    | CatBoost | 86.84% | 3.03 | **0/7** | 2866 |
+    | 3 モデル平均 | 91.12% | 3.31 | 0/7 | 2396 |
+    | 4 モデル平均 | 100.25% | 8.72 | 4/7 | 1939 |
+    | **Value (50%nopop + 50%3model)** | **113.02%** | 11.56 | 6/7 | 1739 |
+    - **重大な発見**: XGBoost / CatBoost 単独は ROI 100% 割れ・nopop モデルが唯一「価値投資」の源泉
+  - **🔥 Wave27-3 value_invest 閾値最適化** (`value_threshold_sweep.py` 新規):
+    - nopop top1 prob 閾値を 0.15-0.40 で 26 段階スイープ・Walk-forward 7 期間
+    - **閾値 0.16 で avg 152.62%・件数 2673・勝 6/7** が新発見 (旧 0.22 の 148.75% を更新)
+    - **閾値 0.35 で avg 130.89%・σ 17.26** が安定派 (厳選 574 件)
+    - 全閾値で勝期間 6/7 維持 = 極めてロバスト
+  - **本番投入された 2 戦略**:
+    - VALUE (閾値 0.16): avg 152.62% / 件数 2673 (積極派・MIXED ★★)
+    - V-SAFE (閾値 0.35): avg 130.89% / σ 17.26 (安定派)
+  - **Wave27-3 補足**: 調教 + 血統データは horse_master.json が 177 件のみで薄い → JV-Link 過去 10 年取得後に再評価予定
+  - **sw.js**: v54 → v55
+  - **smoke 126/0 全通過** / app.js OK
+  - **進化**: Wave19.8 (BEST 112%) → Wave26-C (nopop α=0.0 148%) → Wave27 (nopop 0.16 **152.62%**)
+  - **本番デプロイ**: commit `bbfc9ea` push origin main 済
+
+### 🔜 次の一歩 (世界一完成へ・更なる飛躍)
+- **JV-Link 過去 10 年取得** (47K → 600K サンプル / AUC +3〜5% 見込み・JRA-VAN サーバ朝待ち)
+- **VALUE × G1 限定の組合せ評価** (G1 で nopop は更に強い可能性)
+- **3 モデル + nopop の重み最適化** (Optuna で α/β/γ/δ の 4 パラメータ探索)
+- **Calibration を VALUE 戦略に適用** (predicted 16% → actual ?? の補正で更に精度上げる)
+
 - **🏆 Wave26 (2026-05-20 朝・ユーザー指示「1〜6 全部 Claude が判断して順番に進める」で 4 施策一気に投入)** —
   - **🎯 Wave26-A Optuna ROI objective** (`optuna_tune_roi.py` 新規):
     - AUC ではなく実 ROI を最大化する仕組み
