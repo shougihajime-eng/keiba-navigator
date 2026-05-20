@@ -802,16 +802,16 @@ def _load_backtest_stats_all() -> Dict[str, Dict[str, Any]]:
                     # 真の WF で 130%+ 出てる戦略は控除率突破確定 → TRUSTED
                     if leak_free_roi >= 130 and wp >= ap // 2:
                         trust_level = 4
-                        trust_label = "TRUSTED (真の WF で控除率を大幅突破)"
+                        trust_label = "信頼 (厳しい検証で大きく勝てると確認済)"
                     elif leak_free_roi >= 110 and wp >= ap // 2:
                         trust_level = 3
-                        trust_label = "STABLE (真の WF で期待値+)"
+                        trust_label = "安定 (厳しい検証で勝てると確認済)"
                     elif leak_free_roi >= 95:
                         trust_level = 2
-                        trust_label = "MIXED (真の WF で控除率周辺)"
+                        trust_label = "ふつう (検証ではトントン・判断保留)"
                     else:
                         trust_level = 1
-                        trust_label = "RISKY (真の WF で期待値マイナス)"
+                        trust_label = "危険 (検証では平均で損する)"
                 elif final_roi >= 105 and wp == ap and mean_roi >= 105:
                     trust_level = 4
                     trust_label = "TRUSTED (最終期間でも期待値プラス・但し未検証)"
