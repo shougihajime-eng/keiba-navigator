@@ -253,6 +253,14 @@
     const ev = race.topPick?.ev ?? null;
     const conf = race.confidence ?? 0;
     if (ev == null) return "none";
+    // ★ プレースホルダー pass を結論カードに大写しさせない (Bug ⑨ 予防)
+    //   verdict が "judgement_unavailable" や "pass" のレースは ev が偶然高くても
+    //   結論カードに昇格させない。 必殺１ごうてい(競艇)で「展示走行前 pass が大写し」
+    //   になった事故の予防策。
+    if (race.verdict === "judgement_unavailable") return "none";
+    if (race.verdict === "pass") return "none";
+    // 出走馬データ未取得 (horse_count=0) も結論カードから除外
+    if ((race.horse_count ?? 0) === 0) return "none";
     if (ev >= 1.50 && conf >= 0.45) return "ultra";
     if (ev >= 1.30) return "prime";
     if (ev >= 1.10) return "go";
@@ -339,9 +347,12 @@
     $("#brand-wd").textContent = `(${weekday(today)})`;
 
     const total = state.races.length;
+    // Bug 修正: tierOfRace は "ultra"/"prime"/"go"/"cond"/"best"/"none" を返す。
+    //   "gold" は返らない (デッドコード)。 以前はヘッダの「狙えるレース」が
+    //   ultra/prime を見落として過小カウントしていた。 ultra と prime を加える。
     const goRaces = state.races.filter((r) => {
       const t = tierOfRace(r);
-      return t === "gold" || t === "go";
+      return t === "ultra" || t === "prime" || t === "go";
     });
     $("#metric-races").innerHTML = `${total}<small>R</small>`;
     $("#metric-goes").innerHTML  = `${goRaces.length}<small>R</small>`;

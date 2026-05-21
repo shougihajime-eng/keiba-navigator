@@ -10,20 +10,32 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v65"; // Wave32-X: UX 全文 8 歳でも分かる日本語化 (戦略名/判定/Kelly 解説 全部)
+const CACHE_VERSION = "keiba-nav-v66"; // Bug⑧ 修正: HTML を network-only にして ChunkLoadError 根治
 const PRECACHE = [
-  "/",
-  "/index.html",
   "/manifest.json",
   "/icon.svg",
-  // ↓静的のうち変更頻度低めのもののみ pre-cache。app.js/styles.css は network-first で別管理
+  // ↓ /, /index.html は network-only に変更したので pre-cache から外す
+  //   (オフライン時のフォールバックは /offline.html を別途返す)
 ];
 
 // network-first で扱う (デプロイ後に古い版が残らないようにする)
+// 【!】index.html を cache-first にしておくと、新デプロイで JS チャンクのハッシュが
+//     変わったときに、古いHTMLが古いチャンクURLを参照して 404 → ChunkLoadError 多発。
+//     必殺１ごうてい(競艇)で実際に起きた事故 (Bug ⑧)。
+//     → HTML は **network-only** に格下げ。offline 時のみ最小フォールバック。
 const NETWORK_FIRST_PATHS = [
   "/app.js", "/styles.css",
   "/predictors/", "/lib/",
 ];
+
+// HTML系は network-only (キャッシュしない・古いHTMLが残らない)
+function isHtmlNavigation(req, url) {
+  if (req.mode === "navigate") return true;
+  const accept = req.headers.get("accept") || "";
+  if (accept.includes("text/html")) return true;
+  if (url.pathname === "/" || url.pathname.endsWith(".html")) return true;
+  return false;
+}
 
 function isNetworkFirst(pathname) {
   return NETWORK_FIRST_PATHS.some(p => pathname === p || pathname.startsWith(p));
@@ -61,6 +73,24 @@ self.addEventListener("fetch", (event) => {
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_VERSION);
 
+    // ★ HTML navigation は network-only。デプロイ直後の古いHTML残留=ChunkLoadError 根治。
+    //   オフライン時のみ簡易フォールバックを返す。
+    if (isHtmlNavigation(req, url)) {
+      try {
+        const fresh = await fetch(req, { cache: "no-store" });
+        return fresh;
+      } catch {
+        return new Response(
+          "<!doctype html><meta charset=utf-8><title>オフライン</title>" +
+          "<body style='font-family:sans-serif;padding:24px;text-align:center;background:#0a0a0a;color:#eee'>" +
+          "<h1 style='color:#ffd166'>📡 通信が一瞬切れています</h1>" +
+          "<p>つながったら自動で開きます</p>" +
+          "<script>setInterval(()=>fetch('/').then(r=>r.ok&&location.replace('/')).catch(()=>0),3000)</script>",
+          { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
+        );
+      }
+    }
+
     // network-first 対象 (app.js/styles.css/predictors/lib): 必ずネットを先に試す。
     // ネット失敗時のみキャッシュ。これでデプロイ後の "古い app.js が出続け" を防ぐ。
     if (isNetworkFirst(url.pathname)) {
@@ -75,7 +105,7 @@ self.addEventListener("fetch", (event) => {
       }
     }
 
-    // それ以外 (index.html, icon 等): cache-first → stale-while-revalidate
+    // それ以外 (icon 等の静的アセット): cache-first → stale-while-revalidate
     const cached = await cache.match(req);
     if (cached) {
       fetch(req).then(r => { if (r && r.ok) cache.put(req, r.clone()); }).catch(() => null);
@@ -86,10 +116,6 @@ self.addEventListener("fetch", (event) => {
       if (fresh && fresh.ok) cache.put(req, fresh.clone()).catch(() => null);
       return fresh;
     } catch {
-      if (req.mode === "navigate") {
-        const fallback = await cache.match("/index.html");
-        if (fallback) return fallback;
-      }
       return new Response("offline", { status: 503, statusText: "offline" });
     }
   })());

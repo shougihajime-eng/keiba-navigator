@@ -115,15 +115,32 @@ test("3連単 順序違いは外れ", () => {
   const f = finalize.finalizeBet({betType:"tan3", target:"1-3-6", odds:5, amount:100}, result);
   assert.strictEqual(f.won, false);
 });
-test("結果が 1 件しかない時の馬連は won=false (例外を投げない)", () => {
+test("結果が 1 件しかない+payouts 空 は「未確定」として null (偽外れ防止)", () => {
+  // Bug ④ 予防: 結果がまだ揃ってない (payouts 空) 状態で finalize すると
+  // 「won=false / profit=-amount」の偽外れデータが蓄積される事故が
+  // 必殺１ごうてい(競艇)で起きた (545件の偽外れ)。 keiba 側でも同根の防御:
+  // results 配列が不完全 もしくは 主要券種の払戻が一切ないなら未確定 → null。
   const shortResult = {race_id:"X", results:[{rank:1, number:6}], payouts:{}};
   const f = finalize.finalizeBet({betType:"uren", target:"3-6", odds:5, amount:100}, shortResult);
-  assert.strictEqual(f.won, false);
+  assert.strictEqual(f, null);
 });
-test("結果が 2 件しかない時の 3連複は won=false", () => {
+test("結果が 2 件しかない+payouts 空 は null (3連複・未確定扱い)", () => {
   const r = {race_id:"X", results:[{rank:1,number:6},{rank:2,number:3}], payouts:{}};
   const f = finalize.finalizeBet({betType:"fuku3", target:"1-3-6", odds:5, amount:100}, r);
-  assert.strictEqual(f.won, false);
+  assert.strictEqual(f, null);
+});
+test("結果あり+payouts 空 (rank1 行のみ) でも payouts 無ければ null", () => {
+  // 偽プレースホルダー: results は揃っているが payouts は到着前の状態
+  const r = {race_id:"X", results:[
+    {rank:1,number:6},{rank:2,number:3},{rank:3,number:1}
+  ], payouts:{}};
+  const f = finalize.finalizeBet({betType:"tan", target:"6 a", odds:4.9, amount:100}, r);
+  assert.strictEqual(f, null);
+});
+test("results 空配列 (プレースホルダー結果) は null", () => {
+  const r = {race_id:"X", results:[], payouts:{tan:{winner:1, amount:200}}};
+  const f = finalize.finalizeBet({betType:"tan", target:"1 a", odds:2.0, amount:100}, r);
+  assert.strictEqual(f, null);
 });
 
 console.log("\n=== manual_race ===");

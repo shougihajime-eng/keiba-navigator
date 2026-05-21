@@ -4,6 +4,24 @@
 
 ---
 
+## ✅ 完了済タスク (2026-05-21 必殺１ごうてい側から依頼分)
+
+**12個のバグ監査・修正は完了済** (smoke テスト **128/0 全通過**):
+- `BUG_AUDIT_FROM_HISSATSU.md` (依頼内容)
+- `BUG_AUDIT_RESULT.md` (監査結果と修正記録)
+
+直したファイル:
+- `lib/finalize.js` (Bug ④ 空結果で偽外れ保存を防止・`isResultUnsettled` 追加)
+- `predictors/heuristic_v1.js` (Bug ⑥ 新人騎手の過小評価を解消・`trustRate` 追加)
+- `sw.js` v66 (Bug ⑧ ChunkLoadError 根治・HTML を network-only)
+- `app.js` (Bug ⑨ placeholder pass の結論カード昇格を防止 + `tierOfRace` の "gold" デッドコードを ultra/prime/go に修正)
+- `tests/smoke.js` (偽プレースホルダー検出テスト 4 件・全 128 件通過)
+- `.gitignore` (`.env.production` などを除外)
+
+次のセッションでは別タスクを進めて OK。
+
+---
+
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと

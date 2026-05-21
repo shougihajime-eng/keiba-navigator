@@ -12,6 +12,9 @@ npm-debug.log*
 .env
 .env.local
 .env.*.local
+.env.production
+.env.preview
+.env.development
 
 # OS
 .DS_Store
@@ -74,3 +77,5 @@ catboost_info/
 !data/jv_cache/walk_forward_win5_v1_result.json
 Usersshoug*_review_*
 _prod.tmp
+
+.env*.local
