@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -8,37 +8,87 @@ import { StarRating, ratingLabel } from "@/components/ui/StarRating";
 import { Stat } from "@/components/ui/Stat";
 import { HorseLoader } from "@/components/ui/HorseLoader";
 import { Horseshoe } from "@/components/icons/Horseshoe";
+import { BetConfirmModal } from "@/components/BetConfirmModal";
 import { fetchRaces } from "@/lib/api";
-import { ratingFromRace, sortByRating, shortReason } from "@/lib/rating";
-import { formatHHMM, minutesUntil, formatYen } from "@/lib/utils";
-import { addBet } from "@/lib/store";
+import { ratingFromRace, sortByRating, shortReason, type Rating } from "@/lib/rating";
+import { formatHHMM, formatYen, cn } from "@/lib/utils";
+import { saveSnapshot, compareWithSnapshot, pruneOldSnapshots, type Diff } from "@/lib/snapshot";
+import { notifyOnce, pruneNotifyHistory } from "@/lib/notify";
 import type { RaceSummary, RacesResponse } from "@/types/api";
-import { cn } from "@/lib/utils";
 
 const RECOMMEND_AMOUNT: Record<number, number> = {
-  5: 1000,
-  4: 600,
-  3: 400,
-  2: 300,
-  1: 0,
+  5: 1000, 4: 600, 3: 400, 2: 300, 1: 0,
 };
 
 export function BlockA() {
   const [resp, setResp] = useState<RacesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
+  const [modalRace, setModalRace] = useState<{
+    race: RaceSummary; rating: Rating; stake: number; isFinal: boolean;
+  } | null>(null);
 
   useEffect(() => {
+    pruneOldSnapshots();
+    pruneNotifyHistory();
+
     let alive = true;
-    (async () => {
+    const load = async () => {
       const data = await fetchRaces();
       if (!alive) return;
       setResp(data);
       setLoading(false);
-    })();
-    const tick = setInterval(() => setNow(Date.now()), 30_000);
-    return () => { alive = false; clearInterval(tick); };
+
+      // 朝の暫定スナップショットを保存
+      if (data?.ok && data.races) {
+        for (const r of data.races) {
+          if (!r.raceId) continue;
+          const rating = ratingFromRace(r);
+          // 暫定モードのときだけ保存 (発走 15 分以上前)
+          if (r.startTime) {
+            const min = Math.round((Date.parse(r.startTime) - Date.now()) / 60000);
+            if (min > 15) saveSnapshot(r, rating);
+          } else {
+            saveSnapshot(r, rating);
+          }
+        }
+      }
+    };
+
+    load();
+    // 30 秒ごとに時刻 tick・60 秒ごとに API 再取得
+    const tickClock = setInterval(() => setNow(Date.now()), 30_000);
+    const tickFetch = setInterval(load, 60_000);
+    return () => { alive = false; clearInterval(tickClock); clearInterval(tickFetch); };
   }, []);
+
+  // 10 分前通知
+  useEffect(() => {
+    if (!resp?.races) return;
+    for (const r of resp.races) {
+      if (!r.startTime || !r.raceId) continue;
+      const rating = ratingFromRace(r);
+      if (rating < 4) continue;
+      const min = Math.round((Date.parse(r.startTime) - now) / 60000);
+      if (min <= 10 && min > 0) {
+        const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+        notifyOnce(r.raceId, "10min-before", {
+          title: `${stars} ${min} 分前 · ${r.venue || r.course || ""} ${r.raceName || ""}`,
+          body: `本命 ${r.topPick?.number}番 ${r.topPick?.name || ""}  EV ${r.topPick?.ev?.toFixed(2) || "—"}`,
+        });
+      }
+      // 降格通知 (暫定で 4+ だったが今 3 以下に落ちた)
+      const diff = compareWithSnapshot(r, rating);
+      if (diff.ratingChanged && diff.oldRating !== null && diff.oldRating >= 4 && rating < 4 && r.raceId) {
+        notifyOnce(r.raceId, "demoted", {
+          title: `見送り推奨に降格: ${r.raceName}`,
+          body: diff.message,
+        });
+      }
+    }
+  }, [resp, now]);
+
+  const sorted = useMemo(() => (resp?.races ? sortByRating(resp.races) : []), [resp]);
 
   if (loading) {
     return (
@@ -58,27 +108,29 @@ export function BlockA() {
     );
   }
 
-  const sorted = sortByRating(resp.races);
   const bettable = sorted.filter((r) => ratingFromRace(r) >= 4);
   const skip = sorted.filter((r) => ratingFromRace(r) <= 3);
-
-  if (bettable.length === 0) {
-    return (
-      <section>
-        <SectionHeader />
-        <NoBettableCard skipCount={skip.length} sample={sorted.slice(0, 3)} />
-      </section>
-    );
-  }
 
   return (
     <section>
       <SectionHeader count={bettable.length} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 stagger">
-        {bettable.map((race) => (
-          <RaceCard key={race.raceId || race.raceName} race={race} now={now} />
-        ))}
-      </div>
+
+      {bettable.length === 0 ? (
+        <NoBettableCard skipCount={skip.length} sample={sorted.slice(0, 3)} />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 stagger">
+          {bettable.map((race) => (
+            <RaceCard
+              key={race.raceId || race.raceName}
+              race={race}
+              now={now}
+              onBuyClick={(r, rating, stake, isFinal) =>
+                setModalRace({ race: r, rating, stake, isFinal })
+              }
+            />
+          ))}
+        </div>
+      )}
 
       {skip.length > 0 && (
         <div className="mt-6">
@@ -87,9 +139,7 @@ export function BlockA() {
           </div>
           <Card>
             <CardBody className="divide-y divide-line/60">
-              {skip.slice(0, 6).map((r) => (
-                <SkipRow key={r.raceId} race={r} />
-              ))}
+              {skip.slice(0, 6).map((r) => <SkipRow key={r.raceId} race={r} />)}
               {skip.length > 6 && (
                 <div className="pt-3 text-xs text-ink-muted">
                   他 {skip.length - 6} レースも見送り
@@ -98,6 +148,16 @@ export function BlockA() {
             </CardBody>
           </Card>
         </div>
+      )}
+
+      {modalRace && (
+        <BetConfirmModal
+          race={modalRace.race}
+          rating={modalRace.rating}
+          stake={modalRace.stake}
+          isFinal={modalRace.isFinal}
+          onClose={() => setModalRace(null)}
+        />
       )}
     </section>
   );
@@ -118,7 +178,7 @@ function SectionHeader({ count }: { count?: number }) {
           今日いちばん買うのはこれ
         </h2>
       </div>
-      {count !== undefined && (
+      {count !== undefined && count > 0 && (
         <Badge tone="gold" size="md" className="anim-gold-pulse">
           <Horseshoe className="w-3.5 h-3.5" />
           {count} 件
@@ -128,7 +188,15 @@ function SectionHeader({ count }: { count?: number }) {
   );
 }
 
-function RaceCard({ race, now }: { race: RaceSummary; now: number }) {
+function RaceCard({
+  race,
+  now,
+  onBuyClick,
+}: {
+  race: RaceSummary;
+  now: number;
+  onBuyClick: (race: RaceSummary, rating: Rating, stake: number, isFinal: boolean) => void;
+}) {
   const rating = ratingFromRace(race);
   const isUltra = rating === 5;
   const startMs = race.startTime ? Date.parse(race.startTime) : NaN;
@@ -140,31 +208,11 @@ function RaceCard({ race, now }: { race: RaceSummary; now: number }) {
   const stake = RECOMMEND_AMOUNT[rating] ?? 0;
   const expectedReturn = stake && race.topPick?.ev ? Math.round(stake * race.topPick.ev) : null;
 
+  const diff = compareWithSnapshot(race, rating);
+  const showDiff = isFinalMode && diff.changed;
+
   const venueLabel = race.venue || race.course || "";
   const raceNum = race.raceName?.match(/(\d{1,2})R/)?.[1] || "";
-
-  const handleBuy = () => {
-    if (!race.raceId || !race.topPick) return;
-    addBet({
-      id: `${race.raceId}_${Date.now()}`,
-      raceId: race.raceId,
-      raceName: race.raceName ?? undefined,
-      course: race.course ?? undefined,
-      startTime: race.startTime ?? undefined,
-      type: "複勝",
-      horses: String(race.topPick.number),
-      amount: stake,
-      ev: race.topPick.ev ?? undefined,
-      result: "pending",
-      isDraft: true,
-      createdAt: new Date().toISOString(),
-      factors: { rating, source: "phase2_block_a" },
-    });
-    if (typeof window !== "undefined") {
-      const evt = new CustomEvent("keiba:bet-added");
-      window.dispatchEvent(evt);
-    }
-  };
 
   return (
     <Card tone={tone} elevated className={cn(isUltra && "anim-gold-pulse")}>
@@ -173,7 +221,9 @@ function RaceCard({ race, now }: { race: RaceSummary; now: number }) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               {isFinalMode ? (
-                <Badge tone="final">最終確定 · {minutes <= 0 ? "発走間近" : `${minutes}分前`}</Badge>
+                <Badge tone="final">
+                  最終確定 · {minutes <= 0 ? (minutes >= -1 ? "発走" : "発走済") : `${minutes}分前`}
+                </Badge>
               ) : (
                 <Badge tone="tentative">暫定予想</Badge>
               )}
@@ -194,29 +244,18 @@ function RaceCard({ race, now }: { race: RaceSummary; now: number }) {
       </CardHeader>
 
       <CardBody className="pt-0 space-y-4">
+        {/* Diff banner: 暫定→最終確定で何が変わったか */}
+        {showDiff && <DiffBanner diff={diff} />}
+
         <div className="flex items-center justify-between">
           <StarRating rating={rating} size="lg" />
           <span className="text-xs text-ink-muted font-medium">{ratingLabel(rating)}</span>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <Stat
-            label="期待値"
-            value={race.topPick?.ev?.toFixed(2) ?? "—"}
-            tone={isUltra ? "gold" : "default"}
-            size="md"
-          />
-          <Stat
-            label="信頼度"
-            value={race.confidence ? Math.round(race.confidence * 100) : "—"}
-            unit="%"
-            size="md"
-          />
-          <Stat
-            label="推奨"
-            value={formatYen(stake)}
-            size="md"
-          />
+          <Stat label="期待値" value={race.topPick?.ev?.toFixed(2) ?? "—"} tone={isUltra ? "gold" : "default"} size="md" />
+          <Stat label="信頼度" value={race.confidence ? Math.round(race.confidence * 100) : "—"} unit="%" size="md" />
+          <Stat label="推奨" value={formatYen(stake)} size="md" />
         </div>
 
         <div className="bg-paper-soft/70 rounded-[12px] p-3.5 border border-line/60">
@@ -247,13 +286,30 @@ function RaceCard({ race, now }: { race: RaceSummary; now: number }) {
           variant={isUltra ? "gold" : isFinalMode ? "ruby" : "primary"}
           size="md"
           className={cn("flex-1", isImminent && "anim-gold-pulse")}
-          onClick={handleBuy}
+          onClick={() => onBuyClick(race, rating, stake, isFinalMode)}
         >
           これ買う {stake > 0 && `· ${formatYen(stake)}`}
         </Button>
         <Button variant="secondary" size="md">詳細</Button>
       </CardFooter>
     </Card>
+  );
+}
+
+function DiffBanner({ diff }: { diff: Diff }) {
+  const isDemotion = diff.oldRating !== null && diff.oldRating > diff.newRating;
+  return (
+    <div className={cn(
+      "rounded-[10px] px-3 py-2.5 text-xs leading-relaxed border",
+      isDemotion
+        ? "bg-wine-soft border-wine/20 text-wine"
+        : "bg-deep-green-soft border-deep-green/20 text-deep-green",
+    )}>
+      <div className="font-medium mb-0.5">
+        {isDemotion ? "⚠ 暫定からの変更点" : "✓ 暫定から強化"}
+      </div>
+      {diff.message}
+    </div>
   );
 }
 

@@ -3,6 +3,7 @@ import { BlockB } from "@/components/blocks/BlockB";
 import { BlockC } from "@/components/blocks/BlockC";
 import { CollapsibleSections } from "@/components/blocks/CollapsibleSections";
 import { Logo } from "@/components/ui/Logo";
+import { NotifyBar } from "@/components/NotifyBar";
 
 export default function Home() {
   const today = new Date();
@@ -10,6 +11,8 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
+      <NotifyBar />
+
       {/* Header */}
       <header className="border-b border-line/60 bg-paper/70 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-5 py-3.5 flex items-center justify-between">
