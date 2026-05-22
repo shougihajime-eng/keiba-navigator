@@ -33,6 +33,8 @@ export function BlockA() {
     pruneNotifyHistory();
 
     let alive = true;
+    let fetchTimer: ReturnType<typeof setTimeout> | null = null;
+
     const load = async () => {
       const data = await fetchRaces();
       if (!alive) return;
@@ -44,7 +46,6 @@ export function BlockA() {
         for (const r of data.races) {
           if (!r.raceId) continue;
           const rating = ratingFromRace(r);
-          // 暫定モードのときだけ保存 (発走 15 分以上前)
           if (r.startTime) {
             const min = Math.round((Date.parse(r.startTime) - Date.now()) / 60000);
             if (min > 15) saveSnapshot(r, rating);
@@ -53,13 +54,34 @@ export function BlockA() {
           }
         }
       }
+
+      // 次回のポーリング間隔を動的に決定:
+      //   レース発走 15 分前 ~ 5 分後の窓内に居るなら 20 秒
+      //   それ以外は 60 秒
+      const intervalMs = computeNextInterval(data?.races || []);
+      if (alive) fetchTimer = setTimeout(load, intervalMs);
     };
 
     load();
-    // 30 秒ごとに時刻 tick・60 秒ごとに API 再取得
     const tickClock = setInterval(() => setNow(Date.now()), 30_000);
-    const tickFetch = setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(tickClock); clearInterval(tickFetch); };
+
+    // Page Visibility: 非アクティブで停止・復帰で即取得
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (fetchTimer) { clearTimeout(fetchTimer); fetchTimer = null; }
+      } else {
+        setNow(Date.now());
+        if (alive && !fetchTimer) load();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      alive = false;
+      clearInterval(tickClock);
+      if (fetchTimer) clearTimeout(fetchTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   // 10 分前通知
@@ -161,6 +183,23 @@ export function BlockA() {
       )}
     </section>
   );
+}
+
+// =========================================
+// Smart polling: 発走前後 15 分窓では 20 秒・それ以外は 60 秒
+// =========================================
+function computeNextInterval(races: RaceSummary[]): number {
+  const now = Date.now();
+  for (const r of races) {
+    if (!r.startTime) continue;
+    const startMs = Date.parse(r.startTime);
+    if (!Number.isFinite(startMs)) continue;
+    const min = (startMs - now) / 60000;
+    if (min <= 15 && min >= -5) {
+      return 20_000; // 集中窓: 20 秒
+    }
+  }
+  return 60_000; // 通常: 60 秒
 }
 
 // =========================================

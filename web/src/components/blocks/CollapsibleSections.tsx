@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import {
   Newspaper, Trophy as TrophyIcon, Home, Target, BarChart3, Award, Activity,
-  ClipboardList, BookOpen,
+  ClipboardList, BookOpen, Cloud,
 } from "lucide-react";
 import { Collapsible } from "@/components/Collapsible";
 import { Badge } from "@/components/ui/Badge";
 import { PendingBetsList } from "@/components/PendingBetsList";
 import { ReflectionDashboard } from "@/components/ReflectionDashboard";
+import { SyncCard } from "@/components/SyncCard";
 import { fetchNews, fetchMlStatus, fetchWin5 } from "@/lib/api";
 import { loadBets } from "@/lib/store";
 import { loadReflections } from "@/lib/reflectionStore";
@@ -188,6 +189,16 @@ export function CollapsibleSections() {
       >
         <div className="text-sm text-ink-muted py-2">
           土日 8:30 / 11:00 / 13:30 / 16:00 に自動取得。バックエンドは既存パイプライン継続。
+        </div>
+      </Collapsible>
+
+      <Collapsible
+        icon={<Cloud className="w-4 h-4" />}
+        title="クラウド同期"
+        hint="複数の端末で買い目・反省を共有"
+      >
+        <div className="mt-2">
+          <SyncCard />
         </div>
       </Collapsible>
     </section>

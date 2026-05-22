@@ -4,6 +4,8 @@ import { BlockC } from "@/components/blocks/BlockC";
 import { CollapsibleSections } from "@/components/blocks/CollapsibleSections";
 import { Logo } from "@/components/ui/Logo";
 import { NotifyBar } from "@/components/NotifyBar";
+import { SwRegister } from "@/components/SwRegister";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 export default function Home() {
   const today = new Date();
@@ -34,6 +36,9 @@ export default function Home() {
           KEIBA NAVIGATOR · 長期回収率 100% 超えを目指す · 2026
         </footer>
       </div>
+
+      <SwRegister />
+      <InstallPrompt />
     </main>
   );
 }
