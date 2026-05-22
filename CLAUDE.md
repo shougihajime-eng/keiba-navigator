@@ -26,6 +26,27 @@
 
 ### ✅ 直近で済んだこと
 
+- **🚀 RENEWAL Phase 5 完走 (2026-05-23 続行・「2」選択で PWA + Supabase + ポーリング最適化)** —
+  - **5.1 PWA 化**:
+    - manifest.ts (Web App Manifest・theme_color #D4A85A)
+    - public/sw.js (Service Worker・HTML を network-first / API は素通し)
+    - public/icon-192.svg / icon-512.svg / icon-maskable.svg (蹄鉄モチーフ・金グラデ)
+    - SwRegister.tsx + InstallPrompt.tsx (iOS Safari は手順説明モード・他は beforeinstallprompt)
+  - **5.2 Supabase 同期**:
+    - db/migrations/20260523_reflections.sql で keiba.reflections テーブル新設 (RLS owner only)・本番 Supabase に Management API 経由で適用済
+    - @supabase/supabase-js + @supabase/ssr インストール
+    - lib/supabase.ts (browser client・db schema=keiba)
+    - lib/sync.ts (双方向同期・last-write-wins・bets + reflections 両方対応)
+    - SyncCard.tsx (メール magic link・「今すぐ同期」ボタン・最終同期日時表示)
+    - 「クラウド同期」を折りたたみに統合
+    - Vercel 環境変数 NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY を設定済
+  - **5.3 スマートポーリング**:
+    - 発走 15 分前 ~ 5 分後の集中窓では 20 秒間隔・通常 60 秒
+    - Page Visibility API でタブ非表示時は停止・復帰で即取得
+    - レース時間帯の応答性向上 + バッテリー節約
+  - **本番動作確認**: status 200・/manifest.webmanifest 200・/sw.js 200・/icon-192.svg 200
+  - **git commit**: ddef11c
+
 - **🏆 RENEWAL Phase 1-4 完走 (2026-05-23・「全力で最後まで」指示で全面リニューアル)** — ユーザー直々のリニューアル指示書「Apple x Stripe x 競馬の躍動感」「世界一綺麗で洒落た競馬アプリ」「長期回収率 100% 超え」を全部達成:
   - **新アプリ本番 URL**: https://keiba-navigator-v2.vercel.app
   - **Vercel プロジェクト**: keiba-navigator-v2 (shougihajime-3368s-projects)
