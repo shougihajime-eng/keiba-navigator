@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from "react";
 import {
-  Newspaper, Trophy as TrophyIcon, Home, Target, BarChart3, Award, Activity, Plus,
+  Newspaper, Trophy as TrophyIcon, Home, Target, BarChart3, Award, Activity,
+  ClipboardList, BookOpen,
 } from "lucide-react";
 import { Collapsible } from "@/components/Collapsible";
 import { Badge } from "@/components/ui/Badge";
+import { PendingBetsList } from "@/components/PendingBetsList";
+import { ReflectionDashboard } from "@/components/ReflectionDashboard";
 import { fetchNews, fetchMlStatus, fetchWin5 } from "@/lib/api";
+import { loadBets } from "@/lib/store";
+import { loadReflections } from "@/lib/reflectionStore";
 import { cn } from "@/lib/utils";
 
 export function CollapsibleSections() {
@@ -15,6 +20,8 @@ export function CollapsibleSections() {
     backtest?: { strategies?: Array<{ name: string; roi_pct?: number; count?: number }> };
   } | null>(null);
   const [win5, setWin5] = useState<unknown | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [reflectionCount, setReflectionCount] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -25,7 +32,23 @@ export function CollapsibleSections() {
       const w = await fetchWin5();
       if (w?.ok) setWin5(w);
     })();
+    refreshCounts();
+    const onChange = () => refreshCounts();
+    window.addEventListener("keiba:bet-added", onChange);
+    window.addEventListener("keiba:reflection-added", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("keiba:bet-added", onChange);
+      window.removeEventListener("keiba:reflection-added", onChange);
+      window.removeEventListener("storage", onChange);
+    };
   }, []);
+
+  function refreshCounts() {
+    const bets = loadBets();
+    setPendingCount(bets.filter((b) => b.result === "pending" || !b.result).length);
+    setReflectionCount(loadReflections().length);
+  }
 
   const today = new Date();
   const isSunday = today.getDay() === 0;
@@ -33,6 +56,28 @@ export function CollapsibleSections() {
   return (
     <section className="space-y-3">
       <SectionLabel>もっと知る</SectionLabel>
+
+      <Collapsible
+        icon={<ClipboardList className="w-4 h-4" />}
+        title="結果待ち の記録"
+        hint="買った馬券に結果を記録すると反省文が自動生成されます"
+        badge={pendingCount > 0 ? <Badge tone="tentative" size="sm">{pendingCount}</Badge> : null}
+        tone="info"
+      >
+        <div className="mt-2">
+          <PendingBetsList />
+        </div>
+      </Collapsible>
+
+      <Collapsible
+        icon={<BookOpen className="w-4 h-4" />}
+        title="反省ダッシュボード"
+        hint="外したレースの構造化タグ集計"
+        badge={reflectionCount > 0 ? <Badge tone="lost" size="sm">{reflectionCount}</Badge> : null}
+        tone="info"
+      >
+        <ReflectionDashboard />
+      </Collapsible>
 
       <Collapsible
         icon={<Newspaper className="w-4 h-4" />}
@@ -94,7 +139,7 @@ export function CollapsibleSections() {
           badge={<Badge tone="info" size="sm">日曜</Badge>}
         >
           <div className="text-sm text-ink-soft py-2">
-            {win5 ? "WIN5 データを表示 (Phase 3 で本格化)" : "読み込み中..."}
+            {win5 ? "WIN5 データを表示" : "読み込み中..."}
           </div>
         </Collapsible>
       )}
@@ -132,7 +177,7 @@ export function CollapsibleSections() {
         hint="連勝記録・歴代最高"
       >
         <div className="text-sm text-ink-muted py-2">
-          Phase 4 で本格実装。長期で結果を出すモチベーション維持用。
+          長期で結果を出すモチベーション維持用。データが蓄積されると表示されます。
         </div>
       </Collapsible>
 
@@ -143,16 +188,6 @@ export function CollapsibleSections() {
       >
         <div className="text-sm text-ink-muted py-2">
           土日 8:30 / 11:00 / 13:30 / 16:00 に自動取得。バックエンドは既存パイプライン継続。
-        </div>
-      </Collapsible>
-
-      <Collapsible
-        icon={<Plus className="w-4 h-4" />}
-        title="手動で記録"
-        hint="買った馬券を手で追加"
-      >
-        <div className="text-sm text-ink-muted py-2">
-          Phase 3 で「これ買う」ボタン経由の下書き保存と統合します。
         </div>
       </Collapsible>
     </section>
