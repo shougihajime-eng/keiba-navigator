@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+/* =========================================
+   KEIBA NAVIGATOR Design Tokens
+   Apple x Stripe x 競馬の躍動感
+   ========================================= */
+
+@theme inline {
+  /* Color: Base — オフホワイト基調・清潔感と温度感 */
+  --color-canvas: #FAFAF7;
+  --color-paper: #FFFFFF;
+  --color-paper-soft: #F5F5F0;
+  --color-paper-hover: #F0EFE8;
+
+  /* Color: Text */
+  --color-ink: #1A1A1A;
+  --color-ink-soft: #3F3F3F;
+  --color-ink-muted: #6B7280;
+  --color-ink-faint: #9CA3AF;
+
+  /* Color: Borders */
+  --color-line: #E8E6DF;
+  --color-line-strong: #D1CFC8;
+
+  /* Color: Accents */
+  --color-gold: #D4A85A;
+  --color-gold-deep: #B8893F;
+  --color-gold-soft: #F5E7C4;
+  --color-silver: #9CA3AF;
+  --color-silver-deep: #6B7280;
+  --color-silver-soft: #E5E7EB;
+
+  /* Color: Semantic */
+  --color-ink-blue: #1E40AF;
+  --color-ink-blue-soft: #DBEAFE;
+  --color-ruby: #9F1239;
+  --color-ruby-soft: #FCE7EB;
+  --color-deep-green: #065F46;
+  --color-deep-green-soft: #D1FAE5;
+  --color-wine: #7F1D1D;
+  --color-wine-soft: #FEE2E2;
+
+  /* Typography */
+  --font-sans: var(--font-inter), "Noto Sans JP", system-ui, -apple-system, sans-serif;
+  --font-jp: "Noto Sans JP", var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), "SF Mono", Menlo, monospace;
+
+  /* Spacing / Sizing */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-full: 9999px;
+
+  /* Shadows: subtle, refined */
+  --shadow-xs: 0 1px 2px rgba(15, 14, 10, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 14, 10, 0.05), 0 1px 2px rgba(15, 14, 10, 0.03);
+  --shadow-md: 0 4px 12px rgba(15, 14, 10, 0.06), 0 1px 3px rgba(15, 14, 10, 0.04);
+  --shadow-lg: 0 12px 32px rgba(15, 14, 10, 0.08), 0 2px 6px rgba(15, 14, 10, 0.04);
+  --shadow-gold: 0 0 0 1px rgba(212, 168, 90, 0.18), 0 8px 24px rgba(212, 168, 90, 0.16);
+
+  /* Animation */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* =========================================
+   Base styles
+   ========================================= */
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html, body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01", "ss03";
+}
+
+body {
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: rgba(212, 168, 90, 0.28);
+  color: var(--color-ink);
+}
+
+/* =========================================
+   Utility classes
+   ========================================= */
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.font-display {
+  font-family: var(--font-sans);
+  letter-spacing: -0.025em;
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Smooth focus rings: only on keyboard nav */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* =========================================
+   Animations (上品な馬モチーフ)
+   ========================================= */
+
+@keyframes horseRunAcross {
+  0%   { transform: translateX(-80%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(380%); opacity: 0; }
+}
+
+@keyframes gateOut {
+  0%   { transform: translateX(0); }
+  40%  { transform: translateX(6px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fadeUp {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 168, 90, 0.25); }
+  50%      { box-shadow: 0 0 0 8px rgba(212, 168, 90, 0); }
+}
+
+@keyframes counterShift {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-100%); }
+  100% { transform: translateY(-100%); }
+}
+
+.anim-fade-up      { animation: fadeUp 0.5s var(--ease-out) both; }
+.anim-horse-run    { animation: horseRunAcross 4s linear infinite; }
+.anim-gate-out     { animation: gateOut 280ms var(--ease-out); }
+.anim-gold-pulse   { animation: goldPulse 2.4s var(--ease-in-out) infinite; }
+
+.shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--color-gold-deep) 30%,
+    #F4D793 50%,
+    var(--color-gold-deep) 70%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 3.6s linear infinite;
+}
+
+/* Stagger reveal */
+.stagger > * { opacity: 0; animation: fadeUp 0.5s var(--ease-out) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.04s; }
+.stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger > *:nth-child(3) { animation-delay: 0.16s; }
+.stagger > *:nth-child(4) { animation-delay: 0.22s; }
+.stagger > *:nth-child(5) { animation-delay: 0.28s; }
+.stagger > *:nth-child(6) { animation-delay: 0.34s; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
