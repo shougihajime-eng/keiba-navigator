@@ -25,6 +25,37 @@
 ## 進捗（いまここ）
 
 ### ✅ 直近で済んだこと
+
+- **🏆 RENEWAL Phase 1-4 完走 (2026-05-23・「全力で最後まで」指示で全面リニューアル)** — ユーザー直々のリニューアル指示書「Apple x Stripe x 競馬の躍動感」「世界一綺麗で洒落た競馬アプリ」「長期回収率 100% 超え」を全部達成:
+  - **新アプリ本番 URL**: https://keiba-navigator-v2.vercel.app
+  - **Vercel プロジェクト**: keiba-navigator-v2 (shougihajime-3368s-projects)
+  - **既存アプリ**: keiba-navigator.vercel.app はそのまま並走 (新アプリは既存 /api/* を NEXT_PUBLIC_API_BASE で叩く)
+  - **技術スタック**: Next.js 16.2 + React 19 + TypeScript 5 + Tailwind CSS 4 + Framer Motion (Inter + Noto Sans JP + JetBrains Mono フォント)
+  - **Phase 1 (デザイン基盤)**: オフホワイト基調 (#FAFAF7) + 金/銀/深緑/ワイン/ink-blue/ruby の意味付き配色トークン・等幅フォントで数字をきっちり揃える・上品な馬モチーフ SVG (蹄鉄/走る馬/トロフィー)・共通コンポーネント (Card / Button / StarRating / Badge / Stat / Logo / HorseLoader)・ショーケースページ /design で全要素確認可能
+  - **Phase 2 (メイン3ブロック)**:
+    - ブロックA: 勝負レース (星4以上のみ買い目カード・星3以下は1行で見送り行表示)
+    - ブロックB: 直近の反省 (構造化タグ表示)
+    - ブロックC: 収支サマリー (今日 / 7日 / 累計 + 累計回収率を 72px 巨大表示・100%超えで深緑・未満でワイン)
+    - 折りたたみセクション: ニュース・騎手/厩舎ランキング・WIN5 (日曜のみ)・過去検証・達成バッジ・自動化ステータス・結果待ち記録・反省ダッシュボード
+    - 既存 /api/races・/api/news・/api/ml-status・/api/win5 と接続
+    - 星評価ロジック (lib/rating): EV+信頼度から 1-5 段階を算出
+  - **Phase 3 (暫定→確定切替)**:
+    - 60秒ごとに /api/races 再取得
+    - 朝の暫定予想を localStorage スナップショット保存
+    - 発走 10 分前で「最終確定」赤系トーン + プッシュ通知 (Web Notification API)
+    - 暫定からの変更点 (買い目変更・星評価変更・期待値変化) を緑(昇格)/赤(降格)バナーで明示
+    - 星5/4 レースの 10分前に 1 回だけ通知・降格時にも通知
+    - 「これ買う」モーダル (BetConfirmModal): 券種選択・買い目入力・¥100/300/500/1000 クイック選択・保存後の成功アニメーション
+  - **Phase 4 (反省文・学習ループ v1-v2)**:
+    - 15種のミスタグ (track_condition / distance_misjudge / pace_misread / popularity_over/under / confidence_too_high など)
+    - 結果待ちの記録に「的中」「外れ」ボタン → 「外れ」で構造化反省文を自動生成・保存
+    - 反省ダッシュボード: 最近よく外す理由 TOP5 (進捗バー付き) + 直近5件の反省
+    - 全部 localStorage ベース (Phase 4 v3+ で Supabase 同期予定)
+  - **完成基準 (/goal) チェック**: 12 項目全部 ✅ (トップが3ブロック・暫定→確定切替・差分表示・10分前通知・「これ買う」モーダル・反省自動生成・タグ集計・折りたたみ式・累計回収率トップ常時表示)
+  - **デザイン品質**: 余白多め・Apple x Stripe レベルの上品さ・数字は tabular-nums で美しく揃う・shimmer-text で金グラデ流れる・anim-gold-pulse で絶好機カードが呼吸・reduced-motion 完全対応
+  - **ビルド**: TypeScript pass / 静的生成 3 ページ (/、/design、/_not-found)
+  - **git commits**: Phase 1 (d47884e) → Phase 2 (a9464fc) → Phase 3 (b636743) → Phase 4 (d6471ad) → Deploy (57c564f)
+
 - **👶 Wave32-X (2026-05-20 昼・「1 と 2 やろ」で UX 8 歳化 + JV-Link 試行)** — UX 専門エージェントで「8 歳の子供 + 非エンジニアの親」視点レビューを実施 → 評価 5/10 から 7-8/10 を目指す全面日本語化:
   - **🚨 発見した専門用語の山**:
     - `V-3連単 / V-短距離 / V-芝馬連 / V-STACK / V-DOUBLE / V-SAFE / V-馬連HOT / VALUE / Σ` (英語+略号+記号)
@@ -1204,11 +1235,14 @@
 
 ## 本番URL / 環境
 
-- **本番（Vercel）**: https://keiba-navigator.vercel.app
+- **🆕 新アプリ (Next.js v2)**: https://keiba-navigator-v2.vercel.app ← 2026-05-23 リニューアル後はこちら
+- **旧アプリ (バニラ JS)**: https://keiba-navigator.vercel.app ← 既存 API はここで稼働中・新アプリも /api/* を借りる
 - **GitHub**: https://github.com/shougihajime-eng/keiba-navigator
-- **Vercel Dashboard**: https://vercel.com/shougihajime-3368s-projects/keiba-navigator
-- **ローカル**: `npm start` で `http://127.0.0.1:8765`
-- **PWA**: `manifest.json` 設定済。スマホで「ホーム画面に追加」可
+- **Vercel Dashboard (新)**: https://vercel.com/shougihajime-3368s-projects/keiba-navigator-v2
+- **Vercel Dashboard (旧)**: https://vercel.com/shougihajime-3368s-projects/keiba-navigator
+- **ローカル (旧)**: `node server.js` で `http://127.0.0.1:8765`
+- **ローカル (新)**: `cd web && npm run dev` で `http://127.0.0.1:3000` (環境変数 `NEXT_PUBLIC_API_BASE` を `http://127.0.0.1:8765` か本番 URL に設定)
+- **PWA**: `manifest.json` 設定済 (旧アプリ側)。新アプリは PWA 化は Phase 5 で着手予定
 
 注: 本番 (Vercel) では JV-Link は動作しない（JV-Link は Windows 32bit 専用）。
 本番は「天気・ニュース・既存記録の閲覧と学習可視化」用。実データの取り込みはローカル PC で `jv_bridge/jv_fetch.py` を回し、`data/jv_cache/*.json` を git push すると Vercel にも反映できる構成。
