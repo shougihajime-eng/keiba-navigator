@@ -26,6 +26,23 @@
 
 ### ✅ 直近で済んだこと
 
+- **🚨 5/23 障害対応 + 再発防止 (2026-05-23 昼)** —
+  - **障害**: 当日朝 8 時～13 時、JV-Link から取得した raw bin 全 541 件が `?` (0x3F) padding。JRA-VAN サーバが出走馬データを配信していなかった
+  - **原因切り分け** (Claude が代理ログインで全部確認):
+    - Data Lab. 契約: ✅ 「自動継続中・¥2,090」マイページで確認
+    - 利用キー `3UJC-46WW-7VV1-T7RX-4`: ✅ 有効・PC1 レジストリにも正常登録
+    - **新発見**: 利用キーは 2 つ発行されてた (`6UJC-46WW-9VFN-NYWV-4` が PC2 用に未使用)
+    - JV-Link 接続: ✅ JVInit OK
+    - aggregate API: ✅ rc=0・raw bin 受信成功
+    - raw 中身: ❌ 全 SE レコードが `?` padding → JRA-VAN サーバ側問題と確定
+  - **対応**: JRA-VAN サポート (office@jra-van.jp) に Claude がメール下書き作成 → 鈴木氏がマイページ経由で送信済
+  - **根治済 5 件**:
+    1. `jv_fetch.py:285` で `JVOpen rc=-1` を fatal error 扱いやめ・「データなし正常終了 exit 0」に変更 (5/22 12:32 以降の自動取得 26 回失敗の根本原因)
+    2. `scripts/watch_race_data.sh` 新規 (10 分おき自動再取得・実データ到達検知で予測まで自動実行)
+    3. `KeibaWatcher-Morning-0700` タスク登録 (土日朝 7:00 自動起動・WakeToRun=True・RestartCount=3)
+    4. 新アプリ `BlockA` に `PendingDataCard` 追加 (「JRA-VAN（有料）の接続設定後...」の失礼文面を「出走馬・オッズの配信待ち · 最終チェック○分前 · 今すぐ更新ボタン」に変更)
+    5. CLAUDE.md (グローバル + プロジェクト両方) に利用キー 2 つ・JRA-VAN サポート連絡先・障害対応履歴を追記
+
 - **🚀 RENEWAL Phase 5 完走 (2026-05-23 続行・「2」選択で PWA + Supabase + ポーリング最適化)** —
   - **5.1 PWA 化**:
     - manifest.ts (Web App Manifest・theme_color #D4A85A)

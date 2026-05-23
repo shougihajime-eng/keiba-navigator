@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -143,7 +144,17 @@ export function BlockA() {
       <SectionHeader count={bettable.length} />
 
       {allPending ? (
-        <PendingDataCard raceCount={sorted.length} />
+        <PendingDataCard
+          raceCount={sorted.length}
+          fetchedAt={resp.fetchedAt}
+          onRefresh={() => {
+            setLoading(true);
+            fetchRaces().then((data) => {
+              setResp(data);
+              setLoading(false);
+            });
+          }}
+        />
       ) : bettable.length === 0 ? (
         <NoBettableCard skipCount={skip.length} sample={sorted.slice(0, 3)} />
       ) : (
@@ -379,7 +390,25 @@ function SkipRow({ race }: { race: RaceSummary }) {
   );
 }
 
-function PendingDataCard({ raceCount }: { raceCount: number }) {
+function PendingDataCard({
+  raceCount,
+  fetchedAt,
+  onRefresh,
+}: {
+  raceCount: number;
+  fetchedAt?: string;
+  onRefresh?: () => void;
+}) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 15_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const minutesAgo = fetchedAt
+    ? Math.max(0, Math.round((now - Date.parse(fetchedAt)) / 60000))
+    : null;
+
   return (
     <Card tone="gold">
       <CardBody className="py-10 text-center">
@@ -394,7 +423,20 @@ function PendingDataCard({ raceCount }: { raceCount: number }) {
         <p className="mt-4 text-xs text-ink-muted">
           通常 9:00〜10:00 頃に配信開始 · 10 分おきに自動取得中
         </p>
-        <p className="mt-2 text-[11px] text-ink-faint">
+        {minutesAgo !== null && (
+          <p className="mt-2 text-[11px] text-ink-faint tabular">
+            最終チェック: {minutesAgo === 0 ? "たった今" : `${minutesAgo} 分前`}
+          </p>
+        )}
+        {onRefresh && (
+          <div className="mt-5">
+            <Button variant="gold" size="md" onClick={onRefresh}>
+              <RefreshCw className="w-4 h-4" />
+              今すぐ更新
+            </Button>
+          </div>
+        )}
+        <p className="mt-3 text-[11px] text-ink-faint">
           画面を開いたまましばらくお待ちください。完了すると自動で表示が切り替わります。
         </p>
       </CardBody>

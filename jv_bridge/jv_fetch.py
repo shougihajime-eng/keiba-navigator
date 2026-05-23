@@ -282,7 +282,15 @@ def cmd_aggregate(args) -> int:
         rc, readcount, downloadcount, lastfiletime = jv.JVOpen(
             args.dataspec, args.fromtime, opt, 0, 0, ""
         )
-        if rc != 0:
+        # 2026-05-23 修正: rc=-1 は「該当データなし」を意味する正常終了
+        # (5/22 12:32 から自動取得が壊れた根本原因: rc=-1 を fatal error 扱いしていたため
+        #  fromtime が直近で「もう取得済」になると毎時失敗続きになっていた)
+        if rc == -1:
+            print(f"[info] JVOpen rc=-1 (該当データなし・正常終了)")
+            write_status("aggregate_no_data", fromtime=args.fromtime, dataspec=args.dataspec)
+            return 0  # exit 0 で「データなし正常」を伝える
+        if rc < 0:
+            # その他の負値は本物のエラー
             raise RuntimeError(f"JVOpen failed rc={rc}")
         print(f"[info] JVOpen OK rc={rc} readcount={readcount} downloadcount={downloadcount}")
         if downloadcount and downloadcount > 0:
