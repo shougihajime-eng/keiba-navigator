@@ -7,7 +7,7 @@ $ROOT = "C:\Users\shoug\Keiba"  # placeholder - replaced below
 $ROOT = "$env:USERPROFILE\" + [string]([char]31478) + [string]([char]39340)
 # Actually use literal Japanese path stored as variable assigned from non-literal source
 $ROOT = Join-Path $env:USERPROFILE ([System.Text.Encoding]::UTF8.GetString([byte[]](0xE7, 0xAB, 0xB6, 0xE9, 0xA6, 0xAC)))
-$TASK_NAME = "KeibaWatcher-Morning-0700"
+$TASK_NAME = "KeibaWatcher-Morning-0530"
 $LOG_DIR = Join-Path $ROOT "logs"
 New-Item -ItemType Directory -Force -Path $LOG_DIR | Out-Null
 
@@ -39,7 +39,7 @@ $action = New-ScheduledTaskAction `
   -Argument "-c `"cd '$bashPath' && bash scripts/watch_race_data.sh >> logs/watcher_cron.log 2>&1`"" `
   -WorkingDirectory $ROOT
 
-$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday,Sunday -At 7:00am
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday,Sunday -At 5:30am
 
 $settings = New-ScheduledTaskSettingsSet `
   -WakeToRun `

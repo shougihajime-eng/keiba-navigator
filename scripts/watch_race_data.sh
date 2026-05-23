@@ -38,7 +38,7 @@ if is_real_data; then
 fi
 
 ATTEMPT=0
-MAX_ATTEMPTS=24   # 10 min x 24 = 4 hours
+MAX_ATTEMPTS=48   # 10 min x 48 = 8 hours (5/23 障害を踏まえ強化)
 
 while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
   ATTEMPT=$((ATTEMPT+1))
