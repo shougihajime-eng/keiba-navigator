@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#10b981" />
-  <meta name="description" content="競馬の期待値判定 — 必殺一号艇インスパイア / KEIBA NAVIGATOR" />
+  <meta name="description" content="長期回収率100%超を狙う期待値判定 — KEIBA NAVIGATOR" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="KEIBA" />
@@ -12,7 +12,7 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/icon.svg" />
-  <title>KEIBA NAVIGATOR — 今日のいちばん買う1点</title>
+  <title>KEIBA NAVIGATOR — 今日の勝負レース</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -20,122 +20,13 @@
 </head>
 <body>
 
-<!-- ─── トースト ─── -->
+<!-- トースト -->
 <div id="toast" class="toast" hidden></div>
 
-<!-- ─── アプリ本体 ─── -->
+<!-- アプリ本体 -->
 <main class="app-root section-stack stagger">
 
-  <!-- 0) ヒーローステージ (Wave22.10 - TV OP風) — Wave23: ユーザー指示で完全に閉じた折りたたみへ -->
-  <details class="hideable hideable-hero">
-    <summary class="hideable-summary">
-      <span class="h-arrow">▶</span>
-      <span class="h-icon">🌅</span>
-      <span class="h-title">今日の挨拶 / 名馬列伝</span>
-      <span class="h-hint">クリックで開く</span>
-    </summary>
-  <section class="hero-stage" id="hero-stage" aria-label="今日の挨拶">
-    <!-- 空と背景 (時間帯で色変化) -->
-    <div class="hero-sky" id="hero-sky">
-      <span class="hero-celestial" id="hero-celestial" aria-hidden="true">☀️</span>
-      <span class="hero-cloud cloud-1" aria-hidden="true"></span>
-      <span class="hero-cloud cloud-2" aria-hidden="true"></span>
-      <span class="hero-cloud cloud-3" aria-hidden="true"></span>
-    </div>
-    <!-- 馬場 (緑のターフ) -->
-    <div class="hero-turf" aria-hidden="true">
-      <svg class="hero-grass" viewBox="0 0 1200 80" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="grassg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#34d399"/>
-            <stop offset="100%" stop-color="#047857"/>
-          </linearGradient>
-        </defs>
-        <path d="M0,40 Q200,8 400,30 T800,30 T1200,30 L1200,80 L0,80 Z" fill="url(#grassg)"/>
-        <path d="M0,55 Q200,40 400,50 T800,45 T1200,50 L1200,80 L0,80 Z" fill="#047857" opacity="0.50"/>
-      </svg>
-    </div>
-    <!-- 走る馬群 (3 頭) -->
-    <div class="hero-horses" aria-hidden="true">
-      <svg class="hero-horse horse-A" viewBox="0 0 240 200">
-        <defs><linearGradient id="hA" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7c2d12"/><stop offset="100%" stop-color="#451a03"/>
-        </linearGradient></defs>
-        <g fill="url(#hA)">
-          <path d="M40,110 Q60,80 100,82 Q140,80 175,90 Q200,98 210,110 Q200,125 180,128 Q170,142 175,158 Q172,162 167,160 Q158,150 158,138 L140,140 Q138,160 132,164 Q126,162 128,148 L112,148 Q108,168 102,172 Q96,168 100,154 L86,154 Q80,170 74,172 Q70,166 76,150 Q60,144 50,132 Q44,122 40,110 Z"/>
-          <path d="M30,90 Q34,72 50,62 Q66,55 76,60 Q70,72 64,80 Q56,90 50,98 Q44,102 38,100 Q32,96 30,90 Z"/>
-          <path d="M40,55 Q48,45 60,42 Q72,40 78,46 Q82,52 78,58 Q70,62 60,62 Q50,60 44,60 Q40,58 40,55 Z"/>
-          <path d="M60,40 L64,30 L70,42 Z"/>
-          <path d="M55,55 Q40,60 30,82 Q40,80 50,75 Q60,68 55,55 Z" opacity="0.85"/>
-          <path d="M205,108 Q230,100 234,112 Q230,124 218,128 Q210,124 205,118 Z"/>
-        </g>
-        <circle cx="58" cy="51" r="2" fill="#fef3c7"/>
-        <!-- 騎手 (シルエット) -->
-        <g transform="translate(80,30)">
-          <ellipse cx="35" cy="20" rx="14" ry="13" fill="#f43f5e"/>
-          <rect x="22" y="20" width="26" height="6" fill="#f43f5e"/>
-          <path d="M22,30 Q30,30 35,30 Q40,30 48,30 L52,55 Q48,68 38,68 L32,68 Q22,68 18,55 Z" fill="#f43f5e"/>
-        </g>
-      </svg>
-      <svg class="hero-horse horse-B" viewBox="0 0 240 200">
-        <defs><linearGradient id="hB" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#475569"/>
-        </linearGradient></defs>
-        <g fill="url(#hB)">
-          <path d="M40,110 Q60,80 100,82 Q140,80 175,90 Q200,98 210,110 Q200,125 180,128 Q170,142 175,158 Q172,162 167,160 Q158,150 158,138 L140,140 Q138,160 132,164 Q126,162 128,148 L112,148 Q108,168 102,172 Q96,168 100,154 L86,154 Q80,170 74,172 Q70,166 76,150 Q60,144 50,132 Q44,122 40,110 Z"/>
-          <path d="M30,90 Q34,72 50,62 Q66,55 76,60 Q70,72 64,80 Q56,90 50,98 Q44,102 38,100 Q32,96 30,90 Z"/>
-          <path d="M40,55 Q48,45 60,42 Q72,40 78,46 Q82,52 78,58 Q70,62 60,62 Q50,60 44,60 Q40,58 40,55 Z"/>
-          <path d="M60,40 L64,30 L70,42 Z"/>
-          <path d="M55,55 Q40,60 30,82 Q40,80 50,75 Q60,68 55,55 Z" opacity="0.85"/>
-          <path d="M205,108 Q230,100 234,112 Q230,124 218,128 Q210,124 205,118 Z"/>
-        </g>
-        <circle cx="58" cy="51" r="2" fill="#0f172a"/>
-        <g transform="translate(80,30)">
-          <ellipse cx="35" cy="20" rx="14" ry="13" fill="#38bdf8"/>
-          <rect x="22" y="20" width="26" height="6" fill="#38bdf8"/>
-          <path d="M22,30 Q30,30 35,30 Q40,30 48,30 L52,55 Q48,68 38,68 L32,68 Q22,68 18,55 Z" fill="#38bdf8"/>
-        </g>
-      </svg>
-      <svg class="hero-horse horse-C" viewBox="0 0 240 200">
-        <defs><linearGradient id="hC" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#b45309"/>
-        </linearGradient></defs>
-        <g fill="url(#hC)">
-          <path d="M40,110 Q60,80 100,82 Q140,80 175,90 Q200,98 210,110 Q200,125 180,128 Q170,142 175,158 Q172,162 167,160 Q158,150 158,138 L140,140 Q138,160 132,164 Q126,162 128,148 L112,148 Q108,168 102,172 Q96,168 100,154 L86,154 Q80,170 74,172 Q70,166 76,150 Q60,144 50,132 Q44,122 40,110 Z"/>
-          <path d="M30,90 Q34,72 50,62 Q66,55 76,60 Q70,72 64,80 Q56,90 50,98 Q44,102 38,100 Q32,96 30,90 Z"/>
-          <path d="M40,55 Q48,45 60,42 Q72,40 78,46 Q82,52 78,58 Q70,62 60,62 Q50,60 44,60 Q40,58 40,55 Z"/>
-          <path d="M60,40 L64,30 L70,42 Z"/>
-          <path d="M55,55 Q40,60 30,82 Q40,80 50,75 Q60,68 55,55 Z" opacity="0.85"/>
-          <path d="M205,108 Q230,100 234,112 Q230,124 218,128 Q210,124 205,118 Z"/>
-        </g>
-        <circle cx="58" cy="51" r="2" fill="#0f172a"/>
-        <g transform="translate(80,30)">
-          <ellipse cx="35" cy="20" rx="14" ry="13" fill="#a78bfa"/>
-          <rect x="22" y="20" width="26" height="6" fill="#a78bfa"/>
-          <path d="M22,30 Q30,30 35,30 Q40,30 48,30 L52,55 Q48,68 38,68 L32,68 Q22,68 18,55 Z" fill="#a78bfa"/>
-        </g>
-      </svg>
-    </div>
-    <!-- 中央コンテンツ -->
-    <div class="hero-content">
-      <div class="hero-eyebrow" id="hero-eyebrow">— TODAY'S TURF —</div>
-      <h2 class="hero-greeting" id="hero-greeting">おはよう、はじめさん</h2>
-      <div class="hero-date" id="hero-date">--月--日 (--)</div>
-      <blockquote class="hero-quote" id="hero-quote">
-        <span class="hq-mark">"</span>
-        <span class="hq-text" id="hero-quote-text">勝つために走るのではない。走るために生まれた。</span>
-        <span class="hq-by" id="hero-quote-by">— 名馬の宿命</span>
-      </blockquote>
-    </div>
-    <!-- 下端のスタンド/フェンス -->
-    <div class="hero-stand" aria-hidden="true">
-      <div class="hs-fence"></div>
-      <div class="hs-shadow"></div>
-    </div>
-  </section>
-  </details>
-
-  <!-- 1) ミニブランドヘッダ (Wave24 - 最小化・1 行) -->
+  <!-- ミニブランドヘッダ -->
   <header class="brand-mini">
     <div class="bm-row">
       <span class="bm-logo">
@@ -150,7 +41,7 @@
     </div>
   </header>
 
-  <!-- 2) コンパクト ライブステータス (Wave24 - 1 行細い) -->
+  <!-- ライブステータス (1行細い) -->
   <section class="live-thin">
     <span id="live-dot" class="live-dot" aria-hidden="true"></span>
     <span id="live-label" class="live-label is-go">LIVE</span>
@@ -165,32 +56,80 @@
     </button>
   </section>
 
-  <!-- 2.5) 朝の概要トースト (JST 6-12 時の初回・1 日 1 回) -->
+  <!-- 朝の概要トースト -->
   <div id="morning-mount" hidden></div>
 
-  <!-- 2.6) 今週の最高的中バナー (利益 ¥10,000+ HIT のときだけ表示) -->
+  <!-- 今週の最高的中バナー -->
   <section id="topwin-mount" hidden></section>
 
-  <!-- 3) 結論カード — 今日いちばん買う1点 (最重要) -->
-  <section id="decision-mount" class="fade-in">
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ブロックA: 本日の勝負レース (★5 / ★4 のみ) -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="decision-mount" class="block-battle fade-in">
     <div class="predict-overlay">
       <span class="spinner"></span>
       <span>AI が本日のレースを読み込んでいます…</span>
     </div>
   </section>
 
-  <!-- 4) 今日の推奨レース (100%+ 戦略の発火レース) — Wave23: 折りたたみ -->
-  <details class="hideable hideable-recommend">
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ブロックB: 直近の反省 -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="reflect-mount" class="block-reflect fade-in"></section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ブロックC: 収支サマリー -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="summary-mount" class="block-summary fade-in"></section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ↓↓ ここから下は全部 折りたたみ ↓↓ -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="collapsibles-divider"><span>もっと見る</span></div>
+
+  <!-- 競馬ニュース (placeholder) -->
+  <details class="hideable hideable-news">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">💎</span>
-      <span class="h-title">回収率 100% を超えた本物の戦略</span>
-      <span class="h-hint">過去のレースを 8 つの期間に分けて検証して、合格した予想だけ</span>
+      <span class="h-icon">🗞</span>
+      <span class="h-title">競馬ニュース</span>
+      <span class="h-hint">重賞・出走馬・調教情報</span>
     </summary>
-    <section id="recommend-mount" class="recommend-card fade-in" hidden></section>
+    <section id="news-mount" class="placeholder-section">
+      <p>このセクションは後日実装予定です。</p>
+      <p class="placeholder-sub">JRA-VAN のニュース API と連携して、重賞情報や注目馬の最新ニュースをここに表示します。</p>
+    </section>
   </details>
 
-  <!-- 5) WIN5 カード — Wave23: 折りたたみ (土日中心の機能・平日は隠す) -->
+  <!-- 騎手ランキング (placeholder) -->
+  <details class="hideable hideable-jockey-rank">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">🏇</span>
+      <span class="h-title">騎手ランキング</span>
+      <span class="h-hint">最近勝ってる騎手 TOP10</span>
+    </summary>
+    <section id="jockey-rank-mount" class="placeholder-section">
+      <p>このセクションは後日実装予定です。</p>
+      <p class="placeholder-sub">直近4週間で勝っている騎手をランキング表示します。</p>
+    </section>
+  </details>
+
+  <!-- 厩舎ランキング (placeholder) -->
+  <details class="hideable hideable-stable-rank">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">🏠</span>
+      <span class="h-title">厩舎ランキング</span>
+      <span class="h-hint">最近勝ってる厩舎 TOP10</span>
+    </summary>
+    <section id="stable-rank-mount" class="placeholder-section">
+      <p>このセクションは後日実装予定です。</p>
+      <p class="placeholder-sub">直近4週間で勝っている厩舎をランキング表示します。</p>
+    </section>
+  </details>
+
+  <!-- WIN5 戦略 (日曜) -->
   <details class="hideable hideable-win5">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
@@ -201,7 +140,73 @@
     <section id="win5-mount"></section>
   </details>
 
-  <!-- 6) 全レース 一覧 — Wave23: 折りたたみ -->
+  <!-- 過去検証データ (8期間検証 + AIモデル) -->
+  <details class="hideable hideable-validation">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">📊</span>
+      <span class="h-title">過去検証データ</span>
+      <span class="h-hint">8 期間で検証した戦略の信頼性 + AI モデル成績</span>
+    </summary>
+    <section id="recommend-mount" class="recommend-card fade-in" hidden></section>
+    <section id="ml-status-mount" class="mlstatus-card fade-in" hidden></section>
+  </details>
+
+  <!-- 達成バッジ -->
+  <details class="hideable hideable-streak">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">🏆</span>
+      <span class="h-title">達成バッジ と 連勝記録</span>
+      <span class="h-hint">15 種のバッジ・最近の調子</span>
+    </summary>
+    <section id="achievements-mount" class="achievements-card fade-in" hidden></section>
+    <section id="streak-mount" class="streak-card fade-in" hidden></section>
+  </details>
+
+  <!-- 自動化ステータス -->
+  <details class="hideable hideable-autostatus">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-icon">⚙</span>
+      <span class="h-title">自動化ステータス</span>
+      <span class="h-hint">データ取得 / 予想計算 / 本番反映 / 結果照合</span>
+    </summary>
+    <section id="automation-mount" class="autostatus-card fade-in">
+      <div class="autostatus-head">
+        <span class="autostatus-icon" aria-hidden="true">⚙</span>
+        <span class="autostatus-title">自動化ステータス</span>
+        <span id="autostatus-overall" class="autostatus-pill is-ok">確認中…</span>
+      </div>
+      <div class="autostatus-grid">
+        <div class="autostatus-cell" data-key="fetch">
+          <div class="autostatus-label">データ取得</div>
+          <div class="autostatus-value" id="autostatus-fetch">—</div>
+          <div class="autostatus-sub" id="autostatus-fetch-sub">—</div>
+        </div>
+        <div class="autostatus-cell" data-key="predict">
+          <div class="autostatus-label">予想計算</div>
+          <div class="autostatus-value" id="autostatus-predict">—</div>
+          <div class="autostatus-sub" id="autostatus-predict-sub">—</div>
+        </div>
+        <div class="autostatus-cell" data-key="deploy">
+          <div class="autostatus-label">本番反映</div>
+          <div class="autostatus-value" id="autostatus-deploy">—</div>
+          <div class="autostatus-sub" id="autostatus-deploy-sub">—</div>
+        </div>
+        <div class="autostatus-cell" data-key="finalize">
+          <div class="autostatus-label">結果照合</div>
+          <div class="autostatus-value" id="autostatus-finalize">—</div>
+          <div class="autostatus-sub" id="autostatus-finalize-sub">—</div>
+        </div>
+      </div>
+      <p class="autostatus-note" id="autostatus-note">
+        4 つすべて緑なら手動操作は不要です。
+      </p>
+    </section>
+  </details>
+
+  <!-- 全レース一覧 -->
   <details class="hideable hideable-all-races">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
@@ -233,31 +238,19 @@
     </section>
   </details>
 
-  <!-- 6.5) 達成バッジ + 連勝記録 — Wave23: 折りたたみへ -->
-  <details class="hideable hideable-streak">
-    <summary class="hideable-summary">
-      <span class="h-arrow">▶</span>
-      <span class="h-icon">🏆</span>
-      <span class="h-title">達成バッジ と 連勝記録</span>
-      <span class="h-hint">15 種のバッジ・最近の調子</span>
-    </summary>
-    <section id="achievements-mount" class="achievements-card fade-in" hidden></section>
-    <section id="streak-mount" class="streak-card fade-in" hidden></section>
-  </details>
-
-  <!-- 7) 購入履歴 / 収支 — Wave23: 折りたたみ -->
+  <!-- 購入履歴 / 反省履歴 -->
   <details class="hideable hideable-history">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
       <span class="h-icon">💴</span>
-      <span class="h-title">買ったもの と 収支</span>
-      <span class="h-hint">今日 / 7 日累計 / 累計収支カーブ</span>
+      <span class="h-title">買ったもの と 反省履歴</span>
+      <span class="h-hint">今日 / 7 日累計 / 累計収支カーブ / 過去の反省全件</span>
     </summary>
     <section class="section-card">
       <div class="section-head">
         <div class="title">
           <span class="brand-tag"><span class="bar"></span></span>
-          買ったもの と 収支
+          買ったもの と 反省履歴
         </div>
         <div class="extra">
           <button id="btn-add-bet" class="chip-filter is-active" style="margin-right:4px">+ 手動で記録</button>
@@ -282,62 +275,21 @@
             </div>
           </div>
         </div>
+        <div class="mt-3">
+          <div class="sec-title"><span class="bar bad"></span><h2>過去の反省すべて</h2></div>
+          <div id="reflect-list-all" class="reflect-list-all">
+            <div style="text-align:center;padding:14px;color:var(--c-ink-soft);font-size:12px;">
+              外したレースが記録されると、ここに過去全件の反省が並びます。
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </details>
 
-  <!-- 8) 詳しく見る (折りたたみ・自動化 + ML 詳細) -->
-  <details class="details-card fade-in">
-    <summary class="details-summary">
-      <span class="details-arrow">▶</span>
-      <span class="details-title">もっと詳しく見る</span>
-      <span class="details-hint">自動化ステータス / AI モデル / 過去の検証</span>
-    </summary>
-    <div class="details-body">
-
-      <!-- 自動化ステータス -->
-      <section id="automation-mount" class="autostatus-card fade-in">
-        <div class="autostatus-head">
-          <span class="autostatus-icon" aria-hidden="true">⚙</span>
-          <span class="autostatus-title">自動化ステータス</span>
-          <span id="autostatus-overall" class="autostatus-pill is-ok">確認中…</span>
-        </div>
-        <div class="autostatus-grid">
-          <div class="autostatus-cell" data-key="fetch">
-            <div class="autostatus-label">データ取得</div>
-            <div class="autostatus-value" id="autostatus-fetch">—</div>
-            <div class="autostatus-sub" id="autostatus-fetch-sub">—</div>
-          </div>
-          <div class="autostatus-cell" data-key="predict">
-            <div class="autostatus-label">予想計算</div>
-            <div class="autostatus-value" id="autostatus-predict">—</div>
-            <div class="autostatus-sub" id="autostatus-predict-sub">—</div>
-          </div>
-          <div class="autostatus-cell" data-key="deploy">
-            <div class="autostatus-label">本番反映</div>
-            <div class="autostatus-value" id="autostatus-deploy">—</div>
-            <div class="autostatus-sub" id="autostatus-deploy-sub">—</div>
-          </div>
-          <div class="autostatus-cell" data-key="finalize">
-            <div class="autostatus-label">結果照合</div>
-            <div class="autostatus-value" id="autostatus-finalize">—</div>
-            <div class="autostatus-sub" id="autostatus-finalize-sub">—</div>
-          </div>
-        </div>
-        <p class="autostatus-note" id="autostatus-note">
-          4 つすべて緑なら手動操作は不要です。
-        </p>
-      </section>
-
-      <!-- AI モデル実証成績 -->
-      <section id="ml-status-mount" class="mlstatus-card fade-in" hidden></section>
-
-    </div>
-  </details>
-
 </main>
 
-<!-- ─── ボトムナビ ─── -->
+<!-- ボトムナビ -->
 <nav class="bottom-nav" aria-label="主要ナビゲーション">
   <div class="bottom-nav__row">
     <a class="bottom-nav__item active" data-tab="home" href="#home">
@@ -374,7 +326,7 @@
   </div>
 </nav>
 
-<!-- ─── WIN5 カスタム編集 モーダル ─── -->
+<!-- WIN5 カスタム編集モーダル -->
 <div class="modal-mask" id="modal-win5-edit" hidden>
   <div class="modal-card">
     <div class="modal-head">
@@ -396,7 +348,7 @@
   </div>
 </div>
 
-<!-- ─── レース詳細 モーダル ─── -->
+<!-- レース詳細モーダル -->
 <div class="modal-mask" id="modal-race-detail" hidden>
   <div class="modal-card">
     <div class="modal-head">
@@ -407,7 +359,7 @@
   </div>
 </div>
 
-<!-- ─── 手動入力 モーダル ─── -->
+<!-- 手動入力モーダル -->
 <div class="modal-mask" id="modal-add-bet" hidden>
   <div class="modal-card">
     <div class="modal-head">

@@ -133,11 +133,18 @@ export function BlockA() {
   const bettable = sorted.filter((r) => ratingFromRace(r) >= 4);
   const skip = sorted.filter((r) => ratingFromRace(r) <= 3);
 
+  // 全レースで topPick が空 or EV が全て 0 = JRA-VAN がまだ出走馬・オッズを配信していない状態
+  const allPending =
+    sorted.length > 0 &&
+    sorted.every((r) => !r.topPick?.number || (r.topPick?.ev ?? 0) === 0);
+
   return (
     <section>
       <SectionHeader count={bettable.length} />
 
-      {bettable.length === 0 ? (
+      {allPending ? (
+        <PendingDataCard raceCount={sorted.length} />
+      ) : bettable.length === 0 ? (
         <NoBettableCard skipCount={skip.length} sample={sorted.slice(0, 3)} />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 stagger">
@@ -372,14 +379,53 @@ function SkipRow({ race }: { race: RaceSummary }) {
   );
 }
 
+function PendingDataCard({ raceCount }: { raceCount: number }) {
+  return (
+    <Card tone="gold">
+      <CardBody className="py-10 text-center">
+        <Horseshoe className="w-12 h-12 text-gold-deep mx-auto mb-4 anim-gold-pulse" />
+        <h3 className="font-display text-2xl font-semibold tracking-tight">
+          出走馬・オッズの配信待ち
+        </h3>
+        <p className="mt-3 text-sm text-ink-soft max-w-md mx-auto leading-relaxed">
+          今日は <span className="font-semibold tabular text-gold-deep">{raceCount} レース</span> 開催が確認できています。
+          JRA-VAN から出走馬・騎手・オッズが配信され次第、星評価と買い目をお出しします。
+        </p>
+        <p className="mt-4 text-xs text-ink-muted">
+          通常 9:00〜10:00 頃に配信開始 · 10 分おきに自動取得中
+        </p>
+        <p className="mt-2 text-[11px] text-ink-faint">
+          画面を開いたまましばらくお待ちください。完了すると自動で表示が切り替わります。
+        </p>
+      </CardBody>
+    </Card>
+  );
+}
+
 function NoRaceCard({ reason }: { reason: string }) {
+  // 「JRA-VAN (有料) の接続設定後...」は契約済みユーザーには失礼なので、
+  // バックエンドが今日のデータを取り込み中の場合と未契約を区別して表示
+  const isDataPending = /取得していません|接続設定後/.test(reason);
+  const today = new Date();
+  const isRaceDay = today.getDay() === 0 || today.getDay() === 6;
+
   return (
     <Card>
       <CardBody className="py-12 text-center">
         <Horseshoe className="w-12 h-12 text-line-strong mx-auto mb-4" />
-        <h3 className="font-display text-2xl font-semibold tracking-tight">今日は開催なし</h3>
-        <p className="mt-2 text-sm text-ink-muted max-w-md mx-auto">{reason}</p>
-        <p className="mt-4 text-xs text-ink-faint">次の開催日まで休む日。AI は明日以降の予想を準備しています</p>
+        <h3 className="font-display text-2xl font-semibold tracking-tight">
+          {isDataPending && isRaceDay ? "今日のデータを取り込み中..." : "今日は開催なし"}
+        </h3>
+        <p className="mt-2 text-sm text-ink-muted max-w-md mx-auto">
+          {isDataPending && isRaceDay
+            ? "JRA-VAN からの自動取得が完了するまでもう少しお待ちください。土日は 8:30 / 11:00 / 13:30 / 16:00 に取得が走ります。"
+            : reason}
+        </p>
+        <p className="mt-4 text-xs text-ink-faint">
+          {isDataPending && isRaceDay
+            ? "数分待って再読み込みすると最新データが反映されます"
+            : "次の開催日まで休む日。AI は明日以降の予想を準備しています"}
+        </p>
       </CardBody>
     </Card>
   );

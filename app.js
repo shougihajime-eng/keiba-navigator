@@ -381,7 +381,9 @@
     $("#live-updated-val").textContent = ageSec != null ? fmtAge(ageSec) : "—";
   }
 
-  // ─── 描画: DecisionCard (本日の主役) ──────────────────────
+  // ─── 描画: DecisionCard / ブロックA: 本日の勝負レース ─────
+  // リニューアル: ★5 (ULTRA) と ★4 (PRIME) のレースだけ大きく並べる。
+  // ★3 以下は「見送り推奨」1 行リストに退避。
   function renderDecisionCard() {
     const mount = $("#decision-mount");
     if (!state.racesLast) return;
@@ -396,23 +398,341 @@
       const bEv = b.topPick?.ev ?? -Infinity;
       return bEv - aEv;
     });
-    const best = sorted[0];
-    const tier = tierOfRace(best);
 
-    if (tier === "none" || !best.topPick) {
-      mount.innerHTML = "";
+    // ★5 / ★4 のみ抽出 (買うべきレース)
+    const battleRaces = sorted.filter((r) => {
+      const t = tierOfRace(r);
+      return (t === "ultra" || t === "prime") && r.topPick;
+    });
+
+    // ★3 以下 (見送り推奨)
+    const passRaces = sorted.filter((r) => {
+      const t = tierOfRace(r);
+      return (t === "go" || t === "cond" || t === "best") && r.topPick;
+    });
+
+    mount.innerHTML = "";
+
+    // 勝負レースが 1 つも無いとき = 「今日は見送りの日」
+    if (battleRaces.length === 0) {
       mount.appendChild(renderNoBetCard(sorted));
+      if (passRaces.length > 0) {
+        mount.appendChild(renderPassList(passRaces));
+      }
       return;
     }
 
-    mount.innerHTML = "";
-    mount.appendChild(renderBuyCard(best, tier, sorted));
+    // バトルヘッダ
+    const head = el("div", { class: "battle-header" });
+    head.appendChild(el("div", { class: "battle-overline" }, "TODAY'S BATTLE"));
+    head.appendChild(el("h1", { class: "battle-title" },
+      `今日の勝負レース ${battleRaces.length}R`
+    ));
+    head.appendChild(el("div", { class: "battle-sub" },
+      battleRaces.length === 1 ? "ここに集中して買おう" : `${battleRaces.length} レース全部 ★4 以上の絶好機`
+    ));
+    mount.appendChild(head);
+
+    // ★5/★4 のレースを 1 件ずつ大きなカードで描画
+    battleRaces.forEach((r) => {
+      const t = tierOfRace(r);
+      mount.appendChild(renderBuyCard(r, t, sorted));
+    });
+
+    // 見送り推奨 (★3 以下) のリスト
+    if (passRaces.length > 0) {
+      mount.appendChild(renderPassList(passRaces));
+    }
 
     // Wave22.8: 新しい best レースになった瞬間だけ蹄音を再生 (毎フレームで鳴らさない)
-    if (window.kbEffects && state.lastClopRaceId !== best.raceId) {
-      state.lastClopRaceId = best.raceId;
+    const top = battleRaces[0];
+    if (window.kbEffects && state.lastClopRaceId !== top.raceId) {
+      state.lastClopRaceId = top.raceId;
       try { window.kbEffects.playHoofClop(); } catch {}
     }
+  }
+
+  // ─── 見送り推奨リスト (★3 以下 = GO / COND / BEST) ─────────
+  function renderPassList(races) {
+    const wrap = el("section", { class: "pass-list-card" });
+    wrap.appendChild(el("div", { class: "pl-head" },
+      el("span", { class: "pl-icon" }, "⏸"),
+      el("span", { class: "pl-title" }, "見送り推奨"),
+      el("span", { class: "pl-count" }, `${races.length}R`),
+      el("span", { class: "pl-hint" }, "AI 自信不足のため買わない方が安全")
+    ));
+    const list = el("div", { class: "pl-list" });
+    races.forEach((r) => {
+      const t = tierOfRace(r);
+      const stars = tierStars(t);
+      const vl = parseVenueLabel(r);
+      const ev = r.topPick.ev ?? 0;
+      const row = el("div", { class: `pl-row pl-tier-${t}` });
+      row.appendChild(el("span", { class: "pl-stars" }, stars));
+      row.appendChild(el("span", { class: "pl-race" }, `${vl.venue || "?"}${vl.raceNo || "?"}R`));
+      row.appendChild(el("span", { class: "pl-time" }, r.startTime || "--:--"));
+      row.appendChild(el("span", { class: "pl-name" }, `${r.topPick.number}番 ${scrubName(r.topPick.name, "")}`));
+      row.appendChild(el("span", { class: "pl-ev" }, `EV ×${ev.toFixed(2)}`));
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  // ─── ブロックB: 直近の反省 ────────────────────────────────
+  // 最新の外したレース 1 件を表示。150 字以内の反省文を自動生成。
+  // 「全反省履歴」ボタンで履歴セクションを展開してジャンプ。
+  function renderRecentMiss() {
+    const mount = $("#reflect-mount");
+    if (!mount) return;
+    const settled = state.bets.filter((b) => b.result === "hit" || b.result === "miss");
+    const misses = settled.filter((b) => b.result === "miss")
+      .sort((a, b) => (b.id || 0) - (a.id || 0));
+
+    // 何も記録が無い場合
+    if (settled.length === 0) {
+      mount.innerHTML = `
+        <section class="reflect-card reflect-empty">
+          <div class="rc-icon">📒</div>
+          <div class="rc-text">
+            <div class="rc-title">まだ反省データなし</div>
+            <div class="rc-sub">買って結果を記録すると、外したレースの反省がここに自動で出ます</div>
+          </div>
+        </section>`;
+      return;
+    }
+
+    // 直近で外れがゼロの場合
+    if (misses.length === 0) {
+      mount.innerHTML = `
+        <section class="reflect-card reflect-allwin">
+          <div class="rc-icon">🎉</div>
+          <div class="rc-text">
+            <div class="rc-title">直近の外れなし</div>
+            <div class="rc-sub">過去 ${settled.length} 件すべて的中。この調子で続けよう!</div>
+          </div>
+        </section>`;
+      return;
+    }
+
+    const latest = misses[0];
+    const reflection = generateReflection(latest);
+
+    mount.innerHTML = "";
+    const card = el("section", { class: "reflect-card" });
+
+    card.appendChild(el("div", { class: "rc-head" },
+      el("span", { class: "rc-emoji" }, "📒"),
+      el("span", { class: "rc-title" }, "直近の反省"),
+      el("span", { class: "rc-count" }, `外し ${misses.length} 件`)
+    ));
+
+    const info = el("div", { class: "rc-race-info" });
+    info.appendChild(el("div", { class: "rc-date" },
+      `${fmtDateMonth(latest.date)} · ${latest.race || "(レース不明)"}`
+    ));
+    info.appendChild(el("div", { class: "rc-pick" },
+      `${latest.type || "—"} ${latest.pick || "—"} / 投資 ¥${fmtYen(latest.amount || 0)}`
+    ));
+    card.appendChild(info);
+
+    card.appendChild(el("div", { class: "rc-reflection" }, reflection.text));
+
+    if (reflection.tags && reflection.tags.length > 0) {
+      const tagWrap = el("div", { class: "rc-tags" });
+      reflection.tags.forEach((t) => {
+        tagWrap.appendChild(el("span", { class: "rc-tag" }, t));
+      });
+      card.appendChild(tagWrap);
+    }
+
+    if (misses.length > 1) {
+      const expandBtn = el("button", {
+        class: "rc-expand",
+        onclick: () => { openHistoryAndScrollToReflections(); },
+      }, `全反省履歴 (${misses.length} 件) を見る →`);
+      card.appendChild(expandBtn);
+    }
+
+    mount.appendChild(card);
+  }
+
+  // ─── 反省文の自動生成 (150 字以内) ────────────────────────
+  // v1: 蓄積のみ。bet データから券種・金額・日付ベースの薄いヒューリスティック反省を作る。
+  // 将来 v2 で頻出タグを集計・v3 で重み調整・v4 で完全自動学習へ。
+  function generateReflection(bet) {
+    const tags = [];
+    const amount = bet.amount || 0;
+    const type = bet.type || "";
+    const race = bet.race || "レース不明";
+    const pick = bet.pick || "—";
+    let text = "";
+
+    if (type === "単勝") {
+      tags.push("単勝");
+      tags.push("的中率が低い券種");
+      text = `${race} の単勝 ${pick} で ¥${fmtYen(amount)} を投じたが外れ。`
+           + `単勝は本来 18 頭に 1 頭しか当たらない券種。次回は複勝やワイドへ分散して的中率を上げる手も検討したい。`;
+    } else if (type === "複勝") {
+      tags.push("複勝");
+      tags.push("3着外れ");
+      text = `${race} の複勝 ${pick} (¥${fmtYen(amount)}) が 3 着以内に来ず。`
+           + `複勝で外すのは AI 信頼度が低めのレース。次回は星 4 以上に絞って勝負したい。`;
+    } else if (type === "馬連" || type === "ワイド" || type === "馬単") {
+      tags.push(type);
+      tags.push("組合せ外し");
+      text = `${race} の${type} ${pick} (¥${fmtYen(amount)}) が外れ。`
+           + `2 頭軸は穴側が来ると外しやすい。本命馬と相手馬の信頼度が両方高い時に絞ろう。`;
+    } else if (type === "3連複" || type === "3連単") {
+      tags.push(type);
+      tags.push("3頭組合せ外し");
+      text = `${race} の${type} ${pick} (¥${fmtYen(amount)}) が外れ。`
+           + `3 頭絡みは的中率が低い分配当が大きい。星 5 限定で挑むと長期回収率が安定する。`;
+    } else {
+      text = `${race} の ${type || "不明な券種"} ${pick} (¥${fmtYen(amount)}) が外れ。`
+           + `次回は AI 信頼度をもう一度確認してから買おう。`;
+    }
+
+    // 金額ベースのタグ
+    if (amount >= 1000) tags.push("大きめ投資");
+    if (amount > 0 && amount < 200) tags.push("少額試し買い");
+
+    // 150 字以内に切る
+    if (text.length > 150) text = text.slice(0, 148) + "…";
+
+    return { text, tags };
+  }
+
+  // 過去の反省を全件表示するセクション (折りたたみ内 #reflect-list-all)
+  function renderAllReflections() {
+    const root = $("#reflect-list-all");
+    if (!root) return;
+    const misses = state.bets.filter((b) => b.result === "miss")
+      .sort((a, b) => (b.id || 0) - (a.id || 0));
+
+    if (misses.length === 0) {
+      root.innerHTML = `<div style="text-align:center;padding:14px;color:var(--c-ink-soft);font-size:12px">外したレースの記録がまだありません</div>`;
+      return;
+    }
+
+    root.innerHTML = "";
+    misses.forEach((m) => {
+      const ref = generateReflection(m);
+      const item = el("div", { class: "reflect-item" });
+      item.appendChild(el("div", { class: "ri-head" },
+        el("span", { class: "ri-date" }, fmtDateMonth(m.date)),
+        el("span", { class: "ri-race" }, m.race || "(レース不明)"),
+        el("span", { class: "ri-pick" }, `${m.type || ""} ${m.pick || ""}`),
+        el("span", { class: "ri-loss" }, `−¥${fmtYen(m.amount || 0)}`)
+      ));
+      item.appendChild(el("div", { class: "ri-text" }, ref.text));
+      if (ref.tags && ref.tags.length > 0) {
+        const tg = el("div", { class: "ri-tags" });
+        ref.tags.forEach((t) => tg.appendChild(el("span", { class: "ri-tag" }, t)));
+        item.appendChild(tg);
+      }
+      root.appendChild(item);
+    });
+  }
+
+  function openHistoryAndScrollToReflections() {
+    const det = document.querySelector(".hideable-history");
+    if (det && det.tagName === "DETAILS" && !det.open) det.open = true;
+    const tgt = document.querySelector("#reflect-list-all");
+    if (tgt) {
+      setTimeout(() => tgt.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    } else {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
+  }
+
+  // ─── ブロックC: 収支サマリー (今日 / 7日 / 累計) ─────────
+  // 累計回収率 100% 以上で緑・未満で赤に色分け。
+  function renderProfitSummary() {
+    const mount = $("#summary-mount");
+    if (!mount) return;
+
+    const settled = state.bets.filter((b) => b.result === "hit" || b.result === "miss");
+    if (settled.length === 0) {
+      mount.innerHTML = `
+        <section class="profit-summary profit-empty">
+          <div class="ps-eyebrow">あなたの成績</div>
+          <div class="ps-msg">まだ買った記録がありません</div>
+          <div class="ps-msg-sub">記録すると、今日 / 7 日 / 累計 の収支が出ます</div>
+        </section>`;
+      return;
+    }
+
+    const todayStr = todayJst();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    const todayBets = settled.filter((b) => b.date === todayStr);
+    const last7Bets = settled.filter((b) => b.date >= sevenDaysAgo);
+
+    function calc(bets) {
+      const spent = bets.reduce((a, b) => a + (b.amount || 0), 0);
+      const payout = bets.reduce((a, b) => a + (b.payout || 0), 0);
+      const profit = payout - spent;
+      const recov = spent > 0 ? (payout / spent) * 100 : 0;
+      const hits = bets.filter((b) => b.result === "hit").length;
+      return { spent, payout, profit, recov, hits, total: bets.length };
+    }
+
+    const t = calc(todayBets);
+    const w = calc(last7Bets);
+    const a = calc(settled);
+
+    function tone(stat) {
+      if (stat.total === 0) return "is-empty";
+      if (stat.recov >= 100) return "is-plus";
+      return "is-minus";
+    }
+
+    mount.innerHTML = "";
+    const card = el("section", { class: "profit-summary" });
+
+    const allTone = tone(a);
+    card.appendChild(el("div", { class: "ps-head" },
+      el("span", { class: "ps-icon" }, "💴"),
+      el("span", { class: "ps-title" }, "あなたの成績"),
+      el("span", { class: `ps-allrecov-pill ${allTone}` },
+        a.total > 0 ? `累計 ${a.recov.toFixed(0)}%` : "累計 —"
+      )
+    ));
+
+    const grid = el("div", { class: "ps-grid" });
+    [
+      { label: "今日", data: t },
+      { label: "7日", data: w },
+      { label: "累計", data: a },
+    ].forEach(({ label, data }) => {
+      const has = data.total > 0;
+      const cellTone = tone(data);
+      const cell = el("div", { class: `ps-cell ${cellTone}` });
+      cell.appendChild(el("div", { class: "ps-label" }, label));
+      cell.appendChild(el("div", { class: "ps-recov" },
+        has ? `${data.recov.toFixed(0)}%` : "—"
+      ));
+      cell.appendChild(el("div", { class: "ps-profit" },
+        has ? `${data.profit >= 0 ? "+" : ""}¥${fmtYen(data.profit)}` : ""
+      ));
+      cell.appendChild(el("div", { class: "ps-sub" },
+        has ? `${data.total}件 / 的中 ${data.hits}` : "記録なし"
+      ));
+      grid.appendChild(cell);
+    });
+    card.appendChild(grid);
+
+    // 累計 100%+ 達成バナー (派手目に祝う)
+    if (a.total >= 5 && a.recov >= 100) {
+      card.appendChild(el("div", { class: "ps-celebrate" },
+        el("span", { class: "psc-icon" }, "🏆"),
+        el("span", { class: "psc-text" },
+          `累計回収率 100% 突破! (${a.recov.toFixed(1)}%) — 長期で勝てるユーザーです`
+        )
+      ));
+    }
+
+    mount.appendChild(card);
   }
 
   function renderBuyCard(race, tier, sorted) {
@@ -2258,13 +2578,18 @@
       renderLive();
       renderMorningSummary();
       renderTopWinBanner();
+      // ── トップ3ブロック (リニューアル後の本体) ──
+      renderDecisionCard();      // ブロックA: 本日の勝負レース (★5/★4)
+      renderRecentMiss();        // ブロックB: 直近の反省 1 件
+      renderProfitSummary();     // ブロックC: 収支サマリー (今日/7日/累計)
+      // ── 折りたたみセクション群 ──
       renderAutostatus();
       renderMlStatus();
       renderRecommendations();
-      renderDecisionCard();
       renderWin5();
       renderAllRaces();
       renderHistory();
+      renderAllReflections();    // 履歴折りたたみ内の過去反省全件
       renderAchievements();
       renderStreakCard();
     } catch (e) {

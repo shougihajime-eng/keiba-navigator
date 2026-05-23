@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v66"; // Bug⑧ 修正: HTML を network-only にして ChunkLoadError 根治
+const CACHE_VERSION = "keiba-nav-v67"; // リニューアル: 3 ブロック構造 (勝負レース/反省/収支)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",
