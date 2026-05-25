@@ -46,12 +46,15 @@ export function NotifyBar() {
 
   return (
     <div className="bg-gold-soft border-b border-gold/30 text-ink-soft">
-      <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-        <span className="flex items-center gap-2 text-xs md:text-sm min-w-0">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 sm:gap-3">
+        <span className="flex items-center gap-2 text-xs md:text-sm min-w-0 flex-1">
           <Bell className="w-4 h-4 text-gold-deep shrink-0" />
-          <span className="truncate">星5・星4 レースの発走 10 分前に通知します</span>
+          <span className="truncate">
+            <span className="sm:hidden">星5・星4の10分前に通知</span>
+            <span className="hidden sm:inline">星5・星4 レースの発走 10 分前に通知します</span>
+          </span>
         </span>
-        <span className="flex items-center gap-2 shrink-0">
+        <span className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <Button variant="gold" size="sm" loading={granting} onClick={handleAllow}>
             通知ON
           </Button>

@@ -9,7 +9,9 @@ import { StarRating, ratingLabel } from "@/components/ui/StarRating";
 import { Stat } from "@/components/ui/Stat";
 import { HorseLoader } from "@/components/ui/HorseLoader";
 import { Horseshoe } from "@/components/icons/Horseshoe";
+import { RunningHorse } from "@/components/icons/RunningHorse";
 import { BetConfirmModal } from "@/components/BetConfirmModal";
+import { RaceDetailModal } from "@/components/RaceDetailModal";
 import { fetchRaces } from "@/lib/api";
 import { ratingFromRace, sortByRating, shortReason, type Rating } from "@/lib/rating";
 import { formatHHMM, formatYen, cn } from "@/lib/utils";
@@ -28,6 +30,7 @@ export function BlockA() {
   const [modalRace, setModalRace] = useState<{
     race: RaceSummary; rating: Rating; stake: number; isFinal: boolean;
   } | null>(null);
+  const [detailRace, setDetailRace] = useState<RaceSummary | null>(null);
 
   useEffect(() => {
     pruneOldSnapshots();
@@ -167,6 +170,7 @@ export function BlockA() {
               onBuyClick={(r, rating, stake, isFinal) =>
                 setModalRace({ race: r, rating, stake, isFinal })
               }
+              onDetailClick={(r) => setDetailRace(r)}
             />
           ))}
         </div>
@@ -179,7 +183,9 @@ export function BlockA() {
           </div>
           <Card>
             <CardBody className="divide-y divide-line/60">
-              {skip.slice(0, 6).map((r) => <SkipRow key={r.raceId} race={r} />)}
+              {skip.slice(0, 6).map((r) => (
+                <SkipRow key={r.raceId} race={r} onClick={() => setDetailRace(r)} />
+              ))}
               {skip.length > 6 && (
                 <div className="pt-3 text-xs text-ink-muted">
                   他 {skip.length - 6} レースも見送り
@@ -197,6 +203,24 @@ export function BlockA() {
           stake={modalRace.stake}
           isFinal={modalRace.isFinal}
           onClose={() => setModalRace(null)}
+        />
+      )}
+
+      {detailRace && (
+        <RaceDetailModal
+          race={detailRace}
+          onClose={() => setDetailRace(null)}
+          onBuy={() => {
+            const r = detailRace;
+            const rating = ratingFromRace(r);
+            const startMs = r.startTime ? Date.parse(r.startTime) : NaN;
+            const minutes = Number.isFinite(startMs)
+              ? Math.round((startMs - Date.now()) / 60000)
+              : NaN;
+            const isFinal = Number.isFinite(minutes) && minutes <= 10 && minutes >= -5;
+            setDetailRace(null);
+            setModalRace({ race: r, rating, stake: RECOMMEND_AMOUNT[rating] ?? 0, isFinal });
+          }}
         />
       )}
     </section>
@@ -249,10 +273,12 @@ function RaceCard({
   race,
   now,
   onBuyClick,
+  onDetailClick,
 }: {
   race: RaceSummary;
   now: number;
   onBuyClick: (race: RaceSummary, rating: Rating, stake: number, isFinal: boolean) => void;
+  onDetailClick: (race: RaceSummary) => void;
 }) {
   const rating = ratingFromRace(race);
   const isUltra = rating === 5;
@@ -272,7 +298,7 @@ function RaceCard({
   const raceNum = race.raceName?.match(/(\d{1,2})R/)?.[1] || "";
 
   return (
-    <Card tone={tone} elevated className={cn(isUltra && "anim-gold-pulse")}>
+    <Card tone={tone} elevated className={cn(isUltra && "anim-gold-pulse sheen")}>
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -315,14 +341,14 @@ function RaceCard({
           <Stat label="推奨" value={formatYen(stake)} size="md" />
         </div>
 
-        <div className="bg-paper-soft/70 rounded-[12px] p-3.5 border border-line/60">
-          <div className="text-[10px] uppercase tracking-[0.14em] text-ink-muted font-medium">本命</div>
-          <div className="mt-1 flex items-center gap-2.5">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-ink text-paper font-display font-semibold tabular">
+        <div className="bg-paper-soft/70 rounded-[12px] p-3.5 border border-line">
+          <div className="text-[10px] uppercase tracking-[0.14em] text-gold-deep font-medium">本命</div>
+          <div className="mt-1.5 flex items-center gap-2.5">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-b from-gold-bright to-gold text-on-gold font-display font-semibold tabular shadow-[0_4px_14px_rgba(232,194,108,0.35)]">
               {race.topPick?.number ?? "—"}
             </span>
             <span className="font-medium text-base truncate">{race.topPick?.name ?? "—"}</span>
-            <span className="ml-auto text-sm tabular text-ink-muted">
+            <span className="ml-auto text-sm tabular text-ink-soft">
               {race.topPick?.odds ? `${race.topPick.odds.toFixed(1)}倍` : ""}
             </span>
           </div>
@@ -347,7 +373,9 @@ function RaceCard({
         >
           これ買う {stake > 0 && `· ${formatYen(stake)}`}
         </Button>
-        <Button variant="secondary" size="md">詳細</Button>
+        <Button variant="secondary" size="md" onClick={() => onDetailClick(race)}>
+          詳細
+        </Button>
       </CardFooter>
     </Card>
   );
@@ -370,10 +398,10 @@ function DiffBanner({ diff }: { diff: Diff }) {
   );
 }
 
-function SkipRow({ race }: { race: RaceSummary }) {
+function SkipRow({ race, onClick }: { race: RaceSummary; onClick?: () => void }) {
   const rating = ratingFromRace(race);
-  return (
-    <div className="flex items-center justify-between gap-3 py-2.5 text-sm">
+  const content = (
+    <>
       <div className="flex items-center gap-3 min-w-0">
         <StarRating rating={rating} size="sm" />
         <span className="text-xs text-ink-muted tabular shrink-0">
@@ -386,7 +414,23 @@ function SkipRow({ race }: { race: RaceSummary }) {
       <span className="text-xs text-ink-muted tabular shrink-0">
         EV {race.topPick?.ev?.toFixed(2) ?? "—"}
       </span>
-    </div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full flex items-center justify-between gap-3 py-2.5 text-sm text-left -mx-1 px-1 rounded-[8px] hover:bg-paper-hover/50 transition-colors"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5 text-sm">{content}</div>
   );
 }
 
@@ -410,9 +454,9 @@ function PendingDataCard({
     : null;
 
   return (
-    <Card tone="gold">
+    <Card tone="gold" className="sheen">
       <CardBody className="py-10 text-center">
-        <Horseshoe className="w-12 h-12 text-gold-deep mx-auto mb-4 anim-gold-pulse" />
+        <Horseshoe className="w-12 h-12 text-gold mx-auto mb-4 anim-gold-pulse rounded-full" />
         <h3 className="font-display text-2xl font-semibold tracking-tight">
           出走馬・オッズの配信待ち
         </h3>
@@ -444,32 +488,107 @@ function PendingDataCard({
   );
 }
 
+/** 次の開催日 (土 or 日) の朝 9:30 を返す */
+function nextRaceDay(from: Date): Date {
+  const d = new Date(from);
+  // 当日が土日でも「次」を探すため翌日から走査
+  d.setHours(9, 30, 0, 0);
+  if (d.getTime() <= from.getTime()) d.setDate(d.getDate() + 1);
+  for (let i = 0; i < 8; i++) {
+    const day = d.getDay();
+    if (day === 0 || day === 6) return d;
+    d.setDate(d.getDate() + 1);
+  }
+  return d;
+}
+
 function NoRaceCard({ reason }: { reason: string }) {
   // 「JRA-VAN (有料) の接続設定後...」は契約済みユーザーには失礼なので、
   // バックエンドが今日のデータを取り込み中の場合と未契約を区別して表示
   const isDataPending = /取得していません|接続設定後/.test(reason);
-  const today = new Date();
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const today = new Date(now);
   const isRaceDay = today.getDay() === 0 || today.getDay() === 6;
 
+  // 取り込み中 (土日の朝など) は別の落ち着いた表示
+  if (isDataPending && isRaceDay) {
+    return (
+      <Card tone="gold" className="sheen">
+        <CardBody className="py-12 text-center">
+          <span className="inline-block anim-floaty mb-4">
+            <RunningHorse className="w-20 h-12 text-gold mx-auto" />
+          </span>
+          <h3 className="font-display text-2xl font-semibold tracking-tight">
+            今日のレースを取り込み中
+          </h3>
+          <p className="mt-3 text-sm text-ink-soft max-w-md mx-auto leading-relaxed">
+            JRA-VAN からの自動取得が完了するまでもう少しお待ちください。土日は 8:30 / 11:00 / 13:30 / 16:00 に取得が走ります。
+          </p>
+          <p className="mt-4 text-xs text-ink-faint">
+            数分待って再読み込みすると最新データが反映されます
+          </p>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  // 平日など休む日 — 夜のターフ・カウントダウン
+  const next = nextRaceDay(today);
+  const diffMs = Math.max(0, next.getTime() - now);
+  const totalH = Math.floor(diffMs / 3_600_000);
+  const days = Math.floor(totalH / 24);
+  const hours = totalH % 24;
+  const nextLabel = `${next.getMonth() + 1}月${next.getDate()}日 (${["日","月","火","水","木","金","土"][next.getDay()]})`;
+
   return (
-    <Card>
-      <CardBody className="py-12 text-center">
-        <Horseshoe className="w-12 h-12 text-line-strong mx-auto mb-4" />
-        <h3 className="font-display text-2xl font-semibold tracking-tight">
-          {isDataPending && isRaceDay ? "今日のデータを取り込み中..." : "今日は開催なし"}
+    <Card tone="gold" elevated className="sheen relative overflow-hidden">
+      <CardBody className="py-12 text-center relative">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-gold-deep font-medium">
+          NIGHT AT THE TURF
+        </div>
+
+        <span className="inline-block anim-floaty my-4">
+          <RunningHorse className="w-24 h-14 text-gold mx-auto drop-shadow-[0_6px_18px_rgba(232,194,108,0.35)]" />
+        </span>
+
+        <h3 className="font-display text-3xl font-semibold tracking-tight">
+          今日は<span className="text-gold-grad">休む日</span>
         </h3>
-        <p className="mt-2 text-sm text-ink-muted max-w-md mx-auto">
-          {isDataPending && isRaceDay
-            ? "JRA-VAN からの自動取得が完了するまでもう少しお待ちください。土日は 8:30 / 11:00 / 13:30 / 16:00 に取得が走ります。"
-            : reason}
+        <p className="mt-3 text-sm text-ink-soft max-w-md mx-auto leading-relaxed">
+          中央競馬は土日が開催。買わない日も、勝つための大切な一日です。
+          AI は次の開催に向けて静かに準備しています。
         </p>
-        <p className="mt-4 text-xs text-ink-faint">
-          {isDataPending && isRaceDay
-            ? "数分待って再読み込みすると最新データが反映されます"
-            : "次の開催日まで休む日。AI は明日以降の予想を準備しています"}
+
+        {/* 次の開催までのカウントダウン */}
+        <div className="mt-7 inline-flex items-stretch gap-3">
+          <CountUnit value={days} unit="日" />
+          <span className="self-center text-2xl text-gold/40 font-display">:</span>
+          <CountUnit value={hours} unit="時間" />
+        </div>
+        <p className="mt-4 text-xs text-ink-muted">
+          次の開催 · <span className="text-ink-soft font-medium tabular">{nextLabel}</span>
         </p>
       </CardBody>
     </Card>
+  );
+}
+
+function CountUnit({ value, unit }: { value: number; unit: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="min-w-[72px] rounded-[14px] border border-gold/30 bg-paper-soft/70 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+        <span className="font-display tabular text-4xl font-semibold text-gold-grad num-glow leading-none">
+          {String(value).padStart(2, "0")}
+        </span>
+      </div>
+      <span className="mt-1.5 text-[11px] tracking-wider text-ink-muted">{unit}</span>
+    </div>
   );
 }
 
@@ -478,7 +597,7 @@ function NoBettableCard({ skipCount, sample }: { skipCount: number; sample: Race
     <Card>
       <CardBody>
         <div className="text-center py-6">
-          <Horseshoe className="w-10 h-10 text-line-strong mx-auto mb-3" />
+          <Horseshoe className="w-10 h-10 text-gold-deep/70 mx-auto mb-3" />
           <h3 className="font-display text-xl font-semibold">今日は買うべきレースなし</h3>
           <p className="mt-2 text-sm text-ink-muted">
             {skipCount} レース全部で期待値プラスが出なかった日。<br />

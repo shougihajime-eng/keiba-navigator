@@ -78,11 +78,11 @@ export function BetConfirmModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-ink/40 backdrop-blur-sm anim-fade-up"
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 backdrop-blur-md anim-fade-up"
       onClick={onClose}
     >
       <div
-        className="bg-paper w-full md:max-w-md rounded-t-[24px] md:rounded-[20px] shadow-[var(--shadow-lg)] anim-fade-up"
+        className="bg-paper border border-line-strong w-full md:max-w-md rounded-t-[24px] md:rounded-[20px] shadow-[var(--shadow-lg)] surface-raised anim-rise-in max-h-[92dvh] overflow-y-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -130,7 +130,7 @@ export function BetConfirmModal({
                   本命
                 </div>
                 <div className="mt-1 flex items-center gap-2.5">
-                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink text-paper font-display font-semibold tabular text-base">
+                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-b from-gold-bright to-gold text-on-gold font-display font-semibold tabular text-base shadow-[0_4px_14px_rgba(232,194,108,0.35)]">
                     {race.topPick?.number ?? "—"}
                   </span>
                   <span className="font-medium text-base">{race.topPick?.name ?? "—"}</span>
@@ -173,7 +173,7 @@ export function BetConfirmModal({
                   value={horses}
                   onChange={(e) => setHorses(e.target.value)}
                   placeholder="例: 5  または  5-7"
-                  className="mt-2 w-full h-11 px-3 rounded-[10px] border border-line bg-paper text-base tabular focus:border-ink outline-none transition-colors"
+                  className="mt-2 w-full h-11 px-3 rounded-[10px] border border-line bg-paper text-base tabular focus:border-gold outline-none transition-colors"
                 />
               </div>
 
@@ -204,7 +204,7 @@ export function BetConfirmModal({
                   min={100}
                   value={stake}
                   onChange={(e) => setStake(Math.max(100, Number(e.target.value) || 100))}
-                  className="mt-2 w-full h-11 px-3 rounded-[10px] border border-line bg-paper text-base tabular focus:border-ink outline-none transition-colors"
+                  className="mt-2 w-full h-11 px-3 rounded-[10px] border border-line bg-paper text-base tabular focus:border-gold outline-none transition-colors"
                 />
               </div>
 

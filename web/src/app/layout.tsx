@@ -42,10 +42,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FAFAF7",
+  themeColor: "#080D0A",
+  colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // ピンチ操作での拡大を許可 (文字を大きく見たい人のため・アクセシビリティ)
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({

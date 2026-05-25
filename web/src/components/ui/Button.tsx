@@ -14,15 +14,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-ink text-paper hover:bg-ink-soft active:bg-ink shadow-[var(--shadow-xs)]",
+    "bg-ink text-canvas hover:bg-ink-soft active:bg-ink shadow-[var(--shadow-sm)]",
   secondary:
-    "bg-paper text-ink border border-line hover:bg-paper-hover active:bg-paper-soft",
+    "bg-paper-hover/60 text-ink border border-line-strong hover:bg-paper-hover hover:border-line-strong active:bg-paper-soft",
   ghost:
     "bg-transparent text-ink-soft hover:bg-paper-hover active:bg-paper-soft",
   ruby:
-    "bg-ruby text-paper hover:bg-wine active:bg-ruby shadow-[var(--shadow-sm)]",
+    "bg-ruby text-on-gold hover:brightness-110 active:brightness-95 shadow-[0_8px_26px_rgba(255,122,133,0.30)]",
   gold:
-    "bg-gold text-ink hover:bg-gold-deep active:bg-gold shadow-[var(--shadow-sm)]",
+    "bg-gradient-to-b from-gold-bright to-gold text-on-gold hover:from-gold hover:to-gold-deep active:brightness-95 shadow-[0_10px_30px_rgba(232,194,108,0.32)]",
 };
 
 const sizeStyles: Record<Size, string> = {

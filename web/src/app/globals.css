@@ -1,44 +1,47 @@
 @import "tailwindcss";
 
 /* =========================================
-   KEIBA NAVIGATOR Design Tokens
-   Apple x Stripe x 競馬の躍動感
+   KEIBA NAVIGATOR — Design Tokens
+   "夜のターフ・高級カジノ" — Midnight Turf x Gold
+   深い黒緑の闇に、金が宝石のように灯る
    ========================================= */
 
 @theme inline {
-  /* Color: Base — オフホワイト基調・清潔感と温度感 */
-  --color-canvas: #FAFAF7;
-  --color-paper: #FFFFFF;
-  --color-paper-soft: #F5F5F0;
-  --color-paper-hover: #F0EFE8;
+  /* Color: Base — 夜の競馬場・深い黒緑の闇 */
+  --color-canvas: #080D0A;
+  --color-paper: #121B15;        /* 浮き上がるカード面 */
+  --color-paper-soft: #0C140F;   /* 沈み込む溝・くぼみ */
+  --color-paper-hover: #1A271E;  /* ホバーで明るく */
 
-  /* Color: Text */
-  --color-ink: #1A1A1A;
-  --color-ink-soft: #3F3F3F;
-  --color-ink-muted: #6B7280;
-  --color-ink-faint: #9CA3AF;
+  /* Color: Text — 温かみのあるクリーム白 */
+  --color-ink: #F4F1E6;
+  --color-ink-soft: #C9D0C5;
+  --color-ink-muted: #8C978B;
+  --color-ink-faint: #5C655B;
 
-  /* Color: Borders */
-  --color-line: #E8E6DF;
-  --color-line-strong: #D1CFC8;
+  /* Color: Borders — 控えめな緑がかった輪郭 */
+  --color-line: #233029;
+  --color-line-strong: #38493D;
 
-  /* Color: Accents */
-  --color-gold: #D4A85A;
-  --color-gold-deep: #B8893F;
-  --color-gold-soft: #F5E7C4;
-  --color-silver: #9CA3AF;
-  --color-silver-deep: #6B7280;
-  --color-silver-soft: #E5E7EB;
+  /* Color: Accents — 金（主役） / 銀 */
+  --color-gold: #E8C26C;
+  --color-gold-deep: #D7AB57;
+  --color-gold-bright: #F7DE9B;
+  --color-gold-soft: rgba(232, 194, 108, 0.13);
+  --color-on-gold: #1A1206;       /* 金の上に乗せる暗い文字 */
+  --color-silver: #B6BEC8;
+  --color-silver-deep: #8C95A1;
+  --color-silver-soft: rgba(182, 190, 200, 0.12);
 
-  /* Color: Semantic */
-  --color-ink-blue: #1E40AF;
-  --color-ink-blue-soft: #DBEAFE;
-  --color-ruby: #9F1239;
-  --color-ruby-soft: #FCE7EB;
-  --color-deep-green: #065F46;
-  --color-deep-green-soft: #D1FAE5;
-  --color-wine: #7F1D1D;
-  --color-wine-soft: #FEE2E2;
+  /* Color: Semantic — 暗闇で映える宝石色 */
+  --color-ink-blue: #6FA8FF;      /* 暫定（サファイア） */
+  --color-ink-blue-soft: rgba(111, 168, 255, 0.13);
+  --color-ruby: #FF7A85;          /* 最終確定・急ぎ（コーラル） */
+  --color-ruby-soft: rgba(255, 122, 133, 0.13);
+  --color-deep-green: #4ADBA2;    /* 利益（エメラルド） */
+  --color-deep-green-soft: rgba(74, 219, 162, 0.13);
+  --color-wine: #E68097;          /* 損失（ローズ） */
+  --color-wine-soft: rgba(230, 128, 151, 0.12);
 
   /* Typography */
   --font-sans: var(--font-inter), "Noto Sans JP", system-ui, -apple-system, sans-serif;
@@ -52,12 +55,12 @@
   --radius-xl: 22px;
   --radius-full: 9999px;
 
-  /* Shadows: subtle, refined */
-  --shadow-xs: 0 1px 2px rgba(15, 14, 10, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 14, 10, 0.05), 0 1px 2px rgba(15, 14, 10, 0.03);
-  --shadow-md: 0 4px 12px rgba(15, 14, 10, 0.06), 0 1px 3px rgba(15, 14, 10, 0.04);
-  --shadow-lg: 0 12px 32px rgba(15, 14, 10, 0.08), 0 2px 6px rgba(15, 14, 10, 0.04);
-  --shadow-gold: 0 0 0 1px rgba(212, 168, 90, 0.18), 0 8px 24px rgba(212, 168, 90, 0.16);
+  /* Shadows — 暗闇では「影」より「奥行きと光」 */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.50), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.62), 0 6px 18px rgba(0, 0, 0, 0.42);
+  --shadow-gold: 0 0 0 1px rgba(232, 194, 108, 0.30), 0 14px 48px rgba(232, 194, 108, 0.22);
 
   /* Animation */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -87,10 +90,39 @@ body {
   font-size: 15px;
   line-height: 1.6;
   letter-spacing: -0.01em;
+  position: relative;
+  isolation: isolate;
+}
+
+/* 夜のターフ — 背景に光の層を敷く（ターフの緑光・金のスポット・暗がり） */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(1200px 620px at 50% -8%, rgba(74, 219, 162, 0.10), transparent 60%),
+    radial-gradient(900px 520px at 84% 6%, rgba(232, 194, 108, 0.10), transparent 58%),
+    radial-gradient(1100px 700px at 12% 30%, rgba(31, 79, 56, 0.30), transparent 62%),
+    radial-gradient(140% 120% at 50% 120%, rgba(0, 0, 0, 0.55), transparent 60%),
+    var(--color-canvas);
+}
+
+/* かすかなグレイン（質感） */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 ::selection {
-  background: rgba(212, 168, 90, 0.28);
+  background: rgba(232, 194, 108, 0.30);
   color: var(--color-ink);
 }
 
@@ -109,6 +141,53 @@ body {
   font-feature-settings: "ss01", "cv11";
 }
 
+/* 浮き上がる面の上端ハイライト（ガラスの縁の光） */
+.surface-raised {
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 金のグロー（縁取りの光） */
+.glow-gold {
+  box-shadow: var(--shadow-gold);
+}
+
+/* 金のグラデ文字 */
+.text-gold-grad {
+  background: linear-gradient(135deg, var(--color-gold-bright) 0%, var(--color-gold) 42%, var(--color-gold-deep) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 巨大数字に灯す光 — グラデ文字でも確実に光るよう filter を使う */
+.num-glow {
+  filter: drop-shadow(0 0 22px rgba(232, 194, 108, 0.40));
+}
+.num-glow-green {
+  filter: drop-shadow(0 0 22px rgba(74, 219, 162, 0.38));
+}
+
+/* 斜めに走る光のスイープ（高級カードの表面反射） */
+.sheen { position: relative; overflow: hidden; }
+.sheen::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.10) 50%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  animation: sheenSweep 5.5s ease-in-out infinite;
+}
+
 /* Smooth focus rings: only on keyboard nav */
 :focus { outline: none; }
 :focus-visible {
@@ -118,7 +197,7 @@ body {
 }
 
 /* =========================================
-   Animations (上品な馬モチーフ)
+   Animations
    ========================================= */
 
 @keyframes horseRunAcross {
@@ -139,33 +218,54 @@ body {
   100% { background-position: 200% 0; }
 }
 
+@keyframes sheenSweep {
+  0%, 18%  { left: -150%; }
+  60%      { left: 150%; }
+  100%     { left: 150%; }
+}
+
 @keyframes fadeUp {
   0%   { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes goldPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 168, 90, 0.25); }
-  50%      { box-shadow: 0 0 0 8px rgba(212, 168, 90, 0); }
+@keyframes riseIn {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes counterShift {
-  0%   { transform: translateY(0); }
-  50%  { transform: translateY(-100%); }
-  100% { transform: translateY(-100%); }
+/* 金のグローが呼吸する */
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 194, 108, 0.30), 0 14px 44px rgba(232, 194, 108, 0.14); }
+  50%      { box-shadow: 0 0 0 7px rgba(232, 194, 108, 0), 0 14px 52px rgba(232, 194, 108, 0.22); }
+}
+
+/* 星のきらめき */
+@keyframes twinkle {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 3px rgba(247, 222, 155, 0.6)); }
+  50%      { opacity: 0.82; filter: drop-shadow(0 0 7px rgba(247, 222, 155, 0.95)); }
+}
+
+/* ゆっくり浮遊 */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
 }
 
 .anim-fade-up      { animation: fadeUp 0.5s var(--ease-out) both; }
+.anim-rise-in      { animation: riseIn 0.6s var(--ease-out) both; }
 .anim-horse-run    { animation: horseRunAcross 4s linear infinite; }
 .anim-gate-out     { animation: gateOut 280ms var(--ease-out); }
-.anim-gold-pulse   { animation: goldPulse 2.4s var(--ease-in-out) infinite; }
+.anim-gold-pulse   { animation: goldPulse 2.6s var(--ease-in-out) infinite; }
+.anim-twinkle      { animation: twinkle 2.4s var(--ease-in-out) infinite; }
+.anim-floaty       { animation: floaty 4.5s var(--ease-in-out) infinite; }
 
 .shimmer-text {
   background: linear-gradient(
     100deg,
-    var(--color-gold-deep) 30%,
-    #F4D793 50%,
-    var(--color-gold-deep) 70%
+    var(--color-gold-deep) 28%,
+    var(--color-gold-bright) 50%,
+    var(--color-gold-deep) 72%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -190,4 +290,5 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  .sheen::after { display: none; }
 }

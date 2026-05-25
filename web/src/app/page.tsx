@@ -6,27 +6,35 @@ import { Logo } from "@/components/ui/Logo";
 import { NotifyBar } from "@/components/NotifyBar";
 import { SwRegister } from "@/components/SwRegister";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { LiveDate } from "@/components/LiveDate";
 
 export default function Home() {
-  const today = new Date();
-  const dateLabel = `${today.getMonth() + 1}月${today.getDate()}日 (${["日","月","火","水","木","金","土"][today.getDay()]})`;
-
   return (
     <main className="min-h-screen">
+      {/* 最上部の金の輝線 */}
+      <div className="h-[3px] w-full bg-gradient-to-r from-transparent via-gold to-transparent opacity-70" />
+
       <NotifyBar />
 
       {/* Header */}
-      <header className="border-b border-line/60 bg-paper/70 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-5 py-3.5 flex items-center justify-between">
+      <header className="border-b border-line/70 bg-canvas/75 backdrop-blur-xl sticky top-0 z-20">
+        <div className="max-w-4xl mx-auto px-5 py-3.5 flex items-center justify-between">
           <Logo size="md" />
-          <div className="text-right text-xs text-ink-muted tabular">
-            {dateLabel}
+          <div className="flex items-center gap-2 text-xs text-ink-muted tabular">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper-soft/70 px-2.5 py-1">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-deep-green opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-deep-green" />
+              </span>
+              LIVE
+            </span>
+            <LiveDate />
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <div className="max-w-3xl mx-auto px-4 md:px-5 py-6 md:py-10 space-y-10">
+      <div className="max-w-4xl mx-auto px-4 md:px-5 py-6 md:py-10 space-y-10">
         <BlockA />
         <BlockB />
         <BlockC />

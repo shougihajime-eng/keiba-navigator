@@ -11,11 +11,11 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const toneStyles: Record<CardTone, string> = {
   default:   "bg-paper border-line",
-  tentative: "bg-paper border-ink-blue/15 ring-1 ring-ink-blue/8",
-  final:     "bg-paper border-ruby/25 ring-1 ring-ruby/10",
-  won:       "bg-paper border-deep-green/20 ring-1 ring-deep-green/8",
-  lost:      "bg-paper border-wine/15 ring-1 ring-wine/8",
-  gold:      "bg-paper border-gold/40 ring-1 ring-gold/15",
+  tentative: "bg-paper border-ink-blue/25 ring-1 ring-ink-blue/10",
+  final:     "bg-paper border-ruby/35 ring-1 ring-ruby/15",
+  won:       "bg-paper border-deep-green/30 ring-1 ring-deep-green/12",
+  lost:      "bg-paper border-wine/25 ring-1 ring-wine/10",
+  gold:      "bg-gradient-to-b from-[#1A2418] to-paper border-gold/45 ring-1 ring-gold/20 shadow-[var(--shadow-gold)]",
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
@@ -27,11 +27,12 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
       ref={ref}
       className={cn(
         "rounded-[16px] border transition-all duration-200",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
         toneStyles[tone],
-        elevated && "shadow-[var(--shadow-md)]",
-        !elevated && "shadow-[var(--shadow-xs)]",
+        elevated && "shadow-[var(--shadow-md),inset_0_1px_0_rgba(255,255,255,0.05)]",
+        !elevated && tone === "default" && "shadow-[var(--shadow-xs),inset_0_1px_0_rgba(255,255,255,0.04)]",
         interactive &&
-          "cursor-pointer hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] active:scale-[0.995]",
+          "cursor-pointer hover:-translate-y-0.5 hover:shadow-[var(--shadow-md),inset_0_1px_0_rgba(255,255,255,0.06)] active:scale-[0.995]",
         className,
       )}
       {...rest}
