@@ -118,6 +118,15 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
 
     for se in se_list:
         num = se.get("horse_num")
+        # オッズの決定: O1 (単複オッズレコード) があればそれを最優先、無ければ
+        # SE 自身が持つ確定単勝オッズを使う。
+        # ❗2026-05-25 バグ修正: 以前は `odds_table.get(num) if num is not None else SEオッズ`
+        # と書いており、馬番 num は常に存在するため SE オッズへのフォールバックが
+        # 一度も発火せず、O1 が無いと win_odds が必ず None になっていた
+        # (過去の確定レースは O1 を別取得しないため全頭オッズ欠損 = EV 計算不能だった)。
+        o1_odds = odds_table.get(str(num)) if num is not None else None
+        se_odds = se.get("win_odds")
+        win_odds_val = o1_odds if o1_odds else (se_odds if se_odds else None)
         horses.append({
             "number":      num,
             "frame":       se.get("frame_num"),
@@ -133,8 +142,7 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
             # 前走情報は別レコード (UM/HN/UH 等) から取得する。現状は None。
             "prev_finish": None,
             "popularity":  se.get("popularity"),
-            "win_odds":    odds_table.get(str(num)) if num is not None
-                            else (se.get("win_odds") if se.get("win_odds") else None),
+            "win_odds":    win_odds_val,
             # SE が確定済みなら kakutei_jyuni / time が入る (結果データとしても利用可)
             "kakutei_jyuni": se.get("kakutei_jyuni"),
             "ijyou_code":    se.get("ijyou_code"),
