@@ -68,12 +68,51 @@ def init_jvlink(sid: str = "UNKNOWN"):
     return jv
 
 
-def jv_read(jv, buf_size: int = 256000):
-    """JVRead を呼び出して (rc, data_bytes, fname) を返す。
+def _coerce_jv_buf(buf) -> bytes:
+    """JVGets / JVRead が返すバッファを SJIS バイト列 (bytes) に統一する。
 
-    JVRead の COM IDL は `long JVRead(BSTR* buff, long* size, BSTR* filename)` で、
-    out 引数 (BSTR*, long*) が pywin32 経由で戻り値タプルに追加される。
-    JV-Link のバージョン/タイプライブラリ差により、戻り値が
+    2026-05-25 根本修正の経緯:
+      JV-Link は馬名・騎手名などを SJIS (cp932) で送ってくる。これを Python 側で
+      どう受け取るかで、過去 2 度バグった。
+        - ❌ shift_jis encode: 一度誤デコードされた str を再 encode できず `?` 化
+        - ❌ latin-1 encode (2026-05-19 の "修正"): pywin32 は BSTR を **システム ANSI
+             コードページ (日本語 Windows では cp932)** で Unicode str にデコードして渡す。
+             つまり buf は「コンフェルマ」のような正しい全角文字を含む str。これを
+             latin-1 で encode すると U+00FF を超える文字 (全角かな等) が全部 `?` (0x3F)
+             に置換され、馬名が `??????` に潰れていた (5/22 以降のデータ破損の真因)。
+      ✅ 正しい復元:
+        - JVGets はバイト配列 (memoryview/bytes) をそのまま返す → そのまま bytes 化が最善
+        - JVRead が str を返す場合は、デコードに使われた cp932 で encode し直すと原 SJIS
+          バイト列が無損失で戻る (diag_read.py で「コンフェルマ」「ミサビスケッツ」復元を確認)
+    """
+    if buf is None:
+        return b""
+    if isinstance(buf, (bytes, bytearray)):
+        return bytes(buf)
+    if isinstance(buf, memoryview):
+        return buf.tobytes()
+    if isinstance(buf, str):
+        # pywin32 が ANSI codepage (cp932) でデコード済みの str。同じ cp932 で戻す。
+        return buf.encode("cp932", errors="replace")
+    # SafeArray / tuple of ints など
+    try:
+        return bytes(buf)
+    except Exception:
+        return b""
+
+
+def jv_read(jv, buf_size: int = 256000):
+    """1 レコードを JVRead で読み込み (rc, data_bytes, fname) を返す。
+
+    JVRead は JV-Link 標準の読み出し API で、レコード末尾の CRLF を保ったまま返すため、
+    parse.parse_raw_file の区切り処理がそのまま使える (本コードで数ヶ月の実績あり)。
+    唯一のバグは「受け取った str をどの文字コードで bytes に戻すか」だった
+    (_coerce_jv_buf 参照: latin-1 では日本語が全部 `?` に潰れていた → cp932 が正解)。
+
+    なお JVGets (バイト配列版) は各レコード末尾に余分な NUL を付けて返す版があり、
+    parse_raw_file のレコード境界判定を壊す (2026-05-25 検証済) ため使わない。
+
+    戻り値タプルは JV-Link のバージョン差で
       (rc, buf, fname)            … 3-tuple
       (rc, buf, size_out, fname)  … 4-tuple
     のどちらかになるため両方を吸収する。
@@ -87,27 +126,7 @@ def jv_read(jv, buf_size: int = 256000):
         rc, buf, _size_out, fname = result
     else:
         raise RuntimeError(f"JVRead returned unexpected tuple of length {len(result)}: {result!r}")
-    # buf を bytes に統一。
-    # 重要: JVRead の BSTR は「SJIS バイト列をそのまま 1 バイト = 1 文字 (U+0000-U+00FF)
-    # にマップした疑似 Unicode 文字列」として渡してくる。これを `encode("shift_jis", ...)`
-    # で戻そうとすると、SJIS の高位バイト (0x80+, カタカナ等の第1バイト) が SJIS には
-    # エンコードできずに `?` (0x3F) に置換され、結果として `?A?N?e?B...` のような
-    # 文字化けが発生する (2026-05-19 解明: aggregate_20260510 以降のデータがこれで壊れた)。
-    # 正しくは `latin-1` で encode する。U+0000-U+00FF をそのまま 0x00-0xFF にマップする
-    # ので、JV-Link 本来の SJIS バイト列が完全に復元される。
-    if isinstance(buf, str):
-        data = buf.encode("latin-1", errors="replace")
-    elif isinstance(buf, (bytes, bytearray)):
-        data = bytes(buf)
-    elif buf is None:
-        data = b""
-    else:
-        # tuple of ints (pywin32 may return SafeArray of bytes)
-        try:
-            data = bytes(buf)
-        except Exception:
-            data = b""
-    return (int(rc or 0), data, fname or "")
+    return (int(rc or 0), _coerce_jv_buf(buf), fname or "")
 
 
 def cmd_init(args) -> int:

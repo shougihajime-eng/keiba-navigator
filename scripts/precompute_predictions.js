@@ -135,8 +135,24 @@ function main() {
   });
 
   if (files.length === 0) {
-    console.error(`[NG] 対象レースがありません (today=${today} / tomorrow=${tmr}, 全 ${all.length} 件中 0 件)`);
-    process.exit(1);
+    // ★当日・翌日のレースが無い日 (平日など) は「空の predictions.json」を書く。
+    // ここで何も書かずに終了すると、前回レース日の古い predictions.json が残り続け、
+    // /api/races が「数日前の終わったレース」を今日の予想として配信してしまう
+    // (2026-05-25 修正: 文字化け修正後も古い 5/23 データが本番に残っていた原因)。
+    const emptyOut = {
+      schema_version: 1,
+      fetchedAt:      new Date().toISOString(),
+      computedMs:     0,
+      raceCount:      0,
+      withHorses:     0,
+      placeholder:    0,
+      failed:         0,
+      learning:       { lgbm: readLgbmMeta(), features: readFeaturesMeta() },
+      predictions:    {},
+    };
+    fs.writeFileSync(OUT_PATH, JSON.stringify(emptyOut, null, 0), "utf-8");
+    console.log(`[OK] 対象レースなし (today=${today} / tomorrow=${tmr}) → 空の predictions.json を書き出し (古いデータ残存を防止)`);
+    process.exit(0);
   }
   console.log(`[info] 対象 ${files.length} レース (${wantAll ? "全件" : "当日+翌日"}) / 全ファイル ${all.length}`);
 
