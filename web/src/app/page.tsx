@@ -2,6 +2,7 @@ import { BlockA } from "@/components/blocks/BlockA";
 import { BlockB } from "@/components/blocks/BlockB";
 import { BlockC } from "@/components/blocks/BlockC";
 import { CollapsibleSections } from "@/components/blocks/CollapsibleSections";
+import { HonestStatus } from "@/components/blocks/HonestStatus";
 import { Logo } from "@/components/ui/Logo";
 import { NotifyBar } from "@/components/NotifyBar";
 import { SwRegister } from "@/components/SwRegister";
@@ -36,6 +37,7 @@ export default function Home() {
       {/* Main content */}
       <div className="max-w-4xl mx-auto px-4 md:px-5 py-6 md:py-10 space-y-10">
         <BlockA />
+        <HonestStatus />
         <BlockB />
         <BlockC />
         <CollapsibleSections />
