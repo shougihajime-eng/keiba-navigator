@@ -69,7 +69,12 @@
     - `/api/race-card` を追加 (api/[...slug].js + server.js + lightgbm_v1.loadRaceCard)。本番(旧app) で 200 確認。
     - web v2: `RaceCard.tsx` (全レース一覧+AI本命の結果バッジ+全頭展開テーブル)。`AllPredictions.tsx` は置き換えで削除。検証で+EV無いため正直に全レース「見送り」、価値は「AIの予想 vs 実際の結果」を全レース見られること。
     - `.gitignore` に `!race_card_latest.json` 追加。
+  - **🆕 正直さの修正 + 実データランキング (commit 5021a00, 7887816)**:
+    - 「過去検証データ」→「戦略の正直な成績」: 旧は roi_pct>=100 を緑で“勝てる”表示(偽値)。新は `/api/recommendations` の overall_roi_pct_v2(嘘なし値)+trust_label を表示し「N戦略中100%超はM個」と正直に。`web/CollapsibleSections.StrategyTruth`。
+    - 騎手・調教師ランキング: 「準備中」を実データに。`jv_bridge/build_rankings.py`(過去全レース着順・馬重複除去・30走以上・1着率順) → `rankings.json` → `/api/rankings`(api+server+lightgbm_v1.loadRankings) → `web/CollapsibleSections.RankingList`。ルメール28.9%等、実在トップが正しく上位。本番200確認。
+  - **ユーザーは「3=全部お任せ」を選択** (デザイン・規律含め Claude 判断で順に100点へ)。質問は挟まず継続。
   - **残: 100点へ向けた次の一手** — (A) ライブオッズから正直なEVを per-horse 表示 (B) 新コンポーネントの暗色金デザイン微調整 (C) 結果記録+資金管理(損を抑える規律)の強化 (D) 過去10年データの自動リトライ結果待ち (rc=-501継続中)。
+  - **データ更新コマンド** (開催日後に実行): `py -3.12 jv_bridge/build_race_card.py` (全レースカード再生成) / `py -3.12 jv_bridge/build_rankings.py` (ランキング再集計) / `py -3.12 jv_bridge/predict_lightgbm.py --all-races` (オッズ入り予想再生成) → commit + push。
   - **注**: 予想 win_prob はレース内正規化前は和<1。build_race_card は表示用に正規化済。AI本命の妥当性は popularity 分布(人気1が12R)で確認。
 
 - **🔧🔧 「?」文字化けの真因を特定・根治 (2026-05-25・JRA-VAN「データは正しく送っている」回答を受けて再調査)** —
