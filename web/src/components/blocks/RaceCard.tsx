@@ -174,39 +174,49 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
       </button>
 
       {open && (
-        <div className="mt-3 ml-7 rounded-[12px] border border-line/60 bg-paper-soft/40 overflow-hidden">
-          <table className="w-full text-xs">
+        <>
+        <div className="mt-3 ml-7 rounded-[12px] border border-line/60 bg-paper-soft/40 overflow-x-auto">
+          <table className="w-full text-xs min-w-[360px]">
             <thead>
               <tr className="text-ink-faint border-b border-line/50">
                 <th className="text-left font-medium px-3 py-2">AI順</th>
                 <th className="text-left font-medium px-2 py-2">馬</th>
                 <th className="text-right font-medium px-2 py-2">AI勝率</th>
+                <th className="text-right font-medium px-2 py-2">市場%</th>
                 <th className="text-right font-medium px-2 py-2">人気</th>
                 <th className="text-right font-medium px-2 py-2">オッズ</th>
                 {race.has_result && <th className="text-right font-medium px-3 py-2">着</th>}
               </tr>
             </thead>
             <tbody>
-              {race.horses.slice(0, 18).map((h, i) => (
-                <tr key={h.number} className={cn("border-b border-line/30 last:border-0", h.won && "bg-deep-green-soft/40")}>
-                  <td className="px-3 py-1.5 tabular text-ink-muted">{h.win_prob != null ? i + 1 : "—"}</td>
-                  <td className="px-2 py-1.5">
-                    <span className="tabular text-ink-muted">{h.number}</span>{" "}
-                    <span className="text-ink-soft">{h.name}</span>
-                  </td>
-                  <td className="px-2 py-1.5 text-right tabular text-ink">{pct(h.win_prob)}</td>
-                  <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.popularity || "—"}</td>
-                  <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.odds != null ? `${h.odds.toFixed(1)}` : "—"}</td>
-                  {race.has_result && (
-                    <td className="px-3 py-1.5 text-right tabular font-medium">
-                      {h.finish ? h.finish : "—"}
+              {race.horses.slice(0, 18).map((h, i) => {
+                const market = h.odds && h.odds > 0 ? Math.round((1 / h.odds) * 100) : null;
+                return (
+                  <tr key={h.number} className={cn("border-b border-line/30 last:border-0", h.won && "bg-deep-green-soft/40")}>
+                    <td className="px-3 py-1.5 tabular text-ink-muted">{h.win_prob != null ? i + 1 : "—"}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap">
+                      <span className="tabular text-ink-muted">{h.number}</span>{" "}
+                      <span className="text-ink-soft">{h.name}</span>
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td className="px-2 py-1.5 text-right tabular text-ink">{pct(h.win_prob)}</td>
+                    <td className="px-2 py-1.5 text-right tabular text-ink-muted">{market != null ? `${market}%` : "—"}</td>
+                    <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.popularity || "—"}</td>
+                    <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.odds != null ? `${h.odds.toFixed(1)}` : "—"}</td>
+                    {race.has_result && (
+                      <td className="px-3 py-1.5 text-right tabular font-medium">
+                        {h.finish ? h.finish : "—"}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+        <p className="mt-2 ml-7 text-[11px] text-ink-faint leading-relaxed">
+          「AI勝率」と「市場%（オッズが示す勝率）」がほぼ同じ＝AIと世間の評価が一致。だから市場が見落とした“お買い得”はほぼ無く、見送りが基本です。
+        </p>
+        </>
       )}
     </div>
   );
