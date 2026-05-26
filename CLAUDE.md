@@ -73,7 +73,10 @@
     - 「過去検証データ」→「戦略の正直な成績」: 旧は roi_pct>=100 を緑で“勝てる”表示(偽値)。新は `/api/recommendations` の overall_roi_pct_v2(嘘なし値)+trust_label を表示し「N戦略中100%超はM個」と正直に。`web/CollapsibleSections.StrategyTruth`。
     - 騎手・調教師ランキング: 「準備中」を実データに。`jv_bridge/build_rankings.py`(過去全レース着順・馬重複除去・30走以上・1着率順) → `rankings.json` → `/api/rankings`(api+server+lightgbm_v1.loadRankings) → `web/CollapsibleSections.RankingList`。ルメール28.9%等、実在トップが正しく上位。本番200確認。
   - **ユーザーは「3=全部お任せ」を選択** (デザイン・規律含め Claude 判断で順に100点へ)。質問は挟まず継続。
-  - **残: 100点へ向けた次の一手** — (A) ライブオッズから正直なEVを per-horse 表示 (B) 新コンポーネントの暗色金デザイン微調整 (C) 結果記録+資金管理(損を抑える規律)の強化 (D) 過去10年データの自動リトライ結果待ち (rc=-501継続中)。
+  - **🆕 資金管理 + 市場%比較 (commit 6c2daf9, f35b2d6・ユーザー「全部やって」)**:
+    - `BankrollCard.tsx` + `lib/bankroll.ts` + `store.summaryThisMonth`: 月予算をlocalStorageで管理。今月の使用額/残り/超過バー、1レース上限=予算3%、超過で「今月はもう買わない」・通常は「見送りも勝ち」。BlockC直下に配置。
+    - RaceCard 全頭表に「市場%（1/オッズ）」列追加 → AI勝率とほぼ一致＝勝てる隙間が無いことを各馬で正直に可視化。横スクロール対応。
+  - **残: 100点へ向けた次の一手** — (A) 暗色金デザインの視覚的微調整 (ブラウザ実機を見ながら・要ユーザーfeedback) (B) 結果記録UX強化 (C) 過去10年データの自動リトライ結果待ち (rc=-501継続中)。
   - **データ更新コマンド** (開催日後に実行): `py -3.12 jv_bridge/build_race_card.py` (全レースカード再生成) / `py -3.12 jv_bridge/build_rankings.py` (ランキング再集計) / `py -3.12 jv_bridge/predict_lightgbm.py --all-races` (オッズ入り予想再生成) → commit + push。
   - **注**: 予想 win_prob はレース内正規化前は和<1。build_race_card は表示用に正規化済。AI本命の妥当性は popularity 分布(人気1が12R)で確認。
 
