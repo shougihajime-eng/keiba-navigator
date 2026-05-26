@@ -40,6 +40,8 @@ data/jv_cache/*
 !data/jv_cache/recommendations.json
 # 2026-05-26: 直近開催日の全レースカード (全レース予想を /api/race-card で配信)
 !data/jv_cache/race_card_latest.json
+# 2026-05-26: 騎手・調教師ランキング (/api/rankings で配信)
+!data/jv_cache/rankings.json
 # Wave19.7: Walk-forward 安定性検証結果
 !data/jv_cache/walk_forward_result.json
 # Wave30: 期間別再学習 (真の look-ahead 排除) 結果

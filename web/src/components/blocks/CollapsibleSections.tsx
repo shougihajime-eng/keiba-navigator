@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { PendingBetsList } from "@/components/PendingBetsList";
 import { ReflectionDashboard } from "@/components/ReflectionDashboard";
 import { SyncCard } from "@/components/SyncCard";
-import { fetchNews, fetchWin5, fetchAutomationStatus, fetchRecommendations } from "@/lib/api";
+import { fetchNews, fetchWin5, fetchAutomationStatus, fetchRecommendations, fetchRankings } from "@/lib/api";
 import { loadBets, summaryAll, type Bet } from "@/lib/store";
 import { loadReflections } from "@/lib/reflectionStore";
 import { cn, formatYen } from "@/lib/utils";
@@ -20,6 +20,7 @@ export function CollapsibleSections() {
   const [win5, setWin5] = useState<Win5Resp | null>(null);
   const [auto, setAuto] = useState<AutoResp | null>(null);
   const [rec, setRec] = useState<RecData | null>(null);
+  const [rankings, setRankings] = useState<RankData | null>(null);
   const [bets, setBets] = useState<Bet[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [reflectionCount, setReflectionCount] = useState(0);
@@ -34,6 +35,8 @@ export function CollapsibleSections() {
       if (a) setAuto(a as unknown as AutoResp);
       const r = await fetchRecommendations();
       if (r) setRec(r as unknown as RecData);
+      const rk = await fetchRankings();
+      if (rk) setRankings(rk as unknown as RankData);
     })();
     refreshCounts();
     const onChange = () => refreshCounts();
@@ -117,21 +120,17 @@ export function CollapsibleSections() {
       <Collapsible
         icon={<TrophyIcon className="w-4 h-4" />}
         title="騎手ランキング"
-        hint="最近勝ってる騎手 TOP10"
+        hint="1着率順 · 過去データ集計 (30走以上)"
       >
-        <PreparingHint>
-          開催日にレースデータが貯まると、直近で勝っている騎手を自動で集計して表示します。
-        </PreparingHint>
+        <RankingList rows={rankings?.jockeys} loading={!rankings} />
       </Collapsible>
 
       <Collapsible
         icon={<Home className="w-4 h-4" />}
         title="厩舎ランキング"
-        hint="最近勝ってる厩舎 TOP10"
+        hint="1着率順 · 過去データ集計 (30走以上)"
       >
-        <PreparingHint>
-          開催日にレースデータが貯まると、直近で勝っている厩舎を自動で集計して表示します。
-        </PreparingHint>
+        <RankingList rows={rankings?.trainers} loading={!rankings} />
       </Collapsible>
 
       {isSunday && (
@@ -444,6 +443,32 @@ function StrategyTruth({ rec }: { rec: RecData | null }) {
       <p className="text-[11px] text-ink-faint">
         回収率100% = 賭けた額がそのまま戻る分岐点。それ未満は平均すると損です。
       </p>
+    </div>
+  );
+}
+
+// =========================================
+// 騎手・調教師ランキング (過去データの集計)
+// =========================================
+type RankRow = { name: string; starts: number; wins: number; in3: number; win_rate: number; in3_rate: number };
+type RankData = { jockeys?: RankRow[]; trainers?: RankRow[] };
+
+function RankingList({ rows, loading }: { rows?: RankRow[]; loading: boolean }) {
+  if (loading) return <div className="text-sm text-ink-muted py-2">読み込み中...</div>;
+  if (!rows || rows.length === 0) return <div className="text-sm text-ink-muted py-2">集計データがまだありません。</div>;
+  return (
+    <div className="mt-2 space-y-1">
+      {rows.map((r, i) => (
+        <div key={r.name} className="flex items-center gap-3 text-sm py-1.5 border-b border-line/30 last:border-0">
+          <span className={cn("w-5 text-center tabular text-xs font-semibold shrink-0", i === 0 ? "text-gold" : i < 3 ? "text-gold-deep" : "text-ink-faint")}>
+            {i + 1}
+          </span>
+          <span className="flex-1 truncate text-ink-soft">{r.name}</span>
+          <span className="text-xs text-ink-muted tabular shrink-0">{r.wins}勝/{r.starts}走</span>
+          <span className="tabular font-medium text-ink shrink-0 w-14 text-right">勝率{r.win_rate}%</span>
+        </div>
+      ))}
+      <p className="text-[11px] text-ink-faint pt-1">勝率＝1着になった割合。上位ほど安定して勝っています。</p>
     </div>
   );
 }

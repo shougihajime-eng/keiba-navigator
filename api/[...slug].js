@@ -60,6 +60,12 @@ module.exports = async (req, res) => {
       if (!card) return ok(res, { ok: false, reason: "no_race_card" });
       return ok(res, card);
     }
+    if (path === "/rankings") {
+      // 2026-05-26: 騎手・調教師ランキング (過去全レースの着順から集計)
+      const r = lightgbm_v1.loadRankings();
+      if (!r) return ok(res, { ok: false, reason: "no_rankings" });
+      return ok(res, r);
+    }
     if (path === "/ml-status") {
       // LightGBM の学習メタ + 過去レース実証結果 (回収率)
       const meta = lightgbm_v1.loadModelMeta();

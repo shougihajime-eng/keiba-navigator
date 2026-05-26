@@ -49,6 +49,10 @@ export async function fetchRaceCard() {
   return safeFetch<{ ok: boolean; [key: string]: unknown }>("/api/race-card");
 }
 
+export async function fetchRankings() {
+  return safeFetch<{ ok: boolean; [key: string]: unknown }>("/api/rankings");
+}
+
 export async function fetchStatus(): Promise<StatusResponse | null> {
   return safeFetch<StatusResponse>("/api/status");
 }

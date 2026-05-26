@@ -22,6 +22,7 @@ const META_NOPOP_PATH = path.join(__dirname, "..", "data", "jv_cache", "model_lg
 const BACKTEST_PATH = path.join(__dirname, "..", "data", "jv_cache", "backtest_result.json");
 const RECOMMENDATIONS_PATH = path.join(__dirname, "..", "data", "jv_cache", "recommendations.json");
 const RACE_CARD_PATH = path.join(__dirname, "..", "data", "jv_cache", "race_card_latest.json");
+const RANKINGS_PATH = path.join(__dirname, "..", "data", "jv_cache", "rankings.json");
 
 function _readJsonSafe(p) {
   try {
@@ -50,6 +51,10 @@ function loadRecommendations() {
 
 function loadRaceCard() {
   return _readJsonSafe(RACE_CARD_PATH);
+}
+
+function loadRankings() {
+  return _readJsonSafe(RANKINGS_PATH);
 }
 
 function loadPrediction(raceId) {
@@ -94,5 +99,6 @@ module.exports = {
   loadBacktest,
   loadRecommendations,
   loadRaceCard,
+  loadRankings,
   loadPrediction,
 };
