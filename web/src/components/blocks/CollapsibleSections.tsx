@@ -10,18 +10,16 @@ import { Badge } from "@/components/ui/Badge";
 import { PendingBetsList } from "@/components/PendingBetsList";
 import { ReflectionDashboard } from "@/components/ReflectionDashboard";
 import { SyncCard } from "@/components/SyncCard";
-import { fetchNews, fetchMlStatus, fetchWin5, fetchAutomationStatus } from "@/lib/api";
+import { fetchNews, fetchWin5, fetchAutomationStatus, fetchRecommendations } from "@/lib/api";
 import { loadBets, summaryAll, type Bet } from "@/lib/store";
 import { loadReflections } from "@/lib/reflectionStore";
 import { cn, formatYen } from "@/lib/utils";
 
 export function CollapsibleSections() {
   const [news, setNews] = useState<unknown[] | null>(null);
-  const [ml, setMl] = useState<{
-    backtest?: { strategies?: Array<{ name: string; roi_pct?: number; count?: number }> };
-  } | null>(null);
   const [win5, setWin5] = useState<Win5Resp | null>(null);
   const [auto, setAuto] = useState<AutoResp | null>(null);
+  const [rec, setRec] = useState<RecData | null>(null);
   const [bets, setBets] = useState<Bet[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [reflectionCount, setReflectionCount] = useState(0);
@@ -30,12 +28,12 @@ export function CollapsibleSections() {
     (async () => {
       const n = await fetchNews();
       if (n?.items) setNews(n.items as unknown[]);
-      const m = await fetchMlStatus();
-      if (m) setMl(m as unknown as typeof ml);
       const w = await fetchWin5();
       if (w) setWin5(w as unknown as Win5Resp);
       const a = await fetchAutomationStatus();
       if (a) setAuto(a as unknown as AutoResp);
+      const r = await fetchRecommendations();
+      if (r) setRec(r as unknown as RecData);
     })();
     refreshCounts();
     const onChange = () => refreshCounts();
@@ -150,29 +148,10 @@ export function CollapsibleSections() {
 
       <Collapsible
         icon={<BarChart3 className="w-4 h-4" />}
-        title="過去検証データ"
-        hint="8 期間 Walk-forward 検証の中身"
+        title="戦略の正直な成績"
+        hint="嘘のない検証（未来を見ない）での回収率"
       >
-        {ml?.backtest?.strategies ? (
-          <div className="space-y-2 mt-2">
-            {ml.backtest.strategies
-              .filter((s) => (s.roi_pct ?? 0) >= 100)
-              .slice(0, 5)
-              .map((s) => (
-                <div key={s.name} className="flex items-center justify-between text-sm py-1.5 border-b border-line/40 last:border-0">
-                  <span className="font-mono text-xs text-ink-soft truncate">{s.name}</span>
-                  <span className={cn(
-                    "tabular font-medium",
-                    (s.roi_pct ?? 0) >= 110 ? "text-deep-green" : "text-ink",
-                  )}>
-                    {(s.roi_pct ?? 0).toFixed(1)}% / {s.count ?? 0}件
-                  </span>
-                </div>
-              ))}
-          </div>
-        ) : (
-          <div className="text-sm text-ink-muted py-2">読み込み中...</div>
-        )}
+        <StrategyTruth rec={rec} />
       </Collapsible>
 
       <Collapsible
@@ -401,6 +380,69 @@ function AutomationBody({ auto }: { auto: AutoResp | null }) {
       ))}
       <p className="text-[11px] text-ink-faint pt-1 border-t border-line/50">
         土日 8:30 / 11:00 / 13:30 / 16:00 に自動取得 · 結果照合は毎晩 23:00
+      </p>
+    </div>
+  );
+}
+
+// =========================================
+// 戦略の正直な成績 (嘘のない walk-forward 検証の回収率)
+// =========================================
+type StratStat = {
+  overall_roi_pct?: number | null;
+  overall_roi_pct_v2?: number | null;
+  trust_label?: string | null;
+};
+type StratDef = { key: string; short_label?: string; label?: string; bet_type?: string };
+type RecData = { strategies_def?: StratDef[]; stats?: Record<string, StratStat> };
+
+function StrategyTruth({ rec }: { rec: RecData | null }) {
+  if (!rec) return <div className="text-sm text-ink-muted py-2">読み込み中...</div>;
+  const defs = rec.strategies_def || [];
+  const stats = rec.stats || {};
+  if (defs.length === 0) {
+    return <div className="text-sm text-ink-muted py-2">検証データがまだありません。</div>;
+  }
+
+  // 嘘のない値 (overall_roi_pct_v2) を優先。無ければ overall_roi_pct。
+  const rows = defs
+    .map((d) => {
+      const s = stats[d.key] || {};
+      const roi = s.overall_roi_pct_v2 ?? s.overall_roi_pct ?? null;
+      const leakFree = s.overall_roi_pct_v2 != null;
+      return { label: d.short_label || d.label || d.key, roi, trust: s.trust_label || "", leakFree };
+    })
+    .filter((r) => r.roi != null)
+    .sort((a, b) => (b.roi as number) - (a.roi as number));
+
+  const profitable = rows.filter((r) => (r.roi as number) >= 100).length;
+
+  return (
+    <div className="mt-2 space-y-3">
+      <div className="rounded-[12px] bg-wine-soft/40 border border-wine/20 p-3">
+        <p className="text-sm text-ink-soft leading-relaxed">
+          未来を見ない正直な検証では、
+          <span className="font-semibold text-ink"> {rows.length} 戦略中 回収率100%超は {profitable} 個</span>
+          （安定して勝てる戦略はありません）。下は各戦略の本当の回収率です。
+        </p>
+      </div>
+      <div className="space-y-1.5">
+        {rows.map((r) => {
+          const roi = r.roi as number;
+          const tone = roi >= 100 ? "text-deep-green" : roi >= 90 ? "text-ink-soft" : "text-wine";
+          return (
+            <div key={r.label} className="flex items-center justify-between gap-2 text-sm py-1.5 border-b border-line/30 last:border-0">
+              <span className="text-ink-soft truncate min-w-0">{r.label}</span>
+              <span className="flex items-center gap-2 shrink-0">
+                {r.trust && <span className="text-[10px] text-ink-faint">{r.trust.replace(/\s*\(.*\)/, "")}</span>}
+                <span className={cn("tabular font-medium", tone)}>{roi.toFixed(0)}%</span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-[11px] text-ink-faint">
+        回収率100% = 賭けた額がそのまま戻る分岐点。それ未満は平均すると損です。
       </p>
     </div>
   );
