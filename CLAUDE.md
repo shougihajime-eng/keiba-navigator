@@ -63,7 +63,14 @@
     - `AllPredictions.tsx`: 「全レースをAIが予想」。`/api/recommendations` の recommendations_recent (実力派AI本命+確信度バー+相手) を表示し全件「参考(見送り)」と正直に。開催日以外で空だったトップを充実。
   - **注意**: v2 (keiba-navigator-v2) は Vercel のボット対策チャレンジが有効 (`X-Vercel-Mitigated: challenge`) で curl は 403 になる。実ブラウザでは正常表示。旧 keiba-navigator は 200。
   - **並行作業の検出**: 作業中に別セッションが `25f1a03 design: 夜のターフ・高級カジノ風へ全面リニューアル (暗色+金)` を本番に commit していた (web v2 のデザインは暗色金に刷新済)。Claude の追加分はその上に additive で乗せた。
-  - **残: 100点へ向けた次の一手** — (A) 「全レース」を本当に全レース化 (full card 配信エンドポイント) (B) ライブオッズから正直なEVを per-horse 表示 (C) 自分の新コンポーネントの暗色金デザイン微調整 (D) 過去10年データの自動リトライ結果待ち。
+  - **🆕 「全レース予想」全レースカード 完成・本番公開済 (commit a0c688f)**:
+    - `jv_bridge/build_race_card.py`: 直近開催日の全レース・全頭を 予想(win_prob)+本物オッズ+結果 で結合 → `race_card_latest.json`。races の「同一馬3重複」既知バグを馬番で除去、レース内で確率正規化。AI本命の着順/3着内/1着を集計。
+    - **全予想を odds 入りで再生成** (`predict_lightgbm.py --all-races`): 旧予想はオッズ取得前に計算され本命が153倍の人気薄になっていた → 再生成で本命が正しく favorites に。**AI本命の成績 5/24: 3着内 17/36・1着 5/36** (妥当な水準)。
+    - `/api/race-card` を追加 (api/[...slug].js + server.js + lightgbm_v1.loadRaceCard)。本番(旧app) で 200 確認。
+    - web v2: `RaceCard.tsx` (全レース一覧+AI本命の結果バッジ+全頭展開テーブル)。`AllPredictions.tsx` は置き換えで削除。検証で+EV無いため正直に全レース「見送り」、価値は「AIの予想 vs 実際の結果」を全レース見られること。
+    - `.gitignore` に `!race_card_latest.json` 追加。
+  - **残: 100点へ向けた次の一手** — (A) ライブオッズから正直なEVを per-horse 表示 (B) 新コンポーネントの暗色金デザイン微調整 (C) 結果記録+資金管理(損を抑える規律)の強化 (D) 過去10年データの自動リトライ結果待ち (rc=-501継続中)。
+  - **注**: 予想 win_prob はレース内正規化前は和<1。build_race_card は表示用に正規化済。AI本命の妥当性は popularity 分布(人気1が12R)で確認。
 
 - **🔧🔧 「?」文字化けの真因を特定・根治 (2026-05-25・JRA-VAN「データは正しく送っている」回答を受けて再調査)** —
   - **訂正**: 5/23 に「JRA-VAN サーバ側問題」と結論づけたが**これは誤り**だった。JRA-VAN から「データは全部正しく配信している」とメール回答があり、再調査の結果 **こちら側 (jv_fetch.py) の文字コード変換バグ**と確定。
