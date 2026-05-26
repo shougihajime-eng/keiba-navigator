@@ -6,6 +6,7 @@ import { HonestStatus } from "@/components/blocks/HonestStatus";
 import { RaceCard } from "@/components/blocks/RaceCard";
 import { BankrollCard } from "@/components/blocks/BankrollCard";
 import { Logo } from "@/components/ui/Logo";
+import { Reveal } from "@/components/ui/Reveal";
 import { NotifyBar } from "@/components/NotifyBar";
 import { SwRegister } from "@/components/SwRegister";
 import { InstallPrompt } from "@/components/InstallPrompt";
@@ -39,12 +40,12 @@ export default function Home() {
       {/* Main content */}
       <div className="max-w-4xl mx-auto px-4 md:px-5 py-6 md:py-10 space-y-10">
         <BlockA />
-        <HonestStatus />
-        <RaceCard />
-        <BlockB />
-        <BlockC />
-        <BankrollCard />
-        <CollapsibleSections />
+        <Reveal><HonestStatus /></Reveal>
+        <Reveal><RaceCard /></Reveal>
+        <Reveal><BlockB /></Reveal>
+        <Reveal><BlockC /></Reveal>
+        <Reveal><BankrollCard /></Reveal>
+        <Reveal><CollapsibleSections /></Reveal>
 
         <footer className="text-center text-xs text-ink-muted py-8 border-t border-line/60">
           KEIBA NAVIGATOR · 長期回収率 100% 超えを目指す · 2026
