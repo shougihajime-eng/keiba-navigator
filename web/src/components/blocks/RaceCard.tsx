@@ -176,7 +176,7 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
       {open && (
         <>
         <div className="mt-3 ml-7 rounded-[12px] border border-line/60 bg-paper-soft/40 overflow-x-auto">
-          <table className="w-full text-xs min-w-[360px]">
+          <table className="w-full text-xs min-w-[420px]">
             <thead>
               <tr className="text-ink-faint border-b border-line/50">
                 <th className="text-left font-medium px-3 py-2">AI順</th>
@@ -185,6 +185,7 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
                 <th className="text-right font-medium px-2 py-2">市場%</th>
                 <th className="text-right font-medium px-2 py-2">人気</th>
                 <th className="text-right font-medium px-2 py-2">オッズ</th>
+                <th className="text-right font-medium px-2 py-2">期待値</th>
                 {race.has_result && <th className="text-right font-medium px-3 py-2">着</th>}
               </tr>
             </thead>
@@ -202,6 +203,12 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
                     <td className="px-2 py-1.5 text-right tabular text-ink-muted">{market != null ? `${market}%` : "—"}</td>
                     <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.popularity || "—"}</td>
                     <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.odds != null ? `${h.odds.toFixed(1)}` : "—"}</td>
+                    <td className={cn(
+                      "px-2 py-1.5 text-right tabular",
+                      h.ev == null ? "text-ink-faint" : h.ev >= 1 ? "text-deep-green font-medium" : "text-ink-muted",
+                    )}>
+                      {h.ev != null ? h.ev.toFixed(2) : "—"}
+                    </td>
                     {race.has_result && (
                       <td className="px-3 py-1.5 text-right tabular font-medium">
                         {h.finish ? h.finish : "—"}
@@ -214,7 +221,9 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
           </table>
         </div>
         <p className="mt-2 ml-7 text-[11px] text-ink-faint leading-relaxed">
-          「AI勝率」と「市場%（オッズが示す勝率）」がほぼ同じ＝AIと世間の評価が一致。だから市場が見落とした“お買い得”はほぼ無く、見送りが基本です。
+          「期待値」は <span className="text-ink-soft">AI勝率 × オッズ</span>＝100円が平均で何円に戻るかの理論値。<span className="text-deep-green">1.00超なら理論上お買い得</span>に見えますが、
+          検証では穴馬ほど市場に買われ過ぎ（実際は届かない）と判明しており、<span className="text-ink-soft">単発の1.00超はノイズで継続して勝てる買い方ではありません</span>。
+          「AI勝率」と「市場%」がほぼ同じ＝AIと世間の評価が一致なので、市場が見落とした“本物のお買い得”はほぼ無く、見送りが基本です。
         </p>
         </>
       )}
