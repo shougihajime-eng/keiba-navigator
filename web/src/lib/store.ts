@@ -109,6 +109,11 @@ export function summaryAll(bets: Bet[] = loadBets()): Summary {
   return summarizeBets(bets);
 }
 
+export function summaryThisMonth(bets: Bet[] = loadBets()): Summary {
+  const ym = new Date().toISOString().slice(0, 7); // YYYY-MM
+  return summarizeBets(bets.filter((b) => (b.createdAt || "").slice(0, 7) === ym));
+}
+
 /** 最近外したレースを 1 件返す (反省カード用) */
 export function latestMiss(bets: Bet[] = loadBets()): Bet | null {
   for (let i = bets.length - 1; i >= 0; i -= 1) {

@@ -4,6 +4,7 @@ import { BlockC } from "@/components/blocks/BlockC";
 import { CollapsibleSections } from "@/components/blocks/CollapsibleSections";
 import { HonestStatus } from "@/components/blocks/HonestStatus";
 import { RaceCard } from "@/components/blocks/RaceCard";
+import { BankrollCard } from "@/components/blocks/BankrollCard";
 import { Logo } from "@/components/ui/Logo";
 import { NotifyBar } from "@/components/NotifyBar";
 import { SwRegister } from "@/components/SwRegister";
@@ -42,6 +43,7 @@ export default function Home() {
         <RaceCard />
         <BlockB />
         <BlockC />
+        <BankrollCard />
         <CollapsibleSections />
 
         <footer className="text-center text-xs text-ink-muted py-8 border-t border-line/60">
