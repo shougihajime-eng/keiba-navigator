@@ -98,6 +98,16 @@ async function serve(req, res) {
         return jsonRes(res, 500, { ok: false, error: e.message });
       }
     }
+    if (p === "/api/race-card") {
+      try {
+        const lgbm = require("./predictors/lightgbm_v1");
+        const card = lgbm.loadRaceCard();
+        if (!card) return jsonRes(res, 200, { ok: false, reason: "no_race_card" });
+        return jsonRes(res, 200, card);
+      } catch (e) {
+        return jsonRes(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (p === "/api/ml-status") {
       try {
         const lgbm = require("./predictors/lightgbm_v1");

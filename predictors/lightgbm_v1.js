@@ -21,6 +21,7 @@ const META_PATH = path.join(__dirname, "..", "data", "jv_cache", "model_lgbm_met
 const META_NOPOP_PATH = path.join(__dirname, "..", "data", "jv_cache", "model_lgbm_nopop_meta.json");
 const BACKTEST_PATH = path.join(__dirname, "..", "data", "jv_cache", "backtest_result.json");
 const RECOMMENDATIONS_PATH = path.join(__dirname, "..", "data", "jv_cache", "recommendations.json");
+const RACE_CARD_PATH = path.join(__dirname, "..", "data", "jv_cache", "race_card_latest.json");
 
 function _readJsonSafe(p) {
   try {
@@ -45,6 +46,10 @@ function loadBacktest() {
 
 function loadRecommendations() {
   return _readJsonSafe(RECOMMENDATIONS_PATH);
+}
+
+function loadRaceCard() {
+  return _readJsonSafe(RACE_CARD_PATH);
 }
 
 function loadPrediction(raceId) {
@@ -88,5 +93,6 @@ module.exports = {
   loadModelMetaNopop,
   loadBacktest,
   loadRecommendations,
+  loadRaceCard,
   loadPrediction,
 };

@@ -45,6 +45,10 @@ export async function fetchRecommendations(): Promise<RecommendationsResponse | 
   return safeFetch<RecommendationsResponse>("/api/recommendations");
 }
 
+export async function fetchRaceCard() {
+  return safeFetch<{ ok: boolean; [key: string]: unknown }>("/api/race-card");
+}
+
 export async function fetchStatus(): Promise<StatusResponse | null> {
   return safeFetch<StatusResponse>("/api/status");
 }

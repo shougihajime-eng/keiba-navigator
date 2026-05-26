@@ -54,6 +54,12 @@ module.exports = async (req, res) => {
       if (!rec) return ok(res, { ok: false, reason: "no_recommendations" });
       return ok(res, { ok: true, ...rec });
     }
+    if (path === "/race-card") {
+      // 2026-05-26: 直近開催日の全レース・全頭カード (全レース予想を正直に表示)
+      const card = lightgbm_v1.loadRaceCard();
+      if (!card) return ok(res, { ok: false, reason: "no_race_card" });
+      return ok(res, card);
+    }
     if (path === "/ml-status") {
       // LightGBM の学習メタ + 過去レース実証結果 (回収率)
       const meta = lightgbm_v1.loadModelMeta();
