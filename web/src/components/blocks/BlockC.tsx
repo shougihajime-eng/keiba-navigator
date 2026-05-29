@@ -125,7 +125,7 @@ export function BlockC() {
                       style={{ left: `${targetPct}%` }}
                     />
                   </div>
-                  <div className="mt-1.5 flex justify-between text-[10px] text-ink-faint tabular">
+                  <div className="mt-1.5 flex justify-between text-[11px] text-ink-muted tabular">
                     <span>0%</span>
                     <span className="text-ink-muted">目標 100%</span>
                     <span>150%</span>
@@ -173,7 +173,7 @@ function SubStat({
 }) {
   return (
     <div className="text-center">
-      <div className="text-[10px] uppercase tracking-[0.14em] text-ink-muted font-medium">
+      <div className="text-[11px] uppercase tracking-[0.14em] text-ink-muted font-medium">
         {label}
       </div>
       <div className={cn(
@@ -183,7 +183,7 @@ function SubStat({
       )}>
         {s.count > 0 ? formatPct(s.roi, 1) : "—"}
       </div>
-      <div className="mt-0.5 text-[11px] text-ink-muted tabular">
+      <div className="mt-0.5 text-xs text-ink-muted tabular">
         {formatYen(s.profit)} / {s.count} R
       </div>
     </div>

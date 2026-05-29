@@ -88,7 +88,7 @@ export function HonestStatus() {
           </div>
 
           {/* 唯一の打ち手 */}
-          <div className="flex items-start gap-2.5 text-xs text-ink-muted leading-relaxed">
+          <div className="flex items-start gap-2.5 text-sm text-ink-muted leading-relaxed">
             <Database className="w-4 h-4 text-ink-faint shrink-0 mt-0.5" />
             <p>
               唯一の打ち手は、学習データを今の約 15 倍 (過去 10 年) に増やすこと。
@@ -122,8 +122,8 @@ function FactCard({
         {icon}
         <span className="tabular">{stat}</span>
       </div>
-      <div className="mt-2 text-sm font-semibold text-ink">{title}</div>
-      <p className="mt-1 text-xs text-ink-muted leading-relaxed">{body}</p>
+      <div className="mt-2 text-[15px] font-semibold text-ink">{title}</div>
+      <p className="mt-1 text-sm text-ink-muted leading-relaxed">{body}</p>
     </div>
   );
 }

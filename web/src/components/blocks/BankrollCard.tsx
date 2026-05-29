@@ -144,7 +144,7 @@ export function BankrollCard() {
 function MiniStat({ label, value, tone = "muted" }: { label: string; value: string; tone?: "muted" | "positive" | "negative" }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-[0.14em] text-ink-muted font-medium">{label}</div>
+      <div className="text-[11px] uppercase tracking-[0.14em] text-ink-muted font-medium">{label}</div>
       <div className={cn(
         "mt-1 font-display tabular text-base md:text-lg font-semibold",
         tone === "positive" && "text-deep-green",
