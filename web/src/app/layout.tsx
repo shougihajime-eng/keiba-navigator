@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_JP, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { TurfBackdrop } from "@/components/TurfBackdrop";
 
 const inter = Inter({
   variable: "--font-inter",

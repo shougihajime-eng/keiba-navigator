@@ -7,6 +7,7 @@ import { RaceCard } from "@/components/blocks/RaceCard";
 import { BankrollCard } from "@/components/blocks/BankrollCard";
 import { Logo } from "@/components/ui/Logo";
 import { Reveal } from "@/components/ui/Reveal";
+import { LegendStrip } from "@/components/LegendStrip";
 import { NotifyBar } from "@/components/NotifyBar";
 import { SwRegister } from "@/components/SwRegister";
 import { InstallPrompt } from "@/components/InstallPrompt";
