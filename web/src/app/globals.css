@@ -437,6 +437,19 @@ body::before {
   color: var(--color-gold-deep);
   font-family: var(--font-mono);
 }
+.legend-honor {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px 1px 6px;
+  border-radius: var(--radius-full);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--color-on-gold);
+  background: linear-gradient(135deg, var(--color-gold-bright), var(--color-gold));
+  white-space: nowrap;
+}
+.legend-crown { width: 12px; height: 9px; color: var(--color-on-gold); flex: none; }
 .legend-tale { font-size: 12px; color: var(--color-ink-muted); }
 .legend-sep { margin: 0 10px; color: var(--color-line-strong); }
 
