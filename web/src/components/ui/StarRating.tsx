@@ -65,11 +65,11 @@ function Star({
   const fillColor =
     tone === "gold"   ? "url(#starGold)"   :
     tone === "silver" ? "url(#starSilver)" :
-                        "#38493D";
+                        "#C2D4BF";
   const strokeColor =
-    tone === "gold"   ? "#F7DE9B" :
-    tone === "silver" ? "#B6BEC8" :
-                        "#475646";
+    tone === "gold"   ? "#E8920C" :
+    tone === "silver" ? "#677A6C" :
+                        "#A0AEA2";
 
   return (
     <svg
@@ -79,20 +79,20 @@ function Star({
     >
       <defs>
         <linearGradient id="starGold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"  stopColor="#FBE9B6" />
-          <stop offset="52%" stopColor="#E8C26C" />
-          <stop offset="100%" stopColor="#C99B45" />
+          <stop offset="0%"  stopColor="#FFD27A" />
+          <stop offset="52%" stopColor="#F5A623" />
+          <stop offset="100%" stopColor="#D67E00" />
         </linearGradient>
         <linearGradient id="starSilver" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"  stopColor="#E8ECF1" />
-          <stop offset="55%" stopColor="#B6BEC8" />
-          <stop offset="100%" stopColor="#8C95A1" />
+          <stop offset="0%"  stopColor="#CBD8C8" />
+          <stop offset="55%" stopColor="#93A597" />
+          <stop offset="100%" stopColor="#677A6C" />
         </linearGradient>
       </defs>
       <path
         d="M12 2.6l2.95 5.97 6.6.96-4.78 4.66 1.13 6.57L12 17.66l-5.9 3.1 1.13-6.57L2.45 9.53l6.6-.96L12 2.6Z"
-        fill={filled ? fillColor : "rgba(255,255,255,0.03)"}
-        stroke={filled ? strokeColor : "#2E3D34"}
+        fill={filled ? fillColor : "#EAF2E8"}
+        stroke={filled ? strokeColor : "#C2D4BF"}
         strokeWidth={1.2}
         strokeLinejoin="round"
       />

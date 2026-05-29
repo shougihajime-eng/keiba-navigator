@@ -9,7 +9,7 @@ import { StarRating, ratingLabel } from "@/components/ui/StarRating";
 import { Stat } from "@/components/ui/Stat";
 import { HorseLoader } from "@/components/ui/HorseLoader";
 import { Horseshoe } from "@/components/icons/Horseshoe";
-import { RunningHorse } from "@/components/icons/RunningHorse";
+import { HorseHero } from "@/components/icons/HorseHero";
 import { BetConfirmModal } from "@/components/BetConfirmModal";
 import { RaceDetailModal } from "@/components/RaceDetailModal";
 import { fetchRaces } from "@/lib/api";
@@ -522,7 +522,7 @@ function NoRaceCard({ reason }: { reason: string }) {
       <Card tone="gold" className="sheen">
         <CardBody className="py-12 text-center">
           <span className="inline-block anim-floaty mb-4">
-            <RunningHorse className="w-20 h-12 text-gold mx-auto" />
+            <HorseHero className="w-40 h-auto mx-auto" />
           </span>
           <h3 className="font-display text-2xl font-semibold tracking-tight">
             今日のレースを取り込み中
@@ -549,16 +549,16 @@ function NoRaceCard({ reason }: { reason: string }) {
   return (
     <Card tone="gold" elevated className="sheen relative overflow-hidden">
       <CardBody className="py-12 text-center relative">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-gold-deep font-medium">
-          NIGHT AT THE TURF
+        <div className="text-[10px] uppercase tracking-[0.22em] text-deep-green font-medium">
+          NEXT RACE DAY
         </div>
 
         <span className="inline-block anim-floaty my-4">
-          <RunningHorse className="w-24 h-14 text-gold mx-auto drop-shadow-[0_6px_18px_rgba(232,194,108,0.35)]" />
+          <HorseHero className="w-48 h-auto mx-auto drop-shadow-[0_10px_18px_rgba(21,39,27,0.16)]" />
         </span>
 
         <h3 className="font-display text-3xl font-semibold tracking-tight">
-          今日は<span className="text-gold-grad">休む日</span>
+          今日は<span className="text-green-grad">休む日</span>
         </h3>
         <p className="mt-3 text-sm text-ink-soft max-w-md mx-auto leading-relaxed">
           中央競馬は土日が開催。買わない日も、勝つための大切な一日です。

@@ -42,8 +42,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#080D0A",
-  colorScheme: "dark",
+  themeColor: "#0E8C4A",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
   // ピンチ操作での拡大を許可 (文字を大きく見たい人のため・アクセシビリティ)

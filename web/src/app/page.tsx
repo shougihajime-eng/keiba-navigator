@@ -11,12 +11,13 @@ import { NotifyBar } from "@/components/NotifyBar";
 import { SwRegister } from "@/components/SwRegister";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { LiveDate } from "@/components/LiveDate";
+import { HeroBanner } from "@/components/HeroBanner";
 
 export default function Home() {
   return (
     <main className="min-h-screen">
-      {/* 最上部の金の輝線 */}
-      <div className="h-[3px] w-full bg-gradient-to-r from-transparent via-gold to-transparent opacity-70" />
+      {/* 最上部の緑の輝線 */}
+      <div className="h-[3px] w-full bg-gradient-to-r from-transparent via-deep-green to-transparent opacity-80" />
 
       <NotifyBar />
 
@@ -39,6 +40,7 @@ export default function Home() {
 
       {/* Main content */}
       <div className="max-w-4xl mx-auto px-4 md:px-5 py-6 md:py-10 space-y-10">
+        <HeroBanner />
         <BlockA />
         <Reveal><HonestStatus /></Reveal>
         <Reveal><RaceCard /></Reveal>
