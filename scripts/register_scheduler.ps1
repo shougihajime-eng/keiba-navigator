@@ -51,15 +51,13 @@ function New-KeibaSettings {
         -MultipleInstances IgnoreNew
 }
 
-# ─── 1) 土日の定時 4 タイミング ──────────────────────────────
-$slots = @(
-    @{ Name = "KeibaNavigator-Morning";   Time = "08:30"; Desc = "朝の出走表 + RT" },
-    @{ Name = "KeibaNavigator-Pre";       Time = "11:00"; Desc = "直前オッズ" },
-    @{ Name = "KeibaNavigator-Afternoon"; Time = "13:30"; Desc = "発走後オッズ更新" },
-    @{ Name = "KeibaNavigator-Evening";   Time = "16:00"; Desc = "確定オッズ + 払戻" }
-    # 注: Win5PreSell (土日 18:30) は廃止。本人は WIN5 を当日朝〜昼に買うため、
-    #     前夜の準備は不要。朝 08:30 + 毎時取得 (09:00〜) で当日購入に十分間に合う。
-)
+# ─── 1) 土日の定時タイミング ──────────────────────────────
+# 2026-05-29 廃止: 旧 KeibaNavigator-Morning/Pre/Afternoon/Evening (race_day_pipeline.py) は
+#   新しい毎時取得 KeibaDiffFetch (register_diff_hourly.ps1 / option=2) に置き換え済み。
+#   旧版は JV-Link を毎時取得と取り合って衝突・毎週末 0x1 失敗していたため削除。
+#   取得・予想計算・確定オッズ・払戻・公開はすべて DiffFetch が毎時こなす。
+#   (Win5PreSell 18:30 も廃止: 本人は WIN5 を当日朝〜昼に買うため前夜準備は不要)
+$slots = @()
 
 foreach ($slot in $slots) {
     $Trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday, Sunday -At $slot.Time
@@ -109,13 +107,10 @@ if (Test-Path $CatchupPs) {
 
 Write-Host ""
 Write-Host "================================================="
-Write-Host "Wave16 自動化タスクを登録しました。"
+Write-Host "Catchup タスクを登録しました。"
 Write-Host ""
-Write-Host "  定時 (毎週土日):"
-Write-Host "    08:30  朝の出走表取得"
-Write-Host "    11:00  直前オッズ"
-Write-Host "    13:30  発走後オッズ更新"
-Write-Host "    16:00  確定オッズ + 払戻"
+Write-Host "  土日の取得・予想は KeibaDiffFetch (register_diff_hourly.ps1) が毎時担当。"
+Write-Host "  旧 KeibaNavigator-Morning/Pre/Afternoon/Evening は廃止済み。"
 Write-Host ""
 Write-Host "  保険レイヤー:"
 Write-Host "    起動時/ログオン時  4h 以上空きがあれば自動キャッチアップ"
