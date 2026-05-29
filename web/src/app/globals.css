@@ -7,21 +7,21 @@
    ========================================= */
 
 @theme inline {
-  /* Color: Base — 晴れた競馬場・白とうすい芝の緑 */
-  --color-canvas: #F1F7F0;        /* ページ全体の地・うすい芝白 */
-  --color-paper: #FFFFFF;         /* 浮き上がるカード面 */
-  --color-paper-soft: #EAF2E8;    /* 沈み込む溝・くぼみ */
-  --color-paper-hover: #E2EEE0;   /* ホバーで少し沈む */
+  /* Color: Base — JRA 公式のように清潔な白基調（地はごく薄いグレー） */
+  --color-canvas: #F4F5F6;        /* ページ全体の地・ごく薄いニュートラルグレー */
+  --color-paper: #FFFFFF;         /* 浮き上がるカード面・真っ白 */
+  --color-paper-soft: #EEF0F1;    /* 沈み込む溝・くぼみ */
+  --color-paper-hover: #E7EAEC;   /* ホバーで少し沈む */
 
-  /* Color: Text — 深い芝色がかった黒 */
-  --color-ink: #15271B;
-  --color-ink-soft: #3C4D41;
-  --color-ink-muted: #6B7C70;
-  --color-ink-faint: #9AA99D;
+  /* Color: Text — くっきり読める濃いニュートラルな黒 */
+  --color-ink: #15201A;           /* 見出し・本命の本文（ほぼ黒） */
+  --color-ink-soft: #2E3A33;      /* 通常の本文 */
+  --color-ink-muted: #545E58;     /* 補足・ラベル（コントラスト確保） */
+  --color-ink-faint: #828C86;     /* ごく薄い注記 */
 
-  /* Color: Borders — やわらかな緑がかった輪郭 */
-  --color-line: #DAE7D8;
-  --color-line-strong: #C2D4BF;
+  /* Color: Borders — 落ち着いたグレーの輪郭（区切りをはっきり） */
+  --color-line: #E1E4E6;
+  --color-line-strong: #C8CDD0;
 
   /* Color: Accents — 金（本命・勝負の温かい強調） */
   --color-gold: #E8920C;
@@ -38,7 +38,7 @@
   --color-ink-blue-soft: rgba(37, 99, 235, 0.10);
   --color-ruby: #E03A2E;          /* 最終確定・急ぎ（赤） */
   --color-ruby-soft: rgba(224, 58, 46, 0.10);
-  --color-deep-green: #0E8C4A;    /* JRA グリーン・利益・本体ブランド */
+  --color-deep-green: #0B7A40;    /* JRA グリーン・利益・本体ブランド（白地で映える濃さ） */
   --color-deep-green-soft: rgba(14, 140, 74, 0.12);
   --color-wine: #C0334B;          /* 損失（赤紫） */
   --color-wine-soft: rgba(192, 51, 75, 0.10);
@@ -87,14 +87,15 @@ html, body {
 
 body {
   min-height: 100vh;
-  font-size: 15px;
-  line-height: 1.6;
-  letter-spacing: -0.01em;
+  font-size: 16px;
+  line-height: 1.75;
+  letter-spacing: 0;
   position: relative;
   isolation: isolate;
 }
 
-/* 晴れたターフ — 背景に光の層（空のうすい水色・芝の緑・朝日の暖色） */
+/* JRA 公式風 — 背景は清潔な白基調。
+   上端にほんのり芝の緑をひと刷毛だけ（飾りすぎない） */
 body::before {
   content: "";
   position: fixed;
@@ -102,26 +103,12 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(1200px 600px at 50% -10%, rgba(120, 200, 255, 0.16), transparent 60%),
-    radial-gradient(1000px 560px at 86% 4%, rgba(255, 200, 90, 0.14), transparent 58%),
-    radial-gradient(1100px 720px at 8% 36%, rgba(14, 140, 74, 0.08), transparent 60%),
+    radial-gradient(1400px 420px at 50% -16%, rgba(11, 122, 64, 0.05), transparent 70%),
     var(--color-canvas);
 }
 
-/* かすかなグレイン（紙の質感） */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.025;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
 ::selection {
-  background: rgba(14, 140, 74, 0.20);
+  background: rgba(11, 122, 64, 0.18);
   color: var(--color-ink);
 }
 
@@ -174,24 +161,9 @@ body::after {
   filter: drop-shadow(0 6px 16px rgba(14, 140, 74, 0.26));
 }
 
-/* 斜めに走る光のスイープ（カードの表面反射） */
+/* 斜めに走る光のスイープ — JRA 公式風の落ち着いた見た目では使わない
+   （クラスは残し、動く反射だけ止めて読みやすさ優先） */
 .sheen { position: relative; overflow: hidden; }
-.sheen::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -150%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.55) 50%,
-    transparent 100%
-  );
-  transform: skewX(-18deg);
-  animation: sheenSweep 5.5s ease-in-out infinite;
-}
 
 /* Smooth focus rings: only on keyboard nav */
 :focus { outline: none; }
