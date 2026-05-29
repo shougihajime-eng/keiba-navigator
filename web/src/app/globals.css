@@ -321,31 +321,50 @@ body::before {
   animation: turf-gallop 0.9s ease-in-out infinite;
 }
 .turf-runner--far {
-  width: 130px;
-  height: 80px;
-  bottom: 17vh;
-  color: rgba(11, 122, 64, 0.06);
-  animation: turf-drift 58s linear infinite;
+  width: 165px;
+  height: 103px;
+  bottom: 23vh;
+  color: rgba(11, 122, 64, 0.1);
+  animation: turf-drift 60s linear infinite;
   animation-delay: -8s;
 }
+.turf-runner--back {
+  width: 205px;
+  height: 128px;
+  bottom: 15vh;
+  color: rgba(11, 122, 64, 0.12);
+  animation: turf-drift 50s linear infinite;
+  animation-delay: -30s;
+}
 .turf-runner--mid {
-  width: 180px;
-  height: 112px;
+  width: 245px;
+  height: 153px;
   bottom: 9vh;
-  color: rgba(11, 122, 64, 0.085);
-  animation: turf-drift 44s linear infinite;
-  animation-delay: -22s;
+  color: rgba(11, 122, 64, 0.14);
+  animation: turf-drift 42s linear infinite;
+  animation-delay: -18s;
 }
 .turf-runner--near {
-  width: 240px;
-  height: 150px;
-  bottom: 2vh;
-  color: rgba(11, 122, 64, 0.1);
+  width: 295px;
+  height: 184px;
+  bottom: 3vh;
+  color: rgba(11, 122, 64, 0.16);
   animation: turf-drift 34s linear infinite;
+  animation-delay: -5s;
 }
-.turf-runner--far .turf-gallop { animation-duration: 1.1s; }
+.turf-runner--lead {
+  width: 340px;
+  height: 213px;
+  bottom: -1vh;
+  color: rgba(11, 122, 64, 0.18);
+  animation: turf-drift 28s linear infinite;
+  animation-delay: -40s;
+}
+.turf-runner--far .turf-gallop { animation-duration: 1.15s; }
+.turf-runner--back .turf-gallop { animation-duration: 0.95s; }
 .turf-runner--mid .turf-gallop { animation-duration: 0.85s; }
-.turf-runner--near .turf-gallop { animation-duration: 0.7s; }
+.turf-runner--near .turf-gallop { animation-duration: 0.72s; }
+.turf-runner--lead .turf-gallop { animation-duration: 0.66s; }
 
 @keyframes turf-drift {
   from { transform: translateX(-30vw); }
