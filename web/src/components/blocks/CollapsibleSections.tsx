@@ -377,7 +377,7 @@ function AutomationBody({ auto }: { auto: AutoResp | null }) {
           <span className="text-xs text-ink-muted tabular">{r.detail}</span>
         </div>
       ))}
-      <p className="text-[11px] text-ink-faint pt-1 border-t border-line/50">
+      <p className="text-xs text-ink-muted pt-1 border-t border-line/50">
         土日 8:30 / 11:00 / 13:30 / 16:00 に自動取得 · 結果照合は毎晩 23:00
       </p>
     </div>
@@ -440,7 +440,7 @@ function StrategyTruth({ rec }: { rec: RecData | null }) {
           );
         })}
       </div>
-      <p className="text-[11px] text-ink-faint">
+      <p className="text-xs text-ink-muted">
         回収率100% = 賭けた額がそのまま戻る分岐点。それ未満は平均すると損です。
       </p>
     </div>
@@ -468,7 +468,7 @@ function RankingList({ rows, loading }: { rows?: RankRow[]; loading: boolean }) 
           <span className="tabular font-medium text-ink shrink-0 w-14 text-right">勝率{r.win_rate}%</span>
         </div>
       ))}
-      <p className="text-[11px] text-ink-faint pt-1">勝率＝1着になった割合。上位ほど安定して勝っています。</p>
+      <p className="text-xs text-ink-muted pt-1">勝率＝1着になった割合。上位ほど安定して勝っています。</p>
     </div>
   );
 }

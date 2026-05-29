@@ -115,7 +115,7 @@ export function RaceCard() {
                       <span className="ml-1.5 text-xs text-ink-muted">が1着</span>
                     </div>
                   </div>
-                  <p className="mt-2 text-[11px] text-ink-faint leading-relaxed">
+                  <p className="mt-2 text-xs text-ink-muted leading-relaxed">
                     AIは全レースを予想しますが、買って勝てる場面は無いため全レース「見送り」が正直な判定です。下は各レースのAIの読みと実際の結果です。
                   </p>
                 </div>
@@ -152,7 +152,7 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
             {race.going && <span className="text-ink-faint">· {race.going}</span>}
             {race.is_g1 && <Badge tone="gold" size="xs">G1</Badge>}
           </div>
-          <div className="mt-0.5 text-sm truncate">
+          <div className="mt-0.5 text-[15px] truncate">
             <span className="text-ink-muted">AI本命</span>{" "}
             <span className="font-medium text-ink">#{race.top_number} {race.top_name}</span>{" "}
             <span className="text-ink-muted tabular">
@@ -176,9 +176,9 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
       {open && (
         <>
         <div className="mt-3 ml-7 rounded-[12px] border border-line/60 bg-paper-soft/40 overflow-x-auto">
-          <table className="w-full text-xs min-w-[420px]">
+          <table className="w-full text-sm min-w-[440px]">
             <thead>
-              <tr className="text-ink-faint border-b border-line/50">
+              <tr className="text-ink-muted border-b border-line/50">
                 <th className="text-left font-medium px-3 py-2">AI順</th>
                 <th className="text-left font-medium px-2 py-2">馬</th>
                 <th className="text-right font-medium px-2 py-2">AI勝率</th>
@@ -220,7 +220,7 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
             </tbody>
           </table>
         </div>
-        <p className="mt-2 ml-7 text-[11px] text-ink-faint leading-relaxed">
+        <p className="mt-2 ml-7 text-xs text-ink-muted leading-relaxed">
           「期待値」は <span className="text-ink-soft">AI勝率 × オッズ</span>＝100円が平均で何円に戻るかの理論値。<span className="text-deep-green">1.00超なら理論上お買い得</span>に見えますが、
           検証では穴馬ほど市場に買われ過ぎ（実際は届かない）と判明しており、<span className="text-ink-soft">単発の1.00超はノイズで継続して勝てる買い方ではありません</span>。
           「AI勝率」と「市場%」がほぼ同じ＝AIと世間の評価が一致なので、市場が見落とした“本物のお買い得”はほぼ無く、見送りが基本です。
