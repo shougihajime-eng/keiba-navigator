@@ -51,7 +51,7 @@ export function Collapsible({
         <span className="flex items-center gap-3 min-w-0">
           {icon && <span className="text-ink-soft shrink-0">{icon}</span>}
           <span className="flex flex-col min-w-0">
-            <span className="font-display font-medium tracking-tight text-[15px]">
+            <span className="font-display font-semibold tracking-tight text-base">
               {title}
             </span>
             {hint && (

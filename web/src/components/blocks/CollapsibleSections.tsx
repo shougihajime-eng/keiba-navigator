@@ -305,8 +305,8 @@ function BadgesBody({ bets }: { bets: Bet[] }) {
                 : "border-line bg-paper-soft/30 opacity-55",
             )}
           >
-            <div className={cn("text-2xl", !b.got && "grayscale")}>{b.icon}</div>
-            <div className="mt-1 text-[11px] font-medium leading-tight">{b.label}</div>
+            <div className={cn("text-3xl", !b.got && "grayscale")}>{b.icon}</div>
+            <div className="mt-1.5 text-xs font-semibold leading-tight">{b.label}</div>
           </div>
         ))}
       </div>
@@ -433,7 +433,7 @@ function StrategyTruth({ rec }: { rec: RecData | null }) {
             <div key={r.label} className="flex items-center justify-between gap-2 text-sm py-1.5 border-b border-line/30 last:border-0">
               <span className="text-ink-soft truncate min-w-0">{r.label}</span>
               <span className="flex items-center gap-2 shrink-0">
-                {r.trust && <span className="text-[10px] text-ink-faint">{r.trust.replace(/\s*\(.*\)/, "")}</span>}
+                {r.trust && <span className="text-[11px] text-ink-muted">{r.trust.replace(/\s*\(.*\)/, "")}</span>}
                 <span className={cn("tabular font-medium", tone)}>{roi.toFixed(0)}%</span>
               </span>
             </div>
