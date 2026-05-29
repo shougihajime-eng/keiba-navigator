@@ -61,7 +61,10 @@ export default function RootLayout({
       className={`${inter.variable} ${notoJp.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-canvas text-ink font-sans">{children}</body>
+      <body className="min-h-screen bg-canvas text-ink font-sans">
+        <TurfBackdrop />
+        {children}
+      </body>
     </html>
   );
 }

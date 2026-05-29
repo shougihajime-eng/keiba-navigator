@@ -282,4 +282,146 @@ body::before {
     transition-duration: 0.01ms !important;
   }
   .sheen::after { display: none; }
+  .turf-runner, .turf-gallop, .legend-flow { animation: none !important; }
+}
+
+/* =========================================
+   ターフを走る馬の背景（TurfBackdrop）
+   ========================================= */
+.turf-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1; /* 本文(カード)の後ろ・地の背景より手前 */
+  pointer-events: none;
+  overflow: hidden;
+}
+.turf-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 26vh;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(14, 140, 74, 0.05) 60%,
+    rgba(14, 140, 74, 0.09) 100%
+  );
+}
+.turf-runner {
+  position: absolute;
+  left: 0;
+  will-change: transform;
+}
+.turf-gallop {
+  display: block;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  animation: turf-gallop 0.9s ease-in-out infinite;
+}
+.turf-runner--far {
+  width: 130px;
+  height: 80px;
+  bottom: 17vh;
+  color: rgba(11, 122, 64, 0.06);
+  animation: turf-drift 58s linear infinite;
+  animation-delay: -8s;
+}
+.turf-runner--mid {
+  width: 180px;
+  height: 112px;
+  bottom: 9vh;
+  color: rgba(11, 122, 64, 0.085);
+  animation: turf-drift 44s linear infinite;
+  animation-delay: -22s;
+}
+.turf-runner--near {
+  width: 240px;
+  height: 150px;
+  bottom: 2vh;
+  color: rgba(11, 122, 64, 0.1);
+  animation: turf-drift 34s linear infinite;
+}
+.turf-runner--far .turf-gallop { animation-duration: 1.1s; }
+.turf-runner--mid .turf-gallop { animation-duration: 0.85s; }
+.turf-runner--near .turf-gallop { animation-duration: 0.7s; }
+
+@keyframes turf-drift {
+  from { transform: translateX(-30vw); }
+  to { transform: translateX(130vw); }
+}
+@keyframes turf-gallop {
+  0%, 100% { transform: translateY(0) rotate(-0.5deg); }
+  50% { transform: translateY(-6px) rotate(0.5deg); }
+}
+
+/* =========================================
+   名馬列伝（LegendStrip）流れる帯
+   ========================================= */
+.legend-strip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  height: 40px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-full);
+  background: var(--color-paper);
+  box-shadow: var(--shadow-xs);
+}
+.legend-badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--color-on-gold);
+  background: linear-gradient(135deg, var(--color-gold-bright), var(--color-gold));
+  white-space: nowrap;
+}
+.legend-track {
+  flex: 1;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 20px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 20px), transparent);
+}
+.legend-flow {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+  animation: legend-marquee 64s linear infinite;
+}
+.legend-strip:hover .legend-flow { animation-play-state: paused; }
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px;
+}
+.legend-horse {
+  width: 22px;
+  height: 14px;
+  flex: none;
+  color: var(--color-deep-green);
+  opacity: 0.85;
+}
+.legend-name { font-size: 13px; font-weight: 800; color: var(--color-ink); }
+.legend-year {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-gold-deep);
+  font-family: var(--font-mono);
+}
+.legend-tale { font-size: 12px; color: var(--color-ink-muted); }
+.legend-sep { margin: 0 10px; color: var(--color-line-strong); }
+
+@keyframes legend-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }

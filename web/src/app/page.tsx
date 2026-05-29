@@ -42,6 +42,7 @@ export default function Home() {
       {/* Main content */}
       <div className="max-w-4xl mx-auto px-4 md:px-5 py-6 md:py-10 space-y-10">
         <HeroBanner />
+        <LegendStrip />
         <BlockA />
         <Reveal><HonestStatus /></Reveal>
         <Reveal><RaceCard /></Reveal>
