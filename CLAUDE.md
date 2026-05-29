@@ -31,6 +31,11 @@
   - **WIN5 前夜タスク (土日18:30 `KeibaNavigator-Win5PreSell`) を廃止**: 本人が「WIN5は当日の朝〜昼に買う」と確認 → 前夜の出走馬データ準備は不要。朝08:30 + 毎時取得(09:00〜)で当日購入に十分間に合う。日曜18:30は元々レース後で無駄打ちだった。`scripts/register_scheduler.ps1` の slots からも削除済
   - **実測の根拠**: 5/28 のログで新データ到着時のフルパイプライン (取込→再学習→おすすめ計算→push) は約2分半、学習スキップ時は約1分、新データ無しの回は1秒 → どの時間帯も余裕で間に合うことを確認
   - **commit**: 8a20903 (push 済)
+  - **🧹 失敗し続ける自動タスク 19個を削除して整理 (同日・本人「ゴミは片付けて・何回も失敗したものは除けて」)**: タスクスケジューラが 36個→17個 に。残る17個は全て成功(0x0)か未実行(新09:00)。「落ちる・わけわからん」の正体は**自動の仕組みが新旧2世代あり古い方が壊れたまま JV-Link を取り合っていた**こと。
+    - 削除: `KeibaJVRetry`×9 + `KeibaRetryFullHistory`×3 (10年データ option=4・JRA-VANが rc=-501 で拒否し続け毎時0x1失敗・設定画面を勝手に開く) / `KeibaNavigator-Morning/Pre/Afternoon/Evening` (旧週末 race_day_pipeline・新DiffFetchと時間衝突し毎週末0x1) / `KeibaWatcher-Morning-0530/0800` (旧朝見張り) / `KeibaNavigator-HealthCheck-PreTest` (お試し残骸)
+    - 残す: `KeibaDiffFetch-0900〜2030` (毎時取得=唯一の本体) / `KeibaNavigator-Catchup-0800/1200` (保険) / `KeibaNavigator-HealthCheck` / `KeibaFridayHealthCheck` (金曜夜の準備・WakeToRun済)
+    - 注: 10年データ取得は当面あきらめ。毎時取得(option=2)でも過去データは着実に増える。万一 JRA-VAN が許可したら再登録すればよい
+    - repo: `register_scheduler.ps1` の週末slotsを空に(再登録で復活しない) / 孤児スクリプト4本削除。**commit 774d8ec (push 済)**
 
 - **💴 資金管理・規律カード(BankrollCard) + 馬ごとの「正直な期待値(EV)」列 を追加・本番公開 (2026-05-26・「100点への一手(C)損を抑える規律 +(A)馬ごとEV表示」を実装)** —
   - **資金管理カード (`web/src/components/blocks/BankrollCard.tsx` + `lib/bankroll.ts`)**: 月の予算を決めて守る道具。「儲かる買い方は無い」前提で“損を抑える”規律を支援。今月の使用額/残り/超過をバー表示・1レース上限=予算の3%を提示・予算超過で「今月はもう買わない」/通常は「見送りも勝ち」を明示・今月の投資/回収/収支3セル。`store.summaryThisMonth` 追加。予算は localStorage 保存 (commit 6c2daf9)
