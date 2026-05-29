@@ -464,7 +464,7 @@ function RankingList({ rows, loading }: { rows?: RankRow[]; loading: boolean }) 
             {i + 1}
           </span>
           <span className="flex-1 truncate text-ink-soft">{r.name}</span>
-          <span className="text-xs text-ink-muted tabular shrink-0">{r.wins}勝/{r.starts}走</span>
+          <span className="text-sm text-ink-muted tabular shrink-0">{r.wins}勝/{r.starts}走</span>
           <span className="tabular font-medium text-ink shrink-0 w-14 text-right">勝率{r.win_rate}%</span>
         </div>
       ))}
