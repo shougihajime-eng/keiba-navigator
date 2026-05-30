@@ -1,6 +1,7 @@
 import { BlockA } from "@/components/blocks/BlockA";
 import { BlockB } from "@/components/blocks/BlockB";
 import { BlockC } from "@/components/blocks/BlockC";
+import { PerformanceInsights } from "@/components/blocks/PerformanceInsights";
 import { CollapsibleSections } from "@/components/blocks/CollapsibleSections";
 import { ExperimentLab } from "@/components/blocks/ExperimentLab";
 import { HonestStatus } from "@/components/blocks/HonestStatus";
@@ -49,6 +50,7 @@ export default function Home() {
         <Reveal><RaceCard /></Reveal>
         <Reveal><BlockB /></Reveal>
         <Reveal><BlockC /></Reveal>
+        <Reveal><PerformanceInsights /></Reveal>
         <Reveal><BankrollCard /></Reveal>
         <Reveal><ExperimentLab /></Reveal>
         <Reveal><CollapsibleSections /></Reveal>

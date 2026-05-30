@@ -121,3 +121,81 @@ export function latestMiss(bets: Bet[] = loadBets()): Bet | null {
   }
   return null;
 }
+
+// ============ 見える化用の集計 ============
+
+export type MonthPL = {
+  ym: string;        // "2026-05"
+  label: string;     // "5月"
+  profit: number;
+  stake: number;
+  payout: number;
+  count: number;
+};
+
+/** 直近 n ヶ月の月別収支 (古い→新しい順・データが無い月も 0 で埋める) */
+export function monthlyPL(bets: Bet[] = loadBets(), months = 6): MonthPL[] {
+  const now = new Date();
+  const out: MonthPL[] = [];
+  const byYm = new Map<string, Bet[]>();
+  for (const b of bets) {
+    const ym = (b.createdAt || "").slice(0, 7);
+    if (!ym) continue;
+    (byYm.get(ym) ?? byYm.set(ym, []).get(ym)!).push(b);
+  }
+  for (let i = months - 1; i >= 0; i -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const arr = byYm.get(ym) ?? [];
+    let stake = 0, payout = 0;
+    for (const b of arr) {
+      stake += Number(b.amount) || 0;
+      payout += Number(b.payout) || 0;
+    }
+    out.push({ ym, label: `${d.getMonth() + 1}月`, profit: payout - stake, stake, payout, count: arr.length });
+  }
+  return out;
+}
+
+export type TierPerf = {
+  rating: number;
+  label: string;
+  count: number;     // 記録総数
+  settled: number;   // 結果が出た数 (hit+miss)
+  hit: number;
+  stake: number;
+  payout: number;
+  hitRate: number;   // 0-100 (settled に対する的中率)
+  roi: number;       // 0-… (%)
+};
+
+const TIER_LABELS: Record<number, string> = {
+  5: "絶好機", 4: "勝負", 3: "様子見", 2: "参考", 1: "見送り",
+};
+
+/** 買った時の段階 (factors.rating) 別の成績。記録のある段階のみ・強い順。 */
+export function tierBreakdown(bets: Bet[] = loadBets()): TierPerf[] {
+  const map = new Map<number, TierPerf>();
+  for (const b of bets) {
+    const r = Number((b.factors as { rating?: unknown } | undefined)?.rating);
+    if (!Number.isFinite(r) || r < 1 || r > 5) continue;
+    const t = map.get(r) ?? {
+      rating: r, label: TIER_LABELS[r] || `★${r}`,
+      count: 0, settled: 0, hit: 0, stake: 0, payout: 0, hitRate: 0, roi: 0,
+    };
+    t.count += 1;
+    t.stake += Number(b.amount) || 0;
+    if (b.result === "hit" || b.result === "miss") {
+      t.settled += 1;
+      t.payout += Number(b.payout) || 0;
+      if (b.result === "hit") t.hit += 1;
+    }
+    map.set(r, t);
+  }
+  const arr = [...map.values()];
+  for (const t of arr) {
+    t.hitRate = t.settled > 0 ? (t.hit / t.settled) * 100 : 0;
+    t.roi = t.stake > 0 ? (t.payout / t.stake) * 100 : 0;
+  }
+  return arr.sort((a, b) => b.rating - a.rating);
+}
