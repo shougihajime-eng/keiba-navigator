@@ -7,6 +7,7 @@ import type {
   RacesResponse,
   RecommendationsResponse,
   StatusResponse,
+  ExperimentStatusResponse,
 } from "@/types/api";
 
 function getApiBase(): string {
@@ -76,4 +77,8 @@ export async function fetchMlStatus() {
 
 export async function fetchAutomationStatus() {
   return safeFetch<{ ok: boolean; [key: string]: unknown }>("/api/automation-status");
+}
+
+export async function fetchExperimentStatus() {
+  return safeFetch<ExperimentStatusResponse>("/api/experiment-status");
 }

@@ -76,6 +76,40 @@ export type StatusResponse = {
   raceCount?: number;
 };
 
+// 実験室 (自己成長する実験モード) のレスポンス型
+export type ExperimentStrategy = {
+  key: string;
+  name: string;
+  desc: string;
+  origin: string;
+  bet_type: string;
+  bets: number;
+  hit_rate_pct: number | null;
+  roi_pct: number | null;
+  profit_yen: number;
+  win_periods: number;
+  active_periods: number;
+  period_rois: (number | null)[];
+  bankroll_curve: number[];
+  is_winning: boolean;
+};
+
+export type ExperimentStatusResponse = {
+  ok: boolean;
+  updated_at?: string;
+  leakage_free?: boolean;
+  total_bet_records?: number;
+  periods?: number;
+  start_bankroll?: number;
+  unit_yen?: number;
+  any_winning_strategy?: boolean;
+  headline?: string;
+  champion_key?: string | null;
+  strategies?: ExperimentStrategy[];
+  note?: string;
+  reason?: string;
+};
+
 // Block B 反省履歴用 — Phase 4 で本実装。今は型だけ
 export type Reflection = {
   raceId: string;

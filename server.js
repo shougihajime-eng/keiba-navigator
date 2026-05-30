@@ -431,6 +431,18 @@ async function serve(req, res) {
       }
       return jsonRes(res, 200, { ok: true, available: listG1() });
     }
+    if (p === "/api/experiment-status" || p === "/api/experiment-history") {
+      const _fs = require("fs");
+      const _path = require("path");
+      const fname = p === "/api/experiment-status" ? "experiment_status.json" : "experiment_history.json";
+      try {
+        const fp = _path.join(__dirname, "data", "jv_cache", fname);
+        const data = JSON.parse(_fs.readFileSync(fp, "utf8"));
+        return jsonRes(res, 200, data);
+      } catch (e) {
+        return jsonRes(res, 200, { ok: false, reason: "実験データ未生成(週末データ後に集計されます)" });
+      }
+    }
     if (p === "/api/odds-movement") {
       const { detectMovements } = require("./lib/odds_movement");
       const race = readLatestRace();

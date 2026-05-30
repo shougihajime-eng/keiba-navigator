@@ -393,6 +393,19 @@ module.exports = async (req, res) => {
       }
       return ok(res, { ok: true, available: listG1() });
     }
+    if (path === "/experiment-status" || path === "/experiment-history") {
+      // 自己成長する実験モード(実験室)の正直な採点結果
+      const fs = require("fs");
+      const pth = require("path");
+      const fname = path === "/experiment-status" ? "experiment_status.json" : "experiment_history.json";
+      try {
+        const fp = pth.join(__dirname, "..", "data", "jv_cache", fname);
+        const data = JSON.parse(fs.readFileSync(fp, "utf8"));
+        return ok(res, data);
+      } catch (e) {
+        return ok(res, { ok: false, reason: "実験データ未生成(週末データ後に集計されます)" });
+      }
+    }
     if (path === "/odds-movement") {
       const { detectMovements } = require("../lib/odds_movement");
       const race = readLatestRace();
