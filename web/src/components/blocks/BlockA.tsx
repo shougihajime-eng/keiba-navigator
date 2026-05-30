@@ -13,7 +13,7 @@ import { HorseHero } from "@/components/icons/HorseHero";
 import { BetConfirmModal } from "@/components/BetConfirmModal";
 import { RaceDetailModal } from "@/components/RaceDetailModal";
 import { fetchRaces } from "@/lib/api";
-import { ratingFromRace, sortByRating, shortReason, type Rating } from "@/lib/rating";
+import { ratingFromRace, sortByRating, shortReason, cooledEv, type Rating } from "@/lib/rating";
 import { formatHHMM, formatYen, cn } from "@/lib/utils";
 import { saveSnapshot, compareWithSnapshot, pruneOldSnapshots, type Diff } from "@/lib/snapshot";
 import { notifyOnce, pruneNotifyHistory } from "@/lib/notify";
@@ -289,7 +289,8 @@ function RaceCard({
 
   const tone = isUltra ? "gold" : isFinalMode ? "final" : "tentative";
   const stake = RECOMMEND_AMOUNT[rating] ?? 0;
-  const expectedReturn = stake && race.topPick?.ev ? Math.round(stake * race.topPick.ev) : null;
+  const hev = cooledEv(race);
+  const expectedReturn = stake && hev ? Math.round(stake * hev) : null;
 
   const diff = compareWithSnapshot(race, rating);
   const showDiff = isFinalMode && diff.changed;
@@ -336,7 +337,7 @@ function RaceCard({
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <Stat label="期待値" value={race.topPick?.ev?.toFixed(2) ?? "—"} tone={isUltra ? "gold" : "default"} size="md" />
+          <Stat label="正直EV" value={hev ? hev.toFixed(2) : "—"} tone={isUltra ? "gold" : "default"} size="md" />
           <Stat label="信頼度" value={race.confidence ? Math.round(race.confidence * 100) : "—"} unit="%" size="md" />
           <Stat label="推奨" value={formatYen(stake)} size="md" />
         </div>
@@ -412,7 +413,7 @@ function SkipRow({ race, onClick }: { race: RaceSummary; onClick?: () => void })
         </span>
       </div>
       <span className="text-xs text-ink-muted tabular shrink-0">
-        EV {race.topPick?.ev?.toFixed(2) ?? "—"}
+        正直EV {cooledEv(race) ? cooledEv(race).toFixed(2) : "—"}
       </span>
     </>
   );

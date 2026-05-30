@@ -16,6 +16,10 @@ import glob, json, os, sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# 必殺一号艇の予想思想を移植した「正直な期待値 + 4段階判定」エンジン
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from honest_ev import honest_ev, judge_race, TIER_ORDER, TIER_LABEL  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data" / "jv_cache"
 RACES = CACHE / "races"
@@ -111,6 +115,8 @@ def build_card(date8: str | None = None) -> dict:
             x["win_prob"] = round(x["win_prob"] / sw, 4) if (sw and x["win_prob"]) else None
             x["nopop_prob"] = round(x["nopop_prob"] / sn, 4) if (sn and x["nopop_prob"]) else None
             x["ev"] = round(x["win_prob"] * x["odds"], 2) if (x["win_prob"] and x["odds"]) else None
+            # 正直な期待値 = 生EVを過去の実回収率に合わせて冷ました値 (穴馬ほど強く冷ます)
+            x["cooled_ev"] = honest_ev(x["ev"], x["odds"])
 
         # AI勝率順に並べる (予想が無い馬は末尾)
         horses.sort(key=lambda x: (x["win_prob"] is None, -(x["win_prob"] or 0)))
@@ -123,6 +129,9 @@ def build_card(date8: str | None = None) -> dict:
         except (TypeError, ValueError):
             top_in3 = 0
         top_won = top.get("won") if top else 0
+
+        # 必殺一号艇方式の4段階判定 (絶好機/勝負/様子見/見送り) + 一言理由 + 買い方
+        judge = judge_race(horses)
 
         races_out.append({
             "race_id": rid,
@@ -143,15 +152,28 @@ def build_card(date8: str | None = None) -> dict:
             "top_finish": top_finish,
             "top_in3": top_in3,
             "top_won": top_won,
-            # 検証で+EV戦略は無いと確定 → 全レース「見送り」が正直な判定
-            "verdict": "skip",
+            # 4段階判定 (tier: prime/bet/watch/skip)
+            "tier": judge["tier"],
+            "tier_label": judge["tier_label"],
+            "reason": judge["reason"],
+            "bet_style": judge["bet_style"],
+            "best_honest_ev": judge["best_honest_ev"],
+            # 旧UI互換 (買い候補のみ go、それ以外 skip)
+            "verdict": "go" if judge["tier"] in ("prime", "bet") else "skip",
             "horses": horses,
         })
+
+    # tier の強い順 → 同 tier 内は発走順(race_id)で安定ソート
+    races_out.sort(key=lambda r: (TIER_ORDER.get(r.get("tier"), 9), r["race_id"]))
 
     # 日別の AI 本命成績 (正直なトラックレコード)
     settled = [r for r in races_out if r["has_result"] and r["top_number"] is not None]
     top1_win = sum(1 for r in settled if r["top_won"])
     top1_in3 = sum(1 for r in settled if r["top_in3"])
+    # 4段階の件数サマリ (絶好機/勝負/様子見/見送り)
+    tier_counts = {"prime": 0, "bet": 0, "watch": 0, "skip": 0}
+    for r in races_out:
+        tier_counts[r.get("tier", "skip")] = tier_counts.get(r.get("tier", "skip"), 0) + 1
     return {
         "ok": True,
         "date": date8,
@@ -160,6 +182,7 @@ def build_card(date8: str | None = None) -> dict:
         "settled_count": len(settled),
         "top1_win": top1_win,
         "top1_in3": top1_in3,
+        "tier_counts": tier_counts,
         "races": races_out,
     }
 
@@ -169,8 +192,13 @@ def main():
     card = build_card(date8)
     OUT.write_text(json.dumps(card, ensure_ascii=False), encoding="utf-8")
     n = card.get("race_count", 0)
-    buys = sum(1 for r in card.get("races", []) if r["verdict"] == "buy")
-    print(f"[OK] {OUT.name}: 日={card.get('date')} レース={n} 買い候補レース={buys}", flush=True)
+    tc = card.get("tier_counts", {})
+    print(
+        f"[OK] {OUT.name}: 日={card.get('date')} レース={n} "
+        f"絶好機={tc.get('prime',0)} 勝負={tc.get('bet',0)} "
+        f"様子見={tc.get('watch',0)} 見送り={tc.get('skip',0)}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

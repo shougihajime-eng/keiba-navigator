@@ -100,7 +100,7 @@ function Star({
   );
 }
 
-/** Label text for ratings (e.g., 絶好機 / 勝負 / 条件付 / 参考 / 見送り) */
+/** Label text for ratings (e.g., 絶好機 / 勝負 / 様子見 / 参考 / 見送り) */
 export function ratingLabel(rating: 1 | 2 | 3 | 4 | 5): string {
-  return ["見送り", "参考", "条件付", "勝負", "絶好機"][rating - 1];
+  return ["見送り", "参考", "様子見", "勝負", "絶好機"][rating - 1];
 }
