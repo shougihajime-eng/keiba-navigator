@@ -29,7 +29,8 @@ export function PendingBetsList() {
   function refresh() {
     const all = loadBets();
     const pending = all.filter((b) => b.result === "pending" || !b.result);
-    setBets(pending.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    // createdAt が欠けた古い記録でも落ちないように防御
+    setBets(pending.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
   }
 
   function emitChange() {
@@ -173,9 +174,12 @@ function HitForm({ bet, onConfirm, onCancel }: { bet: Bet; onConfirm: (payout: n
     inputRef.current?.focus();
   }, []);
 
-  const payout = Math.max(0, Math.round(Number(value.replace(/[^\d]/g, "")) || 0));
+  // 全角数字も受け付ける (６００ → 600)
+  const half = value.replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  const payout = Math.max(0, Math.round(Number(half.replace(/[^\d]/g, "")) || 0));
   const profit = payout - bet.amount;
-  const valid = value.trim() !== "" && payout >= 0;
+  // 的中なら払戻金は必ず1円以上 (0円で確定できないように)
+  const valid = payout > 0;
 
   return (
     <div className="mt-3 pt-3 border-t border-deep-green/20">

@@ -141,7 +141,9 @@ export function monthlyPL(bets: Bet[] = loadBets(), months = 6): MonthPL[] {
   for (const b of bets) {
     const ym = (b.createdAt || "").slice(0, 7);
     if (!ym) continue;
-    (byYm.get(ym) ?? byYm.set(ym, []).get(ym)!).push(b);
+    let arr = byYm.get(ym);
+    if (!arr) { arr = []; byYm.set(ym, arr); }
+    arr.push(b);
   }
   for (let i = months - 1; i >= 0; i -= 1) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
