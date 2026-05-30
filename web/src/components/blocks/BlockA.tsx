@@ -324,7 +324,11 @@ function RaceCard({
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge tone={isUltra ? "gold" : "won"} size="sm">
+                <span className={cn("inline-block w-1.5 h-1.5 rounded-full", isUltra ? "bg-gold" : "bg-deep-green")} />
+                {isUltra ? "絶好機" : "勝負"}
+              </Badge>
               {isFinalMode ? (
                 <Badge tone="final">
                   最終確定 · {minutes <= 0 ? (minutes >= -1 ? "発走" : "発走済") : `${minutes}分前`}
@@ -357,16 +361,15 @@ function RaceCard({
           <span className="text-xs text-ink-muted font-medium">{ratingLabel(rating)}</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <Stat label="正直EV" value={hev ? hev.toFixed(2) : "—"} tone={isUltra ? "gold" : "default"} size="md" />
           <Stat label="信頼度" value={race.confidence ? Math.round(race.confidence * 100) : "—"} unit="%" size="md" />
-          <Stat label="複勝の目安" value={formatYen(stake)} size="md" />
         </div>
 
         <div className="bg-paper-soft/70 rounded-[12px] p-3.5 border border-line">
           <div className="text-[10px] uppercase tracking-[0.14em] text-gold-deep font-medium">本命</div>
           <div className="mt-1.5 flex items-center gap-2.5">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-b from-gold-bright to-gold text-on-gold font-display font-semibold tabular shadow-[0_4px_14px_rgba(232,194,108,0.35)]">
+            <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-b from-gold-bright to-gold text-on-gold font-display font-semibold tabular shadow-[0_4px_14px_rgba(232,194,108,0.35)]">
               {race.topPick?.number ?? "—"}
             </span>
             <span className="font-medium text-base truncate">{race.topPick?.name ?? "—"}</span>
@@ -376,13 +379,23 @@ function RaceCard({
           </div>
         </div>
 
+        {/* 複勝おすすめ金額 (大きく・全レースカードと統一) */}
+        {stake > 0 && (
+          <div className="rounded-[12px] border border-deep-green/25 bg-deep-green-soft/40 px-3.5 py-2.5">
+            <div className="text-[10px] uppercase tracking-[0.12em] text-deep-green/80 font-medium">おすすめの買い方</div>
+            <div className="mt-0.5 flex items-baseline gap-2">
+              <span className="text-sm text-ink-soft">複勝 #{race.topPick?.number ?? "—"} に</span>
+              <span className="font-display text-2xl font-semibold tabular text-deep-green num-glow-green">{formatYen(stake)}</span>
+            </div>
+            <div className="mt-0.5 text-[11px] text-ink-muted leading-snug">
+              予算連動の小額（{isUltra ? "予算の3%" : "予算の約2%"}）。儲けではなく損を抑えるのが目的。
+              {expectedReturn !== null && <> 予想戻り 約 {formatYen(expectedReturn)}。</>}
+            </div>
+          </div>
+        )}
+
         <p className="text-sm text-ink-soft leading-relaxed">
           {shortReason(race) || "—"}
-          {expectedReturn !== null && (
-            <span className="block mt-1 text-xs text-ink-muted">
-              予想戻り: 約 {formatYen(expectedReturn)}
-            </span>
-          )}
         </p>
       </CardBody>
 
