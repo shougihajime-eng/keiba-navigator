@@ -2,46 +2,52 @@
 
 /* =========================================
    KEIBA NAVIGATOR — Design Tokens
-   "晴れたターフ" — Bright Turf (White x Green)
-   JRA 公式のように、白地に緑が映える明るく見やすい配色
+   "ネオン・ナイトターフ" — Neon Night Turf
+   深い夜の競馬場。黒地に鮮やかなネオン緑とシアンが灯り、
+   大きな数字が光って浮かぶ近未来・スポーツ中継ふう。
+   ※暗い地ほど文字を明るく＝コントラストを高く取って見やすさを確保
    ========================================= */
 
 @theme inline {
-  /* Color: Base — JRA 公式のように清潔な白基調（地はごく薄いグレー） */
-  --color-canvas: #F4F5F6;        /* ページ全体の地・ごく薄いニュートラルグレー */
-  --color-paper: #FFFFFF;         /* 浮き上がるカード面・真っ白 */
-  --color-paper-soft: #EEF0F1;    /* 沈み込む溝・くぼみ */
-  --color-paper-hover: #E7EAEC;   /* ホバーで少し沈む */
+  /* Color: Base — 夜の競馬場。ほんのり青緑がかった深い黒 */
+  --color-canvas: #05080B;        /* ページ全体の地・ほぼ黒（クールな青緑みの黒） */
+  --color-paper: #0D1512;         /* 浮き上がるカード面・暗いガラス */
+  --color-paper-soft: #121C18;    /* 沈み込む溝・くぼみ（少し明るい暗面） */
+  --color-paper-hover: #18241F;   /* ホバーで少し浮く */
 
-  /* Color: Text — くっきり読める濃いニュートラルな黒 */
-  --color-ink: #15201A;           /* 見出し・本命の本文（ほぼ黒） */
-  --color-ink-soft: #2E3A33;      /* 通常の本文 */
-  --color-ink-muted: #545E58;     /* 補足・ラベル（コントラスト確保） */
-  --color-ink-faint: #6E776F;     /* ごく薄い注記（読めるギリギリまで濃く） */
+  /* Color: Text — 暗い地で映える明るい文字（緑みの白） */
+  --color-ink: #ECF7F0;           /* 見出し・本命の本文（明るい白） */
+  --color-ink-soft: #C3D4CA;      /* 通常の本文 */
+  --color-ink-muted: #91A498;     /* 補足・ラベル（コントラスト確保） */
+  --color-ink-faint: #71857A;     /* ごく薄い注記（読めるギリギリまで明るく） */
 
-  /* Color: Borders — 落ち着いたグレーの輪郭（区切りをはっきり） */
-  --color-line: #E1E4E6;
-  --color-line-strong: #C8CDD0;
+  /* Color: Borders — ネオンがほのかに滲む輪郭 */
+  --color-line: rgba(86, 240, 176, 0.14);
+  --color-line-strong: rgba(86, 240, 176, 0.30);
 
-  /* Color: Accents — 金（本命・勝負の温かい強調） */
-  --color-gold: #E8920C;
-  --color-gold-deep: #B66E00;
-  --color-gold-bright: #FFBC4D;
-  --color-gold-soft: rgba(232, 146, 12, 0.13);
-  --color-on-gold: #3A2400;        /* 金の上に乗せる暗い文字 */
-  --color-silver: #93A597;
-  --color-silver-deep: #677A6C;
-  --color-silver-soft: rgba(103, 122, 108, 0.13);
+  /* Color: Accents — 金（絶好機・勝負の温かい強調・夜に灯る宝石色） */
+  --color-gold: #FFC64D;
+  --color-gold-deep: #E0930C;
+  --color-gold-bright: #FFE49A;
+  --color-gold-soft: rgba(255, 198, 77, 0.16);
+  --color-on-gold: #2A1A00;        /* 金の上に乗せる暗い文字 */
+  --color-silver: #9DB4A6;
+  --color-silver-deep: #7C9486;
+  --color-silver-soft: rgba(157, 180, 166, 0.14);
 
   /* Color: Semantic */
-  --color-ink-blue: #2563EB;      /* 暫定（青） */
-  --color-ink-blue-soft: rgba(37, 99, 235, 0.10);
-  --color-ruby: #E03A2E;          /* 最終確定・急ぎ（赤） */
-  --color-ruby-soft: rgba(224, 58, 46, 0.10);
-  --color-deep-green: #0B7A40;    /* JRA グリーン・利益・本体ブランド（白地で映える濃さ） */
-  --color-deep-green-soft: rgba(14, 140, 74, 0.12);
-  --color-wine: #C0334B;          /* 損失（赤紫） */
-  --color-wine-soft: rgba(192, 51, 75, 0.10);
+  --color-ink-blue: #4DA8FF;      /* 暫定（明るい青） */
+  --color-ink-blue-soft: rgba(77, 168, 255, 0.14);
+  --color-ruby: #FF5247;          /* 最終確定・急ぎ（明るい赤） */
+  --color-ruby-soft: rgba(255, 82, 71, 0.14);
+  --color-deep-green: #16C46F;    /* ネオン緑・利益・本体ブランド（夜に光る主役色） */
+  --color-deep-green-soft: rgba(22, 196, 111, 0.16);
+  --color-on-green: #03140B;      /* ネオン緑の上に乗せる暗い文字 */
+  --color-neon: #16E07E;          /* いちばん明るいネオン緑（数字・グロー用） */
+  --color-cyan: #2FF0E0;          /* ネオンシアン（差し色・ライブ感） */
+  --color-cyan-soft: rgba(47, 240, 224, 0.14);
+  --color-wine: #FF6E84;          /* 損失（明るい赤紫・暗地で読める） */
+  --color-wine-soft: rgba(255, 110, 132, 0.14);
 
   /* Typography */
   --font-sans: var(--font-inter), "Noto Sans JP", system-ui, -apple-system, sans-serif;
@@ -55,12 +61,12 @@
   --radius-xl: 22px;
   --radius-full: 9999px;
 
-  /* Shadows — 明るい紙の上のやわらかな影（緑がほのかに混じる） */
-  --shadow-xs: 0 1px 2px rgba(21, 39, 27, 0.06);
-  --shadow-sm: 0 2px 10px rgba(21, 39, 27, 0.07);
-  --shadow-md: 0 14px 34px rgba(21, 39, 27, 0.10), 0 3px 10px rgba(21, 39, 27, 0.06);
-  --shadow-lg: 0 28px 64px rgba(21, 39, 27, 0.16), 0 8px 20px rgba(21, 39, 27, 0.08);
-  --shadow-gold: 0 0 0 1px rgba(232, 146, 12, 0.30), 0 16px 44px rgba(232, 146, 12, 0.22);
+  /* Shadows — 夜の奥行き（黒い影）＋ネオンのにじみ */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.50), 0 0 0 1px rgba(86, 240, 176, 0.05);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(86, 240, 176, 0.07);
+  --shadow-lg: 0 30px 70px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(86, 240, 176, 0.10);
+  --shadow-gold: 0 0 0 1px rgba(255, 198, 77, 0.45), 0 0 34px rgba(255, 198, 77, 0.30), 0 16px 44px rgba(0, 0, 0, 0.55);
 
   /* Animation */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -94,8 +100,8 @@ body {
   isolation: isolate;
 }
 
-/* JRA 公式風 — 背景は清潔な白基調。
-   上端にほんのり芝の緑をひと刷毛だけ（飾りすぎない） */
+/* ネオン・ナイトターフ — 夜の競馬場。
+   上にネオン緑とシアンの光、足元に芝の緑光、全面にうっすら走るグリッド線 */
 body::before {
   content: "";
   position: fixed;
@@ -103,13 +109,31 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(1400px 420px at 50% -16%, rgba(11, 122, 64, 0.05), transparent 70%),
+    radial-gradient(1200px 520px at 18% -8%, rgba(22, 224, 126, 0.16), transparent 60%),
+    radial-gradient(1100px 520px at 88% 4%, rgba(47, 240, 224, 0.12), transparent 60%),
+    radial-gradient(1400px 600px at 50% 116%, rgba(22, 196, 111, 0.14), transparent 64%),
     var(--color-canvas);
 }
 
+/* 近未来のグリッド（うっすら光るスタジアムの線） */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(86, 240, 176, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(86, 240, 176, 0.045) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(1200px 800px at 50% 0%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(1200px 800px at 50% 0%, #000 0%, transparent 78%);
+}
+
 ::selection {
-  background: rgba(11, 122, 64, 0.18);
-  color: var(--color-ink);
+  background: rgba(22, 224, 126, 0.30);
+  color: #ffffff;
 }
 
 /* =========================================
@@ -127,7 +151,7 @@ body::before {
   font-feature-settings: "ss01", "cv11";
 }
 
-/* 浮き上がる面 — 明るいテーマでは影で奥行きを出す */
+/* 浮き上がる面 — 暗い夜の上に浮かぶガラス */
 .surface-raised {
   box-shadow: var(--shadow-md);
 }
@@ -135,6 +159,22 @@ body::before {
 /* 金のグロー（縁取りの光） */
 .glow-gold {
   box-shadow: var(--shadow-gold);
+}
+
+/* ネオン緑のグロー（縁取りの光） */
+.glow-green {
+  box-shadow: 0 0 0 1px rgba(22, 224, 126, 0.45), 0 0 28px rgba(22, 224, 126, 0.28), 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* ネオンシアンのグロー */
+.glow-cyan {
+  box-shadow: 0 0 0 1px rgba(47, 240, 224, 0.45), 0 0 26px rgba(47, 240, 224, 0.26), 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* ネオンの輪郭（カードを縁取って光らせる） */
+.neon-border {
+  border: 1px solid rgba(47, 240, 224, 0.40);
+  box-shadow: inset 0 0 14px rgba(47, 240, 224, 0.08), 0 0 18px rgba(47, 240, 224, 0.14);
 }
 
 /* 金のグラデ文字 */
@@ -145,30 +185,46 @@ body::before {
   color: transparent;
 }
 
-/* 緑のグラデ文字 — JRA グリーンの主役表現 */
+/* ネオン緑のグラデ文字 — 主役の数字・見出し */
 .text-green-grad {
-  background: linear-gradient(135deg, #2FB56E 0%, var(--color-deep-green) 55%, #0A6E3A 100%);
+  background: linear-gradient(135deg, #6BFFB0 0%, var(--color-neon) 50%, #0FB866 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* 巨大数字に灯す光 */
-.num-glow {
-  filter: drop-shadow(0 6px 16px rgba(232, 146, 12, 0.28));
-}
-.num-glow-green {
-  filter: drop-shadow(0 6px 16px rgba(14, 140, 74, 0.26));
+/* シアンのグラデ文字 */
+.text-cyan-grad {
+  background: linear-gradient(135deg, #9CFFF6 0%, var(--color-cyan) 50%, #11C6BA 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-/* 斜めに走る光のスイープ — JRA 公式風の落ち着いた見た目では使わない
-   （クラスは残し、動く反射だけ止めて読みやすさ優先） */
+/* ネオンに光る文字 */
+.text-neon {
+  color: var(--color-neon);
+  text-shadow: 0 0 14px rgba(22, 224, 126, 0.55);
+}
+
+/* 巨大数字に灯す光 */
+.num-glow {
+  filter: drop-shadow(0 0 18px rgba(255, 198, 77, 0.45));
+}
+.num-glow-green {
+  filter: drop-shadow(0 0 18px rgba(22, 224, 126, 0.50));
+}
+.num-glow-cyan {
+  filter: drop-shadow(0 0 18px rgba(47, 240, 224, 0.50));
+}
+
+/* 斜めに走る光のスイープ用の枠（控えめに残す） */
 .sheen { position: relative; overflow: hidden; }
 
 /* Smooth focus rings: only on keyboard nav */
 :focus { outline: none; }
 :focus-visible {
-  outline: 2px solid var(--color-deep-green);
+  outline: 2px solid var(--color-neon);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -219,14 +275,26 @@ body::before {
 
 /* 金のグローが呼吸する */
 @keyframes goldPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 146, 12, 0.30), 0 14px 40px rgba(232, 146, 12, 0.14); }
-  50%      { box-shadow: 0 0 0 7px rgba(232, 146, 12, 0), 0 16px 48px rgba(232, 146, 12, 0.20); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 198, 77, 0.45), 0 0 30px rgba(255, 198, 77, 0.20), 0 14px 40px rgba(0,0,0,0.5); }
+  50%      { box-shadow: 0 0 0 8px rgba(255, 198, 77, 0), 0 0 44px rgba(255, 198, 77, 0.36), 0 16px 48px rgba(0,0,0,0.55); }
+}
+
+/* ネオン緑のグローが呼吸する */
+@keyframes neonPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22, 224, 126, 0.45), 0 0 26px rgba(22, 224, 126, 0.20); }
+  50%      { box-shadow: 0 0 0 7px rgba(22, 224, 126, 0), 0 0 40px rgba(22, 224, 126, 0.34); }
+}
+
+/* ライブのドットが脈打つ */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 82, 71, 0.6); }
+  50%      { opacity: 0.7; box-shadow: 0 0 0 6px rgba(255, 82, 71, 0); }
 }
 
 /* 星のきらめき */
 @keyframes twinkle {
-  0%, 100% { opacity: 1; filter: drop-shadow(0 0 2px rgba(232, 146, 12, 0.45)); }
-  50%      { opacity: 0.9; filter: drop-shadow(0 0 6px rgba(255, 188, 77, 0.85)); }
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 3px rgba(255, 198, 77, 0.6)); }
+  50%      { opacity: 0.9; filter: drop-shadow(0 0 9px rgba(255, 228, 154, 0.95)); }
 }
 
 /* ゆっくり浮遊 */
@@ -247,6 +315,8 @@ body::before {
 .anim-gallop       { animation: gallop 0.9s var(--ease-in-out) infinite; }
 .anim-gate-out     { animation: gateOut 280ms var(--ease-out); }
 .anim-gold-pulse   { animation: goldPulse 2.6s var(--ease-in-out) infinite; }
+.anim-neon-pulse   { animation: neonPulse 2.6s var(--ease-in-out) infinite; }
+.anim-live-pulse   { animation: livePulse 1.6s var(--ease-in-out) infinite; }
 .anim-twinkle      { animation: twinkle 2.4s var(--ease-in-out) infinite; }
 .anim-floaty       { animation: floaty 4.5s var(--ease-in-out) infinite; }
 .anim-drift        { animation: drift 9s var(--ease-in-out) infinite alternate; }
@@ -254,9 +324,9 @@ body::before {
 .shimmer-text {
   background: linear-gradient(
     100deg,
-    var(--color-gold-deep) 28%,
-    var(--color-gold-bright) 50%,
-    var(--color-gold-deep) 72%
+    var(--color-neon) 28%,
+    #ECFFF4 50%,
+    var(--color-neon) 72%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -287,6 +357,7 @@ body::before {
 
 /* =========================================
    ターフを走る馬の背景（TurfBackdrop）
+   夜のターフ。ネオン緑のシルエットがうっすら走る
    ========================================= */
 .turf-backdrop {
   position: fixed;
@@ -304,14 +375,15 @@ body::before {
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(14, 140, 74, 0.05) 60%,
-    rgba(14, 140, 74, 0.09) 100%
+    rgba(22, 224, 126, 0.06) 55%,
+    rgba(22, 224, 126, 0.12) 100%
   );
 }
 .turf-runner {
   position: absolute;
   left: 0;
   will-change: transform;
+  filter: drop-shadow(0 0 10px rgba(22, 224, 126, 0.35));
 }
 .turf-gallop {
   display: block;
@@ -324,7 +396,7 @@ body::before {
   width: 165px;
   height: 103px;
   bottom: 23vh;
-  color: rgba(11, 122, 64, 0.1);
+  color: rgba(22, 224, 126, 0.16);
   animation: turf-drift 60s linear infinite;
   animation-delay: -8s;
 }
@@ -332,7 +404,7 @@ body::before {
   width: 205px;
   height: 128px;
   bottom: 15vh;
-  color: rgba(11, 122, 64, 0.12);
+  color: rgba(22, 224, 126, 0.20);
   animation: turf-drift 50s linear infinite;
   animation-delay: -30s;
 }
@@ -340,7 +412,7 @@ body::before {
   width: 245px;
   height: 153px;
   bottom: 9vh;
-  color: rgba(11, 122, 64, 0.14);
+  color: rgba(47, 240, 224, 0.18);
   animation: turf-drift 42s linear infinite;
   animation-delay: -18s;
 }
@@ -348,7 +420,7 @@ body::before {
   width: 295px;
   height: 184px;
   bottom: 3vh;
-  color: rgba(11, 122, 64, 0.16);
+  color: rgba(22, 224, 126, 0.24);
   animation: turf-drift 34s linear infinite;
   animation-delay: -5s;
 }
@@ -356,7 +428,7 @@ body::before {
   width: 340px;
   height: 213px;
   bottom: -1vh;
-  color: rgba(11, 122, 64, 0.18);
+  color: rgba(22, 224, 126, 0.30);
   animation: turf-drift 28s linear infinite;
   animation-delay: -40s;
 }
@@ -377,6 +449,7 @@ body::before {
 
 /* =========================================
    名馬列伝（LegendStrip）流れる帯
+   暗いガラスの帯にネオンの名前が流れる
    ========================================= */
 .legend-strip {
   position: relative;
@@ -387,8 +460,9 @@ body::before {
   height: 40px;
   border: 1px solid var(--color-line);
   border-radius: var(--radius-full);
-  background: var(--color-paper);
-  box-shadow: var(--shadow-xs);
+  background: rgba(13, 21, 18, 0.72);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-sm);
 }
 .legend-badge {
   flex: none;
@@ -427,14 +501,14 @@ body::before {
   width: 22px;
   height: 14px;
   flex: none;
-  color: var(--color-deep-green);
-  opacity: 0.85;
+  color: var(--color-neon);
+  opacity: 0.9;
 }
 .legend-name { font-size: 13px; font-weight: 800; color: var(--color-ink); }
 .legend-year {
   font-size: 10px;
   font-weight: 700;
-  color: var(--color-gold-deep);
+  color: var(--color-gold);
   font-family: var(--font-mono);
 }
 .legend-honor {
@@ -456,4 +530,48 @@ body::before {
 @keyframes legend-marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
+}
+
+/* =========================================
+   ネオンテーマの読みやすさ補正（各部品を触らず一括で効かせる）
+   ========================================= */
+
+/* ネオン緑の上に白文字は眩しすぎる → 暗い文字に差し替えてくっきり読ませる */
+.bg-deep-green.text-white,
+.bg-gold.text-white,
+.bg-neon.text-white {
+  color: var(--color-on-green) !important;
+}
+.bg-gold.text-white { color: var(--color-on-gold) !important; }
+
+/* 緑・金のボタンはネオンらしく淡く発光させる（ボタン/リンクだけ） */
+button.bg-deep-green,
+a.bg-deep-green {
+  box-shadow: 0 0 0 1px rgba(22, 224, 126, 0.40), 0 0 18px rgba(22, 224, 126, 0.26);
+}
+button.bg-gold,
+a.bg-gold {
+  box-shadow: 0 0 0 1px rgba(255, 198, 77, 0.42), 0 0 18px rgba(255, 198, 77, 0.26);
+}
+
+/* くぼみ面（bg-paper-soft）は暗地で沈みすぎないよう薄い輪郭を足す */
+.bg-paper-soft {
+  box-shadow: inset 0 0 0 1px rgba(86, 240, 176, 0.05);
+}
+
+/* テキスト入力・テキストエリアを暗いガラス面に（白背景の取り残し防止） */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="search"],
+input:not([type]),
+textarea,
+select {
+  background-color: var(--color-paper-soft);
+  color: var(--color-ink);
+  border-color: var(--color-line-strong);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-ink-faint);
 }

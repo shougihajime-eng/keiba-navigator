@@ -91,8 +91,8 @@ function Star({
       </defs>
       <path
         d="M12 2.6l2.95 5.97 6.6.96-4.78 4.66 1.13 6.57L12 17.66l-5.9 3.1 1.13-6.57L2.45 9.53l6.6-.96L12 2.6Z"
-        fill={filled ? fillColor : "#EAF2E8"}
-        stroke={filled ? strokeColor : "#C2D4BF"}
+        fill={filled ? fillColor : "#14201A"}
+        stroke={filled ? strokeColor : "#32453B"}
         strokeWidth={1.2}
         strokeLinejoin="round"
       />

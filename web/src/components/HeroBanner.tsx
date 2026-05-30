@@ -28,15 +28,15 @@ export function HeroBanner() {
       className="relative overflow-hidden rounded-[22px] border border-line shadow-[var(--shadow-md)]"
       style={{
         background:
-          "linear-gradient(180deg, #DCEEFF 0%, #EAF6EC 52%, #DFF1E1 100%)",
+          "radial-gradient(120% 140% at 80% -20%, rgba(47,240,224,0.18) 0%, transparent 45%), radial-gradient(120% 160% at 8% 120%, rgba(22,224,126,0.20) 0%, transparent 50%), linear-gradient(180deg, #0B1A14 0%, #081310 52%, #050C0A 100%)",
       }}
     >
       {/* 太陽 */}
       <div className="absolute right-10 top-5 h-12 w-12 rounded-full bg-gradient-to-b from-[#FFE08A] to-[#FFBC4D] opacity-80 blur-[1px]" />
 
       {/* 流れる雲 */}
-      <Cloud className="absolute left-6 top-6 w-16 opacity-80 anim-drift" />
-      <Cloud className="absolute left-1/2 top-10 w-12 opacity-60 anim-drift" />
+      <Cloud className="absolute left-6 top-6 w-16 opacity-20 anim-drift" />
+      <Cloud className="absolute left-1/2 top-10 w-12 opacity-[0.12] anim-drift" />
 
       <div className="relative flex items-center justify-between gap-3 px-5 py-6 md:px-8 md:py-8">
         <div className="min-w-0">

@@ -322,7 +322,7 @@ function BuyCard({ race, budget, open, onToggle }: { race: CardRace; budget: num
           "inline-flex items-center justify-center w-10 h-10 rounded-full font-display font-semibold tabular text-lg shrink-0",
           isPrime
             ? "bg-gradient-to-b from-gold-bright to-gold text-on-gold shadow-[0_4px_14px_rgba(232,194,108,0.4)]"
-            : "bg-gradient-to-b from-deep-green to-deep-green text-white",
+            : "bg-gradient-to-b from-deep-green to-deep-green text-on-green",
         )}>
           {race.top_number ?? "—"}
         </span>

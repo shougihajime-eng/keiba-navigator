@@ -15,7 +15,7 @@ const toneStyles: Record<CardTone, string> = {
   final:     "bg-paper border-ruby/40 ring-1 ring-ruby/15",
   won:       "bg-paper border-deep-green/35 ring-1 ring-deep-green/12",
   lost:      "bg-paper border-wine/30 ring-1 ring-wine/10",
-  gold:      "bg-gradient-to-b from-[#FFF8EC] to-paper border-gold/55 ring-1 ring-gold/25 shadow-[var(--shadow-gold)]",
+  gold:      "bg-gradient-to-b from-gold-soft to-paper border-gold/55 ring-1 ring-gold/25 shadow-[var(--shadow-gold)]",
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
