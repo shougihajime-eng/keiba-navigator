@@ -40,6 +40,7 @@ for _a in ("stdout", "stderr"):
             pass
 
 CACHE = Path(__file__).resolve().parent.parent / "data" / "jv_cache"
+RESULTS = CACHE / "results"
 BETS = CACHE / "value_ev_bets.json"
 OUT = CACHE / "experiment_status.json"
 HIST = CACHE / "experiment_history.json"
