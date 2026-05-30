@@ -53,12 +53,33 @@ def _winner_number(result) -> int | None:
     return None
 
 
+def _has_real_data(rid: str) -> bool:
+    """そのレースが「本物のオッズ + AI予想」を持つか (空枠=出走前を除外するため)。"""
+    pred = _load(PREDS / f"{rid}.json")
+    if not pred or not any(h.get("win_prob") for h in (pred.get("horses") or [])):
+        return False
+    race = _load(RACES / f"{rid}.json")
+    return bool(race and any(h.get("win_odds") for h in (race.get("horses") or [])))
+
+
+def _pick_latest_real_date(all_ids: list[str]) -> str:
+    """最新の「本物データ(オッズ+予想)が揃った開催日」を選ぶ。
+    無ければ最大日付(出走前の空枠日)にフォールバック。
+    → 開催当日にオッズが届けばその日・無ければ直近の確定日を自動表示。"""
+    dates = sorted({rid[:8] for rid in all_ids}, reverse=True)
+    for d in dates:
+        for rid in (rid for rid in all_ids if rid.startswith(d)):
+            if _has_real_data(rid):
+                return d
+    return dates[0] if dates else ""
+
+
 def build_card(date8: str | None = None) -> dict:
     all_ids = [os.path.basename(f)[:-5] for f in glob.glob(str(RACES / "*.json"))]
     if not all_ids:
         return {"ok": False, "reason": "races なし", "races": []}
     if date8 is None:
-        date8 = sorted({rid[:8] for rid in all_ids})[-1]
+        date8 = _pick_latest_real_date(all_ids)
     day_ids = sorted(rid for rid in all_ids if rid.startswith(date8))
 
     races_out = []

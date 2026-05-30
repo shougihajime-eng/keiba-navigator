@@ -263,6 +263,20 @@ def run_predict_lightgbm() -> int:
     )
 
 
+# ─── ステップ 4.72: build_race_card.py (全レース4段階判定カード) ──
+def run_build_race_card() -> int:
+    """必殺一号艇方式の「全レース4段階判定」カードを生成 →
+    data/jv_cache/race_card_latest.json。最新の本物データ(オッズ+予想)が
+    揃った開催日を自動で選ぶので、開催当日にオッズが届けばその日を表示。
+    純Pythonなので 32bit でも動く (64bit が無くてもOK)。"""
+    log_line("[step4.72] build_race_card.py (全レース4段階判定カード)")
+    py = python_exe_64() or python_exe()
+    return run_subprocess(
+        [py, str(JV_BRIDGE / "build_race_card.py")],
+        "build_race_card", timeout=120,
+    )
+
+
 # ─── ステップ 4.75: aggregate_recommendations.py (推奨買い目集約) ─
 def run_aggregate_recommendations() -> int:
     """Wave19: 100% 越え戦略 fuku_top1_prob_020 の条件を満たすレースを
@@ -385,6 +399,8 @@ def git_commit_push() -> int:
         "data/jv_cache/model_lgbm_nopop_meta.json",
         "data/jv_cache/recommendations.json",
         "data/jv_cache/backtest_result.json",
+        # ★2026-05-30: 全レース4段階判定カード (必殺一号艇方式・画面の「全レース予想」)
+        "data/jv_cache/race_card_latest.json",
         # ★2026-05-30: 自己成長する実験モード(実験室) の成績表 + 成長ログ
         "data/jv_cache/experiment_status.json",
         "data/jv_cache/experiment_history.json",
@@ -495,6 +511,10 @@ def main():
         rc = run_predict_lightgbm()
         if rc == -2: timed_out = True
         if rc != 0: overall |= 0x400
+    # ★2026-05-30: 全レース4段階判定カード (必殺一号艇方式・画面の「全レース予想」)
+    rc = run_build_race_card()
+    if rc == -2: timed_out = True
+    if rc != 0: overall |= 0x1000
     # ★Wave19: 推奨買い目を集約 (100% 越え戦略 fuku_top1_prob_020)
     if not getattr(args, "skip_recommend", False):
         rc = run_aggregate_recommendations()
