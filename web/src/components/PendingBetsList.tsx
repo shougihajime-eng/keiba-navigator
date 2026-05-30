@@ -1,19 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, X as XIcon, Trash2 } from "lucide-react";
+import { Check, X as XIcon, Trash2, PencilLine } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { loadBets, updateBet, deleteBet, type Bet } from "@/lib/store";
 import { formatYen, cn } from "@/lib/utils";
-import { generateReflection } from "@/lib/reflection";
+import { generateReflection, type MissTag } from "@/lib/reflection";
 import { saveReflection } from "@/lib/reflectionStore";
+import { MissTagPicker } from "@/components/MissTagPicker";
+import { ManualBetModal } from "@/components/ManualBetModal";
+
+type RecordMode = "hit" | "miss";
 
 export function PendingBetsList() {
   const [bets, setBets] = useState<Bet[]>([]);
-  // 的中の払戻金を画面内で入力中のベットid
+  // 入力中のベットid と モード (的中 or 外れ)
   const [recordingId, setRecordingId] = useState<string | null>(null);
+  const [mode, setMode] = useState<RecordMode>("hit");
+  const [showManual, setShowManual] = useState(false);
 
   useEffect(() => {
     refresh();
@@ -47,10 +53,14 @@ export function PendingBetsList() {
     refresh();
   };
 
-  const onMiss = (bet: Bet) => {
+  // 外れ: 選んだ理由タグつきで反省文を保存
+  const confirmMiss = (bet: Bet, tags: MissTag[]) => {
     updateBet(bet.id, { result: "miss", payout: 0, isDraft: false });
-    // 自動で反省文を生成して保存
     const refl = generateReflection({ ...bet, result: "miss", payout: 0 });
+    if (tags.length > 0) {
+      refl.tags = tags;
+      refl.freeText = `外れ。\n選んだ原因:\n${tags.map((t) => `• ${tagJp(t)}`).join("\n")}`;
+    }
     saveReflection(refl);
     emitChange();
     setRecordingId(null);
@@ -68,29 +78,48 @@ export function PendingBetsList() {
 
   if (bets.length === 0) {
     return (
-      <Card>
-        <CardBody className="py-6 text-center text-sm text-ink-muted">
-          結果待ちの記録はありません
-        </CardBody>
-      </Card>
+      <>
+        <Card>
+          <CardBody className="py-6 text-center space-y-3">
+            <div className="text-sm text-ink-muted">結果待ちの記録はありません</div>
+            <Button variant="secondary" size="sm" onClick={() => setShowManual(true)}>
+              <PencilLine className="w-4 h-4" />
+              手で記録する
+            </Button>
+            <p className="text-[11px] text-ink-faint leading-relaxed max-w-xs mx-auto">
+              開催なしの日・WIN5・過去に買った分も、ここから自分で記録できます。
+            </p>
+          </CardBody>
+        </Card>
+        {showManual && <ManualBetModal onClose={() => setShowManual(false)} />}
+      </>
     );
   }
 
   return (
     <Card>
       <CardBody className="space-y-3">
-        <div className="text-xs text-ink-muted">
-          結果が出たら <span className="text-deep-green font-medium">的中</span> か <span className="text-wine font-medium">外れ</span> を押すだけ。成績と収支に自動で反映されます。
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-xs text-ink-muted flex-1">
+            結果が出たら <span className="text-deep-green font-medium">的中</span> か <span className="text-wine font-medium">外れ</span> を押すだけ。成績と収支に自動で反映されます。
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => setShowManual(true)} className="shrink-0">
+            <PencilLine className="w-4 h-4" />
+            手で記録
+          </Button>
         </div>
+        {showManual && <ManualBetModal onClose={() => setShowManual(false)} />}
         {bets.map((b) => (
           <PendingRow
             key={b.id}
             bet={b}
             recording={recordingId === b.id}
-            onStartHit={() => setRecordingId(b.id)}
-            onCancelHit={() => setRecordingId(null)}
+            mode={mode}
+            onStartHit={() => { setMode("hit"); setRecordingId(b.id); }}
+            onStartMiss={() => { setMode("miss"); setRecordingId(b.id); }}
+            onCancel={() => setRecordingId(null)}
             onConfirmHit={confirmHit}
-            onMiss={onMiss}
+            onConfirmMiss={confirmMiss}
             onDelete={onDelete}
           />
         ))}
@@ -102,24 +131,30 @@ export function PendingBetsList() {
 function PendingRow({
   bet,
   recording,
+  mode,
   onStartHit,
-  onCancelHit,
+  onStartMiss,
+  onCancel,
   onConfirmHit,
-  onMiss,
+  onConfirmMiss,
   onDelete,
 }: {
   bet: Bet;
   recording: boolean;
+  mode: RecordMode;
   onStartHit: () => void;
-  onCancelHit: () => void;
+  onStartMiss: () => void;
+  onCancel: () => void;
   onConfirmHit: (b: Bet, payout: number) => void;
-  onMiss: (b: Bet) => void;
+  onConfirmMiss: (b: Bet, tags: MissTag[]) => void;
   onDelete: (b: Bet) => void;
 }) {
   return (
     <div className={cn(
       "p-3 rounded-[12px] border bg-paper-soft/40",
-      recording ? "border-deep-green/40 bg-deep-green-soft/20" : "border-line",
+      recording
+        ? mode === "miss" ? "border-wine/40 bg-wine-soft/20" : "border-deep-green/40 bg-deep-green-soft/20"
+        : "border-line",
     )}>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1 min-w-0">
@@ -143,7 +178,7 @@ function PendingRow({
               <Check className="w-4 h-4 text-deep-green" />
               的中
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => onMiss(bet)} className="!h-9 !px-3">
+            <Button size="sm" variant="secondary" onClick={onStartMiss} className="!h-9 !px-3">
               <XIcon className="w-4 h-4 text-wine" />
               外れ
             </Button>
@@ -158,11 +193,50 @@ function PendingRow({
         )}
       </div>
 
-      {recording && (
-        <HitForm bet={bet} onConfirm={(p) => onConfirmHit(bet, p)} onCancel={onCancelHit} />
+      {recording && mode === "hit" && (
+        <HitForm bet={bet} onConfirm={(p) => onConfirmHit(bet, p)} onCancel={onCancel} />
+      )}
+      {recording && mode === "miss" && (
+        <MissForm onConfirm={(tags) => onConfirmMiss(bet, tags)} onCancel={onCancel} />
       )}
     </div>
   );
+}
+
+/** 外れ時の理由タグを選ぶ (任意・選ばず確定もOK) */
+function MissForm({ onConfirm, onCancel }: { onConfirm: (tags: MissTag[]) => void; onCancel: () => void }) {
+  const [tags, setTags] = useState<MissTag[]>([]);
+  return (
+    <div className="mt-3 pt-3 border-t border-wine/20">
+      <label className="block text-xs text-ink-soft font-medium mb-2">
+        外した理由は？（選ぶほど反省が賢くなります・選ばなくてもOK）
+      </label>
+      <MissTagPicker selected={tags} onChange={setTags} />
+      <div className="mt-3 flex items-center gap-2">
+        <Button size="md" variant="primary" onClick={() => onConfirm(tags)} className="shrink-0">
+          外れで記録
+        </Button>
+        <Button size="md" variant="ghost" onClick={onCancel} className="shrink-0">
+          やめる
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// reflection.ts の表記と合わせる (最小限)
+function tagJp(t: MissTag): string {
+  const m: Record<string, string> = {
+    track_condition: "馬場適性を軽視", distance_misjudge: "距離適性を見誤った",
+    weight_overestimate: "斤量・負担を過大評価", pace_misread: "ペース想定が外れた",
+    jockey_overweight: "騎手の重み付け過大", horse_form_drop: "馬の調子下降を見落とし",
+    prevrun_overweight: "前走の着差を過大評価", popularity_under: "人気馬の地力を過小評価",
+    popularity_over: "人気馬を過大評価", field_quality: "メンバー構成の見落とし",
+    post_position: "枠順の影響を軽視", weather_change: "天候・馬場変化に対応できず",
+    pedigree_misread: "血統適性の判断が甘かった", confidence_too_high: "信頼度を過大に見積もった",
+    unknown: "原因特定が難しい外れ",
+  };
+  return m[t] || t;
 }
 
 /** 的中時の払戻金を画面内で入力 (ブラウザのprompt廃止) */

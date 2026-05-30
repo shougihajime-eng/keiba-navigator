@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Check } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { X, Check, ShieldCheck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { StarRating } from "@/components/ui/StarRating";
 import { Stat } from "@/components/ui/Stat";
 import { formatYen, cn } from "@/lib/utils";
-import { addBet } from "@/lib/store";
+import { addBet, loadBets, summaryThisMonth } from "@/lib/store";
+import { getBudget } from "@/lib/bankroll";
+import { cooledEv } from "@/lib/rating";
 import type { RaceSummary } from "@/types/api";
 import type { Rating } from "@/lib/rating";
 
@@ -46,11 +48,23 @@ export function BetConfirmModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // 今月あといくら使えるか (買う前の最終チェック用)
+  const { budget, usedThisMonth } = useMemo(() => {
+    const bets = loadBets();
+    return { budget: getBudget(), usedThisMonth: summaryThisMonth(bets).totalStake };
+  }, []);
+
   if (!race) return null;
 
   const expectedReturn = stake && race.topPick?.ev
     ? Math.round(stake * race.topPick.ev)
     : null;
+
+  // 正直EV (冷ました現実的な期待値) と 予算チェック
+  const hev = cooledEv(race);
+  const honestReturn = stake && hev ? Math.round(stake * hev) : null;
+  const remainingBefore = Math.max(0, budget - usedThisMonth);
+  const wouldExceed = usedThisMonth + stake > budget;
 
   const handleConfirm = () => {
     if (!race.raceId) return;
@@ -211,14 +225,46 @@ export function BetConfirmModal({
               {/* Summary */}
               <div className="grid grid-cols-3 gap-3 pt-2 border-t border-line">
                 <Stat label="期待値" value={race.topPick?.ev?.toFixed(2) ?? "—"} size="md" />
+                <Stat label="正直EV" value={hev ? hev.toFixed(2) : "—"} tone={hev >= 1 ? "positive" : "default"} size="md" />
                 <Stat label="信頼度" value={race.confidence ? Math.round(race.confidence * 100) : "—"} unit="%" size="md" />
-                <Stat
-                  label="予想戻り"
-                  value={expectedReturn ? formatYen(expectedReturn) : "—"}
-                  tone="positive"
-                  size="md"
-                />
               </div>
+
+              {/* 買う前の最終チェック (正直な見込み + 予算) */}
+              <div className={cn(
+                "rounded-[12px] border p-3.5 space-y-2",
+                wouldExceed ? "bg-wine-soft/40 border-wine/25" : "bg-paper-soft/60 border-line/60",
+              )}>
+                <div className="flex items-start gap-2">
+                  {wouldExceed
+                    ? <AlertTriangle className="w-4 h-4 text-wine shrink-0 mt-0.5" />
+                    : <ShieldCheck className="w-4 h-4 text-deep-green shrink-0 mt-0.5" />}
+                  <div className="text-sm text-ink-soft leading-relaxed">
+                    正直な見込みでは {formatYen(stake)} が平均で
+                    <span className="font-medium text-ink"> 約 {honestReturn != null ? formatYen(honestReturn) : "—"} </span>
+                    戻る計算です。
+                    <span className="text-ink-muted">（期待値を実績で冷ました現実的な数字。競馬は基本100円→約75〜80円なので、ムダ打ちを減らすのが目的です）</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2 pt-1 text-xs tabular border-t border-line/50">
+                  <span className="text-ink-muted">今月あと使える</span>
+                  <span className={cn("font-medium", wouldExceed ? "text-wine" : "text-ink-soft")}>
+                    {wouldExceed
+                      ? `予算オーバー（残り ${formatYen(remainingBefore)}）`
+                      : `${formatYen(remainingBefore)} → 買うと ${formatYen(Math.max(0, remainingBefore - stake))}`}
+                  </span>
+                </div>
+                {wouldExceed && (
+                  <p className="text-xs text-wine leading-snug">
+                    今月の予算を超えます。<span className="font-semibold">見送るのも勝つための判断</span>です。
+                  </p>
+                )}
+              </div>
+
+              {expectedReturn !== null && (
+                <p className="text-[11px] text-ink-faint -mt-2">
+                  ※「期待値」はAI勝率×オッズの理論値（単発では当てになりません）。判断は正直EVを基準に。
+                </p>
+              )}
             </div>
 
             <div className="px-5 py-4 border-t border-line flex gap-2">

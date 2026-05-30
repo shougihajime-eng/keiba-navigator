@@ -5,11 +5,14 @@ import {
   Newspaper, Trophy as TrophyIcon, Home, Target, BarChart3, Award, Activity,
   ClipboardList, BookOpen, Cloud,
 } from "lucide-react";
+import { PencilLine } from "lucide-react";
 import { Collapsible } from "@/components/Collapsible";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { PendingBetsList } from "@/components/PendingBetsList";
 import { ReflectionDashboard } from "@/components/ReflectionDashboard";
 import { SyncCard } from "@/components/SyncCard";
+import { ManualBetModal } from "@/components/ManualBetModal";
 import { fetchNews, fetchWin5, fetchAutomationStatus, fetchRecommendations, fetchRankings } from "@/lib/api";
 import { loadBets, summaryAll, type Bet } from "@/lib/store";
 import { loadReflections } from "@/lib/reflectionStore";
@@ -219,12 +222,28 @@ type Win5Resp = {
 };
 
 function Win5Body({ win5 }: { win5: Win5Resp | null }) {
+  const [showManual, setShowManual] = useState(false);
+  const recordBtn = (
+    <>
+      <Button variant="secondary" size="sm" onClick={() => setShowManual(true)}>
+        <PencilLine className="w-4 h-4" />
+        買ったWIN5を記録する
+      </Button>
+      {showManual && (
+        <ManualBetModal initialType="WIN5" initialRaceName="WIN5" onClose={() => setShowManual(false)} />
+      )}
+    </>
+  );
+
   if (!win5) return <div className="text-sm text-ink-muted py-2">読み込み中...</div>;
   if (!win5.ok) {
     return (
-      <PreparingHint>
-        {win5.note || win5.reason || "本日の WIN5 対象レースはまだ配信されていません。"}
-      </PreparingHint>
+      <div className="space-y-3">
+        <PreparingHint>
+          {win5.note || win5.reason || "本日の WIN5 対象レースはまだ配信されていません。"}
+        </PreparingHint>
+        <div>{recordBtn}</div>
+      </div>
     );
   }
   const order = ["safe", "axis", "mid", "wide"];
@@ -258,6 +277,7 @@ function Win5Body({ win5 }: { win5: Win5Resp | null }) {
           </span>
         </div>
       ))}
+      <div className="pt-1">{recordBtn}</div>
     </div>
   );
 }
