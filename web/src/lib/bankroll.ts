@@ -32,3 +32,15 @@ export function setBudget(yen: number) {
 export function perRaceUnit(budget: number): number {
   return Math.max(100, Math.round((budget * 0.03) / 100) * 100);
 }
+
+/**
+ * 段階(tier)ごとの「複勝」おすすめ金額。儲かる買い方は無い前提なので
+ * 絶好機=1レースの目安額・勝負=その7割 と、損を抑える小額に固定。
+ * 様子見/見送りは買わない(0円)。100円単位。
+ */
+export function fukushoStake(tier: "prime" | "bet" | "watch" | "skip", budget: number): number {
+  const unit = perRaceUnit(budget);
+  if (tier === "prime") return unit;
+  if (tier === "bet") return Math.max(100, Math.round((unit * 0.7) / 100) * 100);
+  return 0;
+}

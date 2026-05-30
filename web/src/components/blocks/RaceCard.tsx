@@ -5,7 +5,8 @@ import { ChevronDown, CheckCircle2, Trophy } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { fetchRaceCard } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { getBudget, fukushoStake } from "@/lib/bankroll";
+import { cn, formatYen } from "@/lib/utils";
 
 type Tier = "prime" | "bet" | "watch" | "skip";
 
@@ -75,6 +76,7 @@ export function RaceCard() {
   const [resp, setResp] = useState<CardResp | null>(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<string | null>(null);
+  const [budget, setBudgetState] = useState(10000);
 
   useEffect(() => {
     let alive = true;
@@ -84,6 +86,14 @@ export function RaceCard() {
       setLoading(false);
     });
     return () => { alive = false; };
+  }, []);
+
+  // 資金管理カードの予算に追従 (複勝おすすめ金額に使う)
+  useEffect(() => {
+    const read = () => setBudgetState(getBudget());
+    read();
+    window.addEventListener("keiba:budget-changed", read);
+    return () => window.removeEventListener("keiba:budget-changed", read);
   }, []);
 
   const races = resp?.races ?? [];
@@ -172,6 +182,7 @@ export function RaceCard() {
                   <RaceRow
                     key={r.race_id}
                     race={r}
+                    budget={budget}
                     open={open === r.race_id}
                     onToggle={() => setOpen(open === r.race_id ? null : r.race_id)}
                   />
@@ -202,12 +213,13 @@ function TierStat({ tier, n }: { tier: Tier; n: number }) {
   );
 }
 
-function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onToggle: () => void }) {
+function RaceRow({ race, budget, open, onToggle }: { race: CardRace; budget: number; open: boolean; onToggle: () => void }) {
   const tier = (race.tier ?? "skip") as Tier;
   const m = TIER_META[tier];
   const hit = race.has_result && race.top_in3 === 1;
   const won = race.has_result && race.top_won === 1;
   const isBuy = tier === "prime" || tier === "bet";
+  const stake = isBuy ? fukushoStake(tier, budget) : 0;
 
   return (
     <div className={cn("py-2.5 -mx-1 px-1 rounded-[10px]", isBuy && "bg-paper-soft/30")}>
@@ -238,6 +250,11 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
               {isBuy ? "▸ " : ""}{race.reason}
             </div>
           )}
+          {isBuy && stake > 0 && (
+            <div className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-deep-green-soft/60 border border-deep-green/20 px-2 py-0.5 text-[11px] text-deep-green font-medium">
+              複勝 #{race.top_number} に {formatYen(stake)}
+            </div>
+          )}
         </div>
         {race.has_result ? (
           won ? (
@@ -254,9 +271,14 @@ function RaceRow({ race, open, onToggle }: { race: CardRace; open: boolean; onTo
 
       {open && (
         <>
-        {race.bet_style && (
-          <div className="mt-2 ml-7 text-xs text-deep-green">
-            おすすめの買い方: <span className="font-medium">{race.bet_style}</span>
+        {isBuy && stake > 0 && (
+          <div className="mt-2 ml-7 rounded-[10px] border border-deep-green/20 bg-deep-green-soft/40 px-3 py-2">
+            <div className="text-xs text-deep-green">
+              おすすめ: <span className="font-semibold">複勝 #{race.top_number} {race.top_name}</span> に <span className="font-semibold tabular">{formatYen(stake)}</span>
+            </div>
+            <div className="mt-0.5 text-[11px] text-ink-muted leading-relaxed">
+              {race.bet_style || "複勝（当たりやすく損を抑えやすい）"} ・金額は資金管理の予算（{tier === "prime" ? "予算の3%" : "予算の約2%"}）に連動する小額です。儲けではなく損を抑えるのが目的。
+            </div>
           </div>
         )}
         <div className="mt-3 ml-7 rounded-[12px] border border-line/60 bg-paper-soft/40 overflow-x-auto">

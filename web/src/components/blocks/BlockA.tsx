@@ -14,23 +14,41 @@ import { BetConfirmModal } from "@/components/BetConfirmModal";
 import { RaceDetailModal } from "@/components/RaceDetailModal";
 import { fetchRaces } from "@/lib/api";
 import { ratingFromRace, sortByRating, shortReason, cooledEv, type Rating } from "@/lib/rating";
+import { getBudget, fukushoStake } from "@/lib/bankroll";
 import { formatHHMM, formatYen, cn } from "@/lib/utils";
 import { saveSnapshot, compareWithSnapshot, pruneOldSnapshots, type Diff } from "@/lib/snapshot";
 import { notifyOnce, pruneNotifyHistory } from "@/lib/notify";
 import type { RaceSummary, RacesResponse } from "@/types/api";
 
-const RECOMMEND_AMOUNT: Record<number, number> = {
-  5: 1000, 4: 600, 3: 400, 2: 300, 1: 0,
-};
+/** 星(rating)を4段階tierに対応 */
+function ratingToTier(rating: number): "prime" | "bet" | "watch" | "skip" {
+  if (rating >= 5) return "prime";
+  if (rating >= 4) return "bet";
+  if (rating >= 3) return "watch";
+  return "skip";
+}
+/** 予算連動の複勝おすすめ金額 (絶好機=予算3% / 勝負=その7割) */
+function recommendStake(rating: number, budget: number): number {
+  return fukushoStake(ratingToTier(rating), budget);
+}
 
 export function BlockA() {
   const [resp, setResp] = useState<RacesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
+  const [budget, setBudget] = useState(10000);
   const [modalRace, setModalRace] = useState<{
     race: RaceSummary; rating: Rating; stake: number; isFinal: boolean;
   } | null>(null);
   const [detailRace, setDetailRace] = useState<RaceSummary | null>(null);
+
+  // 資金管理カードの予算に追従 (複勝おすすめ金額に使う)
+  useEffect(() => {
+    const read = () => setBudget(getBudget());
+    read();
+    window.addEventListener("keiba:budget-changed", read);
+    return () => window.removeEventListener("keiba:budget-changed", read);
+  }, []);
 
   useEffect(() => {
     pruneOldSnapshots();
@@ -167,6 +185,7 @@ export function BlockA() {
               key={race.raceId || race.raceName}
               race={race}
               now={now}
+              budget={budget}
               onBuyClick={(r, rating, stake, isFinal) =>
                 setModalRace({ race: r, rating, stake, isFinal })
               }
@@ -219,7 +238,7 @@ export function BlockA() {
               : NaN;
             const isFinal = Number.isFinite(minutes) && minutes <= 10 && minutes >= -5;
             setDetailRace(null);
-            setModalRace({ race: r, rating, stake: RECOMMEND_AMOUNT[rating] ?? 0, isFinal });
+            setModalRace({ race: r, rating, stake: recommendStake(rating, budget), isFinal });
           }}
         />
       )}
@@ -272,11 +291,13 @@ function SectionHeader({ count }: { count?: number }) {
 function RaceCard({
   race,
   now,
+  budget,
   onBuyClick,
   onDetailClick,
 }: {
   race: RaceSummary;
   now: number;
+  budget: number;
   onBuyClick: (race: RaceSummary, rating: Rating, stake: number, isFinal: boolean) => void;
   onDetailClick: (race: RaceSummary) => void;
 }) {
@@ -288,7 +309,7 @@ function RaceCard({
   const isImminent = Number.isFinite(minutes) && minutes <= 5 && minutes >= -1;
 
   const tone = isUltra ? "gold" : isFinalMode ? "final" : "tentative";
-  const stake = RECOMMEND_AMOUNT[rating] ?? 0;
+  const stake = recommendStake(rating, budget);
   const hev = cooledEv(race);
   const expectedReturn = stake && hev ? Math.round(stake * hev) : null;
 
@@ -339,7 +360,7 @@ function RaceCard({
         <div className="grid grid-cols-3 gap-3">
           <Stat label="正直EV" value={hev ? hev.toFixed(2) : "—"} tone={isUltra ? "gold" : "default"} size="md" />
           <Stat label="信頼度" value={race.confidence ? Math.round(race.confidence * 100) : "—"} unit="%" size="md" />
-          <Stat label="推奨" value={formatYen(stake)} size="md" />
+          <Stat label="複勝の目安" value={formatYen(stake)} size="md" />
         </div>
 
         <div className="bg-paper-soft/70 rounded-[12px] p-3.5 border border-line">
