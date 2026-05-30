@@ -23,7 +23,13 @@ from __future__ import annotations
 
 import glob
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from race_facts import (  # noqa: E402
+    signal_odds_moves, build_prev_index, facts_for_race,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data" / "jv_cache"
@@ -42,6 +48,10 @@ KIND_LABEL = {
     "weight_up":  "馬体重が大きく増えた",
     "weight_down":"馬体重が大きく減った",
     "blinker":    "ブリンカー着用",
+    "rento":      "連闘(中6日以内)",
+    "layoff":     "休み明け(90〜179日)",
+    "long_layoff":"長期休み明け(180日以上)",
+    "dist_change":"距離が前走と大きく変化",
 }
 
 
@@ -50,28 +60,6 @@ def _load(p: Path):
         return json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         return None
-
-
-def _odds_moves(hist) -> dict:
-    """signals 履歴から、最初の本物オッズと最新オッズの変化率%を馬番ごとに。"""
-    if not isinstance(hist, list) or len(hist) < 2:
-        return {}
-    first, last = {}, {}
-    for snap in hist:
-        for h in (snap.get("horses") or []):
-            n, o = h.get("n"), h.get("o")
-            if not isinstance(n, int) or o in (None, 0):
-                continue
-            try:
-                o = float(o)
-            except (TypeError, ValueError):
-                continue
-            if o <= 0:
-                continue
-            first.setdefault(n, o)
-            last[n] = o
-    return {n: (last[n] - o0) / o0 * 100
-            for n, o0 in first.items() if last.get(n) and o0}
 
 
 def _race_horses(rid: str) -> dict:
@@ -85,29 +73,15 @@ def _race_horses(rid: str) -> dict:
     return by_num
 
 
-def _facts_for_race(rid: str) -> dict:
-    """馬番 → その馬に付いた事実 kind の集合。"""
-    moves = _odds_moves(_load(SIGNALS / f"{rid}.json"))
+def _facts_for_race(rid: str, prev_index: dict) -> dict:
+    """馬番 → その馬に付いた事実 kind の集合 (表示と同じ race_facts 定義を使う)。"""
+    race = _load(RACES / f"{rid}.json")
     horses = _race_horses(rid)
+    facts = facts_for_race(rid, horses, (race or {}).get("distance"),
+                           signal_odds_moves(rid), prev_index, limit=99)
     out: dict = {}
-    for n, h in horses.items():
-        kinds = set()
-        mv = moves.get(n)
-        if mv is not None and mv <= -15:
-            kinds.add("money_in")
-        elif mv is not None and mv >= 30:
-            kinds.add("money_out")
-        ij = str(h.get("ijyou_code") or "").strip()
-        if ij in ("2", "3", "4"):
-            kinds.add("scratch")
-        wd = h.get("weight_diff")
-        if isinstance(wd, int) and 16 <= abs(wd) <= 40:
-            kinds.add("weight_up" if wd > 0 else "weight_down")
-        bl = h.get("blinker")
-        if bl not in (None, "", "0", 0):
-            kinds.add("blinker")
-        if kinds:
-            out[n] = kinds
+    for f in facts:
+        out.setdefault(f["number"], set()).add(f["kind"])
     return out
 
 
@@ -129,6 +103,7 @@ def run() -> dict:
     per_kind = {k: {"n": 0, "top3": 0, "win": 0} for k in KIND_LABEL}
     base = {"n": 0, "top3": 0, "win": 0}
     races_used = 0
+    prev_index = build_prev_index()
 
     for sp in glob.glob(str(SIGNALS / "*.json")):
         rid = Path(sp).stem
@@ -136,7 +111,7 @@ def run() -> dict:
         if not finishes:
             continue  # 確定結果が無いレースは採点できない
         races_used += 1
-        facts = _facts_for_race(rid)
+        facts = _facts_for_race(rid, prev_index)
         for n, rank in finishes.items():
             in3 = 1 if 1 <= rank <= 3 else 0
             win = 1 if rank == 1 else 0

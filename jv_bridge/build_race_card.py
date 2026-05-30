@@ -19,6 +19,7 @@ from pathlib import Path
 # 必殺一号艇の予想思想を移植した「正直な期待値 + 4段階判定」エンジン
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from honest_ev import honest_ev, judge_race, TIER_ORDER, TIER_LABEL  # noqa: E402
+from race_facts import signal_odds_moves, build_prev_index, facts_for_race  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data" / "jv_cache"
@@ -27,69 +28,6 @@ PREDS = CACHE / "predictions"
 RESULTS = CACHE / "results"
 SIGNALS = CACHE / "signals"
 OUT = CACHE / "race_card_latest.json"
-
-
-def _signal_odds_moves(rid: str) -> dict:
-    """signals/<rid>.json から、最初に付いた本物オッズと最新オッズを比べて
-    急変した馬を返す。戻り値: {馬番: 変化率%}  (マイナス=下がった=お金が入った)"""
-    hist = _load(SIGNALS / f"{rid}.json")
-    if not isinstance(hist, list) or len(hist) < 2:
-        return {}
-    first: dict = {}
-    last: dict = {}
-    for snap in hist:
-        for h in (snap.get("horses") or []):
-            n, o = h.get("n"), h.get("o")
-            if not isinstance(n, int) or o in (None, 0):
-                continue
-            try:
-                o = float(o)
-            except (TypeError, ValueError):
-                continue
-            if o <= 0:
-                continue
-            first.setdefault(n, o)
-            last[n] = o
-    moves = {}
-    for n, o0 in first.items():
-        o1 = last.get(n)
-        if o1 and o0 and o1 != o0:
-            moves[n] = round((o1 - o0) / o0 * 100, 1)
-    return moves
-
-
-def _race_facts(rid: str, horses_raw: dict) -> list:
-    """「人が見落としがちな硬い事実」を 1 レースぶん集める。
-    予想には混ぜない。参考メモとして画面に出すだけ (未検証)。"""
-    facts = []
-    moves = _signal_odds_moves(rid)
-    for n, h in horses_raw.items():
-        name = h.get("name")
-        mv = moves.get(n)
-        if mv is not None and mv <= -15:
-            facts.append({"number": n, "name": name, "kind": "money_in",
-                          "detail": f"直前にオッズが{abs(mv):.0f}%下がった"})
-        elif mv is not None and mv >= 30:
-            facts.append({"number": n, "name": name, "kind": "money_out",
-                          "detail": f"直前にオッズが{mv:.0f}%上がった"})
-        ij = str(h.get("ijyou_code") or "").strip()
-        if ij in ("2", "3", "4"):
-            facts.append({"number": n, "name": name, "kind": "scratch",
-                          "detail": {"2": "取消", "3": "除外", "4": "中止"}[ij]})
-        wd = h.get("weight_diff")
-        # 現実の馬体重増減は最大でも 40kg 程度。それを超える値は壊れたデータなので無視。
-        if isinstance(wd, int) and 16 <= abs(wd) <= 40:
-            facts.append({"number": n, "name": name,
-                          "kind": "weight_up" if wd > 0 else "weight_down",
-                          "detail": f"馬体重{'+' if wd > 0 else ''}{wd}kg"})
-        bl = h.get("blinker")
-        if bl not in (None, "", "0", 0):
-            facts.append({"number": n, "name": name, "kind": "blinker",
-                          "detail": "ブリンカー着用"})
-    order = {"money_in": 0, "scratch": 1, "weight_up": 2, "weight_down": 2,
-             "money_out": 3, "blinker": 4}
-    facts.sort(key=lambda f: order.get(f["kind"], 9))
-    return facts[:6]
 
 
 def _load(p: Path):
@@ -145,6 +83,9 @@ def build_card(date8: str | None = None) -> dict:
     if date8 is None:
         date8 = _pick_latest_real_date(all_ids)
     day_ids = sorted(rid for rid in all_ids if rid.startswith(date8))
+
+    # 前走比の事実 (連闘/休み明け/距離変更) 用に、全レースから馬ごとの過去走を索引化 (1回だけ)
+    prev_index = build_prev_index()
 
     races_out = []
     for rid in day_ids:
@@ -246,7 +187,8 @@ def build_card(date8: str | None = None) -> dict:
             # 旧UI互換 (買い候補のみ go、それ以外 skip)
             "verdict": "go" if judge["tier"] in ("prime", "bet") else "skip",
             # 「人が見落としがちな硬い事実」の参考メモ (未検証・予想には混ぜない)
-            "facts": _race_facts(rid, dedup),
+            "facts": facts_for_race(rid, dedup, race.get("distance"),
+                                    signal_odds_moves(rid), prev_index),
             "horses": horses,
         })
 
