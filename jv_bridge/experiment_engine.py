@@ -107,10 +107,37 @@ def build_strategies(recs):
          "desc": "期待値1.2以上の馬を複勝で手堅く買う",
          "field": "fuku_pay", "origin": "手堅い",
          "pred": lambda r: r["odds"] is not None and r["p_nopop"] * r["odds"] >= 1.20},
+        # --- 穴狙い (世の中の「AIが推す人気薄」を狙う工夫) ---
+        {"key": "ana_top1_pop5", "name": "単勝・AI本命なのに人気薄(5番人気以下)",
+         "desc": "実力派AIが本命にしたのに世間は5番人気以下=市場が見落とした穴を単勝で狙う",
+         "field": "tan_pay", "origin": "穴狙い",
+         "pred": lambda r: is_top1(r) and r["popularity"] and r["popularity"] >= 5},
+        {"key": "ana_top1_pop5_fuku", "name": "複勝・AI本命なのに人気薄(5番人気以下)",
+         "desc": "同じ穴馬を複勝で手堅めに(3着以内で当たり)",
+         "field": "fuku_pay", "origin": "穴狙い",
+         "pred": lambda r: is_top1(r) and r["popularity"] and r["popularity"] >= 5},
+        # --- 食い違い (AIの評価と市場の評価が大きくズレた馬) ---
+        {"key": "gap_top1_pop3", "name": "単勝・AI本命×市場は3番人気以下",
+         "desc": "AIは一番手なのに市場は3番人気以下=評価のズレが中くらいの馬を単勝",
+         "field": "tan_pay", "origin": "食い違い",
+         "pred": lambda r: is_top1(r) and r["popularity"] and r["popularity"] >= 3},
+        # --- 手堅い (市場の人気上位を複勝で) ---
+        {"key": "fav123_fuku", "name": "複勝・1〜3番人気をすべて(手堅い)",
+         "desc": "市場の上位人気3頭をまとめて複勝で買う鉄板狙い",
+         "field": "fuku_pay", "origin": "手堅い",
+         "pred": lambda r: r["popularity"] and r["popularity"] <= 3},
+        {"key": "fuku_top1_conf25", "name": "複勝・AI本命・自信25%以上(厳選)",
+         "desc": "AI本命のうち特に自信が高い(25%以上)レースだけ複勝で厳選",
+         "field": "fuku_pay", "origin": "手堅い",
+         "pred": lambda r: is_top1(r) and r["p_nopop"] >= 0.25},
         # --- ものさし(市場のベタ買い) ---
         {"key": "fav1_tansho", "name": "単勝・1番人気ベタ買い (ものさし)",
          "desc": "毎レース1番人気を単勝で買うだけ。AIと比べるための基準",
          "field": "tan_pay", "origin": "ものさし",
+         "pred": lambda r: r["popularity"] == 1},
+        {"key": "fav1_fuku", "name": "複勝・1番人気ベタ買い (ものさし)",
+         "desc": "毎レース1番人気を複勝で買うだけ。手堅い基準",
+         "field": "fuku_pay", "origin": "ものさし",
          "pred": lambda r: r["popularity"] == 1},
     ]
     return strategies
