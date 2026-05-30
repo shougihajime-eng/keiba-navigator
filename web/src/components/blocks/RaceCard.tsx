@@ -22,6 +22,7 @@ type CardHorse = {
   finish: number | null;
   won: number;
 };
+type RaceFact = { number: number; name: string | null; kind: string; detail: string };
 type CardRace = {
   race_id: string;
   race_name: string | null;
@@ -44,6 +45,7 @@ type CardRace = {
   reason?: string | null;
   bet_style?: string | null;
   best_honest_ev?: number | null;
+  facts?: RaceFact[];
   horses: CardHorse[];
 };
 type TierCounts = { prime: number; bet: number; watch: number; skip: number };
@@ -67,6 +69,34 @@ const TIER_META: Record<Tier, {
   watch: { label: "様子見", tone: "tentative", dot: "bg-ink-blue",   ring: "border-line/60" },
   skip:  { label: "見送り", tone: "silver",    dot: "bg-silver",     ring: "border-line/50" },
 };
+
+// 事実メモ (参考) の色: お金が入った=緑 / 馬体重=金 / 装備=青 / 取消・お金が抜けた=銀
+const FACT_TONE: Record<string, "gold" | "won" | "silver" | "tentative"> = {
+  money_in: "won", money_out: "silver", scratch: "silver",
+  weight_up: "gold", weight_down: "gold", blinker: "tentative",
+};
+
+/** 「人が見落としがちな硬い事実」を参考メモとして出す (未検証・予想には混ぜない) */
+function FactRow({ facts }: { facts?: RaceFact[] }) {
+  if (!facts || facts.length === 0) return null;
+  return (
+    <div className="mt-2.5">
+      <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium mb-1">
+        事実メモ（参考）
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {facts.map((f, i) => (
+          <Badge key={i} tone={FACT_TONE[f.kind] ?? "silver"} size="xs">
+            #{f.number} {f.detail}
+          </Badge>
+        ))}
+      </div>
+      <p className="mt-1.5 text-[10px] text-ink-faint leading-snug">
+        レース直前の変化です。<span className="text-ink-muted">まだ「当たりやすさに効くか」は検証していない</span>ので、予想には混ぜていません（これから数ヶ月ぶん貯めて確かめます）。
+      </p>
+    </div>
+  );
+}
 
 const pct = (v?: number | null) => (typeof v === "number" ? `${Math.round(v * 100)}%` : "—");
 const fmtDate = (d?: string) =>
@@ -310,6 +340,9 @@ function BuyCard({ race, budget, open, onToggle }: { race: CardRace; budget: num
         <p className="mt-2.5 text-xs text-deep-green leading-snug">▸ {race.reason}</p>
       )}
 
+      {/* 事実メモ (参考・未検証) */}
+      <FactRow facts={race.facts} />
+
       {/* 複勝おすすめ金額 (大きく) */}
       {stake > 0 && (
         <div className="mt-3 rounded-[12px] border border-deep-green/25 bg-deep-green-soft/40 px-3.5 py-2.5">
@@ -359,7 +392,7 @@ function CompactRow({ race, open, onToggle }: { race: CardRace; open: boolean; o
         </div>
         {race.has_result ? <ResultBadge race={race} /> : <Badge tone={m.tone} size="sm">{m.label}</Badge>}
       </button>
-      {open && <div className="ml-7"><HorseDetail race={race} /></div>}
+      {open && <div className="ml-7"><FactRow facts={race.facts} /><HorseDetail race={race} /></div>}
     </div>
   );
 }

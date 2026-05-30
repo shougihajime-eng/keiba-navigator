@@ -89,6 +89,14 @@ $JV_BRIDGE = Join-Path $KEIBA_ROOT "jv_bridge"
 Write-Log "Running archive_signals (硬い事実シグナルの保存)..."
 & py -3.12 (Join-Path $JV_BRIDGE "archive_signals.py") 2>&1 | ForEach-Object { Write-Log ("  " + $_) }
 
+# 全レースカードを再生成 (事実メモ付き) → /api/race-card が返す race_card_latest.json を更新
+Write-Log "Running build_race_card (全レースカード + 事実メモ)..."
+& py -3.12 (Join-Path $JV_BRIDGE "build_race_card.py") 2>&1 | Select-Object -Last 2 | ForEach-Object { Write-Log ("  " + $_) }
+
+# 事実シグナルの採点 (確定結果が貯まるほど精度が上がる)
+Write-Log "Running validate_signals (事実シグナルの採点)..."
+& py -3.12 (Join-Path $JV_BRIDGE "validate_signals.py") 2>&1 | Select-Object -Last 1 | ForEach-Object { Write-Log ("  " + $_) }
+
 # Run aggregate_features_v2 to update features.json
 Write-Log "Running aggregate_features_v2..."
 & py -3.12 (Join-Path $JV_BRIDGE "aggregate_features_v2.py") 2>&1 | Select-Object -Last 3 | ForEach-Object { Write-Log ("  " + $_) }

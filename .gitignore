@@ -59,6 +59,8 @@ data/jv_cache/*
 # 2026-05-30: 硬い事実シグナル(オッズ変動/取消/馬体重/装備)を日付つきで貯める箱
 # 当日のレースだけ時刻つきで蓄積し、後日リークなしで「効くか」を検証する生ログ
 !data/jv_cache/signals/
+# 事実シグナルの採点結果 (validate_signals.py の出力)
+!data/jv_cache/signals_validation.json
 
 # Editor
 .vscode/
