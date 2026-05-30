@@ -316,6 +316,32 @@ def run_precompute_predictions() -> int:
     )
 
 
+# ─── ステップ 4.9: 実験室 (自己成長する実験モード) を更新 ─────────
+def run_walk_forward_value_ev() -> int:
+    """リークなし(各期間を過去だけで学習)の per-bet キャッシュ value_ev_bets.json を再生成。
+    実験室の正直な採点の土台。64bit Python + LightGBM 必須・数分かかる。"""
+    log_line("[step4.9] walk_forward_value_ev.py (リークなし採点データを再生成)")
+    py64 = python_exe_64()
+    if not py64:
+        log_line("  64bit Python 未検出・実験室データ更新をスキップ (前回の値を維持)")
+        return 0
+    return run_subprocess(
+        [py64, str(JV_BRIDGE / "walk_forward_value_ev.py")],
+        "walk_forward_value_ev", timeout=1200,
+    )
+
+
+def run_experiment_engine() -> int:
+    """value_ev_bets.json を 12 作戦で紙上ベット採点 → experiment_status.json /
+    experiment_history.json を更新 (= 実験室が育つ)。軽い処理。"""
+    log_line("[step4.95] experiment_engine.py (実験室を再採点・成長ログ追記)")
+    py = python_exe_64() or python_exe()
+    return run_subprocess(
+        [py, str(JV_BRIDGE / "experiment_engine.py")],
+        "experiment_engine", timeout=180,
+    )
+
+
 # ─── ステップ 5: git commit + push ──────────────────────────
 def git_commit_push() -> int:
     """訓練済モデル + 集計済特徴量を git に乗せて Vercel へ反映する。
@@ -359,6 +385,9 @@ def git_commit_push() -> int:
         "data/jv_cache/model_lgbm_nopop_meta.json",
         "data/jv_cache/recommendations.json",
         "data/jv_cache/backtest_result.json",
+        # ★2026-05-30: 自己成長する実験モード(実験室) の成績表 + 成長ログ
+        "data/jv_cache/experiment_status.json",
+        "data/jv_cache/experiment_history.json",
     ]
     add_args = ["git", "add"] + [t for t in targets if (ROOT / t).exists()]
     if len(add_args) == 2:
@@ -420,6 +449,8 @@ def main():
                     help="aggregate_recommendations をスキップ")
     ap.add_argument("--skip-validate", action="store_true",
                     help="validate_lightgbm (回収率実証) をスキップ")
+    ap.add_argument("--skip-experiment", action="store_true",
+                    help="実験室 (walk_forward_value_ev + experiment_engine) の更新をスキップ")
     args = ap.parse_args()
 
     log_line("=== race_day_pipeline 開始 ===")
@@ -490,6 +521,17 @@ def main():
         rc = run_precompute_predictions()
         if rc == -2: timed_out = True
         if rc != 0: overall |= 0x40
+    # ★2026-05-30: 実験室 (自己成長する実験モード) を更新
+    #   リークなし再学習 (重い・数分) → 12 作戦を紙上ベット採点 → experiment_status.json
+    #   これで「使うほど成長する」が自動で回る。Supabase 非依存 (git push のみ)。
+    if not getattr(args, "skip_experiment", False):
+        rc = run_walk_forward_value_ev()
+        if rc == -2: timed_out = True
+        if rc != 0: overall |= 0x2000
+        # 採点は土台データが無くても前回値で動くので、再学習が失敗しても採点は試みる
+        rc = run_experiment_engine()
+        if rc == -2: timed_out = True
+        if rc != 0: overall |= 0x4000
 
     # ★Wave16-QA: 途中タイムアウトがあった場合、部分データを push せず次回再取得に任せる
     if timed_out:
