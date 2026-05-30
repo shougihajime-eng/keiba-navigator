@@ -170,6 +170,173 @@ def score_strategy(recs, strat, periods):
     }
 
 
+# ---------------------------------------------------------------------------
+# 連系の券種 (馬連・ワイド・3連複) を AI 上位馬で組む作戦
+#   value_ev_bets.json はリークなしの予想(p_nopop)を馬ごとに持つ。
+#   各レースの結果ファイル results/<rid>.json から本物の連系払戻を引いて採点する。
+# ---------------------------------------------------------------------------
+def _key_to_set(key):
+    """'11-12' / '4-7-12' -> {11,12} / {4,7,12}"""
+    try:
+        return frozenset(int(x) for x in str(key).split("-") if x != "")
+    except (TypeError, ValueError):
+        return frozenset()
+
+
+def _load_combo_payouts(rids):
+    """rid -> {uren:(set,amount), wide:[(set,amount)...], fuku3:(set,amount)}"""
+    out = {}
+    for rid in rids:
+        f = RESULTS / f"{rid}.json"
+        if not f.exists():
+            continue
+        try:
+            p = (json.loads(f.read_text(encoding="utf-8")).get("payouts") or {})
+        except Exception:
+            continue
+        entry = {"uren": None, "wide": [], "fuku3": None}
+        u = p.get("uren")
+        if isinstance(u, dict) and u.get("key"):
+            try:
+                entry["uren"] = (_key_to_set(u["key"]), int(u.get("amount") or 0))
+            except (TypeError, ValueError):
+                pass
+        for w in (p.get("wide") or []):
+            if isinstance(w, dict) and w.get("key"):
+                try:
+                    entry["wide"].append((_key_to_set(w["key"]), int(w.get("amount") or 0)))
+                except (TypeError, ValueError):
+                    pass
+        f3 = p.get("fuku3")
+        if isinstance(f3, dict) and f3.get("key"):
+            try:
+                entry["fuku3"] = (_key_to_set(f3["key"]), int(f3.get("amount") or 0))
+            except (TypeError, ValueError):
+                pass
+        out[rid] = entry
+    return out
+
+
+def _ranked_by_nopop(recs):
+    """rid -> [馬番...] を補正nopop勝率の高い順に。"""
+    by_rid = {}
+    for r in recs:
+        by_rid.setdefault(r["rid"], []).append((r["p_nopop"], r["number"]))
+    ranked = {}
+    for rid, lst in by_rid.items():
+        lst.sort(key=lambda x: (x[0], -x[1]), reverse=True)
+        ranked[rid] = [num for _, num in lst]
+    return ranked
+
+
+def _wide_pay(wide_list, pair):
+    """ワイドの payout: pair(frozenset) に一致する組の amount。無ければ 0。"""
+    best = 0
+    for s, amt in wide_list:
+        if s == pair:
+            best = max(best, amt)
+    return best
+
+
+def score_combo(recs, combo_pay, ranked, period_of, kind):
+    """連系作戦を 1 レース単位で採点。score_strategy と同じ形の dict を返す。
+    kind: 'uren' | 'wide_box3' | 'fuku3_box3'
+    """
+    defs = {
+        "uren": {
+            "key": "uren_top12", "name": "馬連・AIの上位2頭",
+            "desc": "実力派AIの1番手と2番手で馬連を1点買う",
+            "bet_type": "馬連", "need": 2, "tickets": 1, "origin": "連系を試す",
+        },
+        "wide_box3": {
+            "key": "wide_box_top3", "name": "ワイド・AI上位3頭ボックス",
+            "desc": "実力派AIの上位3頭から3組のワイドを買う(手堅め)",
+            "bet_type": "ワイド", "need": 3, "tickets": 3, "origin": "連系を試す",
+        },
+        "fuku3_box3": {
+            "key": "fuku3_box_top3", "name": "3連複・AI上位3頭ボックス",
+            "desc": "実力派AIの上位3頭で3連複を1点買う(大きく狙う)",
+            "bet_type": "3連複", "need": 3, "tickets": 1, "origin": "連系を試す",
+        },
+    }
+    d = defs[kind]
+    inv = ret = bets = hits = 0
+    by_period = {}
+    bankroll = START_BANKROLL
+    curve = []
+    for rid in sorted(ranked):
+        order = ranked[rid]
+        if len(order) < d["need"]:
+            continue
+        pay = combo_pay.get(rid)
+        if pay is None:
+            continue
+        per = period_of.get(rid)
+        if per is None:
+            continue
+        race_inv = 0
+        race_ret = 0
+        if kind == "uren":
+            pair = frozenset(order[:2])
+            race_inv = UNIT
+            up = pay.get("uren")
+            won = bool(up and up[0] == pair)
+            race_ret = up[1] if won else 0
+            bets += 1
+            if won:
+                hits += 1
+        elif kind == "wide_box3":
+            top3 = order[:3]
+            pairs = [frozenset((top3[0], top3[1])),
+                     frozenset((top3[0], top3[2])),
+                     frozenset((top3[1], top3[2]))]
+            for pr in pairs:
+                race_inv += UNIT
+                amt = _wide_pay(pay.get("wide") or [], pr)
+                race_ret += amt
+                bets += 1
+                if amt > 0:
+                    hits += 1
+        elif kind == "fuku3_box3":
+            trio = frozenset(order[:3])
+            race_inv = UNIT
+            fp = pay.get("fuku3")
+            won = bool(fp and fp[0] == trio)
+            race_ret = fp[1] if won else 0
+            bets += 1
+            if won:
+                hits += 1
+        inv += race_inv
+        ret += race_ret
+        bankroll += race_ret - race_inv
+        by_period.setdefault(per, [0, 0])
+        by_period[per][0] += race_inv
+        by_period[per][1] += race_ret
+        if bets and bets % 50 == 0:
+            curve.append(round(bankroll))
+    curve.append(round(bankroll))
+
+    period_rois = []
+    for per in sorted(by_period):
+        i, rr = by_period[per]
+        period_rois.append(round(rr / i * 100, 1) if i else None)
+    valid = [x for x in period_rois if x is not None]
+    roi = round(ret / inv * 100, 1) if inv else None
+    return {
+        "key": d["key"], "name": d["name"], "desc": d["desc"], "origin": d["origin"],
+        "bet_type": d["bet_type"],
+        "bets": bets,
+        "hit_rate_pct": round(hits / bets * 100, 1) if bets else None,
+        "roi_pct": roi,
+        "profit_yen": ret - inv,
+        "win_periods": sum(1 for x in valid if x >= 100),
+        "active_periods": len(valid),
+        "period_rois": period_rois,
+        "bankroll_curve": curve,
+        "is_winning": bool(roi is not None and roi >= 100),
+    }
+
+
 def main():
     if not BETS.exists():
         print(f"[NG] {BETS.name} が無い。先に walk_forward_value_ev.py を実行してください。", flush=True)
@@ -181,6 +348,16 @@ def main():
 
     strategies = build_strategies(recs)
     scored = [score_strategy(recs, s, periods) for s in strategies]
+
+    # --- 連系の券種 (馬連・ワイド・3連複) を追加 ---
+    period_of = {r["rid"]: r["period"] for r in recs}
+    ranked = _ranked_by_nopop(recs)
+    combo_pay = _load_combo_payouts(list(ranked.keys()))
+    for kind in ("uren", "wide_box3", "fuku3_box3"):
+        try:
+            scored.append(score_combo(recs, combo_pay, ranked, period_of, kind))
+        except Exception as e:
+            print(f"[warn] combo {kind} 採点失敗: {e}", flush=True)
     # 回収率の高い順 (None は最後)
     scored.sort(key=lambda s: (s["roi_pct"] is not None, s["roi_pct"] or 0), reverse=True)
 
