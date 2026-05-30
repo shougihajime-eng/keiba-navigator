@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,10 @@ interface CollapsibleProps {
   badge?: ReactNode;
   children: ReactNode;
   tone?: "neutral" | "gold" | "info";
+  /** 他の場所からこのセクションを開きたい時の合言葉。
+   *  window に CustomEvent("keiba:open-section", { detail: openOn }) が来たら
+   *  自動で開いてここまでスクロールする。 */
+  openOn?: string;
 }
 
 const toneMap = {
@@ -28,12 +32,30 @@ export function Collapsible({
   badge,
   children,
   tone = "neutral",
+  openOn,
 }: CollapsibleProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openOn) return;
+    const onOpen = (e: Event) => {
+      if ((e as CustomEvent).detail !== openOn) return;
+      setOpen(true);
+      // 開いた直後にスクロール (描画を待ってから)
+      requestAnimationFrame(() => {
+        rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    };
+    window.addEventListener("keiba:open-section", onOpen);
+    return () => window.removeEventListener("keiba:open-section", onOpen);
+  }, [openOn]);
+
   return (
     <div
+      ref={rootRef}
       className={cn(
-        "bg-paper rounded-[16px] border transition-shadow",
+        "bg-paper rounded-[16px] border transition-shadow scroll-mt-20",
         toneMap[tone],
         open ? "shadow-[var(--shadow-sm)]" : "shadow-[var(--shadow-xs)]",
       )}

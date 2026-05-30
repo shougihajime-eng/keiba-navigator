@@ -82,6 +82,7 @@ export function CollapsibleSections() {
         hint="外したレースの構造化タグ集計"
         badge={reflectionCount > 0 ? <Badge tone="lost" size="sm">{reflectionCount}</Badge> : null}
         tone="info"
+        openOn="reflections"
       >
         <ReflectionDashboard />
       </Collapsible>

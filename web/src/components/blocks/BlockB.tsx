@@ -85,7 +85,19 @@ export function BlockB() {
             </div>
           </CardBody>
           <CardFooter className="flex justify-between gap-2 items-center">
-            <Button variant="ghost" size="sm">全反省履歴を見る</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(
+                    new CustomEvent("keiba:open-section", { detail: "reflections" }),
+                  );
+                }
+              }}
+            >
+              全反省履歴を見る
+            </Button>
             <span className="text-xs text-ink-muted">
               累計 {allCount} 件 · 次回の重み調整に反映
             </span>
