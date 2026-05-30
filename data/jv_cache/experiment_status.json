@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "updated_at": "2026-05-30T03:29:34.051371+00:00",
+  "updated_at": "2026-05-30T06:35:58.071827+00:00",
   "leakage_free": true,
   "method": "未来を見ない週ごと再学習(walk-forward)で紙上ベットを自己採点",
   "total_bet_records": 41780,
@@ -8,8 +8,8 @@
   "start_bankroll": 10000,
   "unit_yen": 100,
   "any_winning_strategy": false,
-  "headline": "実験中: 今いちばん良い作戦でも回収率 85.3% (まだ勝てる買い方は見つかっていません・正直に観察を続けます)",
-  "champion_key": "fav1_fuku",
+  "headline": "実験中: AIの一番良い作戦でも回収率 82.4% (まだ勝てる買い方は見つかっていません・正直に観察を続けます) / 比較用の1番人気ベタ買いは85.3%",
+  "champion_key": "fuku_top1_conf25",
   "strategies": [
     {
       "key": "fav1_fuku",
@@ -91,9 +91,9 @@
     },
     {
       "key": "fav123_fuku",
-      "name": "複勝・1〜3番人気をすべて(手堅い)",
-      "desc": "市場の上位人気3頭をまとめて複勝で買う鉄板狙い",
-      "origin": "手堅い",
+      "name": "複勝・1〜3番人気をすべて (ものさし)",
+      "desc": "市場の上位人気3頭をまとめて複勝で買う鉄板狙い。AIは使わない比較用の基準",
+      "origin": "ものさし",
       "bet_type": "複勝",
       "bets": 8517,
       "hit_rate_pct": 53.7,

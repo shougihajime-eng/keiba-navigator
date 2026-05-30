@@ -122,9 +122,9 @@ def build_strategies(recs):
          "field": "tan_pay", "origin": "食い違い",
          "pred": lambda r: is_top1(r) and r["popularity"] and r["popularity"] >= 3},
         # --- 手堅い (市場の人気上位を複勝で) ---
-        {"key": "fav123_fuku", "name": "複勝・1〜3番人気をすべて(手堅い)",
-         "desc": "市場の上位人気3頭をまとめて複勝で買う鉄板狙い",
-         "field": "fuku_pay", "origin": "手堅い",
+        {"key": "fav123_fuku", "name": "複勝・1〜3番人気をすべて (ものさし)",
+         "desc": "市場の上位人気3頭をまとめて複勝で買う鉄板狙い。AIは使わない比較用の基準",
+         "field": "fuku_pay", "origin": "ものさし",
          "pred": lambda r: r["popularity"] and r["popularity"] <= 3},
         {"key": "fuku_top1_conf25", "name": "複勝・AI本命・自信25%以上(厳選)",
          "desc": "AI本命のうち特に自信が高い(25%以上)レースだけ複勝で厳選",
@@ -389,16 +389,26 @@ def main():
     # 回収率の高い順 (None は最後)
     scored.sort(key=lambda s: (s["roi_pct"] is not None, s["roi_pct"] or 0), reverse=True)
 
-    champion = scored[0] if scored else None
-    any_winning = any(s["is_winning"] and s["bets"] >= 100 for s in scored)
+    # 首位(champion)は「AIの作戦」だけから選ぶ。
+    # origin=="ものさし"(1番人気ベタ買い等)は比較用の基準なので首位にしない
+    # = 「AIより単なる人気買いが上」という誤解を防ぐ。表示はする。
+    ai_strategies = [s for s in scored if s["origin"] != "ものさし"]
+    champion = ai_strategies[0] if ai_strategies else (scored[0] if scored else None)
+    any_winning = any(s["is_winning"] and s["bets"] >= 100 for s in ai_strategies)
+
+    # ものさしの最上位 (AI と比べるための基準値)
+    ruler = next((s for s in scored if s["origin"] == "ものさし"), None)
 
     # 正直なひとこと
     if any_winning:
-        headline = "実験中: 100%を超えた作戦が出ています(まだ過去データ上の話・継続観察中)"
+        headline = "実験中: AIの作戦で100%を超えたものが出ています(まだ過去データ上の話・継続観察中)"
     else:
         best_roi = champion["roi_pct"] if champion else None
-        headline = (f"実験中: 今いちばん良い作戦でも回収率 {best_roi}% "
-                    f"(まだ勝てる買い方は見つかっていません・正直に観察を続けます)")
+        ruler_note = ""
+        if ruler and ruler["roi_pct"] is not None:
+            ruler_note = f" / 比較用の1番人気ベタ買いは{ruler['roi_pct']}%"
+        headline = (f"実験中: AIの一番良い作戦でも回収率 {best_roi}% "
+                    f"(まだ勝てる買い方は見つかっていません・正直に観察を続けます){ruler_note}")
 
     out = {
         "ok": True,

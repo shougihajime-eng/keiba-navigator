@@ -137,22 +137,32 @@ function originBadge(origin: string): "info" | "neutral" | "won" {
 function StrategyRow({ s, rank, champion }: { s: ExperimentStrategy; rank: number; champion: boolean }) {
   const roi = s.roi_pct;
   const winning = s.is_winning && s.bets >= 100;
+  const isRuler = s.origin === "ものさし";
   const roiCls =
     roi == null ? "text-ink-faint" : roi >= 100 ? "text-deep-green" : roi >= 90 ? "text-gold" : "text-wine";
   return (
     <div
       className={`rounded-[12px] border p-3.5 ${
-        champion ? "border-gold/40 bg-gold-soft/30" : "border-line/60 bg-paper"
+        champion
+          ? "border-gold/40 bg-gold-soft/30"
+          : isRuler
+            ? "border-dashed border-line/70 bg-paper-soft/50"
+            : "border-line/60 bg-paper"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] font-bold text-ink-faint tabular">{rank}.</span>
-            <span className="truncate text-sm font-semibold text-ink">{s.name}</span>
+            <span className={`truncate text-sm font-semibold ${isRuler ? "text-ink-muted" : "text-ink"}`}>{s.name}</span>
             {champion && (
               <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-gold/20 px-1.5 py-0.5 text-[9px] font-bold text-gold">
-                <Trophy className="w-3 h-3" />首位
+                <Trophy className="w-3 h-3" />AI首位
+              </span>
+            )}
+            {isRuler && (
+              <span className="shrink-0 rounded-full bg-paper-soft px-1.5 py-0.5 text-[9px] font-medium text-ink-muted border border-line">
+                比較用の基準
               </span>
             )}
           </div>
