@@ -5,8 +5,11 @@ import { Wallet, Pencil, Check, ShieldCheck, AlertTriangle } from "lucide-react"
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { loadBets, summaryThisMonth, type Summary } from "@/lib/store";
-import { getBudget, setBudget, perRaceUnit } from "@/lib/bankroll";
+import { getBudget, setBudget, perRaceUnit, fukushoStake } from "@/lib/bankroll";
 import { formatYen, cn } from "@/lib/utils";
+
+// ワンタップで選べる予算の候補 (非エンジニアでも迷わず設定できるように)
+const QUICK_BUDGETS = [5000, 10000, 20000, 30000];
 
 export function BankrollCard() {
   const [budget, setBudgetState] = useState<number>(10000);
@@ -38,6 +41,8 @@ export function BankrollCard() {
   const fillPct = budget > 0 ? Math.min(100, (used / budget) * 100) : 0;
   const unit = perRaceUnit(budget);
   const profit = month.profit;
+  const primeStake = fukushoStake("prime", budget);
+  const betStake = fukushoStake("bet", budget);
 
   const fillTone = over
     ? "from-wine/70 to-wine"
@@ -91,6 +96,33 @@ export function BankrollCard() {
             )}
           </div>
 
+          {/* ワンタップで予算を選ぶ (非エンジニアでも迷わず) */}
+          <div className="flex flex-wrap gap-2">
+            {QUICK_BUDGETS.map((b) => {
+              const active = b === budget;
+              return (
+                <button
+                  key={b}
+                  onClick={() => setBudget(b)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-sm tabular font-medium border transition-colors",
+                    active
+                      ? "bg-deep-green text-white border-deep-green"
+                      : "bg-paper-soft text-ink-soft border-line hover:border-deep-green/40",
+                  )}
+                >
+                  {formatYen(b)}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => { setDraft(String(budget)); setEditing(true); }}
+              className="px-3 py-1.5 rounded-full text-sm font-medium border border-line bg-paper-soft text-ink-muted hover:border-gold/40 transition-colors"
+            >
+              自分で入力
+            </button>
+          </div>
+
           {/* 使用状況バー */}
           <div>
             <div className="relative h-2.5 rounded-full bg-paper-soft overflow-hidden border border-line">
@@ -116,12 +148,24 @@ export function BankrollCard() {
               </p>
             </div>
           ) : (
-            <div className="flex items-start gap-2.5 rounded-[12px] bg-deep-green-soft/40 border border-deep-green/20 p-3.5">
-              <ShieldCheck className="w-4.5 h-4.5 text-deep-green shrink-0 mt-0.5" />
-              <p className="text-sm text-ink-soft leading-relaxed">
-                1レースは <span className="font-semibold text-ink tabular">{formatYen(unit)}</span> まで（予算の3%）。
-                当たらない前提で小さく。<span className="font-medium">期待値プラスの確信が無いレースは見送る</span>のが長期で勝つ唯一の道です。
-              </p>
+            <div className="rounded-[12px] bg-deep-green-soft/40 border border-deep-green/20 p-3.5 space-y-2.5">
+              <div className="flex items-start gap-2.5">
+                <ShieldCheck className="w-4.5 h-4.5 text-deep-green shrink-0 mt-0.5" />
+                <p className="text-sm text-ink-soft leading-relaxed">
+                  1レースは <span className="font-semibold text-ink tabular">{formatYen(unit)}</span> まで（予算の3%）。
+                  当たらない前提で小さく。<span className="font-medium">期待値プラスの確信が無いレースは見送る</span>のが長期で勝つ唯一の道です。
+                </p>
+              </div>
+              {/* この予算だと複勝はいくらになるか (レースカードの金額と連動) */}
+              <div className="flex items-center gap-2 pl-7 text-xs">
+                <span className="text-ink-muted">この予算だと複勝の目安:</span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-gold-soft/60 border border-gold/30 px-2 py-0.5 text-gold-deep font-medium tabular">
+                  絶好機 {formatYen(primeStake)}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-deep-green-soft/60 border border-deep-green/20 px-2 py-0.5 text-deep-green font-medium tabular">
+                  勝負 {formatYen(betStake)}
+                </span>
+              </div>
             </div>
           )}
 
