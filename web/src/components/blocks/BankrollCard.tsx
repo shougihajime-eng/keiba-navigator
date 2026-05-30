@@ -5,7 +5,7 @@ import { Wallet, Pencil, Check, ShieldCheck, AlertTriangle } from "lucide-react"
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { loadBets, summaryThisMonth, type Summary } from "@/lib/store";
-import { getBudget, setBudget, perRaceUnit, fukushoStake } from "@/lib/bankroll";
+import { getBudget, setBudget, fukushoStake } from "@/lib/bankroll";
 import { formatYen, cn } from "@/lib/utils";
 
 // ワンタップで選べる予算の候補 (非エンジニアでも迷わず設定できるように)
@@ -39,10 +39,9 @@ export function BankrollCard() {
   const remaining = Math.max(0, budget - used);
   const over = used > budget;
   const fillPct = budget > 0 ? Math.min(100, (used / budget) * 100) : 0;
-  const unit = perRaceUnit(budget);
   const profit = month.profit;
-  const primeStake = fukushoStake("prime", budget);
-  const betStake = fukushoStake("bet", budget);
+  const primeStake = fukushoStake("prime");
+  const betStake = fukushoStake("bet");
 
   const fillTone = over
     ? "from-wine/70 to-wine"
@@ -152,18 +151,17 @@ export function BankrollCard() {
               <div className="flex items-start gap-2.5">
                 <ShieldCheck className="w-4.5 h-4.5 text-deep-green shrink-0 mt-0.5" />
                 <p className="text-sm text-ink-soft leading-relaxed">
-                  1レースは <span className="font-semibold text-ink tabular">{formatYen(unit)}</span> まで（予算の3%）。
-                  当たらない前提で小さく。<span className="font-medium">期待値プラスの確信が無いレースは見送る</span>のが長期で勝つ唯一の道です。
+                  買う金額は自分で決めたルール。<span className="font-medium">確信が無いレースは見送る</span>のが長期で勝つ唯一の道です。WIN5は金額を決めず、自信のあるときだけ。
                 </p>
               </div>
-              {/* この予算だと複勝はいくらになるか (レースカードの金額と連動) */}
-              <div className="flex items-center gap-2 pl-7 text-xs">
-                <span className="text-ink-muted">この予算だと複勝の目安:</span>
-                <span className="inline-flex items-center gap-1 rounded-md bg-gold-soft/60 border border-gold/30 px-2 py-0.5 text-gold-deep font-medium tabular">
-                  絶好機 {formatYen(primeStake)}
-                </span>
+              {/* 自分で決めた買う金額 (レースカードの金額と連動) */}
+              <div className="flex items-center gap-2 pl-7 text-xs flex-wrap">
+                <span className="text-ink-muted">買う金額:</span>
                 <span className="inline-flex items-center gap-1 rounded-md bg-deep-green-soft/60 border border-deep-green/20 px-2 py-0.5 text-deep-green font-medium tabular">
                   勝負 {formatYen(betStake)}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-gold-soft/60 border border-gold/30 px-2 py-0.5 text-gold-deep font-medium tabular">
+                  絶好機 1万〜{formatYen(primeStake)}
                 </span>
               </div>
             </div>

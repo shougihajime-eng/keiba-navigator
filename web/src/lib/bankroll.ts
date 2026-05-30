@@ -28,19 +28,24 @@ export function setBudget(yen: number) {
   }
 }
 
-/** 1レースの目安額: 予算の3%・100円単位・最低100円 (当たらない前提で小さく) */
+/** 1レースの目安額: 予算の3%・100円単位・最低100円 (使用箇所が残るため互換維持) */
 export function perRaceUnit(budget: number): number {
   return Math.max(100, Math.round((budget * 0.03) / 100) * 100);
 }
 
 /**
- * 段階(tier)ごとの「複勝」おすすめ金額。儲かる買い方は無い前提なので
- * 絶好機=1レースの目安額・勝負=その7割 と、損を抑える小額に固定。
- * 様子見/見送りは買わない(0円)。100円単位。
+ * 買う金額のルール (本人が決めた固定額・2026-05-30):
+ *   勝負 (普通に買うレース) = 5,000円
+ *   絶好機 (自信のあるレース) = 15,000円 (1万〜1万5千円の上限)
+ *   様子見 / 見送り = 買わない (0円)
+ * WIN5 は金額を決めず、自信のあるときだけ買う (本人判断)。
  */
-export function fukushoStake(tier: "prime" | "bet" | "watch" | "skip", budget: number): number {
-  const unit = perRaceUnit(budget);
-  if (tier === "prime") return unit;
-  if (tier === "bet") return Math.max(100, Math.round((unit * 0.7) / 100) * 100);
+export const STAKE_PLAN = { prime: 15000, bet: 5000 } as const;
+export const STAKE_PRIME_LOW = 10000; // 絶好機の下限 (1万円)
+
+/** 段階(tier)ごとの「複勝」おすすめ金額。本人が決めた固定額。 */
+export function fukushoStake(tier: "prime" | "bet" | "watch" | "skip", _budget?: number): number {
+  if (tier === "prime") return STAKE_PLAN.prime;
+  if (tier === "bet") return STAKE_PLAN.bet;
   return 0;
 }

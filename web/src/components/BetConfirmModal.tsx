@@ -182,8 +182,8 @@ export function BetConfirmModal({
                 <label className="text-[11px] uppercase tracking-[0.14em] text-ink-muted font-medium">
                   投資額
                 </label>
-                <div className="mt-2 grid grid-cols-4 gap-2">
-                  {[100, 300, 500, 1000].map((amt) => (
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {[5000, 10000, 15000].map((amt) => (
                     <button
                       key={amt}
                       onClick={() => setStake(amt)}

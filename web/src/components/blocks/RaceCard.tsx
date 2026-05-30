@@ -74,6 +74,7 @@ const TIER_META: Record<Tier, {
 const FACT_TONE: Record<string, "gold" | "won" | "silver" | "tentative"> = {
   money_in: "won", money_out: "silver", scratch: "silver",
   weight_up: "gold", weight_down: "gold", blinker: "tentative",
+  rento: "tentative", layoff: "tentative", long_layoff: "silver", dist_change: "gold",
 };
 
 /** 「人が見落としがちな硬い事実」を参考メモとして出す (未検証・予想には混ぜない) */
@@ -352,7 +353,7 @@ function BuyCard({ race, budget, open, onToggle }: { race: CardRace; budget: num
             <span className="font-display text-2xl font-semibold tabular text-deep-green num-glow-green">{formatYen(stake)}</span>
           </div>
           <div className="mt-0.5 text-[11px] text-ink-muted leading-snug">
-            予算連動の小額（{isPrime ? "予算の3%" : "予算の約2%"}）。儲けではなく損を抑えるのが目的。
+            {isPrime ? "自信のレース（1万〜1万5千円）。" : "普通に買うレース。"}自分で決めた金額です。
           </div>
         </div>
       )}

@@ -233,6 +233,9 @@ function Win5Body({ win5 }: { win5: Win5Resp | null }) {
 
   return (
     <div className="mt-2 space-y-2">
+      <div className="rounded-[10px] bg-ink-blue-soft/40 border border-ink-blue/20 px-3 py-2 text-xs text-ink-soft leading-relaxed">
+        WIN5 は金額を決めず、<span className="font-medium">自信があるときだけ</span>買う方針です（買う額はその時のお気持ちで）。下は参考の組み立て方です。
+      </div>
       {win5.note && <p className="text-sm text-ink-soft">{win5.note}</p>}
       {items.map(({ key, s }) => (
         <div

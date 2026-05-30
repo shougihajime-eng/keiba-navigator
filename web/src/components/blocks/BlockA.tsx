@@ -27,7 +27,7 @@ function ratingToTier(rating: number): "prime" | "bet" | "watch" | "skip" {
   if (rating >= 3) return "watch";
   return "skip";
 }
-/** 予算連動の複勝おすすめ金額 (絶好機=予算3% / 勝負=その7割) */
+/** 複勝おすすめ金額 (本人が決めた固定額: 絶好機1.5万 / 勝負5千) */
 function recommendStake(rating: number, budget: number): number {
   return fukushoStake(ratingToTier(rating), budget);
 }
@@ -388,7 +388,7 @@ function RaceCard({
               <span className="font-display text-2xl font-semibold tabular text-deep-green num-glow-green">{formatYen(stake)}</span>
             </div>
             <div className="mt-0.5 text-[11px] text-ink-muted leading-snug">
-              予算連動の小額（{isUltra ? "予算の3%" : "予算の約2%"}）。儲けではなく損を抑えるのが目的。
+              {isUltra ? "自信のレース（1万〜1万5千円）。" : "普通に買うレース。"}自分で決めた金額です。
               {expectedReturn !== null && <> 予想戻り 約 {formatYen(expectedReturn)}。</>}
             </div>
           </div>
