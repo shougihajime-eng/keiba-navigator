@@ -56,6 +56,9 @@ data/jv_cache/*
 # 2026-05-30: 自己成長する実験モード(実験室) の成績表と成長ログ
 !data/jv_cache/experiment_status.json
 !data/jv_cache/experiment_history.json
+# 2026-05-30: 硬い事実シグナル(オッズ変動/取消/馬体重/装備)を日付つきで貯める箱
+# 当日のレースだけ時刻つきで蓄積し、後日リークなしで「効くか」を検証する生ログ
+!data/jv_cache/signals/
 
 # Editor
 .vscode/

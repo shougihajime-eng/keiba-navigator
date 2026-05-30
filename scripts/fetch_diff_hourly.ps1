@@ -83,6 +83,12 @@ Write-Log "New records captured. Running build_all..."
 $JV_BRIDGE = Join-Path $KEIBA_ROOT "jv_bridge"
 & py -3.12 (Join-Path $JV_BRIDGE "build_all.py") 2>&1 | ForEach-Object { Write-Log ("  " + $_) }
 
+# 硬い事実シグナルを日付つきで貯める箱に追記する。
+# 当日のレースのオッズ変動(賢いお金の動き)/取消/馬体重増減/装備変更を時刻つきで残し、
+# 数ヶ月後にリークなしで「本当に的中につながるか」を検証するための生ログ。
+Write-Log "Running archive_signals (硬い事実シグナルの保存)..."
+& py -3.12 (Join-Path $JV_BRIDGE "archive_signals.py") 2>&1 | ForEach-Object { Write-Log ("  " + $_) }
+
 # Run aggregate_features_v2 to update features.json
 Write-Log "Running aggregate_features_v2..."
 & py -3.12 (Join-Path $JV_BRIDGE "aggregate_features_v2.py") 2>&1 | Select-Object -Last 3 | ForEach-Object { Write-Log ("  " + $_) }

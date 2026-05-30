@@ -146,6 +146,9 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
             # SE が確定済みなら kakutei_jyuni / time が入る (結果データとしても利用可)
             "kakutei_jyuni": se.get("kakutei_jyuni"),
             "ijyou_code":    se.get("ijyou_code"),
+            # 装備 (ブリンカー使用 = 1)。初装着など「人が見落としがちな硬い事実」。
+            # シグナル保存の箱 (archive_signals.py) で日付つきに残し、後日検証する。
+            "blinker":       se.get("blinker"),
             # 確定後の実走データ (集計バッチが「過去成績」を計算する時の元値)
             "time":          se.get("time"),           # 走破タイム 'MSSS'
             "haron_l3":      se.get("haron_l3"),       # 上がり 3F
