@@ -71,11 +71,13 @@ const TIER_META: Record<Tier, {
 const pct = (v?: number | null) => (typeof v === "number" ? `${Math.round(v * 100)}%` : "—");
 const fmtDate = (d?: string) =>
   d && d.length === 8 ? `${Number(d.slice(4, 6))}月${Number(d.slice(6, 8))}日` : "";
+const raceNum = (name?: string | null) => name?.match(/(\d{1,2})\s*R/)?.[1] || "";
 
 export function RaceCard() {
   const [resp, setResp] = useState<CardResp | null>(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<string | null>(null);
+  const [showAllRest, setShowAllRest] = useState(false);
   const [budget, setBudgetState] = useState(10000);
 
   useEffect(() => {
@@ -106,6 +108,16 @@ export function RaceCard() {
   }, [resp, races]);
   const buyCount = tc.prime + tc.bet;
 
+  const buyRaces = useMemo(
+    () => races.filter((r) => r.tier === "prime" || r.tier === "bet"),
+    [races],
+  );
+  const restRaces = useMemo(
+    () => races.filter((r) => r.tier !== "prime" && r.tier !== "bet"),
+    [races],
+  );
+  const restShown = showAllRest ? restRaces : restRaces.slice(0, 8);
+
   return (
     <section aria-label="全レース予想">
       <div className="flex items-end justify-between mb-3">
@@ -122,64 +134,54 @@ export function RaceCard() {
         )}
       </div>
 
-      <Card>
-        <CardBody className="space-y-4">
-          {loading ? (
-            <div className="text-sm text-ink-muted py-6 text-center">全レースのAI判定を読み込み中...</div>
-          ) : races.length === 0 ? (
-            <div className="text-sm text-ink-muted py-6 text-center">
-              開催日のデータが入ると、その日の全レースを4段階で判定してここに並べます。
-            </div>
-          ) : (
-            <>
-              {/* 4段階の件数サマリ (一目で「買う/見送り」の内訳) */}
-              <div className="grid grid-cols-4 gap-2">
-                <TierStat tier="prime" n={tc.prime} />
-                <TierStat tier="bet" n={tc.bet} />
-                <TierStat tier="watch" n={tc.watch} />
-                <TierStat tier="skip" n={tc.skip} />
-              </div>
+      {loading ? (
+        <Card><CardBody><div className="text-sm text-ink-muted py-6 text-center">全レースのAI判定を読み込み中...</div></CardBody></Card>
+      ) : races.length === 0 ? (
+        <Card><CardBody><div className="text-sm text-ink-muted py-6 text-center">
+          開催日のデータが入ると、その日の全レースを4段階で判定してここに並べます。
+        </div></CardBody></Card>
+      ) : (
+        <div className="space-y-4">
+          {/* 4段階の件数サマリ (一目で「買う/見送り」の内訳) */}
+          <div className="grid grid-cols-4 gap-2">
+            <TierStat tier="prime" n={tc.prime} />
+            <TierStat tier="bet" n={tc.bet} />
+            <TierStat tier="watch" n={tc.watch} />
+            <TierStat tier="skip" n={tc.skip} />
+          </div>
 
-              {/* この判定の読み方 (正直な説明) */}
-              <div className="rounded-[12px] bg-paper-soft/70 border border-line/60 p-3.5">
-                <p className="text-xs text-ink-soft leading-relaxed">
-                  <span className="text-deep-green font-medium">勝負・絶好機</span>は「AI本命が抜けて堅く、3着内に来やすい」とAIが選んだレース（買うなら<span className="text-ink-soft font-medium">複勝</span>が損を抑えやすい）。
-                  <span className="text-ink-muted">様子見・見送り</span>は狙いを絞れない・配当の妙味がないレースです。
-                </p>
-                <p className="mt-1.5 text-[11px] text-ink-muted leading-relaxed">
-                  ※競馬は市場(オッズ)がとても賢く「必ず儲かる買い方」はありません。これは利益の保証ではなく、<span className="text-ink-soft">ムダな赤字を減らすための選別</span>です。
-                  {buyCount > 0
-                    ? `本日は${buyCount}レースだけが「買うなら候補」です。`
-                    : "本日は買うなら候補は0件。見送りが正直な判定です。"}
-                </p>
-              </div>
-
-              {/* 正直なトラックレコード */}
+          {/* この判定の読み方 (正直な説明) */}
+          <Card>
+            <CardBody className="py-3.5">
+              <p className="text-xs text-ink-soft leading-relaxed">
+                <span className="text-deep-green font-medium">勝負・絶好機</span>は「AI本命が抜けて堅く、3着内に来やすい」とAIが選んだレース（買うなら<span className="text-ink-soft font-medium">複勝</span>が損を抑えやすい）。
+                <span className="text-ink-muted">様子見・見送り</span>は狙いを絞れない・配当の妙味がないレースです。
+              </p>
+              <p className="mt-1.5 text-[11px] text-ink-muted leading-relaxed">
+                ※競馬は市場(オッズ)がとても賢く「必ず儲かる買い方」はありません。これは利益の保証ではなく、<span className="text-ink-soft">ムダな赤字を減らすための選別</span>です。
+                {buyCount > 0
+                  ? `本日は${buyCount}レースだけが「買うなら候補」です。`
+                  : "本日は買うなら候補は0件。見送りが正直な判定です。"}
+              </p>
               {settled > 0 && (
-                <div className="rounded-[12px] bg-paper-soft/70 border border-line/60 p-3.5">
-                  <div className="text-[10px] uppercase tracking-[0.14em] text-ink-muted font-medium mb-2">
-                    この日のAI本命の成績（正直な実績）
-                  </div>
-                  <div className="flex items-center gap-5">
-                    <div>
-                      <span className="font-display text-2xl font-semibold tabular text-ink">
-                        {resp?.top1_in3}/{settled}
-                      </span>
-                      <span className="ml-1.5 text-xs text-ink-muted">が3着内</span>
-                    </div>
-                    <div>
-                      <span className="font-display text-2xl font-semibold tabular text-ink">
-                        {resp?.top1_win}/{settled}
-                      </span>
-                      <span className="ml-1.5 text-xs text-ink-muted">が1着</span>
-                    </div>
-                  </div>
+                <div className="mt-3 pt-3 border-t border-line/60 flex items-center gap-5">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-ink-muted font-medium">この日のAI本命</div>
+                  <div><span className="font-display text-xl font-semibold tabular text-ink">{resp?.top1_in3}/{settled}</span><span className="ml-1.5 text-xs text-ink-muted">3着内</span></div>
+                  <div><span className="font-display text-xl font-semibold tabular text-ink">{resp?.top1_win}/{settled}</span><span className="ml-1.5 text-xs text-ink-muted">1着</span></div>
                 </div>
               )}
+            </CardBody>
+          </Card>
 
-              <div className="divide-y divide-line/50">
-                {races.map((r) => (
-                  <RaceRow
+          {/* 買うなら候補 (絶好機・勝負) を目立つカードで */}
+          {buyRaces.length > 0 && (
+            <div>
+              <div className="text-xs uppercase tracking-[0.16em] text-deep-green font-medium mb-2">
+                買うなら候補 · {buyRaces.length} 件
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 stagger">
+                {buyRaces.map((r) => (
+                  <BuyCard
                     key={r.race_id}
                     race={r}
                     budget={budget}
@@ -188,10 +190,39 @@ export function RaceCard() {
                   />
                 ))}
               </div>
-            </>
+            </div>
           )}
-        </CardBody>
-      </Card>
+
+          {/* 様子見・見送り はコンパクトな一覧で */}
+          {restRaces.length > 0 && (
+            <div>
+              <div className="text-xs uppercase tracking-[0.16em] text-ink-muted mb-2">
+                様子見・見送り · {restRaces.length} 件
+              </div>
+              <Card>
+                <CardBody className="divide-y divide-line/50 py-1">
+                  {restShown.map((r) => (
+                    <CompactRow
+                      key={r.race_id}
+                      race={r}
+                      open={open === r.race_id}
+                      onToggle={() => setOpen(open === r.race_id ? null : r.race_id)}
+                    />
+                  ))}
+                  {restRaces.length > 8 && (
+                    <button
+                      onClick={() => setShowAllRest((v) => !v)}
+                      className="w-full pt-3 pb-1 text-xs text-ink-muted hover:text-ink-soft transition-colors"
+                    >
+                      {showAllRest ? "閉じる" : `残り ${restRaces.length - 8} レースも見る`}
+                    </button>
+                  )}
+                </CardBody>
+              </Card>
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -199,10 +230,11 @@ export function RaceCard() {
 function TierStat({ tier, n }: { tier: Tier; n: number }) {
   const m = TIER_META[tier];
   const dim = n === 0;
+  const glow = tier === "prime" && n > 0;
   return (
     <div className={cn(
       "rounded-[10px] border px-2 py-2.5 text-center transition-opacity",
-      m.ring, dim && "opacity-45",
+      m.ring, dim && "opacity-45", glow && "anim-gold-pulse",
     )}>
       <div className="flex items-center justify-center gap-1.5">
         <span className={cn("inline-block w-2 h-2 rounded-full", m.dot)} />
@@ -213,123 +245,174 @@ function TierStat({ tier, n }: { tier: Tier; n: number }) {
   );
 }
 
-function RaceRow({ race, budget, open, onToggle }: { race: CardRace; budget: number; open: boolean; onToggle: () => void }) {
-  const tier = (race.tier ?? "skip") as Tier;
+/** 結果バッジ (確定後) */
+function ResultBadge({ race }: { race: CardRace }) {
+  if (!race.has_result) return null;
+  const won = race.top_won === 1;
+  const hit = race.top_in3 === 1;
+  if (won) return <Badge tone="won" size="sm"><Trophy className="w-3 h-3" />的中 {race.top_finish}着</Badge>;
+  if (hit) return <Badge tone="won" size="sm"><CheckCircle2 className="w-3 h-3" />3着内 {race.top_finish}着</Badge>;
+  return <Badge tone="silver" size="sm">{race.top_finish ? `${race.top_finish}着` : "—"}</Badge>;
+}
+
+/** 絶好機・勝負 の目立つカード */
+function BuyCard({ race, budget, open, onToggle }: { race: CardRace; budget: number; open: boolean; onToggle: () => void }) {
+  const tier = (race.tier ?? "bet") as Tier;
+  const isPrime = tier === "prime";
   const m = TIER_META[tier];
-  const hit = race.has_result && race.top_in3 === 1;
-  const won = race.has_result && race.top_won === 1;
-  const isBuy = tier === "prime" || tier === "bet";
-  const stake = isBuy ? fukushoStake(tier, budget) : 0;
+  const stake = fukushoStake(tier, budget);
+  const rn = raceNum(race.race_name);
 
   return (
-    <div className={cn("py-2.5 -mx-1 px-1 rounded-[10px]", isBuy && "bg-paper-soft/30")}>
-      <button onClick={onToggle} className="w-full flex items-center gap-3 text-left group">
+    <div className={cn(
+      "rounded-[16px] border p-4 relative overflow-hidden transition-shadow",
+      isPrime
+        ? "border-gold/50 bg-gradient-to-b from-gold-soft/40 to-canvas anim-gold-pulse sheen"
+        : "border-deep-green/30 bg-gradient-to-b from-deep-green-soft/30 to-canvas",
+    )}>
+      {/* ヘッダ行 */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Badge tone={m.tone} size="sm">
+            <span className={cn("inline-block w-1.5 h-1.5 rounded-full", m.dot)} />
+            {m.label}
+          </Badge>
+          {race.is_g1 && <Badge tone="gold" size="xs">G1</Badge>}
+          <span className="text-xs text-ink-muted tabular truncate">
+            {race.course || "—"}{rn && ` ${rn}R`}{race.going ? ` · ${race.going}` : ""}
+          </span>
+        </div>
+        <ResultBadge race={race} />
+      </div>
+
+      {/* 本命 */}
+      <div className="mt-3 flex items-center gap-3">
+        <span className={cn(
+          "inline-flex items-center justify-center w-10 h-10 rounded-full font-display font-semibold tabular text-lg shrink-0",
+          isPrime
+            ? "bg-gradient-to-b from-gold-bright to-gold text-on-gold shadow-[0_4px_14px_rgba(232,194,108,0.4)]"
+            : "bg-gradient-to-b from-deep-green to-deep-green text-white",
+        )}>
+          {race.top_number ?? "—"}
+        </span>
+        <div className="min-w-0">
+          <div className={cn("font-medium truncate", isPrime && "shimmer-text", "text-[15px]")}>
+            {race.top_name || "—"}
+          </div>
+          <div className="text-xs text-ink-muted tabular">
+            AI勝率 {pct(race.top_prob)}{race.top_odds ? ` · ${race.top_odds.toFixed(1)}倍` : ""}
+          </div>
+        </div>
+      </div>
+
+      {/* 一言理由 */}
+      {race.reason && (
+        <p className="mt-2.5 text-xs text-deep-green leading-snug">▸ {race.reason}</p>
+      )}
+
+      {/* 複勝おすすめ金額 (大きく) */}
+      {stake > 0 && (
+        <div className="mt-3 rounded-[12px] border border-deep-green/25 bg-deep-green-soft/40 px-3.5 py-2.5">
+          <div className="text-[10px] uppercase tracking-[0.12em] text-deep-green/80 font-medium">おすすめの買い方</div>
+          <div className="mt-0.5 flex items-baseline gap-2">
+            <span className="text-sm text-ink-soft">複勝 #{race.top_number} に</span>
+            <span className="font-display text-2xl font-semibold tabular text-deep-green num-glow-green">{formatYen(stake)}</span>
+          </div>
+          <div className="mt-0.5 text-[11px] text-ink-muted leading-snug">
+            予算連動の小額（{isPrime ? "予算の3%" : "予算の約2%"}）。儲けではなく損を抑えるのが目的。
+          </div>
+        </div>
+      )}
+
+      {/* 詳細トグル */}
+      <button onClick={onToggle} className="mt-3 flex items-center gap-1 text-xs text-ink-muted hover:text-ink-soft transition-colors">
+        <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", open && "rotate-180")} />
+        全頭のAI予想を{open ? "閉じる" : "見る"}
+      </button>
+      {open && <HorseDetail race={race} />}
+    </div>
+  );
+}
+
+/** 様子見・見送り のコンパクト行 */
+function CompactRow({ race, open, onToggle }: { race: CardRace; open: boolean; onToggle: () => void }) {
+  const tier = (race.tier ?? "skip") as Tier;
+  const m = TIER_META[tier];
+  return (
+    <div className="py-2.5">
+      <button onClick={onToggle} className="w-full flex items-center gap-3 text-left">
         <ChevronDown className={cn("w-4 h-4 text-ink-faint shrink-0 transition-transform", open && "rotate-180")} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-xs text-ink-muted">
             <Badge tone={m.tone} size="xs">
-              <span className={cn("inline-block w-1.5 h-1.5 rounded-full", m.dot)} />
-              {m.label}
+              <span className={cn("inline-block w-1.5 h-1.5 rounded-full", m.dot)} />{m.label}
             </Badge>
             <span className="tabular truncate">{race.course || "—"}</span>
-            {race.going && <span className="text-ink-faint">· {race.going}</span>}
             {race.is_g1 && <Badge tone="gold" size="xs">G1</Badge>}
           </div>
-          <div className="mt-1 text-[15px] truncate">
-            <span className="text-ink-muted">AI本命</span>{" "}
-            <span className="font-medium text-ink">#{race.top_number} {race.top_name}</span>{" "}
-            <span className="text-ink-muted tabular">
-              {pct(race.top_prob)}{race.top_odds ? ` · ${race.top_odds.toFixed(1)}倍` : ""}
-            </span>
+          <div className="mt-0.5 text-sm truncate">
+            <span className="text-ink-muted">本命</span>{" "}
+            <span className="text-ink-soft">#{race.top_number} {race.top_name}</span>{" "}
+            <span className="text-ink-muted tabular text-xs">{pct(race.top_prob)}{race.top_odds ? ` · ${race.top_odds.toFixed(1)}倍` : ""}</span>
           </div>
-          {race.reason && (
-            <div className={cn(
-              "mt-0.5 text-xs leading-snug truncate",
-              isBuy ? "text-deep-green" : "text-ink-muted",
-            )}>
-              {isBuy ? "▸ " : ""}{race.reason}
-            </div>
-          )}
-          {isBuy && stake > 0 && (
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-deep-green-soft/60 border border-deep-green/20 px-2 py-0.5 text-[11px] text-deep-green font-medium">
-              複勝 #{race.top_number} に {formatYen(stake)}
-            </div>
-          )}
+          {race.reason && <div className="mt-0.5 text-[11px] text-ink-muted truncate">{race.reason}</div>}
         </div>
-        {race.has_result ? (
-          won ? (
-            <Badge tone="won" size="sm"><Trophy className="w-3 h-3" />的中 {race.top_finish}着</Badge>
-          ) : hit ? (
-            <Badge tone="won" size="sm"><CheckCircle2 className="w-3 h-3" />3着内 {race.top_finish}着</Badge>
-          ) : (
-            <Badge tone="silver" size="sm">{race.top_finish ? `${race.top_finish}着` : "—"}</Badge>
-          )
-        ) : (
-          <Badge tone={m.tone} size="sm">{m.label}</Badge>
-        )}
+        {race.has_result ? <ResultBadge race={race} /> : <Badge tone={m.tone} size="sm">{m.label}</Badge>}
       </button>
-
-      {open && (
-        <>
-        {isBuy && stake > 0 && (
-          <div className="mt-2 ml-7 rounded-[10px] border border-deep-green/20 bg-deep-green-soft/40 px-3 py-2">
-            <div className="text-xs text-deep-green">
-              おすすめ: <span className="font-semibold">複勝 #{race.top_number} {race.top_name}</span> に <span className="font-semibold tabular">{formatYen(stake)}</span>
-            </div>
-            <div className="mt-0.5 text-[11px] text-ink-muted leading-relaxed">
-              {race.bet_style || "複勝（当たりやすく損を抑えやすい）"} ・金額は資金管理の予算（{tier === "prime" ? "予算の3%" : "予算の約2%"}）に連動する小額です。儲けではなく損を抑えるのが目的。
-            </div>
-          </div>
-        )}
-        <div className="mt-3 ml-7 rounded-[12px] border border-line/60 bg-paper-soft/40 overflow-x-auto">
-          <table className="w-full text-sm min-w-[460px]">
-            <thead>
-              <tr className="text-ink-muted border-b border-line/50">
-                <th className="text-left font-medium px-3 py-2">AI順</th>
-                <th className="text-left font-medium px-2 py-2">馬</th>
-                <th className="text-right font-medium px-2 py-2">AI勝率</th>
-                <th className="text-right font-medium px-2 py-2">人気</th>
-                <th className="text-right font-medium px-2 py-2">オッズ</th>
-                <th className="text-right font-medium px-2 py-2">期待値</th>
-                <th className="text-right font-medium px-2 py-2">正直EV</th>
-                {race.has_result && <th className="text-right font-medium px-3 py-2">着</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {race.horses.slice(0, 18).map((h, i) => (
-                <tr key={h.number} className={cn("border-b border-line/30 last:border-0", h.won && "bg-deep-green-soft/40")}>
-                  <td className="px-3 py-1.5 tabular text-ink-muted">{h.win_prob != null ? i + 1 : "—"}</td>
-                  <td className="px-2 py-1.5 whitespace-nowrap">
-                    <span className="tabular text-ink-muted">{h.number}</span>{" "}
-                    <span className="text-ink-soft">{h.name}</span>
-                  </td>
-                  <td className="px-2 py-1.5 text-right tabular text-ink">{pct(h.win_prob)}</td>
-                  <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.popularity || "—"}</td>
-                  <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.odds != null ? `${h.odds.toFixed(1)}` : "—"}</td>
-                  <td className="px-2 py-1.5 text-right tabular text-ink-faint">{h.ev != null ? h.ev.toFixed(2) : "—"}</td>
-                  <td className={cn(
-                    "px-2 py-1.5 text-right tabular",
-                    h.cooled_ev == null ? "text-ink-faint" : h.cooled_ev >= 1 ? "text-deep-green font-medium" : "text-ink-muted",
-                  )}>
-                    {h.cooled_ev != null ? h.cooled_ev.toFixed(2) : "—"}
-                  </td>
-                  {race.has_result && (
-                    <td className="px-3 py-1.5 text-right tabular font-medium">
-                      {h.finish ? h.finish : "—"}
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-2 ml-7 text-xs text-ink-muted leading-relaxed">
-          <span className="text-ink-soft">「期待値」</span>はAI勝率×オッズの理論値。<span className="text-ink-soft">「正直EV」</span>は、その数字を
-          <span className="text-ink-soft">過去に実際そういう馬を買って戻ってきた割合（約0.7〜0.8倍・穴馬ほど低い）</span>に冷ました現実的な見込みです。
-          正直EVが1.00を超えればお買い得ですが、競馬では市場が賢く<span className="text-ink-soft">ほぼ1.00未満＝お買い得は基本ありません</span>。
-        </p>
-        </>
-      )}
+      {open && <div className="ml-7"><HorseDetail race={race} /></div>}
     </div>
+  );
+}
+
+/** 全頭テーブル + 正直EVの説明 (展開時に共用) */
+function HorseDetail({ race }: { race: CardRace }) {
+  return (
+    <>
+      <div className="mt-3 rounded-[12px] border border-line/60 bg-paper-soft/40 overflow-x-auto">
+        <table className="w-full text-sm min-w-[460px]">
+          <thead>
+            <tr className="text-ink-muted border-b border-line/50">
+              <th className="text-left font-medium px-3 py-2">AI順</th>
+              <th className="text-left font-medium px-2 py-2">馬</th>
+              <th className="text-right font-medium px-2 py-2">AI勝率</th>
+              <th className="text-right font-medium px-2 py-2">人気</th>
+              <th className="text-right font-medium px-2 py-2">オッズ</th>
+              <th className="text-right font-medium px-2 py-2">期待値</th>
+              <th className="text-right font-medium px-2 py-2">正直EV</th>
+              {race.has_result && <th className="text-right font-medium px-3 py-2">着</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {race.horses.slice(0, 18).map((h, i) => (
+              <tr key={h.number} className={cn("border-b border-line/30 last:border-0", h.won && "bg-deep-green-soft/40")}>
+                <td className="px-3 py-1.5 tabular text-ink-muted">{h.win_prob != null ? i + 1 : "—"}</td>
+                <td className="px-2 py-1.5 whitespace-nowrap">
+                  <span className="tabular text-ink-muted">{h.number}</span>{" "}
+                  <span className="text-ink-soft">{h.name}</span>
+                </td>
+                <td className="px-2 py-1.5 text-right tabular text-ink">{pct(h.win_prob)}</td>
+                <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.popularity || "—"}</td>
+                <td className="px-2 py-1.5 text-right tabular text-ink-muted">{h.odds != null ? `${h.odds.toFixed(1)}` : "—"}</td>
+                <td className="px-2 py-1.5 text-right tabular text-ink-faint">{h.ev != null ? h.ev.toFixed(2) : "—"}</td>
+                <td className={cn(
+                  "px-2 py-1.5 text-right tabular",
+                  h.cooled_ev == null ? "text-ink-faint" : h.cooled_ev >= 1 ? "text-deep-green font-medium" : "text-ink-muted",
+                )}>
+                  {h.cooled_ev != null ? h.cooled_ev.toFixed(2) : "—"}
+                </td>
+                {race.has_result && (
+                  <td className="px-3 py-1.5 text-right tabular font-medium">{h.finish ? h.finish : "—"}</td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-xs text-ink-muted leading-relaxed">
+        <span className="text-ink-soft">「期待値」</span>はAI勝率×オッズの理論値。<span className="text-ink-soft">「正直EV」</span>は、その数字を
+        <span className="text-ink-soft">過去に実際そういう馬を買って戻ってきた割合（約0.7〜0.8倍・穴馬ほど低い）</span>に冷ました現実的な見込みです。
+        正直EVが1.00を超えればお買い得ですが、競馬では市場が賢く<span className="text-ink-soft">ほぼ1.00未満＝お買い得は基本ありません</span>。
+      </p>
+    </>
   );
 }
