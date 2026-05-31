@@ -3375,39 +3375,14 @@ details[open] .details-summary .details-arrow { transform: rotate(90deg); }
 /* =====================================================================
    Wave22.1 — 背景メッシュの彩度UP (白すぎ問題の解消)
    ===================================================================== */
+/* NOIR: 旧Wave22.1の虹色メッシュは廃止。漆黒のまま。 */
 body {
   background:
-    radial-gradient(70% 50% at 50% -10%, rgba(125, 211, 252, 0.75) 0%, transparent 60%),
-    radial-gradient(55% 55% at 5% 80%, rgba(110, 231, 183, 0.70) 0%, transparent 65%),
-    radial-gradient(50% 50% at 95% 10%, rgba(196, 181, 253, 0.65) 0%, transparent 60%),
-    radial-gradient(60% 60% at 100% 100%, rgba(253, 186, 116, 0.60) 0%, transparent 65%),
-    radial-gradient(55% 35% at 50% 110%, rgba(252, 211, 77, 0.50) 0%, transparent 70%),
-    radial-gradient(35% 30% at 80% 50%, rgba(167, 243, 208, 0.45) 0%, transparent 70%),
-    radial-gradient(30% 30% at 15% 35%, rgba(253, 224, 71, 0.40) 0%, transparent 70%),
-    linear-gradient(180deg, #ecfeff 0%, #f0fdf4 35%, #fffbeb 70%, #fef3c7 100%) !important;
+    radial-gradient(120% 50% at 50% -20%, rgba(201, 168, 92, 0.06) 0%, transparent 60%),
+    #060606 !important;
   background-attachment: fixed !important;
 }
-
-/* メッシュにゆっくり呼吸するアニメ (12 秒周期・気付かない程度に) */
-body::after {
-  content: "";
-  position: fixed;
-  inset: -10%;
-  pointer-events: none;
-  z-index: -1;
-  background:
-    radial-gradient(50% 50% at 30% 30%, rgba(16,185,129,0.10) 0%, transparent 70%),
-    radial-gradient(50% 50% at 70% 70%, rgba(245,158,11,0.10) 0%, transparent 70%);
-  animation: bodyBreathe 16s ease-in-out infinite;
-  opacity: 0.6;
-}
-@keyframes bodyBreathe {
-  0%, 100% { transform: translate(0,0) scale(1); opacity: 0.45; }
-  50%      { transform: translate(2%, -1%) scale(1.04); opacity: 0.70; }
-}
-@media (prefers-reduced-motion: reduce) {
-  body::after { animation: none; }
-}
+body::after { content: none !important; display: none !important; }
 
 /* =====================================================================
    Wave22.1 — Daily Headline (モバイルでも遊び心が見える横スクロール帯)
