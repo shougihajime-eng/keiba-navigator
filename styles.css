@@ -7,56 +7,69 @@
    ===================================================================== */
 
 :root {
-  color-scheme: light;
-  /* === ブランドアクセント === 大人っぽく：彩度を落とした上品な色 */
-  --c-turf:    #4FB98A;   /* 落ち着いたエメラルド（暗地で読める） */
-  --c-deep:    #74D6A6;   /* 暗地で映える明るめグリーン（テキスト用） */
-  --c-gold:    #D9B779;   /* シャンパンゴールド（けばけばしくない金） */
-  --c-amber:   #C79A52;
-  --c-sky:     #86B4DE;   /* 霧がかった青 */
-  --c-cyan:    #79C6C0;
-  --c-rose:    #DB7E8C;
-  --c-bad:     #E0707A;
-  --c-warn:    #DBA869;
-  --c-violet:  #A996D6;
-  --c-peach:   #D8B08A;
-  --c-mint:    #6FCBA0;
+  color-scheme: dark;
+  /* =====================================================================
+     NOIR — 真っ黒 × 細い金の高級テーマ (2026-05-31 ゼロから作り直し)
+     設計: 装飾を削ぎ落とし、漆黒の地にヘアライン金と上質な余白だけで魅せる。
+           ガラス・虹色グラデ・グロー・弾むアニメは一掃。静かで凛とした佇まい。
+     ===================================================================== */
 
-  /* === テキスト === 暗い地で読める落ち着いた白 */
-  --c-ink:        #ECEDEF;
-  --c-ink-soft:   #B4BAC0;
-  --c-ink-mute:   #8A9198;
-  --c-ink-dim:    #646B72;
+  /* === 金（ただ一つの主役・ヘアライン） === */
+  --gold:        #C9A85C;   /* 落ち着いた本物の金 */
+  --gold-bright: #E4C77E;   /* 光が当たった金（見出し・数字の主役） */
+  --gold-deep:   #9C7E3A;   /* 沈んだ金（線・縁） */
+  --gold-line:   rgba(201, 168, 92, 0.32);   /* ヘアラインの金 */
+  --gold-line-soft: rgba(201, 168, 92, 0.16);
+  --gold-soft:   rgba(201, 168, 92, 0.08);
 
-  /* === 背景トークン === 炭のような黒・暗いガラス面 */
-  --c-bg:         #0D0F12;
-  --c-bg-card:    rgba(26, 30, 35, 0.78);
-  --c-bg-elev:    rgba(32, 37, 43, 0.88);
-  --c-bg-soft:    rgba(255, 255, 255, 0.045);
-  --c-bg-chip:    rgba(79, 185, 138, 0.14);
-  --c-bg-panel:   rgba(22, 26, 31, 0.75);
+  /* === 旧トークン互換（既存ルールが参照するので金/白に寄せる） === */
+  --c-turf:    #9FB89C;   /* 利益などの控えめなセージグリーン */
+  --c-deep:    #B7CBB3;
+  --c-gold:    var(--gold-bright);
+  --c-amber:   var(--gold);
+  --c-sky:     #9DB2C4;
+  --c-cyan:    #9DB2C4;
+  --c-rose:    #C98A8A;
+  --c-bad:     #C77B7B;
+  --c-warn:    var(--gold);
+  --c-violet:  #ADA3BE;
+  --c-peach:   var(--gold);
+  --c-mint:    #9FB89C;
+
+  /* === テキスト === 漆黒の上で読める上質な白〜グレー === */
+  --c-ink:        #F1EFEA;   /* 見出し・主役（わずかに暖色の白） */
+  --c-ink-soft:   #C3C2BD;   /* 本文 */
+  --c-ink-mute:   #8E8D88;   /* 補足 */
+  --c-ink-dim:    #5E5D59;   /* ごく薄い注記 */
+
+  /* === 背景トークン === 漆黒・フラットな黒い面（ガラスをやめる） === */
+  --c-bg:         #060606;
+  --c-bg-card:    #0C0C0D;
+  --c-bg-elev:    #111112;
+  --c-bg-soft:    rgba(255, 255, 255, 0.035);
+  --c-bg-chip:    rgba(255, 255, 255, 0.05);
+  --c-bg-panel:   #0A0A0B;
 
   /* === 軟質色 === */
-  --c-turf-soft:  rgba(79, 185, 138, 0.14);
-  --c-gold-soft:  rgba(217, 183, 121, 0.14);
-  --c-sky-soft:   rgba(134, 180, 222, 0.14);
-  --c-rose-soft:  rgba(219, 126, 140, 0.14);
+  --c-turf-soft:  rgba(159, 184, 156, 0.10);
+  --c-gold-soft:  var(--gold-soft);
+  --c-sky-soft:   rgba(157, 178, 196, 0.10);
+  --c-rose-soft:  rgba(201, 138, 138, 0.10);
 
-  /* === 影 === 黒い奥行き＋ごく薄い光の縁 */
-  --shadow-card:  0 1px 0 0 rgba(255,255,255,0.05) inset,
-                  0 1px 2px 0 rgba(0,0,0,0.40),
-                  0 12px 32px -12px rgba(0,0,0,0.60);
-  --shadow-hero:  0 1px 0 0 rgba(255,255,255,0.06) inset,
-                  0 -1px 0 0 rgba(0,0,0,0.30) inset,
-                  0 2px 4px 0 rgba(0,0,0,0.40),
-                  0 18px 40px -14px rgba(0,0,0,0.65),
-                  0 28px 64px -20px rgba(0,0,0,0.55);
-  --shadow-gold:  0 0 0 1px rgba(217,183,121,0.45),
-                  0 0 40px -12px rgba(217,183,121,0.30),
-                  0 28px 64px -24px rgba(0,0,0,0.65);
+  /* === 罫線 === 髪の毛のような細い線 === */
+  --hair:        rgba(255, 255, 255, 0.08);
+  --hair-strong: rgba(255, 255, 255, 0.14);
 
-  /* === イージング === */
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* === 影 === ほぼ無し。奥行きは黒で出す === */
+  --shadow-card:  0 1px 0 0 rgba(255,255,255,0.03) inset,
+                  0 16px 40px -24px rgba(0,0,0,0.9);
+  --shadow-hero:  0 1px 0 0 rgba(255,255,255,0.04) inset,
+                  0 24px 60px -30px rgba(0,0,0,0.95);
+  --shadow-gold:  0 0 0 1px var(--gold-line),
+                  0 24px 60px -30px rgba(0,0,0,0.95);
+
+  /* === イージング === 弾みを消して静かに === */
+  --ease-spring: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-soft:   cubic-bezier(0.4, 0, 0.2, 1);
 
   /* === safe-area === */
@@ -77,29 +90,22 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--c-ink);
+  background: #060606;
   min-height: 100vh;
   overscroll-behavior-y: none;
+  letter-spacing: 0.01em;
 }
 
+/* 漆黒の地。装飾は無し。上端にだけ金のひと刷毛をごく薄く。 */
 body {
   background:
-    radial-gradient(90% 60% at 50% -12%, rgba(217, 183, 121, 0.10) 0%, transparent 58%),
-    radial-gradient(70% 50% at 8% 108%, rgba(79, 185, 138, 0.08) 0%, transparent 60%),
-    radial-gradient(60% 50% at 96% 6%, rgba(134, 180, 222, 0.05) 0%, transparent 60%),
-    linear-gradient(180deg, #101216 0%, #0C0E11 55%, #0A0B0E 100%);
+    radial-gradient(120% 50% at 50% -20%, rgba(201, 168, 92, 0.06) 0%, transparent 60%),
+    #060606;
   background-attachment: fixed;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.03 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  opacity: 0.45;
-  mix-blend-mode: screen;
-}
+/* 背景のノイズ・グレインは廃止（凛とした漆黒のまま） */
+body::before { content: none; display: none; }
 
 button, a, [role="button"], .tap {
   touch-action: manipulation;
@@ -6450,3 +6456,247 @@ button:focus:not(:focus-visible) { outline: none; }
   border: 1px solid rgba(0,0,0,0.06);
   position: relative;
 }
+
+/* =====================================================================
+   ░░░ NOIR OVERRIDE ░░░  真っ黒 × 細い金の高級テーマ (2026-05-31)
+   既存の必殺一号艇スタイルを最後に上書きして、漆黒・ヘアライン金・
+   広い余白・静けさで全面リデザイン。ガラス/虹色/グロー/弾みを一掃。
+   ===================================================================== */
+
+/* --- 1. 一掃: ガラスのぼかし・装飾アニメ・派手な影 --- */
+* {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.decision-card,
+.decision-card.tier-gold,
+.win5-card,
+.brand-strip,
+.morning-toast,
+.topwin-banner,
+.streak-banner,
+.live-dot,
+.metric-cell.metric-gold::after,
+.btn-cta-gold,
+.bigstat .val,
+.hit-glow,
+.clock-spin,
+.ai-thinking .dot,
+.shimmer-text {
+  animation: none !important;
+}
+
+/* --- 2. タイポgrafi: 見出しは上品なセリフ・細身に --- */
+.brand-title, .bm-logo-text,
+.decision-tier-label, .venue-display,
+.section-head .title, .sec-title h2,
+.win5-head .title, .mega-eval,
+.noday-title, h1, h2, h3 {
+  font-family: "Cormorant Garamond", "Noto Sans JP", serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+}
+.app-root { letter-spacing: 0.01em; }
+
+/* --- 3. 面の統一: すべてのカードを漆黒のフラット＋ヘアライン --- */
+.brand-strip, .brand-mini,
+.live-strip, .live-thin,
+.section-card,
+.decision-card, .decision-card.tier-go,
+.decision-card.tier-cond, .decision-card.tier-best,
+.decision-card.tier-none,
+.win5-card,
+.bigstat,
+.reason-box,
+.metric-cell,
+.history-row,
+.runner-item,
+.ml-strat, .ml-rec-card, .rec-strat-card,
+.autostatus-cell,
+.details-card, .saved-race-row {
+  background: var(--c-bg-card) !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+/* 浮かせたい主役カードだけ、ほんのり奥行き */
+.decision-card, .win5-card, .section-card {
+  box-shadow: 0 24px 60px -34px rgba(0,0,0,0.9) !important;
+}
+
+/* --- 4. 主役カード(本日の結論): 漆黒＋ヘアライン金 --- */
+.decision-card,
+.decision-card.tier-gold {
+  background: linear-gradient(180deg, #0E0E0F 0%, #090909 100%) !important;
+  border: 1px solid var(--gold-line) !important;
+  border-radius: 18px !important;
+}
+.decision-head,
+.tier-gold .decision-head,
+.tier-go .decision-head,
+.tier-cond .decision-head,
+.tier-best .decision-head,
+.tier-none .decision-head {
+  background: transparent !important;
+  border-bottom: 1px solid var(--hair) !important;
+}
+.decision-card::before { display: none !important; }
+.decision-body {
+  background: transparent !important;
+}
+.decision-tier-label,
+.tier-gold .decision-tier-label,
+.tier-go .decision-tier-label,
+.tier-cond .decision-tier-label,
+.tier-best .decision-tier-label {
+  color: var(--gold-bright) !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase;
+}
+.venue-display {
+  color: var(--c-ink) !important;
+  text-shadow: none !important;
+  font-weight: 600 !important;
+}
+
+/* --- 5. 大きな数字: 金で品よく光らせる(グローは無し) --- */
+.bigstat .val,
+.bigstat .val.tone-gold,
+.bigstat .val.tone-go,
+.bigstat .val.tone-warn,
+.bigstat .val.tone-ink,
+.donut-num {
+  color: var(--gold-bright) !important;
+  text-shadow: none !important;
+  filter: none !important;
+  font-weight: 500 !important;
+}
+.bigstat .label, .metric-cell .label, .countdown .label,
+.lab-label, .sec-title, .decision-prelabel {
+  color: var(--c-ink-mute) !important;
+  letter-spacing: 0.18em !important;
+}
+
+/* --- 6. 買い目ボックス: 黒地にヘアライン金 --- */
+.buy-box,
+.tier-gold .buy-box, .tier-go .buy-box,
+.tier-cond .buy-box, .tier-best .buy-box {
+  background: rgba(255,255,255,0.02) !important;
+  border: 1px solid var(--gold-line-soft) !important;
+  box-shadow: none !important;
+  border-radius: 12px !important;
+}
+.buy-item, .buy-item.is-main,
+.tier-gold .buy-item.is-main {
+  background: rgba(255,255,255,0.025) !important;
+  border: 1px solid var(--hair) !important;
+  box-shadow: none !important;
+}
+.buy-item .combo, .buy-item.is-main .combo,
+.tier-gold .buy-item.is-main .combo { color: var(--gold-bright) !important; }
+.buy-item .role, .buy-item.is-main .role,
+.tier-gold .buy-item.is-main .role {
+  background: transparent !important;
+  border: 1px solid var(--gold-line) !important;
+  color: var(--gold) !important;
+}
+.buy-item .return, .tier-gold .buy-item .return { color: var(--c-turf) !important; }
+
+/* --- 7. ボタン: 金の輪郭(主) / 黒の輪郭(副) --- */
+.btn-cta-go, .btn-cta-gold, .btn-cta-info {
+  background: linear-gradient(180deg, #15130D, #0C0B08) !important;
+  color: var(--gold-bright) !important;
+  border: 1px solid var(--gold-line) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+}
+.btn-cta-go:hover, .btn-cta-gold:hover, .btn-cta-info:hover {
+  border-color: var(--gold) !important;
+  background: linear-gradient(180deg, #1A170F, #100E0A) !important;
+  box-shadow: 0 0 0 1px var(--gold-line) !important;
+}
+.btn-cta-mute {
+  background: transparent !important;
+  color: var(--c-ink-soft) !important;
+  border: 1px solid var(--hair-strong) !important;
+}
+.btn-cta-mute:hover { background: rgba(255,255,255,0.03) !important; }
+
+/* --- 8. ブランドヘッダ / ライブ帯: 静かに --- */
+.brand-mini, .live-thin {
+  background: rgba(8,8,9,0.85) !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 12px !important;
+}
+.bm-logo-icon { filter: grayscale(1) opacity(0.85); }
+.bm-logo-text b { color: var(--gold-bright) !important; font-weight: 600; }
+.live-dot { background: var(--gold) !important; box-shadow: none !important; }
+.live-label.is-go { color: var(--c-ink-soft) !important; letter-spacing: 0.18em; }
+.learning-badge { background: transparent !important; color: var(--c-ink-mute) !important; border: 1px solid var(--hair) !important; }
+
+/* --- 9. セクション見出し: ヘアラインの区切り --- */
+.section-head {
+  background: transparent !important;
+  border-bottom: 1px solid var(--hair) !important;
+}
+.section-head .title { color: var(--c-ink) !important; }
+.sec-title .bar, .brand-tag .bar, .decision-prelabel .pl-bar {
+  background: var(--gold) !important;
+  box-shadow: none !important;
+}
+
+/* --- 10. ピル/バッジ: 塗りをやめてヘアラインに --- */
+.pill, .pill-go, .pill-warn, .pill-info, .pill-skip, .pill-gold, .pill-bad,
+.surface-pill, .surface-pill.shiba, .surface-pill.dirt, .surface-pill.shou,
+.grade-badge, .rec-pill, .ml-pill {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink-soft) !important;
+  box-shadow: none !important;
+}
+.pill-gold, .grade-badge { border-color: var(--gold-line) !important; color: var(--gold) !important; }
+
+/* --- 11. ボトムナビ: 漆黒＋上ヘアライン --- */
+.bottom-nav, .bottom-nav__bar {
+  background: rgba(6,6,6,0.94) !important;
+  border-top: 1px solid var(--hair) !important;
+  box-shadow: none !important;
+}
+.bottom-nav__item.active, .bottom-nav__item[data-tab].active {
+  color: var(--gold-bright) !important;
+}
+.bottom-nav__item.active::before,
+.bottom-nav__item[data-tab].active::before {
+  background: var(--gold) !important;
+  box-shadow: none !important;
+}
+
+/* --- 12. グラデ文字は金一色に統一 --- */
+.text-grad-gold, .text-grad-turf, .text-grad-sky, .shimmer-text {
+  background: none !important;
+  -webkit-text-fill-color: var(--gold-bright) !important;
+  color: var(--gold-bright) !important;
+}
+
+/* --- 13. 反省・収支など本文カード内の小要素 --- */
+.reason-list li { color: var(--c-ink-soft) !important; }
+.reason-list .arrow,
+.tier-gold .reason-list .arrow,
+.tier-cond .reason-list .arrow { color: var(--gold) !important; }
+
+/* --- 14. スクロールバー --- */
+::-webkit-scrollbar-thumb {
+  background: var(--gold-line) !important;
+}
+
+/* --- 15. 区切り線・トースト --- */
+.collapsibles-divider span, .toast {
+  background: #0C0C0D !important;
+  border: 1px solid var(--hair) !important;
+  color: var(--c-ink) !important;
+}
+
+/* --- 16. 仕上げ: フォーカスリングも金に --- */
+:focus-visible { outline: 1px solid var(--gold) !important; outline-offset: 2px; }
