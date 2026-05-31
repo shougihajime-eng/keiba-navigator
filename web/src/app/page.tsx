@@ -7,6 +7,8 @@ import { ExperimentLab } from "@/components/blocks/ExperimentLab";
 import { HonestStatus } from "@/components/blocks/HonestStatus";
 import { RaceCard } from "@/components/blocks/RaceCard";
 import { BankrollCard } from "@/components/blocks/BankrollCard";
+import { RecordsHub } from "@/components/blocks/RecordsHub";
+import { DailyAdvice } from "@/components/DailyAdvice";
 import { Logo } from "@/components/ui/Logo";
 import { Reveal } from "@/components/ui/Reveal";
 import { LegendStrip } from "@/components/LegendStrip";
@@ -45,12 +47,14 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 md:px-5 py-6 md:py-10 space-y-10">
         <HeroBanner />
         <LegendStrip />
+        <DailyAdvice />
         <BlockA />
         <Reveal><HonestStatus /></Reveal>
         <Reveal><RaceCard /></Reveal>
         <Reveal><BlockB /></Reveal>
         <Reveal><BlockC /></Reveal>
         <Reveal><PerformanceInsights /></Reveal>
+        <Reveal><RecordsHub /></Reveal>
         <Reveal><BankrollCard /></Reveal>
         <Reveal><ExperimentLab /></Reveal>
         <Reveal><CollapsibleSections /></Reveal>

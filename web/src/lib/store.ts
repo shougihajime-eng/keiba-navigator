@@ -65,6 +65,26 @@ export function deleteBet(id: string) {
   saveBets(bets);
 }
 
+/**
+ * 取り込み用: 複数の記録をまとめて追加。
+ * 同じ id があれば取り込み側で上書きせずスキップ (重複防止)。
+ * 戻り値は { added, skipped }。
+ */
+export function mergeBets(incoming: Bet[]): { added: number; skipped: number } {
+  const existing = loadBets();
+  const ids = new Set(existing.map((b) => b.id));
+  let added = 0, skipped = 0;
+  for (const b of incoming) {
+    if (!b || !b.id) { skipped += 1; continue; }
+    if (ids.has(b.id)) { skipped += 1; continue; }
+    existing.push(b);
+    ids.add(b.id);
+    added += 1;
+  }
+  if (added > 0) saveBets(existing);
+  return { added, skipped };
+}
+
 // ============ 集計 ============
 
 export type Summary = {
