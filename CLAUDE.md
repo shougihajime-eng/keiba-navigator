@@ -26,6 +26,14 @@
 
 ### ✅ 直近で済んだこと
 
+- **⏰🐎 「6月1日に確定データが配信されたら自動で空白を埋める」夜間自動化を仕込み (2026-05-31 夜・本人「6/1になったら情報が取れる→取りに行って・空白の時間を全部埋めて・明日朝起きたら全部効いているように」指示)** —
+  - **調べて分かった状況**: 出走表(races)は5/31まであるが、**予想(predictions)と結果(results)が5/24で止まっていた**=これが空白。5/30・5/31の確定データ(着順・配当・オッズ)は今夜の時点でまだJRA-VANに無く(蓄積系 option=1 を14日分取り直しても5/24止まり)、**6/1前後に配信される見込み**で確定
+  - **共有Supabase(クラウド)**: 管理APIでは ACTIVE_HEALTHY・DB本体もSQLで生存(keiba.bets=0件)だが、アプリ用REST APIだけ 503 PGRST002 (スキーマキャッシュ読めず)。`NOTIFY pgrst,'reload schema'` でも復旧せず=請求制限/接続制限系で、**6/1の新請求月で自動復活する見込み**。共有DBの restart は他アプリに影響するため本人承認待ち(今夜は触らない)
+  - **検証**: `race_day_pipeline.py --skip-rt --skip-train --skip-train-nopop --skip-validate --skip-experiment` を手動で1回完走 (取得 option=1 → build_all → features v2 → predict 全3684 → race_card → recommendations(best 100.9%/safe 90.1%) → precompute → **git push 成功 commit 51988f7**)。一気通貫で本番反映まで動くことを実証
+  - **夜間タスク登録** (`scripts/register_overnight_gapfill.ps1` 新規): 早朝の空白時間を埋める。**毎日** KeibaDiffFetch-0030/0330/0630 (cheap生取得) + KeibaGapFill-0700 (完全版=予想+カード+push)。**6/1限定** KeibaGapFill-Jun1-0130/0430 (確定配信を早く拾う)。WakeToRun=True・RestartCount=3。既存の09:00〜20:30毎時はそのまま温存
+  - **動き**: 6/1の各実行で option=1(蓄積=確定)を14日分取り直す→確定データが届いた瞬間に予想生成・カード前進・push→Vercel自動反映で空白(5/25〜5/31)が自動で埋まる
+  - **次の一手(将来の根治)**: 毎時取得(fetch_diff_hourly)に predict が無く、本来は開催翌日に予想/カードが自動前進しない穴があった。KeibaGapFill-0700 を毎日入れたことで当面は前進するが、恒久対策は fetch_diff 側 or 専用日次に predict を正式に組み込むこと
+
 - **🐎❌ NOIR仕上げ — バーチャルな馬の装飾を全廃止 + 文字拡大 (2026-05-31・本人「後ろのバーチャルな馬が冴えない・本物志向で行きたい」「もう少し文字を大きく見やすく」指示)** —
   - `lib/decorations.js`(余白を走る馬・名馬列伝の流れる帯・章区切り)の `<script>` をコメントアウトで停止。ロゴの🐎絵文字も撤去
   - styles.css 末尾の NOIR2 ブロックで hero-horses/ms-horse/brand-art-horse/margin-art/legend-strip/turf-backdrop 等の装飾SVG・走るアニメを全て `display:none`(安っぽいバーチャル馬を一掃)
