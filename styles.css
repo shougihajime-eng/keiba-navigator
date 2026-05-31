@@ -6675,3 +6675,58 @@ button:focus:not(:focus-visible) { outline: none; }
 
 /* --- 16. 仕上げ: フォーカスリングも金に --- */
 :focus-visible { outline: 1px solid var(--gold) !important; outline-offset: 2px; }
+
+/* =====================================================================
+   ░░░ NOIR — 本物志向 + 文字を大きく (2026-05-31 追補) ░░░
+   バーチャルな馬の装飾を全部隠し、本文の文字を一段大きく読みやすく。
+   ===================================================================== */
+
+/* --- A. 安っぽいバーチャルな馬・装飾を全消し --- */
+.hero-horses, .hero-horse, .horse-A, .horse-B, .horse-C,
+.hero-cloud, .hero-celestial,
+.ms-horse, .ms-trophy, .ms-finish, .ms-horseshoe, .ms-jockey,
+.margin-art-left, .margin-art-right,
+.margin-hoof-trail, .margin-hoof, .ms-hooves,
+.margin-legend-hero, .margin-quote,
+.brand-art-horse,
+.legend-strip, .legend-flow, .daily-headline, .run-strip,
+.chapter-divider, .turf-backdrop {
+  display: none !important;
+}
+/* 休む日カードの飾りSVGの台座も消して静かに */
+.ms-stack, .margin-stack { display: none !important; }
+
+/* --- B. 文字を大きく・読みやすく --- */
+.app-root { font-size: 16.5px; line-height: 1.7; }
+
+/* 見出し */
+.brand-title, .bm-logo-text { font-size: 22px !important; }
+.section-head .title, .sec-title h2 { font-size: 19px !important; }
+.decision-tier-label { font-size: 18px !important; }
+.noday-display .big, .noday-head-label { font-size: 1.05em; }
+
+/* 本文・理由・ラベル */
+.reason-list li { font-size: 16.5px !important; line-height: 1.65 !important; }
+.reason-box .label, .bigstat .label, .metric-cell .label,
+.buy-head .title, .lab-label { font-size: 12px !important; }
+.live-thin, .live-strip, .live-meta { font-size: 13px !important; }
+.section-body, .noday-display .sub { font-size: 15.5px !important; }
+
+/* 買い目を大きく */
+.buy-item .combo { font-size: 20px !important; }
+.buy-item.is-main .combo { font-size: 28px !important; }
+.buy-item .horse-name { font-size: 15px !important; }
+.buy-item.is-main .horse-name { font-size: 17px !important; }
+.buy-item .amount, .buy-item .return { font-size: 15px !important; }
+
+/* 全レース行・本命名 */
+.race-row .info .pick .horse-name, .race-row .venue-name { font-size: 16px !important; }
+.race-row .info .pick .horse-num { font-size: 18px !important; }
+
+/* ボタン */
+.btn-cta { font-size: 16.5px !important; min-height: 54px !important; }
+
+/* ボトムナビの文字 */
+.bottom-nav__item { font-size: 12px !important; }
+
+/* 数字(期待値・確率)は大きいまま据え置き(bigstatは既存サイズ) */
