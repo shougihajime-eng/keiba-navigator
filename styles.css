@@ -6730,3 +6730,25 @@ button:focus:not(:focus-visible) { outline: none; }
 .bottom-nav__item { font-size: 12px !important; }
 
 /* 数字(期待値・確率)は大きいまま据え置き(bigstatは既存サイズ) */
+
+/* =====================================================================
+   ░░░ NOIR — 本物の写真背景 (2026-05-31) ░░░
+   夕暮れに芝を駆ける白馬の本物写真を、強く暗く落として最背面に固定。
+   うっすら透ける程度の漆黒テクスチャ。文字の可読性は黒ベールで担保。
+   ===================================================================== */
+body::before {
+  content: "" !important;
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -3 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(180deg, rgba(6,6,6,0.93) 0%, rgba(6,6,6,0.88) 40%, rgba(6,6,6,0.96) 100%),
+    url("assets/horse-bg.jpg") center 30% / cover no-repeat !important;
+  /* 写真をモノトーン寄りにして金/黒の世界に馴染ませる */
+  filter: saturate(0.55) contrast(1.02) brightness(0.85);
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+/* 上端の金のひと刷毛は body 本体側で維持済み */
