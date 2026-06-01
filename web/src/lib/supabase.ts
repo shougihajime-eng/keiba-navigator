@@ -6,6 +6,18 @@ const URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://eqkaaohdbqefuszxwqz
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxa2Fhb2hkYnFlZnVzenh3cXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDg4NjcsImV4cCI6MjA5MzAyNDg2N30.91ypwWiV3jLKh0OL2NOQsRBXf3PfFAiR1kHbHlxYLA8";
 
+function timeoutFetch(timeoutMs = 8000): typeof fetch {
+  return async (input, init) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(input as RequestInfo, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let client: any = null;
 
@@ -17,6 +29,7 @@ export function getSupabase(): any {
   if (!client) {
     client = createBrowserClient(URL, ANON, {
       db: { schema: "keiba" },
+      global: { fetch: timeoutFetch(8000) },
       auth: {
         persistSession: true,
         storage: window.localStorage,
