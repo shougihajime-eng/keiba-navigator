@@ -13,8 +13,45 @@ const { clearCache }        = require("../lib/fetch");
 const predCache             = require("../lib/predictions_cache");
 const lightgbm_v1           = require("../predictors/lightgbm_v1");
 
-function ok(res, body)  { res.setHeader("Cache-Control", "no-store"); res.status(200).json(body); }
+// 成功応答: 事前に Cache-Control が設定されていればそれを尊重 (CDN キャッシュ)。
+// 未設定なら従来通り no-store (安全側)。
+function ok(res, body)  {
+  if (!res.getHeader("Cache-Control")) res.setHeader("Cache-Control", "no-store");
+  res.status(200).json(body);
+}
+// エラー応答は常に no-store (4xx/5xx を CDN に焼き付けない)
 function bad(res, code, body) { res.setHeader("Cache-Control", "no-store"); res.status(code).json(body); }
+
+// ─── CDN キャッシュ方針 (2026-06-04 高速化) ───
+// データは「ローカル PC → git push → Vercel デプロイ」でしか変わらず、
+// デプロイのたびに Vercel の CDN キャッシュは自動で全消去される。
+// → GET のデータ系 API は s-maxage で CDN に置いても古くならない。
+// ブラウザ側は max-age=0 (毎回 CDN に確認) なので体感は常に最新・応答は数十 ms。
+// [s-maxage 秒, stale-while-revalidate 秒]
+const CACHE_POLICY = {
+  "/status":            [60, 600],
+  "/races":             [30, 600],
+  "/win5":              [60, 600],
+  "/race":              [60, 600],
+  "/conclusion":        [60, 600],
+  "/recommendations":   [300, 3600],
+  "/race-card":         [300, 3600],
+  "/rankings":          [300, 3600],
+  "/ml-status":         [300, 3600],
+  "/learning-status":   [60, 600],
+  "/model-info":        [300, 3600],
+  "/experiment-status": [300, 3600],
+  "/experiment-history":[300, 3600],
+  "/g1-history":        [300, 3600],
+  "/result":            [120, 3600],
+  "/venues":            [3600, 86400],
+  "/connection":        [60, 600],
+  "/automation-status": [60, 600],
+  "/schedule":          [30, 300],
+  "/weather":           [600, 1800],
+  "/news":              [600, 1800],
+  "/news-annotated":    [600, 1800],
+};
 function methodNotAllowed(res, allow) {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Allow", allow);
@@ -45,6 +82,12 @@ module.exports = async (req, res) => {
     slug = (u.pathname || "").replace(/^\/api\/?/, "");
   }
   const path = "/" + (slug || "");
+
+  // GET のデータ系 API は CDN キャッシュを許可 (ok() がこのヘッダを尊重する)
+  if (req.method === "GET" && CACHE_POLICY[path]) {
+    const [smax, swr] = CACHE_POLICY[path];
+    res.setHeader("Cache-Control", `public, max-age=0, s-maxage=${smax}, stale-while-revalidate=${swr}`);
+  }
 
   try {
     if (path === "/status")     return ok(res, buildStatus());

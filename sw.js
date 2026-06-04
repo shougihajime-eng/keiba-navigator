@@ -10,13 +10,19 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v67"; // リニューアル: 3 ブロック構造 (勝負レース/反省/収支)
+const CACHE_VERSION = "keiba-nav-v68"; // 高速化: network-first にタイムアウト + 画像プリキャッシュ
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",
+  "/assets/horse-bg.jpg",
   // ↓ /, /index.html は network-only に変更したので pre-cache から外す
   //   (オフライン時のフォールバックは /offline.html を別途返す)
 ];
+
+// network-first のネット待ち上限 (ms)。遅い回線ではこれを超えたら
+// 手元のキャッシュで即表示し、ネットの結果は裏でキャッシュ更新に回す。
+// 鮮度: 次回ロードでは更新済みキャッシュ or 速いネットが返る。
+const NETWORK_TIMEOUT_MS = 2500;
 
 // network-first で扱う (デプロイ後に古い版が残らないようにする)
 // 【!】index.html を cache-first にしておくと、新デプロイで JS チャンクのハッシュが
@@ -92,17 +98,28 @@ self.addEventListener("fetch", (event) => {
     }
 
     // network-first 対象 (app.js/styles.css/predictors/lib): 必ずネットを先に試す。
-    // ネット失敗時のみキャッシュ。これでデプロイ後の "古い app.js が出続け" を防ぐ。
+    // ただし NETWORK_TIMEOUT_MS を超えたらキャッシュで即表示 (遅い回線対策)。
+    // ネットの結果は裏で待ち続けてキャッシュを更新するので、次回は最新になる。
     if (isNetworkFirst(url.pathname)) {
-      try {
-        const fresh = await fetch(req, { cache: "no-store" });
+      const networkPromise = fetch(req, { cache: "no-store" }).then((fresh) => {
         if (fresh && fresh.ok) cache.put(req, fresh.clone()).catch(() => null);
         return fresh;
-      } catch {
-        const cached = await cache.match(req);
-        if (cached) return cached;
-        return new Response("offline", { status: 503, statusText: "offline" });
-      }
+      });
+      // 後で使わない場合の unhandled rejection を防ぐ
+      networkPromise.catch(() => null);
+      const timeoutToken = Symbol("timeout");
+      const winner = await Promise.race([
+        networkPromise.catch(() => null),
+        new Promise((resolve) => setTimeout(() => resolve(timeoutToken), NETWORK_TIMEOUT_MS)),
+      ]);
+      if (winner && winner !== timeoutToken) return winner;  // ネットが先に返った (成功)
+      const cached = await cache.match(req);
+      if (cached) return cached;                              // 遅い/失敗 → キャッシュで即表示
+      try {
+        const fresh = await networkPromise;                   // キャッシュも無い → ネットを待ち切る
+        if (fresh) return fresh;
+      } catch { /* fallthrough */ }
+      return new Response("offline", { status: 503, statusText: "offline" });
     }
 
     // それ以外 (icon 等の静的アセット): cache-first → stale-while-revalidate

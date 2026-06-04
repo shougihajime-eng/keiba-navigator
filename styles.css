@@ -6752,3 +6752,95 @@ body::before {
   mix-blend-mode: normal !important;
 }
 /* 上端の金のひと刷毛は body 本体側で維持済み */
+
+/* =====================================================================
+   ░░░ SPEED & 操作性 (2026-06-04) ░░░
+   ① 手動更新ボタン (↻)  ② 引っ張って更新  ③ レイアウトシフト防止
+   ===================================================================== */
+
+/* ① ライブストリップの「今すぐ更新」ボタン (sound-toggle と同じ佇まい) */
+.refresh-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 8px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(201,168,92,0.35);
+  background: rgba(28,32,37,0.85);
+  color: var(--c-gold, #C9A85C);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-left: 6px;
+  min-height: 36px;
+  min-width: 36px;
+  touch-action: manipulation;
+}
+.refresh-btn:hover { border-color: rgba(201,168,92,0.7); }
+.refresh-btn:active { transform: scale(0.92); }
+.refresh-btn .rf-icon { font-size: 15px; line-height: 1; display: inline-block; }
+.refresh-btn.is-spinning .rf-icon { animation: kbRefreshSpin 0.8s linear infinite; }
+@keyframes kbRefreshSpin { to { transform: rotate(360deg); } }
+
+/* ② 引っ張って更新のインジケータ (最上部で下に引っ張ると出る) */
+.ptr-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  display: flex; justify-content: center;
+  pointer-events: none;
+  transform: translateY(-110%);
+  transition: transform 0.18s ease;
+}
+.ptr-bar.is-visible { transform: translateY(0); }
+.ptr-bar .ptr-inner {
+  margin-top: calc(env(safe-area-inset-top, 0px) + 8px);
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--c-gold, #C9A85C);
+  background: rgba(6,6,6,0.92);
+  border: 1px solid rgba(201,168,92,0.4);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+}
+.ptr-bar.is-ready .ptr-inner {
+  color: #0a0a0a;
+  background: linear-gradient(135deg, #C9A85C, #E4C77E);
+  border-color: transparent;
+}
+
+/* ③ 初回描画のレイアウトシフト防止 (結論カード枠の高さを先に確保) */
+#decision-mount { min-height: 180px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .refresh-btn.is-spinning .rf-icon { animation: none; }
+  .ptr-bar { transition: none; }
+}
+
+/* ライブストリップ内の更新ボタンはコンパクトに (sound-toggle と同じ寸法) */
+.live-thin .refresh-btn { padding: 3px 7px; min-height: auto; min-width: 30px; }
+.live-thin .refresh-btn .rf-icon { font-size: 13px; }
+/* 狭い画面ではライブストリップの文字情報を詰めて 1 行に収める */
+@media (max-width: 420px) {
+  .live-thin { gap: 5px; padding: 4px 8px; }
+  .live-thin .ai-thinking { display: none; } /* 思考中表示は狭幅では省略 (はみ出し防止) */
+}
+
+/* =====================================================================
+   ░░░ スマホ幅の横はみ出し根治 (2026-06-04) ░░░
+   NOIR 追補の「文字を大きく(!important)」がスマホ用縮小を打ち消し、
+   ヘッダー行の最小幅 (約460px) が画面幅 (390px) を超えて全体が
+   横にあふれていた。後勝ちでスマホだけ適正サイズに戻す。
+   ===================================================================== */
+.bm-row { flex-wrap: wrap; row-gap: 3px; }
+@media (max-width: 480px) {
+  .brand-mini .bm-logo-text { font-size: 15px !important; }
+  .bm-metric { padding: 2px 7px; font-size: 10px; gap: 2px; }
+  .brand-mini .bm-metric b { font-size: 12px !important; }
+  .bm-date { font-size: 11px; }
+  .bm-date b { font-size: 12px; }
+  .live-thin { font-size: 11px !important; }
+  .live-thin .live-meta { font-size: 11px !important; }
+  .live-thin .ai-thinking { display: none !important; }
+}
+/* どの幅でも横スクロールを発生させない最終ガード */
+body { overflow-x: clip; }

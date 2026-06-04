@@ -13,9 +13,35 @@
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/icon.svg" />
   <title>KEIBA NAVIGATOR — 今日の勝負レース</title>
+  <script>
+  /* 先行フェッチ: app.js の読み込みを待たずに API 取得を開始する (初回表示の高速化)。
+     app.js 側の api() がこの Promise を 1 回だけ消費する。 */
+  (function () {
+    try {
+      var paths = ["/api/status", "/api/races", "/api/automation-status", "/api/ml-status", "/api/recommendations"];
+      // WIN5 の URL は app.js (refreshAll) と同じ組み立て順 (mode → budget → plan) にする
+      var p = [];
+      try {
+        if (localStorage.getItem("keiba_win5_mode") === "hit") p.push("mode=hit");
+        var b = parseInt(localStorage.getItem("keiba_win5_budget"), 10);
+        if (b) p.push("budget=" + b);
+        var plan = JSON.parse(localStorage.getItem("keiba_win5_plan") || "null");
+        if (Array.isArray(plan) && plan.length === 5 && plan.every(function (n) { return typeof n === "number" && isFinite(n) && n >= 1 && n <= 8; })) {
+          p.push("plan=" + plan.join(","));
+        }
+      } catch (e) {}
+      paths.push("/api/win5" + (p.length ? "?" + p.join("&") : ""));
+      var pre = {};
+      paths.forEach(function (path) { pre[path] = fetch(path, { cache: "no-store" }); });
+      window.__apiPreload = pre;
+    } catch (e) {}
+  })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <!-- フォント CSS は非ブロッキングで読み込む (描画を止めない・読み込み完了後に適用) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -50,6 +76,9 @@
       <span class="dot"></span><span class="dot"></span><span class="dot"></span>AI思考中
     </span>
     <span class="learning-badge" style="margin-left:auto">学習中</span>
+    <button class="refresh-btn" id="refresh-btn" type="button" aria-label="今すぐ更新">
+      <span class="rf-icon" aria-hidden="true">↻</span>
+    </button>
     <button class="sound-toggle is-on" id="sound-toggle" type="button" aria-label="効果音 ON/OFF">
       <span class="st-icon" id="st-icon">🔊</span>
     </button>

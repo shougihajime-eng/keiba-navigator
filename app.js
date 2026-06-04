@@ -7,9 +7,13 @@
   "use strict";
 
   // ─── 設定 ────────────────────────────────────────────────
-  const REFRESH_MS = 30_000;
+  const REFRESH_MS = 30_000;        // 通常時の更新間隔
+  const REFRESH_FAST_MS = 15_000;   // 発走 20 分前以内の集中更新
+  const REFRESH_IDLE_MS = 120_000;  // 開催なし日のゆっくり更新
+  const SLOW_REFRESH_MS = 5 * 60_000; // 重い API (ml-status 等) の更新間隔
   const TICK_MS    = 1_000;
   const STORE_KEY  = "keiba_v15";
+  const SNAPSHOT_KEY = "keiba_snapshot_v1"; // 前回データの控え (起動を一瞬にする)
 
   // ─── State ───────────────────────────────────────────────
   const state = {
@@ -124,6 +128,60 @@
   function saveBets() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state.bets)); }
     catch (e) { console.warn("saveBets failed", e); }
+  }
+
+  // ─── 起動高速化: 前回データの控え (スナップショット) ──────
+  // refreshAll 成功のたびに保存 → 次回起動時は API を待たずに即描画。
+  // その裏で最新を取得して上書きする (体感 0 秒起動)。
+  function saveSnapshot() {
+    try {
+      localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({
+        ts: Date.now(),
+        day: todayJst(),
+        status: state.status,
+        racesLast: state.racesLast,
+        races: state.races,
+        fetchedAt: state.fetchedAt,
+        win5: state.win5,
+        autostatus: state.autostatus,
+        mlStatus: state.mlStatus,
+        recommendations: state.recommendations,
+      }));
+    } catch (e) { /* 容量超過などは無視 (体感最適化用の控えなので) */ }
+  }
+  function hydrateSnapshot() {
+    try {
+      const raw = localStorage.getItem(SNAPSHOT_KEY);
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      if (!s || !s.ts) return false;
+      if (Date.now() - s.ts > 24 * 3600 * 1000) return false; // 1 日より古い控えは使わない
+      // レース系 (今日の予想) は「同じ日付」のときだけ復元 — 昨日のレースを今日と誤表示しない
+      if (s.day === todayJst()) {
+        if (Array.isArray(s.races)) state.races = s.races;
+        if (s.racesLast) state.racesLast = s.racesLast;
+        if (s.fetchedAt) state.fetchedAt = s.fetchedAt;
+        if (s.win5) state.win5 = s.win5;
+      }
+      // 日をまたいでも安全な情報 (学習状態・検証・自動化) はそのまま復元
+      if (s.status) state.status = s.status;
+      if (s.autostatus) state.autostatus = s.autostatus;
+      if (s.mlStatus) state.mlStatus = s.mlStatus;
+      if (s.recommendations) state.recommendations = s.recommendations;
+      return true;
+    } catch { return false; }
+  }
+
+  // ─── 差分描画: データが変わったセクションだけ再描画 ───────
+  // 入力のシグネチャ (JSON) が前回と同じなら DOM を触らない。
+  // 30 秒ごとの全セクション作り直しによるカクつき・ちらつきを根治する。
+  const _renderSigs = Object.create(null);
+  function memoRender(key, parts, fn) {
+    let sig;
+    try { sig = JSON.stringify(parts); } catch { sig = "err" + Date.now(); }
+    if (_renderSigs[key] === sig) return;
+    _renderSigs[key] = sig;
+    fn();
   }
 
   // ─── 日付 / 時刻 ─────────────────────────────────────────
@@ -286,20 +344,37 @@
   }
 
   // ─── API ─────────────────────────────────────────────────
+  function shapeResponse(r) {
+    if (!r.ok) {
+      if (r.status >= 500 && r.status < 600) return { _http: r.status, ok: false };
+      return null;
+    }
+    return r.json();
+  }
   async function api(path) {
+    // 先行フェッチ (index.html の head で app.js より先に開始済み) があれば使う。
+    // 初回表示までの待ち時間を短縮する。1 回使ったら破棄して通常フェッチに戻る。
+    const pre = window.__apiPreload;
+    if (pre && pre[path]) {
+      const pending = pre[path];
+      delete pre[path];
+      try {
+        const r = await pending;
+        if (r) return await shapeResponse(r);
+      } catch { /* 先行フェッチ失敗 → 下の通常フェッチへ */ }
+    }
     try {
       const r = await fetch(path, { cache: "no-store" });
-      if (!r.ok) {
-        if (r.status >= 500 && r.status < 600) return { _http: r.status, ok: false };
-        return null;
-      }
-      return await r.json();
+      return await shapeResponse(r);
     } catch (e) {
       console.warn(`[api] ${path} failed:`, e?.message || e);
       return null;
     }
   }
-  async function refreshAll() {
+  // 重い API (ml-status / recommendations / automation-status) は内容が
+  // 1 日単位でしか変わらないので 5 分間隔に間引く (通信量と電池の節約)。
+  let lastSlowFetchAt = 0;
+  async function refreshAll(force) {
     if (state.isRefreshing) return;
     state.isRefreshing = true;
     $("#ai-thinking").hidden = false;
@@ -312,14 +387,19 @@
         w5Params.push(`plan=${state.win5UserPlan.join(",")}`);
       }
       const w5Url = "/api/win5" + (w5Params.length ? "?" + w5Params.join("&") : "");
+      const includeSlow = !!force || (Date.now() - lastSlowFetchAt > SLOW_REFRESH_MS - 10_000);
+      // WIN5 は日曜 (発売・購入日) は毎回、それ以外は 5 分間隔 + 初回 + 強制時のみ
+      const includeWin5 = !!force || !state.win5 || new Date().getDay() === 0 || includeSlow;
+      const nul = () => Promise.resolve(null);
       const [status, races, win5, autostatus, mlStatus, recommendations] = await Promise.all([
         api("/api/status"),
         api("/api/races"),
-        api(w5Url),
-        api("/api/automation-status"),
-        api("/api/ml-status"),
-        api("/api/recommendations"),
+        includeWin5 ? api(w5Url) : nul(),
+        includeSlow ? api("/api/automation-status") : nul(),
+        includeSlow ? api("/api/ml-status") : nul(),
+        includeSlow ? api("/api/recommendations") : nul(),
       ]);
+      if (includeSlow) lastSlowFetchAt = Date.now();
       if (status) state.status = status;
       if (races && races.ok) {
         state.races = Array.isArray(races.races) ? races.races : [];
@@ -333,6 +413,7 @@
       if (autostatus) state.autostatus = autostatus;
       if (mlStatus) state.mlStatus = mlStatus;
       if (recommendations) state.recommendations = recommendations;
+      saveSnapshot();
       render();
     } finally {
       state.isRefreshing = false;
@@ -1577,7 +1658,7 @@
       state.win5Budget = v;
       localStorage.setItem("keiba_win5_budget", String(v));
       toast(`予算 ¥${fmtYen(v)} で AI 最適化中…`);
-      refreshAll();
+      refreshAll(true);
     });
     toolbar.appendChild(optBtn);
 
@@ -1587,7 +1668,7 @@
         state.win5Budget = null;
         localStorage.removeItem("keiba_win5_budget");
         budgetIn.value = "";
-        refreshAll();
+        refreshAll(true);
       });
       toolbar.appendChild(clr);
     }
@@ -1712,7 +1793,7 @@
   function switchWin5Mode(mode) {
     state.win5Mode = mode;
     localStorage.setItem("keiba_win5_mode", mode);
-    refreshAll();
+    refreshAll(true);
   }
 
   // ─── WIN5 カスタム編集モーダル ─────────────────────────
@@ -1776,7 +1857,7 @@
       localStorage.setItem("keiba_win5_plan", JSON.stringify(plan));
       $("#modal-win5-edit").hidden = true;
       toast("カスタム編集を反映しました");
-      refreshAll();
+      refreshAll(true);
     };
     $("#w5e-cancel").onclick = () => { $("#modal-win5-edit").hidden = true; };
     $("#modal-win5-edit").hidden = false;
@@ -2498,8 +2579,8 @@
   }
 
   // ─── カウントダウン秒更新 ───────────────────────────────
-  let lastAllRacesRender = 0;
   function tickCountdown() {
+    if (document.hidden) return; // 画面を見ていない間は何もしない (電池節約)
     const sorted = [...state.races].sort((a, b) => {
       const aEv = a.topPick?.ev ?? -Infinity;
       const bEv = b.topPick?.ev ?? -Infinity;
@@ -2562,36 +2643,35 @@
         }
       }
     }
-    // 60 秒に 1 度 全レース行再描画 (締切表示更新)。
-    // refreshAll (30s) と重ならないように間隔を取る — 重複描画でカクつくのを防ぐ
-    if (Date.now() - lastAllRacesRender > 60000) {
-      lastAllRacesRender = Date.now();
-      renderAllRaces();
-    }
-    // LiveStrip も毎秒の年齢表示更新
+    // 全レース行の「あとX分」更新は render() の memoRender("allraces", [.., minuteBucket])
+    // が 1 分粒度で受け持つ (旧: ここで 60 秒ごとに直接再描画していたが二重描画なので撤去)
+    // LiveStrip は毎秒の年齢表示更新
     renderLive();
   }
 
   function render() {
     try {
-      renderHeader();
-      renderLive();
-      renderMorningSummary();
-      renderTopWinBanner();
+      // 各セクションは memoRender で「入力データが変わったときだけ」再描画する。
+      // カウントダウン等の毎秒更新は tickCountdown が担当 (ここでは作り直さない)。
+      const minuteBucket = Math.floor(Date.now() / 60000); // 「あとX分」表示の更新用
+      memoRender("header", [state.races, state.racesLast?.learning?.lgbm?.metrics?.auc], renderHeader);
+      renderLive(); // 毎秒系 (鮮度表示)・軽量なので常時
+      memoRender("morning", [state.races.length, state.recommendations?.recommendations_recent?.length, todayJst()], renderMorningSummary);
+      memoRender("topwin", [state.bets], renderTopWinBanner);
       // ── トップ3ブロック (リニューアル後の本体) ──
-      renderDecisionCard();      // ブロックA: 本日の勝負レース (★5/★4)
-      renderRecentMiss();        // ブロックB: 直近の反省 1 件
-      renderProfitSummary();     // ブロックC: 収支サマリー (今日/7日/累計)
+      memoRender("decision", [state.racesLast, state.bets, minuteBucket], renderDecisionCard);
+      memoRender("reflect", [state.bets], renderRecentMiss);
+      memoRender("profit", [state.bets], renderProfitSummary);
       // ── 折りたたみセクション群 ──
-      renderAutostatus();
-      renderMlStatus();
-      renderRecommendations();
-      renderWin5();
-      renderAllRaces();
-      renderHistory();
-      renderAllReflections();    // 履歴折りたたみ内の過去反省全件
-      renderAchievements();
-      renderStreakCard();
+      memoRender("autostatus", [state.autostatus, minuteBucket], renderAutostatus);
+      memoRender("mlstatus", [state.mlStatus], renderMlStatus);
+      memoRender("recommend", [state.recommendations], renderRecommendations);
+      memoRender("win5", [state.win5, state.win5Mode, state.win5Budget, state.win5SelectedKey, state.win5UserPlan], renderWin5);
+      memoRender("allraces", [state.races, state.allRacesFilter, state.allRacesSort, minuteBucket], renderAllRaces);
+      memoRender("history", [state.bets], renderHistory);
+      memoRender("reflectAll", [state.bets], renderAllReflections);
+      memoRender("achievements", [state.bets], renderAchievements);
+      memoRender("streak", [state.bets], renderStreakCard);
     } catch (e) {
       console.error("[render] error", e);
     }
@@ -3335,15 +3415,130 @@
     });
   }
 
+  // ─── 賢い自動更新スケジューラ ─────────────────────────────
+  // ・発走 20 分前以内のレースがある → 15 秒間隔 (オッズ・確定が動く時間帯)
+  // ・開催日 (レースあり) → 30 秒間隔
+  // ・開催なし日 → 2 分間隔 (データが動かないので休む)
+  // ・画面が非表示 → 完全停止。表示に戻った瞬間に即更新 + 再開
+  let refreshTimer = null;
+  function nextRefreshDelay() {
+    let soonest = Infinity;
+    for (const r of state.races) {
+      const m = minutesUntilStart(r);
+      if (m != null && m >= -5) soonest = Math.min(soonest, m);
+    }
+    if (soonest <= 20) return REFRESH_FAST_MS;
+    if (state.races.length > 0) return REFRESH_MS;
+    return REFRESH_IDLE_MS;
+  }
+  function scheduleNextRefresh() {
+    clearTimeout(refreshTimer);
+    if (document.hidden) return; // 非表示中は止める (visibilitychange で再開)
+    refreshTimer = setTimeout(async () => {
+      try { await refreshAll(); } catch {}
+      scheduleNextRefresh();
+    }, nextRefreshDelay());
+  }
+  function resumeAndRefresh() {
+    refreshAll();
+    scheduleNextRefresh();
+  }
+
+  // ─── 手動更新 (↻ ボタン) ────────────────────────────────
+  function setupRefreshButton() {
+    const btn = $("#refresh-btn");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      if (state.isRefreshing) return;
+      btn.classList.add("is-spinning");
+      try {
+        await refreshAll(true); // 強制 (重い API も含め全部取り直す)
+        toast("最新の状態に更新しました");
+      } finally {
+        btn.classList.remove("is-spinning");
+      }
+      scheduleNextRefresh();
+    });
+  }
+
+  // ─── 引っ張って更新 (スマホ・最上部で下に引っ張る) ────────
+  function setupPullToRefresh() {
+    let startY = null;
+    let pulling = false;
+    const THRESHOLD = 80;
+    const bar = el("div", { class: "ptr-bar", "aria-hidden": "true" }, el("span", { class: "ptr-inner" }, "↓ 引っ張って更新"));
+    document.body.appendChild(bar);
+    window.addEventListener("touchstart", (e) => {
+      if (window.scrollY <= 0 && e.touches.length === 1) {
+        startY = e.touches[0].clientY;
+        pulling = false;
+      } else {
+        startY = null;
+      }
+    }, { passive: true });
+    window.addEventListener("touchmove", (e) => {
+      if (startY == null || window.scrollY > 0) { if (pulling) { pulling = false; bar.classList.remove("is-visible", "is-ready"); } return; }
+      const dy = e.touches[0].clientY - startY;
+      if (dy > 12) {
+        pulling = true;
+        bar.classList.add("is-visible");
+        bar.classList.toggle("is-ready", dy > THRESHOLD);
+        const inner = bar.querySelector(".ptr-inner");
+        if (inner) inner.textContent = dy > THRESHOLD ? "↻ 離すと更新" : "↓ 引っ張って更新";
+      }
+    }, { passive: true });
+    window.addEventListener("touchend", async (e) => {
+      if (pulling && startY != null) {
+        const dy = (e.changedTouches[0]?.clientY ?? startY) - startY;
+        bar.classList.remove("is-visible", "is-ready");
+        if (dy > THRESHOLD) {
+          try { if (window.kbEffects?.vibrate) window.kbEffects.vibrate("tap"); } catch {}
+          await refreshAll(true);
+          toast("最新の状態に更新しました");
+          scheduleNextRefresh();
+        }
+      }
+      startY = null;
+      pulling = false;
+    }, { passive: true });
+  }
+
+  // ─── 折りたたみ (details) の開閉状態を記憶・復元 ──────────
+  function setupDetailsMemory() {
+    const KEY = "keiba_details_open_v1";
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch {}
+    $$("details.hideable").forEach((d) => {
+      // 2 つ目のクラス名 (hideable-news 等) を保存キーにする
+      const k = [...d.classList].find((c) => c !== "hideable") || "";
+      if (!k) return;
+      if (saved[k]) d.open = true;
+      d.addEventListener("toggle", () => {
+        saved[k] = d.open;
+        try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch {}
+      });
+    });
+  }
+
   function init() {
     setupTabs();
     setupFilters();
     setupModals();
     setupSoundToggle();  // Wave22.8
+    setupRefreshButton();
+    setupPullToRefresh();
+    setupDetailsMemory();
+    // 起動を一瞬に: まず前回の控えで即描画 → その裏で最新を取得して上書き
+    hydrateSnapshot();
     render();
-    refreshAll();
-    setInterval(refreshAll, REFRESH_MS);
+    refreshAll().then(() => scheduleNextRefresh());
     setInterval(tickCountdown, TICK_MS);
+    // 画面に戻った瞬間 / 回線が復活した瞬間に即更新 (待たせない)
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) { clearTimeout(refreshTimer); }
+      else { resumeAndRefresh(); }
+    });
+    window.addEventListener("online", resumeAndRefresh);
     // 通知チェック (30 秒に 1 回・該当時刻なら 1 回だけ通知)
     setInterval(checkWin5NotifyTick, 30_000);
     checkWin5NotifyTick();
