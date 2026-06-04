@@ -495,6 +495,7 @@ def main():
     ap.add_argument("--race-id", help="特定レースのみ推論")
     ap.add_argument("--all-today", action="store_true", help="data/jv_cache/races/*.json で今日の日付 (YYYYMMDD) のレース全部")
     ap.add_argument("--all-races", action="store_true", help="races/*.json の全レース")
+    ap.add_argument("--date", help="指定日 (YYYYMMDD) のレース全部 (例: 前日夜に明日の前売りオッズで予想)")
     args = ap.parse_args()
 
     model, kind = _load_model()
@@ -528,7 +529,9 @@ def main():
                   f"ev={h.get('ev')} value={h.get('value_signal')}", flush=True)
         return 0
 
-    if args.all_today:
+    if args.date:
+        targets = [p for p in RACES_DIR.glob(f"{args.date}*.json")]
+    elif args.all_today:
         today = datetime.now().strftime("%Y%m%d")
         targets = [p for p in RACES_DIR.glob(f"{today}*.json")]
     elif args.all_races:
