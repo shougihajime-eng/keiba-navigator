@@ -7561,3 +7561,432 @@ main .hideable:last-of-type { border-bottom: 1px solid var(--hair) !important; }
   color: var(--c-ink-mute) !important;
   letter-spacing: 0.08em !important;
 }
+
+/* =====================================================================
+   ░░░ NOIR II — RACE DAY ░░░ (2026-06-05)
+   開催日画面 (結論カード/買い目/本命3頭/全レース行/WIN5) を
+   金/白/灰の3声部に統一。土曜の本番画面を目次と同じ品格に。
+   ===================================================================== */
+
+/* ── R1. バトルヘッダ ── */
+.battle-overline {
+  color: var(--gold-deep) !important;
+  letter-spacing: 0.34em !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+}
+.battle-title {
+  font-family: "Cormorant Garamond", "Noto Sans JP", serif !important;
+  font-weight: 600 !important;
+  color: var(--c-ink) !important;
+  letter-spacing: 0.04em !important;
+}
+.battle-sub { color: var(--c-ink-mute) !important; letter-spacing: 0.04em; }
+
+/* ── R2. 結論カードのヘッダ帯 — 文字を整える ── */
+.decision-tier-label {
+  font-size: 14.5px !important;
+  letter-spacing: 0.10em !important;
+  line-height: 1.6 !important;
+}
+.decision-tier-extra { color: var(--c-ink-dim) !important; font-size: 11px !important; }
+.decision-tier-extra b { color: var(--c-ink-soft) !important; }
+
+/* TODAY'S BEST PICK 帯: 金の塗り帯をやめ、静かな一行の眉に。
+   ティアのピル (ヘッダ帯と同文の重複) は出さない */
+.today-best-overline,
+.today-best-gold, .today-best-turf, .today-best-sky, .today-best-mute {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--hair) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 2px 2px 12px !important;
+}
+.tbo-emoji, .tbo-tier-pill { display: none !important; }
+.tbo-eyebrow {
+  color: var(--gold-deep) !important;
+  font-size: 9.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.30em !important;
+}
+.tbo-headline {
+  color: var(--c-ink) !important;
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-shadow: none !important;
+}
+
+/* ── R3. 場名・距離・締切 — 縦に折れる事故を根治 ── */
+.race-name-block { flex-wrap: wrap; align-items: baseline !important; row-gap: 6px; }
+.venue-display {
+  font-family: "Cormorant Garamond", "Noto Sans JP", serif !important;
+  font-size: 40px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  white-space: nowrap !important;
+  text-shadow: none !important;
+}
+@media (min-width: 640px)  { .venue-display { font-size: 52px !important; } }
+@media (max-width: 420px)  { .venue-display { font-size: 34px !important; } }
+.race-number {
+  font-family: "Cormorant Garamond", serif !important;
+  font-size: 26px !important;
+  font-weight: 500 !important;
+  color: var(--gold-bright) !important;
+  padding-bottom: 2px !important;
+}
+@media (min-width: 640px) { .race-number { font-size: 34px !important; } }
+.grade-badge, .grade-badge.grade-l {
+  background: transparent !important;
+  border: 1px solid var(--gold-line) !important;
+  color: var(--gold-bright) !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+.surface-pill, .surface-pill.shiba, .surface-pill.dirt, .surface-pill.shou {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink-mute) !important;
+}
+.countdown .label { color: var(--c-ink-dim) !important; letter-spacing: 0.24em !important; font-weight: 500 !important; }
+.countdown .big {
+  font-family: "Cormorant Garamond", serif !important;
+  font-weight: 500 !important;
+  font-size: 30px !important;
+  color: var(--gold-bright) !important;
+}
+.countdown.warn .big { color: var(--gold) !important; }
+.countdown.past .big { color: var(--c-ink-mute) !important; }
+.countdown .sub { color: var(--c-ink-dim) !important; }
+
+/* ── R4. 本命3頭 (シルク行) — 名前が1文字ずつ折れる事故を根治 ── */
+.spr-eyebrow {
+  color: var(--c-ink-dim) !important;
+  letter-spacing: 0.28em !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+}
+.spr-horses { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px !important; }
+.spr-card, .spr-card.is-main {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  min-width: 0 !important;
+  padding: 12px 8px !important;
+  transform: none !important;
+}
+.spr-card.is-main { border-color: var(--gold-line) !important; }
+.spr-card.is-main .spr-silk svg { filter: none !important; }
+.spr-silk svg { filter: none !important; }
+.spr-role { color: var(--c-ink-dim) !important; letter-spacing: 0.10em !important; font-weight: 500 !important; }
+.spr-card.is-main .spr-role { color: var(--gold) !important; }
+.spr-name, .spr-card.is-main .spr-name {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  font-size: 11.5px !important;
+  color: var(--c-ink-soft) !important;
+}
+.spr-card.is-main .spr-name { color: var(--c-ink) !important; font-size: 12.5px !important; }
+.spr-prob, .spr-card.is-main .spr-prob {
+  font-family: "Cormorant Garamond", serif !important;
+  font-weight: 500 !important;
+  font-size: 19px !important;
+  color: var(--c-ink) !important;
+}
+.spr-card.is-main .spr-prob { color: var(--gold-bright) !important; font-size: 21px !important; }
+.spr-odds { color: var(--c-ink-dim) !important; }
+
+/* ── R5. 買い目 — 役割タグの混色を金1色へ・馬名の折返し根治 ── */
+.buy-box .buy-head .title {
+  color: var(--c-ink-mute) !important;
+  letter-spacing: 0.12em !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+.buy-box .buy-head .total b { color: var(--gold-bright) !important; font-size: 18px; }
+.buy-item { gap: 10px !important; }
+.buy-item > div:not(.right) { min-width: 0; flex: 1; }
+.buy-item .combo, .buy-item.is-main .combo {
+  font-family: "Cormorant Garamond", serif !important;
+  font-weight: 500 !important;
+  font-size: 21px !important;
+  letter-spacing: 0.02em;
+}
+.buy-item.is-main .combo { font-size: 26px !important; }
+.buy-item .horse-name, .buy-item.is-main .horse-name {
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  font-size: 12.5px !important;
+  color: var(--c-ink-mute) !important;
+}
+.buy-item.is-main .horse-name { color: var(--c-ink-soft) !important; font-size: 13.5px !important; }
+.buy-item .role.role-main, .buy-item .role.role-sub,
+.buy-item .role.role-side, .buy-item .role.role-ins,
+.buy-item.is-main .role {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink-soft) !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+}
+.buy-item .role.role-main, .buy-item.is-main .role {
+  border-color: var(--gold-line) !important;
+  color: var(--gold-bright) !important;
+}
+.buy-item .right { flex-shrink: 0; }
+.buy-item .amount { color: var(--c-ink) !important; }
+.buy-item .return { color: var(--c-turf) !important; font-weight: 600 !important; }
+
+/* ── R6. 円グラフ・ハート — 赤/緑/橙を金へ ── */
+.donut-ring { box-shadow: none !important; }
+.donut-ring::before { background: #0E0E0F !important; box-shadow: none !important; }
+.bigstat-donut.tone-go .donut-ring,
+.bigstat-donut.tone-gold .donut-ring,
+.bigstat-donut.tone-warn .donut-ring,
+.bigstat-donut.tone-ink .donut-ring { --c-fill: var(--gold) !important; }
+.bigstat-donut.tone-mute .donut-ring { --c-fill: rgba(201, 168, 92, 0.35) !important; }
+.donut-num,
+.bigstat-donut.tone-go .donut-num,
+.bigstat-donut.tone-gold .donut-num,
+.bigstat-donut.tone-warn .donut-num {
+  font-family: "Cormorant Garamond", serif !important;
+  font-weight: 500 !important;
+  color: var(--gold-bright) !important;
+}
+.heart.is-on,
+.bigstat-bars.tone-gold .heart.is-on,
+.bigstat-bars.tone-go .heart.is-on {
+  color: var(--gold) !important;
+  text-shadow: none !important;
+}
+.heart.is-off { color: rgba(255, 255, 255, 0.12) !important; }
+
+/* ── R7. 見送り推奨リスト ── */
+.pass-list-card {
+  background: transparent !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+.pl-title { color: var(--c-ink-soft) !important; letter-spacing: 0.08em; }
+.pl-count { border: 1px solid var(--hair-strong) !important; background: transparent !important; color: var(--c-ink-mute) !important; }
+.pl-hint { color: var(--c-ink-dim) !important; }
+.pl-row, .pl-row.pl-tier-go, .pl-row.pl-tier-cond, .pl-row.pl-tier-best {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--hair) !important;
+}
+.pl-stars { color: var(--gold-deep) !important; }
+.pl-ev {
+  font-family: "Cormorant Garamond", serif !important;
+  color: var(--c-ink-soft) !important;
+  font-weight: 500 !important;
+}
+
+/* ── R8. AI の根拠 (検証ボックス・思考プロセス) ── */
+.cond-stats-box, .ai-process-box {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+.cond-stats-box .header, .cond-stats-box .header b,
+.ai-process-box .header { color: var(--c-ink-soft) !important; }
+.cond-stats-row .badge, .cond-stats-row .badge.gold, .cond-stats-row .badge.green {
+  background: transparent !important;
+  border: 1px solid var(--gold-line) !important;
+  color: var(--gold) !important;
+}
+.cond-stats-row .roi { color: var(--gold-bright) !important; font-family: "Cormorant Garamond", serif !important; font-weight: 500 !important; }
+.cond-stats-row .sub { color: var(--c-ink-dim) !important; }
+.ai-process-step { background: transparent !important; border: 0 !important; }
+.ai-process-step .idx {
+  background: transparent !important;
+  border: 1px solid var(--gold-line) !important;
+  color: var(--gold) !important;
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+}
+.decision-suppl { background: rgba(255,255,255,0.015) !important; border: 1px solid var(--hair) !important; }
+.decision-suppl .ds-arrow {
+  background: transparent !important;
+  border: 1px solid var(--hair) !important;
+  color: var(--c-ink-mute) !important;
+}
+.decision-suppl[open] .ds-arrow { background: transparent !important; border-color: var(--gold-line) !important; color: var(--gold) !important; }
+
+/* ── R9. 全レース行 — ティア色の塗りをやめ、罫線の声部で ── */
+.race-row,
+.race-row.tier-ultra, .race-row.tier-prime, .race-row.tier-gold,
+.race-row.tier-go, .race-row.tier-cond, .race-row.tier-best, .race-row.tier-none {
+  background: #0C0C0D !important;
+  border: 1px solid var(--hair) !important;
+  box-shadow: none !important;
+}
+.race-row.tier-ultra { border-color: var(--gold-line) !important; }
+.race-row.tier-prime, .race-row.tier-gold { border-color: var(--gold-line-soft) !important; }
+.race-row .time,
+.race-row.tier-ultra .time, .race-row.tier-go .time, .race-row.tier-cond .time {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  box-shadow: none !important;
+}
+.race-row.tier-ultra .time { border-color: var(--gold-line) !important; }
+.race-row .time .hh,
+.race-row.tier-ultra .time .hh, .race-row.tier-prime .time .hh,
+.race-row.tier-go .time .hh, .race-row.tier-cond .time .hh {
+  font-family: "Cormorant Garamond", serif !important;
+  font-weight: 500 !important;
+  color: var(--c-ink) !important;
+}
+.race-row.tier-ultra .time .hh { color: var(--gold-bright) !important; }
+.race-row .ev .num-big,
+.race-row.tier-gold .ev .num-big, .race-row.tier-prime .ev .num-big,
+.race-row.tier-ultra .ev .num-big, .race-row.tier-cond .ev .num-big,
+.race-row.tier-best .ev .num-big, .race-row.tier-none .ev .num-big {
+  font-family: "Cormorant Garamond", serif !important;
+  font-weight: 500 !important;
+  color: var(--c-ink-soft) !important;
+}
+.race-row.tier-ultra .ev .num-big, .race-row.tier-prime .ev .num-big { color: var(--gold-bright) !important; }
+.race-row .ev .aim-star.on,
+.race-row.tier-ultra .ev .aim-star.on { color: var(--gold) !important; text-shadow: none !important; }
+.race-row .ev .aim-star.off { color: rgba(255, 255, 255, 0.12) !important; }
+.race-row .venue-name, .race-row [data-v] {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink-soft) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+.race-row.tier-gold .info .pick .horse-num { color: var(--gold-bright) !important; }
+
+/* ── R10. WIN5 — 紫の声部を金へ ── */
+.win5-card { border-color: var(--gold-line-soft) !important; }
+.win5-head .title {
+  font-family: "Cormorant Garamond", "Noto Sans JP", serif !important;
+  font-weight: 600 !important;
+  color: var(--c-ink) !important;
+}
+.win5-head .day { color: var(--gold) !important; border: 1px solid var(--gold-line) !important; background: transparent !important; }
+.win5-wf-banner {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 12px !important;
+}
+.win5-wf-banner .wf-head { color: var(--c-ink-soft) !important; }
+.win5-wf-banner .wf-body { color: var(--c-ink-mute) !important; }
+.win5-wf-banner .wf-warn {
+  background: transparent !important;
+  border-top: 1px solid var(--hair) !important;
+  color: var(--c-ink-mute) !important;
+}
+.win5-wf-banner .wf-warn b { color: var(--gold) !important; }
+.win5-toolbar .seg { background: transparent !important; border: 1px solid var(--hair-strong) !important; }
+.win5-toolbar .seg button { color: var(--c-ink-mute) !important; background: transparent !important; }
+.win5-toolbar .seg button.is-active {
+  background: rgba(201, 168, 92, 0.08) !important;
+  color: var(--gold-bright) !important;
+  box-shadow: none !important;
+}
+.budget-input { border: 1px solid var(--hair-strong) !important; background: transparent !important; color: var(--c-ink-mute) !important; }
+.budget-input input { background: transparent !important; color: var(--c-ink) !important; }
+.budget-btn {
+  background: linear-gradient(180deg, #15130D, #0C0B08) !important;
+  border: 1px solid var(--gold-line) !important;
+  color: var(--gold-bright) !important;
+  box-shadow: none !important;
+}
+.win5-strategy, .win5-strategy.is-recommended {
+  background: #0C0C0D !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+.win5-strategy.is-recommended { border-color: var(--gold-line) !important; }
+.win5-strategy .rec-badge {
+  background: transparent !important;
+  border: 1px solid var(--gold-line) !important;
+  color: var(--gold) !important;
+  box-shadow: none !important;
+}
+.win5-strategy .name { color: var(--c-ink) !important; font-weight: 600 !important; }
+.win5-strategy.is-recommended .name { color: var(--gold-bright) !important; }
+.win5-strategy .stake {
+  font-family: "Cormorant Garamond", serif !important;
+  font-weight: 500 !important;
+  color: var(--gold-bright) !important;
+}
+.win5-strategy .sub { color: var(--c-ink-mute) !important; }
+
+/* WIN5 ストーリーカード */
+.win5-story-card {
+  background: #0C0C0D !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+.wsc-leg {
+  background: transparent !important;
+  border: 0 !important;
+  font-family: "Cormorant Garamond", serif !important;
+  font-style: italic;
+  font-weight: 500 !important;
+  color: var(--gold-deep) !important;
+  letter-spacing: 0.06em !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.wsc-venue,
+.wsc-venue[data-v="東京"], .wsc-venue[data-v="中山"],
+.wsc-venue[data-v="京都"], .wsc-venue[data-v="阪神"],
+.wsc-venue[data-v="札幌"], .wsc-venue[data-v="函館"],
+.wsc-venue[data-v="新潟"], .wsc-venue[data-v="福島"],
+.wsc-venue[data-v="小倉"], .wsc-venue[data-v="中京"] {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink-soft) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+.wsc-rn { color: var(--c-ink-mute) !important; }
+.wsc-horse-name { color: var(--c-ink) !important; }
+.wsc-prob-pct {
+  font-family: "Cormorant Garamond", serif !important;
+  font-weight: 500 !important;
+  color: var(--gold-bright) !important;
+}
+.wsc-prob-label, .wsc-sep, .wsc-odds { color: var(--c-ink-dim) !important; }
+.wsc-bar { background: rgba(255, 255, 255, 0.06) !important; }
+.wsc-bar-fill, .wsc-bar-fill.tone-high, .wsc-bar-fill.tone-mid, .wsc-bar-fill.tone-low {
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold)) !important;
+  box-shadow: none !important;
+}
+.wsc-bar-fill.tone-low { opacity: 0.45; }
+.wsc-meta { color: var(--c-ink-mute) !important; }
+
+/* ── R11. 「本物の戦略」見出し (recommend セクション) ── */
+.rec-head .rec-icon, .rec-title { color: var(--gold-bright) !important; }
+.rec-pill { border-color: var(--hair-strong) !important; color: var(--c-ink-mute) !important; }
+
+/* ── R12. モーダル内の合計金額 (紫) を金へ ── */
+#w5e-summary [style*="--c-violet"] { color: var(--gold-bright) !important; }
+
+
+/* 買い目右側の金額: 横一列で窮屈なら縦積みで美しく */
+.buy-item .right {
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 1px !important;
+  white-space: nowrap;
+}
+.buy-item .right .odds { font-size: 10.5px !important; }
+.buy-item .right .return { font-size: 12px !important; }

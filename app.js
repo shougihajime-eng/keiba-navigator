@@ -336,7 +336,7 @@
       go:    `AI の本命予想 ${tierStars("go")} ・ ここを買え!`,
       cond:  `AI の今日の予想 ${tierStars("cond")} ・ 条件付きで買う`,
       best:  `今日のおすすめ ${tierStars("best")} ・ 自信控えめ・お試し買いに`,
-      none:  "⏸ AI は今日は休みたい ・ 買う価値のあるレースが見当たらない",
+      none:  "AI は今日は休みたい ・ 買う価値のあるレースが見当たらない",
     }[t] || "—";
   }
   function tierLabel(t) {
@@ -1708,8 +1708,8 @@
           <p style="font-size:14px;color:var(--c-ink-soft);margin:0 0 14px">
             ${escapeHtml(w5.note || "WIN5 対象レース 5 つのデータがまだ揃っていません")}
           </p>
-          <div class="reason-box" style="text-align:left;background:rgba(196,181,253,0.12);border-color:rgba(139,92,246,0.30)">
-            <div class="label" style="color:#6d28d9">次回 WIN5 予定</div>
+          <div class="reason-box" style="text-align:left">
+            <div class="label">次回 WIN5 予定</div>
             <p style="margin:6px 0 0;font-size:15px;font-weight:800;color:var(--c-ink)">
               ${next.dateLabel} (${next.weekday}) — 14:50〜15:40 ごろの 5 レース
             </p>
