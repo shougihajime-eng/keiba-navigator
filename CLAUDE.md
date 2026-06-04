@@ -26,6 +26,18 @@
 
 ### ✅ 直近で済んだこと
 
+- **⚡ Wave37: 速度と操作性の全面強化 (2026-06-04 深夜・本人「操作性と更新の速さを最新技術で最高に・遅いアプリは最低」指示)** — 旧アプリ (keiba-navigator.vercel.app) を高速化。commit 961f3da push済:
+  - **API に CDN キャッシュ**: 全 GET データ系 API に `s-maxage + stale-while-revalidate` (`api/[...slug].js` の CACHE_POLICY 表)。データは git push デプロイでしか変わらず、デプロイで Vercel CDN キャッシュは自動全消去されるので「古くならない」。実測: 初回 2,000ms → キャッシュ後 数十ms。エラー応答(4xx/5xx)と POST は no-store のまま
+  - **起動を一瞬に**: refreshAll 成功ごとに state を `keiba_snapshot_v1` (localStorage) に控え、起動時に即復元描画 → 裏で最新取得。レース系は「同じ日付のときだけ」復元 (昨日のレースを今日と誤表示しない)。index.html の head にインライン先行フェッチ (`window.__apiPreload`) を置き app.js 実行前に API 取得開始。Google Fonts CSS も非ブロッキング化
+  - **賢い自動更新** (旧: 無条件30秒): 発走20分前以内=15秒 / 開催日=30秒 / 開催なし=2分。画面非表示中は完全停止し visibilitychange/online で即更新+再開。重い API (ml-status/recommendations/automation-status) は5分間隔に間引き。WIN5 は日曜のみ毎回。WIN5 の予算/編集等の操作は `refreshAll(true)` で強制全取得
+  - **差分描画** (`memoRender`): render() の各セクションは入力シグネチャが変わったときだけ DOM を作り直す (30秒ごとの全 DOM 再構築によるカクつき根治)。「あとX分」表示は minuteBucket で1分粒度更新。tickCountdown 内の旧 renderAllRaces 60秒直接呼びは二重描画なので撤去
+  - **Service Worker v68**: app.js/styles.css の network-first に2.5秒タイムアウト → 超えたらキャッシュ即表示+裏で更新 (遅い回線で白画面にならない)。背景画像プリキャッシュ。HTML network-only (ChunkLoadError対策) は維持
+  - **背景写真の軽量化**: assets/horse-bg.jpg 339KB→117KB (1280px・品質62・黒ベール越しで見た目差ゼロ)
+  - **操作性**: ライブストリップに「↻ 今すぐ更新」ボタン (金縁・回転アニメ・完了トースト) / スマホで最上部から引っ張って更新 / 折りたたみの開閉状態を `keiba_details_open_v1` に記憶・復元 / #decision-mount min-height でガタつき防止
+  - **🚨 スマホ横あふれを根治**: 5/31 NOIR追補の「文字を大きく(!important)」が既存スマホ縮小(≤480px・!important無し)を打ち消しヘッダー行最小幅が画面幅超過 → styles.css 末尾で後勝ち !important のスマホ補正 + `.bm-row` flex-wrap + `body{overflow-x:clip}`
+  - **検証**: smoke 128/0 / CDP スマホ実機エミュ390pxで 横あふれ0・JSエラー0・スナップショット復元・折りたたみ記憶・更新ボタン動作を確認
+  - **⚠️ 検証の教訓**: Windows の headless Chrome は `--window-size=390` でも実最小 ~484px (画像が切れるだけ) → スマホ検証は CDP `Emulation.setDeviceMetricsOverride` を使う。ローカル検証はポート8765が pythonw 常駐で塞がることがある → `$env:PORT="8771"; node server.js`
+
 - **🏇⚡ Wave36 — 土曜(6/6)本番に向けた総仕上げ (2026-06-04 夜・本人「次の土曜から本気・儲けることが目標・完璧と言えるまで全部仕上げて」指示で就寝中に実施)** —
   - **① 土日当日に予想が動き続ける穴を根治**: 毎時取得(fetch_diff_hourly)に予想更新が無く、土日の日中オッズは毎時届くのに**予想が朝7時のまま固まる**構造だった → 毎時取得に「当日+翌日の予想再計算(`predict_lightgbm --date`新設)→レースカード→precompute→push」を組み込み。土曜は最新オッズで毎時予想が更新され本番に自動反映される
   - **② 賢いお金の動き(オッズ変動)がついに貯まり始める**: 蓄積系取得は前売りオッズを運ばないため signals の money_in/out が永遠に0件だった → 毎時取得に**RT単複オッズ(0B31)を当日+翌日の全レースで取得**を追加。前売りは前日夕方からなので、金曜夜から土曜の、土曜夜から日曜の予想とオッズ履歴が立つ(日曜朝にWIN5を買う本人に効く)。未発売時は正常拒否(rc=-114)で無害を実機確認済
