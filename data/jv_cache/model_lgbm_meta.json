@@ -1,5 +1,5 @@
 {
-  "trained_at": "2026-06-01T05:31:48.022506+00:00",
+  "trained_at": "2026-06-04T05:31:37.052600+00:00",
   "feature_names": [
     "win_odds",
     "log_odds",
@@ -66,10 +66,10 @@
     "last3F_x_in3",
     "waku_x_distance"
   ],
-  "samples_total": 79854,
+  "samples_total": 85206,
   "races_total": 3641,
   "samples_train": 40131,
-  "samples_test": 39723,
+  "samples_test": 45075,
   "model": "lightgbm",
   "no_pop": false,
   "params": {
@@ -90,8 +90,8 @@
     "verbosity": -1
   },
   "metrics": {
-    "auc": 0.7130674351184031,
-    "logloss": 0.2556821407611575
+    "auc": 0.7313357383624645,
+    "logloss": 0.25343381429314976
   },
   "feature_importance": {
     "win_odds": 11422,
