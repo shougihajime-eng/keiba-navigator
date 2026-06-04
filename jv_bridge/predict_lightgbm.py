@@ -546,12 +546,26 @@ def main():
         return 0
 
     ok_n = 0
+    shell_n = 0
     for race_path in sorted(targets):
         try:
             race = json.loads(race_path.read_text(encoding="utf-8"))
         except Exception:
             continue
         rid = race.get("race_id") or race_path.stem
+        # 枠順確定前の空シェル(全頭 馬番0/None・登録馬の重複入り)は予想しない。
+        # 均等割りの無意味な予想が本番に流れるのを防ぐ。枠順確定後に自動で本物を予想する。
+        hs = race.get("horses") or []
+        if not hs or not any((h.get("number") or 0) >= 1 for h in hs):
+            shell_n += 1
+            # 過去に作られた古い予想ファイルが残っていれば消す (precompute が junk を拾わないように)
+            stale = PREDICTIONS_DIR / f"{rid}.json"
+            if stale.exists():
+                try:
+                    stale.unlink()
+                except OSError:
+                    pass
+            continue
         out = predict_race(race, model, kind, features_index, model_nopop, kind_nopop)
         if not out.get("ok"):
             print(f"[skip] {rid} reason={out.get('reason')}", flush=True)
@@ -560,7 +574,8 @@ def main():
             json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8"
         )
         ok_n += 1
-    print(f"[OK] 推論完了 {ok_n} レース → {PREDICTIONS_DIR.relative_to(ROOT)}/", flush=True)
+    extra = f" (枠順確定前のシェル {shell_n} 件は予想せずスキップ)" if shell_n else ""
+    print(f"[OK] 推論完了 {ok_n} レース{extra} → {PREDICTIONS_DIR.relative_to(ROOT)}/", flush=True)
     return 0
 
 
