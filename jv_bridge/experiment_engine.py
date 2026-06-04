@@ -98,6 +98,18 @@ def build_strategies(recs):
          "desc": "期待値1.2以上かつ配当5〜50倍のお得な中穴を単勝で買う",
          "field": "tan_pay", "origin": "価値投資",
          "pred": lambda r: r["odds"] is not None and 5.0 <= r["odds"] <= 50.0 and r["p_nopop"] * r["odds"] >= 1.20},
+        # --- 2026-06-04 のしらみつぶし再探索で見つけた「損益分岐に最も近い帯」。
+        #     1番人気なのにAIの補正期待値も高い=市場とAIの意見が一致した堅い馬だけ単勝。
+        #     発見時点: EV1.05+ 回収94.7%(127件) / EV1.15+ 99.5%(85件)・どちらも3/6期間勝ち。
+        #     件数が少ないので断定せず、データが増えるたびここで自動採点して観察する。
+        {"key": "fav1_ev105", "name": "単勝・1番人気でAI期待値1.05以上",
+         "desc": "市場1番人気かつAIの補正期待値1.05以上の馬だけ単勝(市場とAIの意見一致)",
+         "field": "tan_pay", "origin": "価値投資",
+         "pred": lambda r: r["popularity"] == 1 and r["odds"] is not None and r["p_nopop"] * r["odds"] >= 1.05},
+        {"key": "fav1_ev115", "name": "単勝・1番人気でAI期待値1.15以上(厳選)",
+         "desc": "1番人気かつAI補正期待値1.15以上に厳選した単勝。発見時99.5%で損益分岐に最接近",
+         "field": "tan_pay", "origin": "価値投資",
+         "pred": lambda r: r["popularity"] == 1 and r["odds"] is not None and r["p_nopop"] * r["odds"] >= 1.15},
         # --- 複勝(手堅い) ---
         {"key": "fuku_top1", "name": "複勝・実力派AIの本命",
          "desc": "実力派AI本命を複勝(3着以内)で手堅く買う",

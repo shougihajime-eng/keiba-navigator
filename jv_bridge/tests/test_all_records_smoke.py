@@ -78,9 +78,9 @@ def test_parse_has_data_kbn_field(rid):
 
 
 def test_total_record_count():
-    """対応レコード種別が想定通り 33 種類あること。"""
-    assert len(jvdata_struct.RECORD_REGISTRY) == 33
-    assert len(jvdata_struct.RECORD_COMPLETED) == 33
+    """対応レコード種別が想定通り 34 種類あること (Wave31 で WF=重勝式/WIN5 を追加し 33→34)。"""
+    assert len(jvdata_struct.RECORD_REGISTRY) == 34
+    assert len(jvdata_struct.RECORD_COMPLETED) == 34
 
 
 def test_spec_version_matches():
