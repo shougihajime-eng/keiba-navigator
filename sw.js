@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v68"; // 高速化: network-first にタイムアウト + 画像プリキャッシュ
+const CACHE_VERSION = "keiba-nav-v69"; // NOIR II — MAISON デザイン全面磨き上げ
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

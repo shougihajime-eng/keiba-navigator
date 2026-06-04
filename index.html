@@ -52,17 +52,34 @@
 <!-- アプリ本体 -->
 <main class="app-root section-stack stagger">
 
-  <!-- ミニブランドヘッダ -->
-  <header class="brand-mini">
-    <div class="bm-row">
-      <span class="bm-logo">
-        <span class="bm-logo-text"><b>競馬</b>ナビゲーター</span>
-      </span>
-      <span class="bm-spacer"></span>
-      <span class="bm-metric"><span class="bm-mlabel">本日</span><b id="metric-races">—</b><span class="bm-msuf">R</span></span>
-      <span class="bm-metric bm-go"><span class="bm-mlabel">勝負</span><b id="metric-goes">—</b><span class="bm-msuf">R</span></span>
-      <span class="bm-metric bm-mute"><span class="bm-mlabel">AI</span><b id="metric-auc">—</b></span>
-      <span class="bm-date"><b id="brand-day">--/--</b><span id="brand-wd">(--)</span></span>
+  <!-- マストヘッド (NOIR II — 紋章 + 銘 + 罫線) -->
+  <header class="brand-mini noir-mast">
+    <div class="nm-emblem" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+        <path d="M4.6 20.6C3.2 18 2.5 15.2 2.5 12.7 2.5 7.1 6.8 2.9 12 2.9s9.5 4.2 9.5 9.8c0 2.5-.7 5.3-2.1 7.9"/>
+        <path d="M4.6 20.6l2.1-.7M19.4 20.6l-2.1-.7"/>
+        <circle cx="4.9" cy="13.2" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="6" cy="8.7" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="9.3" cy="5.5" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="14.7" cy="5.5" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="18" cy="8.7" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="19.1" cy="13.2" r="0.55" fill="currentColor" stroke="none"/>
+      </svg>
+    </div>
+    <div class="nm-word">
+      <span class="nm-rule" aria-hidden="true"></span>
+      <h1 class="nm-title"><b>競馬</b>ナビゲーター</h1>
+      <span class="nm-rule nm-rule-r" aria-hidden="true"></span>
+    </div>
+    <p class="nm-tag">期待値で選ぶ、買わないAI</p>
+    <div class="nm-meta">
+      <span class="nm-date"><b id="brand-day">--/--</b> <span id="brand-wd">(--)</span></span>
+      <span class="nm-dot" aria-hidden="true">·</span>
+      <span class="nm-m">本日 <b id="metric-races">—</b></span>
+      <span class="nm-dot" aria-hidden="true">·</span>
+      <span class="nm-m">勝負 <b id="metric-goes">—</b></span>
+      <span class="nm-dot" aria-hidden="true">·</span>
+      <span class="nm-m">AI精度 <b id="metric-auc">—</b></span>
     </div>
   </header>
 
@@ -80,7 +97,7 @@
       <span class="rf-icon" aria-hidden="true">↻</span>
     </button>
     <button class="sound-toggle is-on" id="sound-toggle" type="button" aria-label="効果音 ON/OFF">
-      <span class="st-icon" id="st-icon">🔊</span>
+      <span class="st-icon" id="st-icon">ON</span>
     </button>
   </section>
 
@@ -119,7 +136,6 @@
   <details class="hideable hideable-news">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">🗞</span>
       <span class="h-title">競馬ニュース</span>
       <span class="h-hint">重賞・出走馬・調教情報</span>
     </summary>
@@ -133,7 +149,6 @@
   <details class="hideable hideable-jockey-rank">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">🏇</span>
       <span class="h-title">騎手ランキング</span>
       <span class="h-hint">最近勝ってる騎手 TOP10</span>
     </summary>
@@ -147,7 +162,6 @@
   <details class="hideable hideable-stable-rank">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">🏠</span>
       <span class="h-title">厩舎ランキング</span>
       <span class="h-hint">最近勝ってる厩舎 TOP10</span>
     </summary>
@@ -161,7 +175,6 @@
   <details class="hideable hideable-win5">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">🎰</span>
       <span class="h-title">WIN5 戦略</span>
       <span class="h-hint">日曜 5 レース連勝で最大 6 億円</span>
     </summary>
@@ -172,7 +185,6 @@
   <details class="hideable hideable-validation">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">📊</span>
       <span class="h-title">過去検証データ</span>
       <span class="h-hint">8 期間で検証した戦略の信頼性 + AI モデル成績</span>
     </summary>
@@ -184,7 +196,6 @@
   <details class="hideable hideable-streak">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">🏆</span>
       <span class="h-title">達成バッジ と 連勝記録</span>
       <span class="h-hint">15 種のバッジ・最近の調子</span>
     </summary>
@@ -196,7 +207,6 @@
   <details class="hideable hideable-autostatus">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">⚙</span>
       <span class="h-title">自動化ステータス</span>
       <span class="h-hint">データ取得 / 予想計算 / 本番反映 / 結果照合</span>
     </summary>
@@ -238,7 +248,6 @@
   <details class="hideable hideable-all-races">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">🐎</span>
       <span class="h-title">本日の全レース</span>
       <span class="h-hint"><span id="all-races-count-hint">—</span> レースを一覧表示</span>
     </summary>
@@ -270,7 +279,6 @@
   <details class="hideable hideable-history">
     <summary class="hideable-summary">
       <span class="h-arrow">▶</span>
-      <span class="h-icon">💴</span>
       <span class="h-title">買ったもの と 反省履歴</span>
       <span class="h-hint">今日 / 7 日累計 / 累計収支カーブ / 過去の反省全件</span>
     </summary>

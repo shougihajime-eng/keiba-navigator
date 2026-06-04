@@ -103,9 +103,9 @@
       else if (/注意|warn|⚠/i.test(msg)) detectedType = "warn";
     }
     const icon =
-      detectedType === "success" ? "✅" :
-      detectedType === "warn"    ? "⚠️" :
-      detectedType === "error"   ? "🚫" : "💡";
+      detectedType === "success" ? "✓" :
+      detectedType === "warn"    ? "!" :
+      detectedType === "error"   ? "×" : "i";
     t.className = "toast toast-" + detectedType;
     t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${escapeHtml(msg)}</span>`;
     t.hidden = false;
@@ -331,11 +331,11 @@
   }
   function tierTitle(t) {
     return {
-      ultra: `💎✦ AI の究極予想 ${tierStars("ultra")} ・ 今日いちばん買う1点`,
-      prime: `💎 AI の絶好機予想 ${tierStars("prime")} ・ 本気で買う`,
-      go:    `🎯 AI の本命予想 ${tierStars("go")} ・ ここを買え!`,
-      cond:  `⚡ AI の今日の予想 ${tierStars("cond")} ・ 条件付きで買う`,
-      best:  `⭐ 今日のおすすめ ${tierStars("best")} ・ 自信控えめ・お試し買いに`,
+      ultra: `AI の究極予想 ${tierStars("ultra")} ・ 今日いちばん買う1点`,
+      prime: `AI の絶好機予想 ${tierStars("prime")} ・ 本気で買う`,
+      go:    `AI の本命予想 ${tierStars("go")} ・ ここを買え!`,
+      cond:  `AI の今日の予想 ${tierStars("cond")} ・ 条件付きで買う`,
+      best:  `今日のおすすめ ${tierStars("best")} ・ 自信控えめ・お試し買いに`,
       none:  "⏸ AI は今日は休みたい ・ 買う価値のあるレースが見当たらない",
     }[t] || "—";
   }
@@ -832,7 +832,7 @@
     const body = el("div", { class: "decision-body card-enter-stagger" });
 
     // (0) Wave24: 「今日いちばん買う 1 点」+ ティア — 1 行に統合 (重複削除)
-    const tierEmoji = tier === "ultra" ? "💎✦" : tier === "prime" ? "💎" : tier === "go" ? "🎯" : tier === "cond" ? "⚡" : "🎲";
+    const tierEmoji = "";
     const tierColor = tier === "ultra" ? "gold" : tier === "prime" ? "gold" : tier === "go" ? "turf" : tier === "cond" ? "sky" : "mute";
     const tierMsg = tier === "ultra" ? "究極の絶好機・今日いちばん買う 1 点" :
                     tier === "prime" ? "絶好機・本気で買おう" :
@@ -913,7 +913,7 @@
       if (hasWf) {
         const condBox = el("div", { class: "cond-stats-box" });
         condBox.appendChild(el("div", { class: "header" },
-          "📊 ", el("b", null, "AI 戦略の Walk-forward 検証"),
+          el("b", null, "AI 戦略の Walk-forward 検証"),
           el("span", { style: "font-size:10px;color:var(--c-ink-mute);margin-left:auto" }, "(過去 8 期間に分割して再評価)")
         ));
         const ul = el("ul", { class: "cond-stats-list" });
@@ -946,7 +946,7 @@
       // AI 思考プロセス
       if (reasons.length > 0) {
         const proc = el("div", { class: "ai-process-box" });
-        proc.appendChild(el("div", { class: "header" }, "🧠 AI の思考プロセス — この1点で勝負する理由"));
+        proc.appendChild(el("div", { class: "header" }, "AI の思考プロセス — この1点で勝負する理由"));
         const ul = el("ol", { class: "ai-process-steps" });
         reasons.slice(0, 4).forEach((r, i) =>
           ul.appendChild(el("li", { class: "ai-process-step" },
@@ -970,7 +970,7 @@
     cta.appendChild(el("button", {
       class: detailBtnClass,
       onclick: () => openDetailModal(race.raceId),
-    }, "🎯 このレースの詳細を見る ▸"));
+    }, "このレースの詳細を見る ▸"));
     cta.appendChild(el("a", {
       class: "btn-cta btn-cta-mute",
       href: buildJraOddsUrl(race),
@@ -989,7 +989,7 @@
       class: "btn-cta btn-cta-answers",
       href: "#history",
       onclick: (e) => { e.preventDefault(); document.querySelector('[data-tab="history"]')?.click(); window.scrollTo({ top: document.querySelector(".history-list")?.offsetTop || 0, behavior: "smooth" }); },
-    }, "📊 これまでの答え合わせを見る →"));
+    }, "これまでの答え合わせを見る →"));
     body.appendChild(cta2);
 
     card.appendChild(body);
@@ -1130,7 +1130,7 @@
       }
     } else {
       // データなし
-      card.appendChild(el("div", { class: "wsc-empty" }, "🐎 出走馬データ準備中"));
+      card.appendChild(el("div", { class: "wsc-empty" }, "出走馬データ準備中"));
     }
     return card;
   }
@@ -1147,9 +1147,9 @@
 
     const row = el("div", { class: "spr-horses" });
     const horses = [
-      { h: tp, role: "本命", roleIcon: "🥇", main: true },
-      { h: race.second, role: "対抗", roleIcon: "🥈", main: false },
-      { h: race.third,  role: "3着",  roleIcon: "🥉", main: false },
+      { h: tp, role: "本命", roleIcon: "◎", main: true },
+      { h: race.second, role: "対抗", roleIcon: "○", main: false },
+      { h: race.third,  role: "3着",  roleIcon: "▲", main: false },
     ].filter(x => x.h && x.h.number);
 
     horses.forEach(({ h, role, roleIcon, main }) => {
@@ -1211,10 +1211,10 @@
     const box = el("div", { class: "buy-box" });
     const head = el("div", { class: "buy-head" });
     const titleTxt = (tier === "ultra" || tier === "prime")
-      ? "📢 このとおりに買おう (絶好機・5点)"
+      ? "このとおりに買おう (絶好機・5点)"
       : (tier === "cond" || tier === "best")
-        ? "⭐ お試し買い目 (慎重に・お試し金額で)"
-        : "📢 このとおりに買おう (5点)";
+        ? "お試し買い目 (慎重に・お試し金額で)"
+        : "このとおりに買おう (5点)";
     head.appendChild(el("div", { class: "title" }, titleTxt));
     const items = makeBuyItems(race, tier);
     const total = items.reduce((a, x) => a + x.amount, 0);
@@ -1262,31 +1262,31 @@
     // 信頼性ティアで金額を調整
     const baseAmt = (tier === "ultra") ? 1000 : (tier === "prime") ? 600 : (tier === "go") ? 500 : 300;
     items.push({
-      role: "🥇 主軸 単勝", combo: String(tp.number), name: tp.name || "",
+      role: "◎ 主軸 単勝", combo: String(tp.number), name: tp.name || "",
       amount: baseAmt, odds: tp.odds,
       ret: tp.odds ? Math.round((baseAmt / 100) * tp.odds) : null,
     });
     items.push({
-      role: "🥈 本命 複勝", combo: String(tp.number), name: tp.name || "",
+      role: "○ 本命 複勝", combo: String(tp.number), name: tp.name || "",
       amount: baseAmt, odds: null, ret: null,
     });
     if (s2) {
       items.push({
-        role: "🥉 対抗 馬連", combo: `${tp.number}-${s2.number}`, name: s2.name || "",
+        role: "▲ 対抗 馬連", combo: `${tp.number}-${s2.number}`, name: s2.name || "",
         amount: baseAmt, odds: null, ret: null,
       });
     }
     if (s2 && s3) {
       // ワイド 3 点 (1-2 / 1-3 / 2-3)
       items.push({
-        role: "🛡 保険 ワイド", combo: `${tp.number}-${s3.number}`, name: s3.name || "",
+        role: "△ 保険 ワイド", combo: `${tp.number}-${s3.number}`, name: s3.name || "",
         amount: baseAmt, odds: null, ret: null,
       });
     }
     // 究極の絶好機なら 3 連複ボックス 1 点を追加
     if ((tier === "ultra" || tier === "prime") && s2 && s3) {
       items.push({
-        role: "🎰 一発 3連複", combo: `${tp.number}-${s2.number}-${s3.number}`, name: "ボックス",
+        role: "☆ 一発 3連複", combo: `${tp.number}-${s2.number}-${s3.number}`, name: "ボックス",
         amount: baseAmt, odds: null, ret: null,
       });
     }
@@ -1298,13 +1298,13 @@
   function renderNoBetCard(sorted) {
     const card = el("div", { class: "decision-card tier-none fade-in" });
     card.appendChild(el("div", { class: "decision-head" },
-      el("div", { class: "decision-tier-label" }, "⏸ AI は今日は買わない方が安全 ・ 期待値プラスの馬がいません")
+      el("div", { class: "decision-tier-label" }, "AI は今日は買わない方が安全 ・ 期待値プラスの馬がいません")
     ));
     const body = el("div", { class: "decision-body card-enter-stagger" });
 
     body.appendChild(el("div", { class: "decision-prelabel" },
       el("span", { class: "pl-bar" }),
-      el("span", null, "📢 AI の判定 — 本日は見送り推奨")
+      el("span", null, "AI の判定 — 本日は見送り推奨")
     ));
     body.appendChild(el("div", { html: `
       <p style="text-align:center;font-size:32px;font-weight:900;line-height:1.2;margin:8px 0">
@@ -1364,7 +1364,7 @@
       class: "btn-cta btn-cta-answers",
       href: "#history",
       onclick: (e) => { e.preventDefault(); openHistoryAndScroll(); },
-    }, "📊 これまでの答え合わせを見る →"));
+    }, "これまでの答え合わせを見る →"));
     cta.appendChild(el("button", {
       class: "btn-cta btn-cta-mute",
       onclick: () => openAddBetModal(),
@@ -1394,7 +1394,7 @@
 
     // ── ヘッダ
     const head = el("div", { class: "noday-head" });
-    head.appendChild(el("div", { class: "noday-head-label" }, "⏸ AI は今日は休憩中"));
+    head.appendChild(el("div", { class: "noday-head-label" }, "REST DAY — AI は今日は休息中"));
     wrap.appendChild(head);
 
     // 次の開催日 (土曜) を計算
@@ -1426,7 +1426,7 @@
     // ② 次回開催プレビュー (カウントダウン)
     const nextCard = el("div", { class: "noday-next-card" });
     nextCard.appendChild(el("div", { class: "lab-row" },
-      el("span", null, "📅 NEXT RACE WEEKEND"),
+      el("span", null, "NEXT RACE WEEKEND"),
       hoursUntilSat != null
         ? el("span", { class: "countdown-small" }, `あと ${daysUntilSat}日${hoursUntilSat % 24}時間`)
         : ""
@@ -1514,7 +1514,7 @@
       .slice(0, 4);
     if (recentHits.length > 0) {
       const hitsBox = el("div", { class: "recent-hits-box" });
-      hitsBox.appendChild(el("div", { class: "header" }, "🎉 直近の的中ハイライト"));
+      hitsBox.appendChild(el("div", { class: "header" }, "直近の的中ハイライト"));
       const ul = el("ul", { class: "recent-hits-list" });
       recentHits.forEach((b) => {
         const profit = (b.payout || 0) - (b.amount || 0);
@@ -1534,7 +1534,7 @@
       class: "btn-cta btn-cta-answers",
       href: "#history",
       onclick: (e) => { e.preventDefault(); openHistoryAndScroll(); },
-    }, "📊 これまでの予想と結果の答え合わせを見る →"));
+    }, "これまでの予想と結果の答え合わせを見る →"));
     cta.appendChild(el("button", {
       class: "btn-cta btn-cta-mute",
       onclick: () => openAddBetModal(),
@@ -1929,10 +1929,10 @@
     if (race.isG1) meta.appendChild(el("span", { class: "pill pill-gold" }, "G1"));
     if (race.surface) meta.appendChild(el("span", null, `${race.surface}${race.distance || ""}m`));
     // ティアバッジ (★ stars)
-    if (tier === "ultra") meta.appendChild(el("span", { class: "pill pill-gold", style: "background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#fff;font-weight:900" }, "💎✦ ULTRA"));
-    else if (tier === "prime") meta.appendChild(el("span", { class: "pill pill-gold" }, "💎 PRIME"));
-    else if (tier === "go") meta.appendChild(el("span", { class: "pill pill-go" }, "🎯 GO"));
-    else if (tier === "cond") meta.appendChild(el("span", { class: "pill pill-info" }, "⚡ COND"));
+    if (tier === "ultra") meta.appendChild(el("span", { class: "pill pill-gold" }, "ULTRA"));
+    else if (tier === "prime") meta.appendChild(el("span", { class: "pill pill-gold" }, "PRIME"));
+    else if (tier === "go") meta.appendChild(el("span", { class: "pill pill-go" }, "GO"));
+    else if (tier === "cond") meta.appendChild(el("span", { class: "pill pill-info" }, "COND"));
     info.appendChild(meta);
     const pick = el("div", { class: "pick" });
     if (race.topPick) {
@@ -2089,7 +2089,7 @@
       el("span", { class: "cell-bignum-int" }, String(currentStreak)),
       el("span", { class: "cell-bignum-unit" }, "連勝")
     ));
-    if (currentStreak >= 3) streakCell.appendChild(el("div", { class: "cell-sub" }, "🔥 絶好調"));
+    if (currentStreak >= 3) streakCell.appendChild(el("div", { class: "cell-sub" }, "絶好調"));
     else if (currentStreak >= 1) streakCell.appendChild(el("div", { class: "cell-sub" }, "前回的中"));
     else streakCell.appendChild(el("div", { class: "cell-sub" }, "次の的中を狙おう"));
     sub.appendChild(streakCell);
@@ -2101,7 +2101,7 @@
       el("span", { class: "cell-bignum-int" }, String(bestStreak)),
       el("span", { class: "cell-bignum-unit" }, "連勝")
     ));
-    bestStreakCell.appendChild(el("div", { class: "cell-sub" }, bestStreak >= 5 ? "🏆 殿堂入り" : bestStreak >= 3 ? "🥇 ベスト記録" : "もっと積もう"));
+    bestStreakCell.appendChild(el("div", { class: "cell-sub" }, bestStreak >= 5 ? "殿堂入り" : bestStreak >= 3 ? "ベスト記録" : "もっと積もう"));
     sub.appendChild(bestStreakCell);
 
     // 過去最高利益
@@ -2132,7 +2132,7 @@
     if (currentStreak >= 3) {
       const banner = el("div", { class: "streak-banner" });
       banner.innerHTML = `
-        <div class="sb-icon">🔥🔥🔥</div>
+        <div class="sb-icon">◆</div>
         <div class="sb-text">
           <div class="sb-eyebrow">CURRENT STREAK</div>
           <div class="sb-head"><b>${currentStreak}</b> 連勝中 — このペースを維持しよう!</div>
@@ -2314,9 +2314,9 @@
         const num = parseInt(h.number, 10) || 1;
         const silkIdx = ((num - 1) % 8) + 1;
         const silkClass = `silk-${silkIdx}`;
-        const rankBadge = idx === 0 ? `<span class="rb-medal">🥇</span>`
-                        : idx === 1 ? `<span class="rb-medal">🥈</span>`
-                        : idx === 2 ? `<span class="rb-medal">🥉</span>`
+        const rankBadge = idx === 0 ? `<span class="rb-medal">1</span>`
+                        : idx === 1 ? `<span class="rb-medal">2</span>`
+                        : idx === 2 ? `<span class="rb-medal">3</span>`
                         : `<span class="rb-rank">${idx + 1}</span>`;
         html += `<div class="runner-item ${rankCls}">
           <div class="runner-silk ${silkClass}">
@@ -2460,7 +2460,7 @@
     state.bets.push(bet);
     saveBets();
     $("#modal-add-bet").hidden = true;
-    toast(result === "hit" ? "🎉 的中を記録しました!" : "購入を記録しました");
+    toast(result === "hit" ? "的中を記録しました!" : "購入を記録しました");
     renderHistory();
     // Wave22.8: 的中なら紙吹雪 + ファンファーレ
     if (result === "hit" && window.kbEffects) {
@@ -2484,7 +2484,7 @@
       return;
     }
     saveBets();
-    toast(bet.result === "hit" ? "🎉 的中を記録しました!" : "結果を記録しました");
+    toast(bet.result === "hit" ? "的中を記録しました!" : "結果を記録しました");
     renderHistory();
     if (bet.result === "hit" && window.kbEffects) {
       try { window.kbEffects.fireConfetti({ count: 130, duration: 3800 }); } catch {}
@@ -2844,15 +2844,15 @@
     const wd = ["日","月","火","水","木","金","土"][now.getDay()];
     const isWeekend = now.getDay() === 0 || now.getDay() === 6;
     const headline = goldRaces.length > 0
-      ? `☀️ おはよう・今日の絶好機 ${goldRaces.length} R`
+      ? `おはよう・今日の絶好機 ${goldRaces.length} R`
       : goRaces.length > 0
-        ? `☀️ おはよう・今日の勝負 ${goRaces.length} R`
+        ? `おはよう・今日の勝負 ${goRaces.length} R`
         : isWeekend
-          ? `☀️ おはよう・データ取得中`
-          : `☀️ おはよう・今日 (${wd}) は休む日`;
+          ? `おはよう・データ取得中`
+          : `おはよう・今日 (${wd}) は休む日`;
 
     const parts = [];
-    if (goldRaces.length > 0) parts.push(`<span style="color:var(--c-gold);font-weight:900">💎 絶好機 ${goldRaces.length}R</span>`);
+    if (goldRaces.length > 0) parts.push(`<span style="color:var(--c-gold);font-weight:900">絶好機 ${goldRaces.length}R</span>`);
     if (goRaces.length > goldRaces.length) parts.push(`<span style="color:var(--c-deep);font-weight:800">勝負 ${goRaces.length - goldRaces.length}R</span>`);
     if (firstHM) parts.push(`<span style="color:var(--c-ink-soft)">最初の締切 ${firstHM}</span>`);
 
@@ -2892,7 +2892,7 @@
       <div class="topwin-banner">
         <div class="emoji-wrap"><span class="emoji">🎯</span></div>
         <div class="msg">
-          <div class="lab">🏆 今週の最高的中</div>
+          <div class="lab">今週の最高的中</div>
           <div class="title">${escapeHtml(fmtDateMonth(top.date) || "—")} ${escapeHtml(top.race || "?")} ${escapeHtml(top.type || "")}</div>
           <div class="sub">${escapeHtml(top.pick || "")} ・ 払戻 ¥${fmtYen(top.payout || 0)}${bigWins.length > 1 ? ` <span class="more">他 +${bigWins.length - 1}件</span>` : ""}</div>
         </div>
@@ -3113,7 +3113,12 @@
 
     const stratBadges = (keys) => {
       const labels = { big: "BIG", turf: "TURF", ultra: "★ULTRA", best: "BEST", safe: "SAFE" };
-      return (keys || []).map((k) => `<span class="rec-badge rec-b-${k}">${labels[k] || k}</span>`).join("");
+      // 新戦略 (value_stack_uren 等) は strategies_def の日本語短縮名で表示する
+      // (生キーのままだと英語の羅列になり読めない)
+      (state.recommendations?.strategies_def || []).forEach((d) => {
+        if (d.key && d.short_label) labels[d.key] = d.short_label;
+      });
+      return (keys || []).map((k) => `<span class="rec-badge rec-b-${k}">${escapeHtml(labels[k] || k)}</span>`).join("");
     };
 
     const renderItem = (it) => {
@@ -3214,11 +3219,11 @@
       }
       const kellyBlock = (kellyHalfPct != null && kellyBetJpy != null && kellyHalfPct > 0)
         ? `<div class="rec-strat-kelly ${kellyIsLeakFree ? 'rec-strat-kelly-true' : ''}" title="${kellyIsLeakFree ? '賭けすぎないよう、安全に半分量に抑えた推奨額です (厳しい検証で算出)' : '旧計算 (古い検証由来)'}">
-             💴 1 レース ¥${kellyBetJpy.toLocaleString()} がおすすめ
+             1 レース ¥${kellyBetJpy.toLocaleString()} がおすすめ
              <span class="rec-strat-kelly-sub">${kellyIsLeakFree ? '✓ ' : ''}(使ってよい総額¥${dailyBudget.toLocaleString()} のうち${edgePct != null ? ` ・期待利益 +${edgePct}%` : ''})</span>
            </div>`
         : (kellyHalfPct === 0
-            ? `<div class="rec-strat-kelly rec-strat-kelly-skip" title="厳しい検証で平均的に損する戦略・賭けない推奨">⛔ 平均で損する戦略・買いません</div>`
+            ? `<div class="rec-strat-kelly rec-strat-kelly-skip" title="厳しい検証で平均的に損する戦略・賭けない推奨">平均で損する戦略・買いません</div>`
             : "");
       const riskBlock = (maxStreak != null && maxDD != null)
         ? `<div class="rec-strat-risk" title="16 期間検証での最悪値">
@@ -3261,7 +3266,7 @@
       </p>
       ${todayList.length > 0 ? `
         <div class="rec-section">
-          <div class="rec-section-head">📢 今日 (${r.todayJst}) の推奨 ${todayList.length} 件</div>
+          <div class="rec-section-head">今日 (${r.todayJst}) の推奨 ${todayList.length} 件</div>
           <div class="rec-list">${todayList.map(renderItem).join("")}</div>
         </div>
       ` : `
@@ -3272,13 +3277,13 @@
       `}
       ${recentList.length > 0 ? `
         <div class="rec-section">
-          <div class="rec-section-head">📊 直近の推奨レース過去ログ (${recentList.length} 件)</div>
+          <div class="rec-section-head">直近の推奨レース過去ログ (${recentList.length} 件)</div>
           <div class="rec-list rec-list-small">${recentList.map(renderItem).join("")}</div>
         </div>
       ` : ""}
       ${(todayList.length === 0 && recentList.length === 0 && fallbackList.length > 0) ? `
         <div class="rec-section">
-          <div class="rec-section-head">🗂 AI の最新の推奨レース ${fallbackList.length} 件 (取り込み済の過去レース)</div>
+          <div class="rec-section-head">AI の最新の推奨レース ${fallbackList.length} 件 (取り込み済の過去レース)</div>
           <p class="rec-criteria" style="font-size:12px;color:var(--c-ink-soft)">
             ※ 今週末のレースデータは土曜朝に取り込まれます。下記は直近に AI が推奨を出した過去レースです。
           </p>
@@ -3397,7 +3402,7 @@
       const off = window.kbEffects.isSoundOff();
       btn.classList.toggle("is-on", !off);
       btn.classList.toggle("is-off", off);
-      if (icon) icon.textContent = off ? "🔇" : "🔊";
+      if (icon) icon.textContent = off ? "OFF" : "ON";
       if (text) text.textContent = off ? "音 OFF" : "音 ON";
     };
     applyState();

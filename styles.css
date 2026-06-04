@@ -6844,3 +6844,720 @@ body::before {
 }
 /* どの幅でも横スクロールを発生させない最終ガード */
 body { overflow-x: clip; }
+
+/* =====================================================================
+   ░░░ NOIR II — MAISON ░░░ (2026-06-04)
+   「30点→100点」全面磨き上げ。原則:
+   ・箱を減らす(マストヘッド/目次はカード化をやめ、罫線と余白で組む)
+   ・金は細く少なく。色は 金/白/灰 の3声部のみ(橙・赤・紫・青の混入を一掃)
+   ・絵文字をUIから排除し、セリフ書体と数字で品格を出す
+   ・数字の主役は Cormorant Garamond (細く大きく)
+   ===================================================================== */
+
+/* ── 0. 土台のリズム ─────────────────────────────── */
+html { scroll-behavior: smooth; }
+::selection { background: rgba(201, 168, 92, 0.30); color: #FFF; }
+
+.app-root { padding-top: max(18px, var(--sat)); }
+.section-stack > * + * { margin-top: 24px !important; }
+@media (min-width: 1024px) { .section-stack > * + * { margin-top: 30px !important; } }
+
+/* 写真背景: 上端だけ気配を残し、下へ完全な漆黒に沈める */
+body::before {
+  background:
+    linear-gradient(180deg,
+      rgba(6,6,6,0.90) 0%,
+      rgba(6,6,6,0.86) 26%,
+      rgba(6,6,6,0.965) 72%,
+      #060606 100%),
+    url("assets/horse-bg.jpg") center 24% / cover no-repeat !important;
+}
+
+/* ── 1. マストヘッド — 箱をやめ、紋章+セリフ銘+罫線で組む ── */
+.brand-mini.noir-mast {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 8px 0 0 !important;
+  text-align: center;
+  position: relative;
+}
+.nm-emblem {
+  display: inline-flex;
+  color: var(--gold);
+  opacity: 0.92;
+  margin-bottom: 7px;
+}
+.nm-emblem svg { width: 22px; height: 22px; }
+.nm-word {
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px;
+}
+.nm-rule {
+  flex: 1; max-width: 110px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-line));
+}
+.nm-rule.nm-rule-r {
+  background: linear-gradient(270deg, transparent, var(--gold-line));
+}
+.nm-title, h1.nm-title {
+  margin: 0;
+  white-space: nowrap;
+  font-family: "Cormorant Garamond", "Noto Sans JP", serif !important;
+  font-size: 27px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  line-height: 1.2;
+  color: var(--c-ink);
+}
+.nm-title b { color: var(--gold-bright) !important; font-weight: 600 !important; }
+.nm-tag {
+  margin: 7px 0 0;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em; /* 字間ぶん中央を合わせる */
+  color: var(--c-ink-mute);
+}
+.nm-meta {
+  margin-top: 13px;
+  padding: 10px 4px;
+  border-top: 1px solid var(--hair);
+  display: flex; align-items: baseline; justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-mute);
+  font-variant-numeric: tabular-nums;
+}
+.nm-meta b { color: var(--c-ink); font-weight: 600; font-size: 14px; }
+.nm-meta .nm-date { color: var(--c-ink-soft); }
+.nm-meta .nm-date b { color: var(--gold-bright); font-size: 14.5px; }
+.nm-dot { color: var(--c-ink-dim); }
+@media (max-width: 420px) {
+  .nm-title, h1.nm-title { font-size: 23px !important; letter-spacing: 0.09em !important; }
+  .nm-rule { max-width: 56px; }
+  .nm-tag { font-size: 9px; letter-spacing: 0.26em; text-indent: 0.26em; }
+  .nm-meta { gap: 4px 10px; font-size: 11px; }
+}
+
+/* ── 1b. ライブ行 — マストヘッド直下の静かな一行 ── */
+.live-thin {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--hair) !important;
+  border-radius: 0 !important;
+  justify-content: center;
+  gap: 14px !important;
+  padding: 0 4px 12px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.08em;
+  color: var(--c-ink-mute) !important;
+}
+.section-stack > .brand-mini + .live-thin { margin-top: 0 !important; }
+.live-thin .live-label { color: var(--c-ink-soft) !important; }
+.live-thin .live-meta { color: var(--c-ink-mute); }
+.live-thin .live-meta b { color: var(--c-ink); font-weight: 600; }
+.live-thin .learning-badge {
+  margin-left: 0 !important;
+  border: 0 !important;
+  padding: 0 !important;
+  letter-spacing: 0.14em;
+  color: var(--c-ink-dim) !important;
+}
+.sound-toggle, .live-thin .sound-toggle {
+  border: 1px solid var(--hair-strong) !important;
+  border-radius: 999px !important;
+  padding: 2px 10px !important;
+  background: transparent !important;
+  color: var(--c-ink-mute) !important;
+  transition: border-color 0.2s, color 0.2s;
+}
+.sound-toggle:hover { border-color: var(--gold-line) !important; color: var(--gold) !important; }
+.sound-toggle .st-icon, .live-thin .sound-toggle .st-icon {
+  font-size: 10px !important;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: inherit;
+}
+
+/* ── 2. 目次 (折りたたみ) — カードの羅列をやめ、編集者の目次に ── */
+main.app-root { counter-reset: noirIdx; }
+.hideable {
+  counter-increment: noirIdx;
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid var(--hair) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+.section-stack > .hideable + .hideable { margin-top: 0 !important; }
+.section-stack > .collapsibles-divider + .hideable { margin-top: 6px !important; }
+main .hideable:last-of-type { border-bottom: 1px solid var(--hair) !important; }
+
+.hideable-summary {
+  padding: 19px 4px !important;
+  gap: 14px !important;
+  background: transparent !important;
+  align-items: baseline !important;
+}
+.hideable-summary:hover { background: rgba(255, 255, 255, 0.018) !important; }
+.hideable[open] .hideable-summary {
+  border-bottom: 0 !important;
+  padding-bottom: 12px !important;
+}
+
+/* 番号 01–09 (セリフ・イタリックの金) */
+.hideable-summary::before {
+  content: counter(noirIdx, decimal-leading-zero);
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--gold-deep);
+  min-width: 28px;
+  letter-spacing: 0.05em;
+  transition: color 0.22s;
+  transform: translateY(1px);
+}
+.hideable[open] .hideable-summary::before { color: var(--gold-bright); }
+
+.h-icon { display: none !important; }
+.h-title {
+  font-family: "Cormorant Garamond", "Noto Sans JP", serif !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  color: var(--c-ink) !important;
+  transition: color 0.22s;
+}
+.hideable[open] .h-title { color: var(--gold-bright) !important; }
+.h-hint {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.05em !important;
+  color: var(--c-ink-dim) !important;
+  max-width: 45%;
+  overflow: hidden; text-overflow: ellipsis;
+}
+@media (max-width: 560px) { .h-hint { display: none; } }
+
+/* 矢印: 塗り円をやめ、細い輪+シェブロン */
+.h-arrow {
+  order: 9;
+  margin-left: auto;
+  width: 26px !important; height: 26px !important;
+  background: transparent !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 50% !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  position: relative;
+  align-self: center;
+  transition: transform 0.3s var(--ease-soft), border-color 0.22s !important;
+}
+.h-arrow::after {
+  content: "";
+  position: absolute;
+  width: 6px; height: 6px;
+  border-right: 1.2px solid var(--c-ink-mute);
+  border-bottom: 1.2px solid var(--c-ink-mute);
+  top: 50%; left: 50%;
+  transform: translate(-62%, -50%) rotate(-45deg);
+  transition: border-color 0.22s;
+}
+.hideable[open] .h-arrow {
+  transform: rotate(90deg) !important;
+  background: transparent !important;
+  border-color: var(--gold-line) !important;
+}
+.hideable[open] .h-arrow::after { border-color: var(--gold); }
+
+/* 開いた中身: 目次行の下にそっと差し込む */
+.hideable[open] > section { padding: 2px 0 26px !important; }
+
+/* 「もっと見る」区切り: 飾り箱をやめ、小さな見出しに */
+.collapsibles-divider span {
+  background: transparent !important;
+  border: 0 !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.36em !important;
+  text-indent: 0.36em;
+  color: var(--c-ink-mute) !important;
+  padding: 0 14px !important;
+}
+.collapsibles-divider::before,
+.collapsibles-divider::after { background: var(--hair) !important; height: 1px !important; }
+
+/* ── 3. 休息日ヒーロー — 静かな一枚に ── */
+.noday-hero {
+  background: linear-gradient(180deg, #0D0D0E 0%, #090909 100%) !important;
+  border: 1px solid var(--gold-line-soft) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 32px 80px -44px rgba(0, 0, 0, 0.95) !important;
+}
+.noday-hero::before { display: none !important; }
+.noday-head {
+  background: transparent !important;
+  border-bottom: 0 !important;
+  padding: 24px 22px 0 !important;
+  text-align: center;
+}
+.noday-head-label {
+  color: var(--c-ink-mute) !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.32em !important;
+  text-indent: 0.32em;
+}
+.noday-head-label::before { display: none !important; }
+.noday-body {
+  background: transparent !important;
+  padding: 8px 22px 26px !important;
+}
+.noday-body > * + * { margin-top: 18px !important; }
+.noday-display .big {
+  font-family: "Cormorant Garamond", "Noto Sans JP", serif !important;
+  font-size: 31px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+  line-height: 1.3 !important;
+}
+@media (min-width: 640px) { .noday-display .big { font-size: 40px !important; } }
+.noday-display .sub {
+  font-size: 13.5px !important;
+  color: var(--c-ink-mute) !important;
+  margin-top: 10px !important;
+  letter-spacing: 0.04em;
+}
+.noday-display .sub b { color: var(--c-ink) !important; font-weight: 600 !important; }
+
+.noday-next-card {
+  background: transparent !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 14px !important;
+  padding: 16px 18px 14px !important;
+}
+.noday-next-card .lab-row {
+  color: var(--c-ink-mute) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.26em !important;
+  margin-bottom: 10px !important;
+}
+.noday-next-card .lab-row .countdown-small {
+  color: var(--gold) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+}
+.noday-next-card .next-dates { gap: 0 !important; }
+.noday-next-card .next-date-cell {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 6px 8px !important;
+}
+.noday-next-card .next-date-cell + .next-date-cell { border-left: 1px solid var(--hair) !important; }
+.noday-next-card .next-date-cell .label {
+  color: var(--c-ink-dim) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.24em !important;
+}
+.noday-next-card .next-date-cell .day {
+  font-family: "Cormorant Garamond", serif !important;
+  font-size: 42px !important;
+  font-weight: 500 !important;
+  color: var(--gold-bright) !important;
+  margin-top: 4px !important;
+}
+
+/* ── 4. 戦略カード — 橙/赤/緑の混色を一掃し、金/白/灰の3声部に ── */
+.strat-trust-card,
+.strat-trust-card.trusted, .strat-trust-card.stable,
+.strat-trust-card.mixed, .strat-trust-card.risky {
+  background: #0C0C0D !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  padding: 15px 16px 13px !important;
+}
+.strat-trust-card.trusted { border-color: var(--gold-line) !important; }
+.strat-trust-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 44px -26px rgba(0, 0, 0, 0.9) !important;
+}
+.strat-trust-card .head { margin-bottom: 4px !important; }
+.strat-trust-card .head .name,
+.strat-trust-card.trusted .head .name, .strat-trust-card.stable .head .name {
+  color: var(--c-ink) !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  letter-spacing: 0.05em !important;
+}
+.strat-trust-card.trusted .head .name { color: var(--gold-bright) !important; }
+.strat-trust-card.mixed .head .name,
+.strat-trust-card.risky .head .name { color: var(--c-ink-mute) !important; }
+.strat-trust-card .head .stars,
+.strat-trust-card.trusted .head .stars, .strat-trust-card.stable .head .stars,
+.strat-trust-card.mixed .head .stars, .strat-trust-card.risky .head .stars {
+  font-size: 10px !important;
+  letter-spacing: 0.20em !important;
+  filter: none !important;
+  color: var(--c-ink-dim) !important;
+}
+.strat-trust-card.trusted .head .stars { color: var(--gold) !important; }
+.strat-trust-card.stable .head .stars { color: var(--c-ink-soft) !important; }
+.strat-trust-card .big-roi,
+.strat-trust-card.trusted .big-roi, .strat-trust-card.mixed .big-roi,
+.strat-trust-card.risky .big-roi {
+  font-family: "Cormorant Garamond", serif !important;
+  font-size: 37px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+  margin: 6px 0 2px !important;
+}
+.strat-trust-card.trusted .big-roi { color: var(--gold-bright) !important; }
+.strat-trust-card.stable .big-roi { color: var(--c-ink) !important; }
+.strat-trust-card.mixed .big-roi { color: var(--c-ink-soft) !important; }
+.strat-trust-card.risky .big-roi { color: var(--c-ink-mute) !important; }
+
+.big-roi-label, .rec-strat-roi-label,
+.strat-trust-card.trusted .big-roi-label, .strat-trust-card.risky .big-roi-label {
+  text-align: left !important;
+  margin: 0 0 8px !important;
+  font-size: 9.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.10em !important;
+  color: var(--c-ink-dim) !important;
+}
+.strat-trust-card.trusted .big-roi-label { color: var(--gold-deep) !important; }
+
+.strat-trust-card .meta {
+  color: var(--c-ink-mute) !important;
+  font-size: 11px !important;
+  line-height: 1.7 !important;
+}
+.strat-trust-card .desc {
+  color: var(--c-ink-dim) !important;
+  font-size: 10.5px !important;
+  line-height: 1.6 !important;
+  margin-top: 10px !important;
+  padding-top: 8px;
+  border-top: 1px solid var(--hair);
+}
+.strat-final-roi, .rec-strat-final,
+.strat-trust-card.trusted .strat-final-roi, .strat-trust-card.risky .strat-final-roi {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink-soft) !important;
+  box-shadow: none !important;
+}
+.strat-trust-card.trusted .strat-final-roi { border-color: var(--gold-line) !important; color: var(--gold) !important; }
+
+/* 過去検証セクションの戦略カードも同じ声部に */
+.rec-strat-card,
+.rec-strat-card.rec-strat-trusted, .rec-strat-card.rec-strat-stable,
+.rec-strat-card.rec-strat-mixed, .rec-strat-card.rec-strat-risky {
+  background: #0C0C0D !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+.rec-strat-card.rec-strat-trusted { border-color: var(--gold-line) !important; }
+.rec-strat-lf-badge,
+.rec-strat-card.rec-strat-trusted .rec-strat-lf-badge {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink-soft) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+.rec-strat-card.rec-strat-trusted .rec-strat-lf-badge { border-color: var(--gold-line) !important; color: var(--gold) !important; }
+.rec-strat-card.rec-strat-trusted .rec-strat-roi-label { color: var(--gold-deep) !important; }
+.rec-strat-card.rec-strat-risky .rec-strat-roi-label { color: var(--c-ink-dim) !important; }
+.rec-strat-card.rec-strat-risky .rec-strat-final { color: var(--c-ink-mute) !important; border-color: var(--hair-strong) !important; }
+
+/* ── 5. ボタンを一声部に (青緑/別色のCTAを金輪郭へ統一) ── */
+.btn-cta-answers, .btn-cta-tele {
+  background: linear-gradient(180deg, #15130D, #0C0B08) !important;
+  color: var(--gold-bright) !important;
+  border: 1px solid var(--gold-line) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+}
+.btn-cta-answers:hover, .btn-cta-tele:hover {
+  border-color: var(--gold) !important;
+  background: linear-gradient(180deg, #1A170F, #100E0A) !important;
+}
+.btn-cta { border-radius: 12px !important; }
+
+/* ── 6. ボトムナビ — 細い線の品格 ── */
+.bottom-nav { background: rgba(5, 5, 5, 0.96) !important; }
+.bottom-nav__item { color: var(--c-ink-dim) !important; }
+.bottom-nav__item span { font-size: 10px !important; letter-spacing: 0.10em !important; font-weight: 500 !important; }
+.bottom-nav__item .nav-icon { width: 21px; height: 21px; }
+.bottom-nav__item.active { color: var(--gold-bright) !important; }
+.bottom-nav__item.active::before { height: 1px !important; width: 18px !important; }
+
+/* ── 7. 空状態・補助アイコン — 絵文字を菱形の金に置換 ── */
+.rc-icon, .rc-emoji, .ps-icon, .psc-icon, .ml-icon, .pl-icon {
+  font-size: 0 !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center; justify-content: center;
+  filter: none !important;
+}
+.rc-icon::before, .rc-emoji::before, .ps-icon::before,
+.psc-icon::before, .ml-icon::before, .pl-icon::before {
+  content: "◆";
+  font-size: 10px;
+  color: var(--gold-deep);
+}
+
+/* ── 8. 朝の挨拶・最高的中バナー — 漆黒に馴染ませる ── */
+.morning-toast {
+  background: linear-gradient(180deg, #0E0D0B, #0A0908) !important;
+  border: 1px solid var(--gold-line-soft) !important;
+  box-shadow: 0 24px 60px -34px rgba(0,0,0,0.9) !important;
+  color: var(--c-ink) !important;
+}
+.morning-toast .emoji { display: none !important; }
+.topwin-banner {
+  background: linear-gradient(180deg, #0E0D0B, #0A0908) !important;
+  border: 1px solid var(--gold-line) !important;
+  box-shadow: none !important;
+}
+.topwin-banner .emoji-wrap, .topwin-banner .emoji { display: none !important; }
+
+/* ── 9. フォーカスリングも金で統一 ── */
+.btn-cta:focus-visible, .btn-bn:focus-visible, .chip-filter:focus-visible,
+.tab:focus-visible, button:focus-visible, a:focus-visible,
+[data-gloss]:focus-visible {
+  outline: 1px solid var(--gold) !important;
+  outline-offset: 2px;
+}
+
+/* ── 10. チップ/フィルタ — 静かな輪郭 ── */
+.chip-filter {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink-mute) !important;
+  letter-spacing: 0.04em;
+}
+.chip-filter.is-active {
+  border-color: var(--gold-line) !important;
+  color: var(--gold-bright) !important;
+  background: rgba(201, 168, 92, 0.06) !important;
+}
+
+/* ── 11. モーダル — 漆黒の上の一枚 ── */
+.modal-card {
+  background: #0C0C0D !important;
+  border: 1px solid var(--hair-strong) !important;
+  box-shadow: 0 40px 100px -40px rgba(0, 0, 0, 1) !important;
+}
+.modal-head { border-bottom: 1px solid var(--hair) !important; background: transparent !important; }
+.modal-head .title {
+  font-family: "Cormorant Garamond", "Noto Sans JP", serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+}
+.modal-close {
+  border: 1px solid var(--hair) !important;
+  border-radius: 50% !important;
+  color: var(--c-ink-mute) !important;
+  background: transparent !important;
+}
+.modal-close:hover { border-color: var(--gold-line) !important; color: var(--gold) !important; }
+.modal-mask { background: rgba(0, 0, 0, 0.72) !important; }
+
+/* フォーム部品 */
+.modal-body input[type="text"], .modal-body input[type="number"],
+.modal-body select, .modal-body textarea {
+  background: #0A0A0B !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink) !important;
+  border-radius: 10px !important;
+}
+.modal-body input:focus, .modal-body select:focus, .modal-body textarea:focus {
+  border-color: var(--gold-line) !important;
+  outline: none !important;
+}
+.modal-body .label { color: var(--c-ink-mute) !important; letter-spacing: 0.08em !important; }
+
+/* ── 12. トースト ── */
+.toast {
+  background: #0E0D0B !important;
+  border: 1px solid var(--gold-line) !important;
+  color: var(--c-ink) !important;
+  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.95) !important;
+  letter-spacing: 0.03em;
+}
+
+/* ── 13. 用語ツールチップのⓘを金に ── */
+[data-gloss]::after { color: var(--gold-deep) !important; border-color: var(--gold-line) !important; }
+
+/* ── 14. reduced-motion 尊重 ── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .h-arrow, .hideable-summary::before, .h-title { transition: none !important; }
+}
+
+
+/* ── 15. 細部の仕上げ (トースト印・メタ行・発走演出・メダル) ── */
+.nm-meta b small { font-size: 9.5px; color: var(--c-ink-mute); margin-left: 1px; letter-spacing: 0.06em; }
+
+.toast .toast-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--gold-line);
+  color: var(--gold-bright);
+  font-size: 11px; font-weight: 600;
+  line-height: 1;
+}
+.toast.toast-error .toast-icon { border-color: rgba(201, 138, 138, 0.55); color: var(--c-rose); }
+.toast.toast-warn  .toast-icon { border-color: var(--gold-line); color: var(--gold); }
+
+/* 達成・連勝のアイコン絵文字も菱形の金へ */
+.ach-head .ach-icon, .streak-icon {
+  font-size: 0 !important;
+  line-height: 1 !important;
+  filter: none !important;
+}
+.ach-head .ach-icon::before, .streak-icon::before {
+  content: "◆"; font-size: 11px; color: var(--gold-deep);
+}
+
+/* 発走フラッシュ — 金の閃光に (絵文字は出さない) */
+.imminent-flash .if-emoji { display: none !important; }
+.imminent-flash .if-bg {
+  background: radial-gradient(circle at 50% 42%, rgba(201, 168, 92, 0.35), rgba(6, 6, 6, 0.94) 72%) !important;
+}
+.imminent-flash .if-text, .start-flash .sf-text {
+  font-family: "Cormorant Garamond", "Noto Sans JP", serif !important;
+  color: var(--gold-bright) !important;
+  text-shadow: none !important;
+}
+.start-flash .sf-bg {
+  background: radial-gradient(circle at 50% 45%, rgba(201, 168, 92, 0.45), rgba(6, 6, 6, 0.96) 75%) !important;
+}
+.start-flash .sf-sub { color: var(--c-ink-soft) !important; }
+
+/* ランキングのメダルは数字の品格で */
+.rb-medal {
+  font-family: "Cormorant Garamond", serif !important;
+  font-style: italic;
+  color: var(--gold-bright) !important;
+  font-size: 15px !important;
+}
+
+/* 「賭けない」注意は静かな弱いバラ色 */
+.rec-strat-kelly-skip {
+  background: transparent !important;
+  border: 1px solid rgba(201, 138, 138, 0.30) !important;
+  color: #B98D8D !important;
+  box-shadow: none !important;
+}
+
+/* 達成バッジ内の絵文字も菱形の金に統一 */
+.ach-badge .head .emoji {
+  font-size: 0 !important;
+  line-height: 1 !important;
+}
+.ach-badge .head .emoji::before {
+  content: "◆"; font-size: 10px; color: var(--gold-deep);
+}
+
+/* 休息日の見出しの折り返しを美しく (スマホで「で/す」と切れない) */
+.noday-display .big { text-wrap: balance; }
+@media (max-width: 480px) {
+  .noday-display .big { font-size: 27px !important; }
+}
+
+/* ── 16. 推奨ログ行・思考中表示の仕上げ ── */
+.rec-race { flex-wrap: wrap; }
+.rec-badges { display: inline-flex; flex-wrap: wrap; gap: 4px; max-width: 100%; }
+.rec-badge, .rec-badge[class*="rec-b-"] {
+  background: transparent !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink-mute) !important;
+  border-radius: 999px !important;
+  font-size: 9.5px !important;
+  padding: 1px 8px !important;
+  letter-spacing: 0.04em !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+.rec-bet {
+  background: transparent !important;
+  border: 1px solid var(--gold-line-soft) !important;
+  color: var(--c-turf) !important;
+  box-shadow: none !important;
+}
+.rec-item { border-color: var(--hair) !important; }
+
+/* AI思考中インジケータも金で */
+.ai-thinking { color: var(--c-ink-mute) !important; }
+.ai-thinking .dot { background: var(--gold) !important; }
+
+/* ── 17. AIモデル成績の戦略行 — 緑/赤の塗りをやめ、静かな3声部に ── */
+.ml-strat.is-win, .ml-strat.is-close, .ml-strat.is-lose, .ml-strat.is-mute {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--hair) !important;
+}
+.ml-strat.is-win { border-color: var(--gold-line-soft) !important; }
+.ml-strat.is-win .ml-strat-roi { color: var(--gold-bright) !important; }
+.ml-strat.is-close .ml-strat-roi { color: var(--c-ink) !important; }
+.ml-strat.is-lose .ml-strat-roi { color: var(--c-ink-mute) !important; }
+.ml-strat-name { color: var(--c-ink-soft) !important; }
+.ml-rec-card, .ml-rec-card.is-possible {
+  background: #0C0C0D !important;
+  border: 1px solid var(--gold-line-soft) !important;
+  box-shadow: none !important;
+}
+.ml-rec-card .ml-rec-roi, .ml-rec-card.is-possible .ml-rec-roi { color: var(--gold-bright) !important; }
+
+/* 自動化ステータスの歯車テキスト絵文字は出さない (見出しの重複も軽減) */
+.autostatus-icon { display: none !important; }
+
+/* ── 18. 「100%越え推奨/候補」ボックスも金の声部へ ── */
+.ml-recommended {
+  background: rgba(201, 168, 92, 0.05) !important;
+  border: 1px solid var(--gold-line) !important;
+  box-shadow: none !important;
+}
+.ml-possible {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--hair-strong) !important;
+}
+.ml-rec-icon, .ml-rec-title { color: var(--gold-bright) !important; }
+.ml-rec-pill {
+  background: transparent !important;
+  border: 1px solid var(--gold-line) !important;
+  color: var(--gold) !important;
+}
+.ml-rec-note { color: var(--c-ink-mute) !important; }
+.ml-rec-name { color: var(--c-ink-soft) !important; }
+
+/* ── 19. 目次の中の二重見出しを整理 (01目次タイトルと内箱タイトルの重複) ── */
+.hideable .section-head { border-bottom: 0 !important; padding-bottom: 2px !important; }
+.hideable .section-head .title { display: none !important; }
+.hideable .section-head .extra { margin-left: auto !important; }
+.hideable .autostatus-head .autostatus-title { display: none !important; }
+.hideable .autostatus-head { justify-content: flex-end; }
+
+/* 馬番パレットの台座を漆黒に馴染ませる (枠番の色はJRA本物の色なので残す) */
+.add-pick-helper {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--hair) !important;
+  border-radius: 12px !important;
+}
+.add-pick-helper .ah-label {
+  color: var(--c-ink-mute) !important;
+  letter-spacing: 0.08em !important;
+}
