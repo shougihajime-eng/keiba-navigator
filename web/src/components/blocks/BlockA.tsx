@@ -480,7 +480,8 @@ function PendingDataCard({
 }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 15_000);
+    // 画面が見えない間は休む(無駄な再描画ゼロ)
+    const t = setInterval(() => { if (document.hidden) return; setNow(Date.now()); }, 15_000);
     return () => clearInterval(t);
   }, []);
 
@@ -544,7 +545,8 @@ function NoRaceCard({ reason }: { reason: string }) {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 60_000);
+    // 画面が見えない間は休む(開催のない日に裏で回り続けない)
+    const t = setInterval(() => { if (document.hidden) return; setNow(Date.now()); }, 60_000);
     return () => clearInterval(t);
   }, []);
 
