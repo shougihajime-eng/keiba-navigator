@@ -29,6 +29,11 @@ const ROOT = path.resolve(__dirname, "..");
 const RACES_DIR  = path.join(ROOT, "data", "jv_cache", "races");
 const FEATS_PATH = path.join(ROOT, "data", "jv_cache", "features.json");
 const OUT_PATH   = path.join(ROOT, "data", "jv_cache", "predictions.json");
+// 🚨 2026-06-07: 本番 (Vercel) には races/*.json が無い (git 管理外) ため、
+// readAllRaces() が常に空 → /api/win5 が本番で一度も動かず 503 だった。
+// 当日+翌日の「完全なレース JSON」を 1 ファイルにまとめて git に乗せ、
+// lib/jv_cache.readAllRaces のフォールバックとして本番でも読めるようにする。
+const TODAY_RACES_PATH = path.join(ROOT, "data", "jv_cache", "today_races.json");
 
 let buildConclusion;
 let evGrade;
@@ -151,6 +156,8 @@ function main() {
       predictions:    {},
     };
     fs.writeFileSync(OUT_PATH, JSON.stringify(emptyOut, null, 0), "utf-8");
+    // 本番用の当日レース完全データも空にする (古い週末データの残存防止)
+    fs.writeFileSync(TODAY_RACES_PATH, JSON.stringify({ fetchedAt: new Date().toISOString(), races: [] }, null, 0), "utf-8");
     console.log(`[OK] 対象レースなし (today=${today} / tomorrow=${tmr}) → 空の predictions.json を書き出し (古いデータ残存を防止)`);
     process.exit(0);
   }
@@ -158,6 +165,7 @@ function main() {
 
   const startMs = Date.now();
   const predictions = {};
+  const todayRaces = [];  // 当日+翌日の完全なレース JSON (本番 WIN5 等のフォールバック用)
   let withHorses = 0;
   let placeholder = 0;
   let failed = 0;
@@ -190,6 +198,7 @@ function main() {
     }
     const summary = compactConclusion(c, race);
     predictions[race.race_id] = summary;
+    todayRaces.push(race);
     if ((race.horses || []).length > 0) withHorses++;
     else placeholder++;
   }
@@ -229,6 +238,10 @@ function main() {
   fs.writeFileSync(OUT_PATH, JSON.stringify(out, null, 0), "utf-8");
   const sizeKb = (fs.statSync(OUT_PATH).size / 1024).toFixed(1);
   console.log(`[OK] predictions.json 書き出し: ${out.raceCount} レース (${withHorses} データあり / ${placeholder} 未配信 / ${failed} 失敗) ${sizeKb} KB / ${out.computedMs}ms`);
+  // 本番 (Vercel) で /api/win5 等が読む「当日+翌日の完全レースデータ」
+  fs.writeFileSync(TODAY_RACES_PATH, JSON.stringify({ fetchedAt: new Date().toISOString(), races: todayRaces }, null, 0), "utf-8");
+  const trKb = (fs.statSync(TODAY_RACES_PATH).size / 1024).toFixed(1);
+  console.log(`[OK] today_races.json 書き出し: ${todayRaces.length} レース ${trKb} KB (本番 WIN5 用)`);
   if (lgbm) console.log(`     LightGBM: ${lgbm.state ?? "?"} / AUC ${lgbm.metrics?.auc ?? "?"} / trained ${lgbm.trained_at ?? "?"}`);
 }
 
