@@ -115,6 +115,8 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
     """RA / SE[] / O1 を 1 つの race JSON にマージする。"""
     horses: List[Dict[str, Any]] = []
     odds_table = (o1 or {}).get("win_odds_by_horse") or {}
+    # 発走前の SE は人気が空 (0) のため、O1 の人気で補完する (2026-06-07)
+    pop_table = (o1 or {}).get("popularity_by_horse") or {}
 
     for se in se_list:
         num = se.get("horse_num")
@@ -141,7 +143,7 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
             # JV-Data の SE には「前走着順」は無い (kakutei_jyuni は当該レースの着順)
             # 前走情報は別レコード (UM/HN/UH 等) から取得する。現状は None。
             "prev_finish": None,
-            "popularity":  se.get("popularity"),
+            "popularity":  se.get("popularity") or (pop_table.get(str(num)) if num is not None else None),
             "win_odds":    win_odds_val,
             # SE が確定済みなら kakutei_jyuni / time が入る (結果データとしても利用可)
             "kakutei_jyuni": se.get("kakutei_jyuni"),

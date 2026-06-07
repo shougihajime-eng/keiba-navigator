@@ -79,8 +79,37 @@ def parse_raw_file(raw: bytes) -> List[Dict[str, Any]]:
         if parsed is not None:
             if parsed.get("_record_id") == "HR":
                 parsed["_raw"] = rec
+            elif parsed.get("_record_id") == "O1":
+                # 🚨 2026-06-07 バグ修正: build_race_json.merge は
+                # o1["win_odds_by_horse"] を読むが、それを作る処理がどこにも無く、
+                # O1 (単勝オッズ) が届いても races/*.json に一度も反映されていなかった
+                # (過去レースのオッズは SE の確定オッズ由来。発走前のレースは
+                #  RTオッズを取っても全頭 None のままで、当日予想にオッズが効かなかった)。
+                # ここで繰り返し領域をパースして馬番→オッズ/人気の表を添付する。
+                tables = build_o1_win_tables(rec)
+                parsed["win_odds_by_horse"] = tables["win_odds_by_horse"]
+                parsed["popularity_by_horse"] = tables["popularity_by_horse"]
             results.append(parsed)
     return results
+
+
+def build_o1_win_tables(rec_bytes: bytes) -> Dict[str, Dict[str, Any]]:
+    """O1 レコードの単勝オッズ繰り返し領域 (offset 43, 8B x 28頭) から
+    {"win_odds_by_horse": {"7": 3.2, ...}, "popularity_by_horse": {"7": 1, ...}} を作る。
+    キーは build_race_json.merge が期待する str(馬番)。"""
+    from . import jvdata_struct as st
+    loop = st.O1_WIN_LOOP
+    elems = parse_loop(rec_bytes, loop["offset"], loop["element_len"],
+                       loop["max_count"], parse_win_odds_element)
+    odds: Dict[str, Any] = {}
+    pops: Dict[str, Any] = {}
+    for e in elems:
+        n = str(e.get("number"))
+        if e.get("odds"):
+            odds[n] = e["odds"]
+        if e.get("popularity"):
+            pops[n] = e["popularity"]
+    return {"win_odds_by_horse": odds, "popularity_by_horse": pops}
 
 
 def group_by_record_id(parsed: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
