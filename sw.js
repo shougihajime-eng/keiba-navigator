@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 // KEIBA NAVIGATOR — Service Worker
 // 役割:
@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v70"; // NOIR II — RACE DAY 開催日画面の磨き上げ
+const CACHE_VERSION = "keiba-nav-v71"; // 開催日の自動更新停止アラート (6/7 オッズ全滅事故の再発防止)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

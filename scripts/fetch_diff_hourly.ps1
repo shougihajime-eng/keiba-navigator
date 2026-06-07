@@ -103,6 +103,13 @@ if ($rtTargets.Count -gt 0) {
     if ($rtOk -eq 0 -and $todayCount -gt 0 -and $hourNow -ge 9 -and $hourNow -le 16) {
         Write-Log ("  [ALERT] 発売中の時間帯なのに RT オッズが 1 件も取れていない (today races=" + $todayCount + ")。レースID形式や JV-Link を確認すること。")
     }
+    # 前売り時間帯 (19時以降) に翌日レースがあるのに 1 件も取れない場合も警報。
+    # JRA の前売りは前日夕方 (18:30 頃〜) に始まるため、金曜夜にここが 0 件のままなら
+    # 土曜本番も失敗する可能性が高い = 当日を待たずに金曜夜に気づける。
+    $tomorrowCount = @($rtTargets | Where-Object { $_.Name -like ($tomorrowStr + "*") }).Count
+    if ($rtOk -eq 0 -and $tomorrowCount -gt 0 -and $hourNow -ge 19) {
+        Write-Log ("  [ALERT] 前売り時間帯なのに翌日レースの RT オッズが 1 件も取れていない (tomorrow races=" + $tomorrowCount + ")。前売り開始が遅い日もあるが、20:30 の回でも 0 件なら異常を疑うこと。")
+    }
 } else {
     Write-Log "No races today/tomorrow. RT odds fetch skipped."
 }

@@ -2656,6 +2656,8 @@
       const minuteBucket = Math.floor(Date.now() / 60000); // 「あとX分」表示の更新用
       memoRender("header", [state.races, state.racesLast?.learning?.lgbm?.metrics?.auc], renderHeader);
       renderLive(); // 毎秒系 (鮮度表示)・軽量なので常時
+      // 🚨 開催日に自動更新が死んでいたら画面最上部で大きく警告する (2026-06-07 事故の再発防止)
+      memoRender("staleAlert", [state.races, state.autostatus?.predictionsComputedAt, minuteBucket], renderStaleAlert);
       memoRender("morning", [state.races.length, state.recommendations?.recommendations_recent?.length, todayJst()], renderMorningSummary);
       memoRender("topwin", [state.bets], renderTopWinBanner);
       // ── トップ3ブロック (リニューアル後の本体) ──
@@ -3294,6 +3296,53 @@
   }
 
   // ─── 描画: 自動化ステータス (Wave16) ─────────────────────
+  // ── 開催日の「自動更新停止」緊急警告 ──────────────────────
+  // 2026-06-06/07 の土日、RTオッズ取得が二日間黙って全滅し、アプリは古い予想を
+  // 平然と表示し続けた。メール下書きの報告は本人に届かなかった。
+  // 教訓: 異常は「本人が必ず見る場所 = アプリの画面最上部」で叫ぶ。
+  // 条件 (発売中 9:00-16:59 のみ判定):
+  //   A. 今日のレースがあるのに、全レースでオッズが無い → オッズが届いていない
+  //   B. 予想の計算時刻が 2.5 時間以上前 → 予想が固まっている
+  function computeStaleAlert() {
+    try {
+      const force = /staleTest=1/.test(location.search); // 検証用: ?staleTest=1 で強制表示
+      const races = Array.isArray(state.races) ? state.races : [];
+      const todayKey = todayJst().replace(/-/g, "");
+      const todays = races.filter((r) => String(r.raceId || "").slice(0, 8) === todayKey);
+      if (force) return { kind: "noodds", count: todays.length || 24 };
+      if (!todays.length) return null;
+      const hour = new Date().getHours();
+      if (hour < 9 || hour >= 17) return null; // 発売中の時間帯だけ警報を出す
+      const withOdds = todays.filter((r) => Number(r.topPick?.odds) > 0);
+      if (withOdds.length === 0) return { kind: "noodds", count: todays.length };
+      const iso = state.autostatus?.predictionsComputedAt;
+      if (iso) {
+        const t = new Date(iso).getTime();
+        const ageH = isNaN(t) ? null : (Date.now() - t) / 3600000;
+        if (ageH != null && ageH > 2.5) return { kind: "frozen", hours: ageH };
+      }
+      return null;
+    } catch { return null; }
+  }
+
+  function renderStaleAlert() {
+    const root = $("#stale-alert-mount");
+    if (!root) return;
+    const alert = computeStaleAlert();
+    if (!alert) { root.hidden = true; root.innerHTML = ""; return; }
+    const title = "自動更新が止まっています";
+    const body = alert.kind === "noodds"
+      ? `今日の ${alert.count} レースに本物のオッズが届いていません。この画面の予想は当てになりません。<strong>買う前に必ず</strong>、自宅パソコンの電源とインターネットを確認してください。`
+      : `予想が ${alert.hours.toFixed(1)} 時間更新されていません。最新のオッズが反映されていない可能性があります。買う前に自宅パソコンを確認してください。`;
+    root.innerHTML = `
+      <div class="stale-alert" role="alert">
+        <div class="stale-alert-eyebrow">SYSTEM ALERT</div>
+        <div class="stale-alert-title">${title}</div>
+        <div class="stale-alert-body">${body}</div>
+      </div>`;
+    root.hidden = false;
+  }
+
   function renderAutostatus() {
     const root = $("#automation-mount");
     if (!root) return;

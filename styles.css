@@ -7990,3 +7990,34 @@ main .hideable:last-of-type { border-bottom: 1px solid var(--hair) !important; }
 }
 .buy-item .right .odds { font-size: 10.5px !important; }
 .buy-item .right .return { font-size: 12px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   SYSTEM ALERT — 開催日に自動更新が死んでいる時の緊急警告
+   (2026-06-07 土日オッズ全滅事故の再発防止。NOIR と調和する深い緋色)
+   ═══════════════════════════════════════════════════════════ */
+.stale-alert {
+  margin: 10px 12px 4px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(120, 20, 24, 0.55), rgba(60, 8, 10, 0.75));
+  border: 1px solid rgba(232, 96, 96, 0.85);
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(232, 96, 96, 0.18), 0 6px 24px rgba(180, 30, 30, 0.25);
+  animation: staleAlertPulse 1.6s ease-in-out infinite;
+}
+.stale-alert-eyebrow {
+  font-size: 10px; letter-spacing: 0.22em; font-style: italic;
+  color: #f3b2b2; opacity: 0.9; margin-bottom: 4px;
+}
+.stale-alert-title {
+  font-family: "Cormorant Garamond", "Noto Serif JP", serif;
+  font-size: 21px; font-weight: 700; color: #ffd9d9; line-height: 1.3;
+}
+.stale-alert-body {
+  margin-top: 6px; font-size: 13.5px; line-height: 1.7; color: #f4e3e3;
+}
+.stale-alert-body strong { color: #ffb3b3; }
+@keyframes staleAlertPulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(232, 96, 96, 0.18), 0 6px 24px rgba(180, 30, 30, 0.25); }
+  50%      { box-shadow: 0 0 0 2px rgba(232, 96, 96, 0.45), 0 6px 30px rgba(200, 40, 40, 0.45); }
+}
+@media (prefers-reduced-motion: reduce) { .stale-alert { animation: none; } }
