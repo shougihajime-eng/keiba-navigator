@@ -91,11 +91,47 @@ def parse_all(raw_paths: List[Path]) -> List[Dict[str, Any]]:
     return all_records
 
 
+def _se_record_score(se: Dict[str, Any]) -> tuple:
+    """同一馬の重複 SE レコードから「どちらを残すか」を決めるスコア。
+    確定着順あり > 情報が多い、の順で優先する。"""
+    has_finish = 1 if (se.get("kakutei_jyuni") or 0) else 0
+    filled = sum(1 for v in se.values() if v not in (None, "", "0", 0))
+    return (has_finish, filled)
+
+
+def dedup_se_list(se_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """SE (出走馬) レコードの重複を除去する。
+
+    🚨 2026-06-07 バグ修正: 毎時の差分取得で同じレースの SE レコードが
+    raw bin ごとに何度も届くが、従来は全部 se_list に追加していたため
+    「同じ馬が 5 重複 + 枠順確定前の空シェル (馬番 0) 32 件 = 112 頭」の
+    壊れたレース JSON が生成され、当日の予想が全レース「判断不可」になった。
+
+    ルール:
+    - 馬番 1 以上のレコードが 1 件でもあれば、馬番 0/None の空シェルは捨てる
+      (全頭シェルの場合のみそのまま返す = 出走表未配信の表現を維持)
+    - 同じ馬番の重複は「確定着順あり > 情報量が多い > 後から届いた方」を採用
+    """
+    real = [se for se in se_list if (se.get("horse_num") or 0) > 0]
+    if not real:
+        return se_list  # 全部シェル (枠順確定前) はそのまま
+    best: Dict[int, tuple] = {}  # horse_num -> (score, index, record)
+    for idx, se in enumerate(real):
+        num = int(se.get("horse_num"))
+        cand = (_se_record_score(se), idx, se)
+        cur = best.get(num)
+        # スコア同点なら後から届いたレコード (新しい更新) を採用
+        if cur is None or (cand[0], cand[1]) >= (cur[0], cur[1]):
+            best[num] = cand
+    return [best[num][2] for num in sorted(best.keys())]
+
+
 def group_by_race(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """race_id → {ra, se_list, o1, hr, dm_list, tk_list} に振り分け。
 
     SE/DM は同一 race に複数頭の繰り返しがあるためリスト。
     O1 / HR は通常 1 race に 1 件。
+    SE は最後に dedup_se_list() で重複・空シェルを掃除する。
     """
     out: Dict[str, Dict[str, Any]] = {}
     for r in records:
@@ -119,6 +155,10 @@ def group_by_race(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
             slot["dm_list"].append(r)
         elif rec_type == "TK":
             slot["tk_list"].append(r)
+    # SE の重複・空シェルを掃除 (races と results の両方がこの結果を使う)
+    for slot in out.values():
+        if slot["se_list"]:
+            slot["se_list"] = dedup_se_list(slot["se_list"])
     return out
 
 

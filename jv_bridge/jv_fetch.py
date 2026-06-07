@@ -163,11 +163,18 @@ def cmd_rt(args) -> int:
         return cmd_init(args)
     try:
         jv = init_jvlink(args.sid)
-        rc = jv.JVRTOpen(args.dataspec, args.raceid)
+        raceid = args.raceid
+        # races/*.json のファイル名はフロント互換のため末尾に "00" を足した18桁だが、
+        # JVRTOpen が受け付けるレースIDは16桁 (YYYYMMDDJJKKHHRR)。
+        # 18桁のまま渡すと rc=-114 (該当なし) で全滅する (2026-06-06/07 の土日に
+        # 全RTオッズ取得が二日間沈黙した実バグ)。ここで自動的に16桁へ直す。
+        if len(raceid) == 18 and raceid.endswith("00"):
+            raceid = raceid[:16]
+        rc = jv.JVRTOpen(args.dataspec, raceid)
         if rc != 0:
             raise RuntimeError(f"JVRTOpen failed rc={rc}")
 
-        out_path = CACHE_DIR / f"raw_{args.dataspec}_{args.raceid}_{int(dt.datetime.now().timestamp())}.bin"
+        out_path = CACHE_DIR / f"raw_{args.dataspec}_{raceid}_{int(dt.datetime.now().timestamp())}.bin"
         records = []
         import time as _time
         with open(out_path, "wb") as f:
@@ -198,14 +205,14 @@ def cmd_rt(args) -> int:
             "ok": True,
             "mode": "rt",
             "dataspec": args.dataspec,
-            "raceid": args.raceid,
+            "raceid": raceid,
             "rawFile": str(out_path.name),
             "recordCount": len(records),
             "recordsHead": records[:50],
             "fetchedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
             "note": "本ファイルはレコード種別までを抽出しています。各フィールドの完全パースには JVData 仕様書が必要です。",
         }
-        meta_path = CACHE_DIR / f"meta_{args.dataspec}_{args.raceid}.json"
+        meta_path = CACHE_DIR / f"meta_{args.dataspec}_{raceid}.json"
         meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
         write_status("ready", lastFetch=meta)
         print(f"[OK] 取得完了。{len(records)} レコード保存 → {out_path.name}")
@@ -407,7 +414,7 @@ def main():
     p_rt = sub.add_parser("rt", help="リアルタイム系データを取得")
     p_rt.add_argument("--sid", default="UNKNOWN")
     p_rt.add_argument("--dataspec", default="0B31", help="例: 0B31=単複オッズ")
-    p_rt.add_argument("--raceid", required=True, help="例: 2026YYYYMMDDJJRRRR の18桁")
+    p_rt.add_argument("--raceid", required=True, help="16桁 (YYYYMMDDJJKKHHRR)。18桁(末尾00)が来ても自動で16桁に直す")
 
     sub.add_parser("status", help="現在のステータスを表示")
 

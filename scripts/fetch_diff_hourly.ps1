@@ -76,12 +76,33 @@ foreach ($dstr in @($todayStr, $tomorrowStr)) {
 if ($rtTargets.Count -gt 0) {
     Write-Log ("RT odds (0B31) fetch for " + $rtTargets.Count + " races (today+tomorrow)...")
     $rtOk = 0
+    $rtFails = @{}
     foreach ($rf in $rtTargets) {
         $rid = [System.IO.Path]::GetFileNameWithoutExtension($rf.Name)
-        & py -3.12-32 $JV_FETCH rt --dataspec 0B31 --raceid $rid 2>&1 | Out-Null
-        if ($LASTEXITCODE -eq 0) { $rtOk++ }
+        $rtOut = & py -3.12-32 $JV_FETCH rt --dataspec 0B31 --raceid $rid 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $rtOk++
+        } else {
+            # 失敗理由(rc=コード)を必ず集計してログに残す。
+            # 2026-06-06/07 の土日、レースID桁違い(18桁)で全RT取得が rc=-114 で
+            # 二日間黙って全滅した事故の再発防止: 失敗を Out-Null で捨てない。
+            $lastLine = ($rtOut | Select-Object -Last 1)
+            if ("$lastLine" -match 'rc=(-?\d+)') { $key = "rc=" + $Matches[1] } else { $key = "other" }
+            if ($rtFails.ContainsKey($key)) { $rtFails[$key]++ } else { $rtFails[$key] = 1 }
+        }
     }
     Write-Log ("RT odds fetch done (" + $rtOk + "/" + $rtTargets.Count + " ok)")
+    if ($rtFails.Count -gt 0) {
+        $detail = ($rtFails.GetEnumerator() | ForEach-Object { $_.Key + " x" + $_.Value }) -join ", "
+        Write-Log ("  RT failures: " + $detail)
+    }
+    # 発売中の時間帯 (9:00-16:59) に今日のレースがあるのに 1 件も取れない = 異常。
+    # rc=-114 を「未発売の正常拒否」と同一視して黙る設計が事故の温床だったため、警報を出す。
+    $hourNow = (Get-Date).Hour
+    $todayCount = @($rtTargets | Where-Object { $_.Name -like ($todayStr + "*") }).Count
+    if ($rtOk -eq 0 -and $todayCount -gt 0 -and $hourNow -ge 9 -and $hourNow -le 16) {
+        Write-Log ("  [ALERT] 発売中の時間帯なのに RT オッズが 1 件も取れていない (today races=" + $todayCount + ")。レースID形式や JV-Link を確認すること。")
+    }
 } else {
     Write-Log "No races today/tomorrow. RT odds fetch skipped."
 }

@@ -1,7 +1,7 @@
 {
   "races_scored": 48,
-  "base_top3_rate": 0.2043,
-  "base_win_rate": 0.0671,
+  "base_top3_rate": 0.2057,
+  "base_win_rate": 0.0686,
   "base_n": 700,
   "min_sample": 30,
   "findings": [
@@ -24,33 +24,33 @@
     {
       "kind": "scratch",
       "label": "取消・除外",
-      "n": 12,
-      "top3_rate": 0.25,
-      "win_rate": 0.0833,
-      "verdict": "データ不足 (あと 18 頭ぶん必要)"
-    },
-    {
-      "kind": "weight_up",
-      "label": "馬体重が大きく増えた",
-      "n": 9,
-      "top3_rate": 0.2222,
-      "win_rate": 0.0,
-      "verdict": "データ不足 (あと 21 頭ぶん必要)"
-    },
-    {
-      "kind": "weight_down",
-      "label": "馬体重が大きく減った",
       "n": 0,
       "top3_rate": null,
       "win_rate": null,
       "verdict": "データ不足 (あと 30 頭ぶん必要)"
     },
     {
+      "kind": "weight_up",
+      "label": "馬体重が大きく増えた",
+      "n": 5,
+      "top3_rate": 0.2,
+      "win_rate": 0.2,
+      "verdict": "データ不足 (あと 25 頭ぶん必要)"
+    },
+    {
+      "kind": "weight_down",
+      "label": "馬体重が大きく減った",
+      "n": 1,
+      "top3_rate": 0.0,
+      "win_rate": 0.0,
+      "verdict": "データ不足 (あと 29 頭ぶん必要)"
+    },
+    {
       "kind": "blinker",
       "label": "ブリンカー着用",
-      "n": 612,
-      "top3_rate": 0.2239,
-      "win_rate": 0.0719,
+      "n": 95,
+      "top3_rate": 0.1684,
+      "win_rate": 0.0632,
       "verdict": "差が無い (効かない)"
     },
     {
