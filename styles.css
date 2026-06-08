@@ -4686,7 +4686,8 @@ body::after { content: none !important; display: none !important; }
   .runner-list-rich .prob .pct { font-size: 16px !important; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .runner-list-rich .prob-bar-fill { transition: none; }
+  .runner-list-rich .prob-bar-fill,
+  .runner-list-rich .ability-bar-fill { transition: none; }
 }
 
 /* =====================================================================
