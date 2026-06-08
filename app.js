@@ -2333,6 +2333,28 @@
         return { in2: bin.in2, in3: bin.in3 };
       };
 
+      // 実測ベースの絶対「能力スコア」(0-100)。帯の str を prob で補間（なめらか・どのレースでも同じ意味）。
+      const abilityFor = (prob) => {
+        const cal = (typeof window !== 'undefined') ? window.PLACE_CALIBRATION : null;
+        if (!cal || !Array.isArray(cal.bins) || cal.bins.length === 0 || !(prob > 0)) return null;
+        const bins = cal.bins;
+        if (bins[0].str == null) return null;
+        if (bins[0].pMid == null) {
+          const b = bins.find((x) => prob <= x.pMax) || bins[bins.length - 1];
+          return b.str ?? null;
+        }
+        if (prob <= bins[0].pMid) return bins[0].str;
+        if (prob >= bins[bins.length - 1].pMid) return bins[bins.length - 1].str;
+        for (let i = 0; i < bins.length - 1; i++) {
+          const a = bins[i], b = bins[i + 1];
+          if (prob >= a.pMid && prob <= b.pMid) {
+            const t = (prob - a.pMid) / ((b.pMid - a.pMid) || 1);
+            return Math.round(a.str + t * (b.str - a.str));
+          }
+        }
+        return bins[bins.length - 1].str;
+      };
+
       html += `<div class="runner-list runner-list-rich">`;
       const top18 = sortedH.slice(0, 18);
       // 能力値バーの正規化用（最上位=100の相対値）
@@ -2343,8 +2365,8 @@
         const probRaw = h.pickInfo?.prob || 0;
         const probPct = probRaw * 100;
         const probText = h.pickInfo?.prob ? `${probPct.toFixed(1)}%` : "—";
-        const ability = Math.round(Math.max(2, Math.min(100, (probRaw / maxProb) * 100)));
-        const abilityTone = probPct >= 30 ? "high" : probPct >= 15 ? "mid" : "low";
+        const ability = abilityFor(probRaw) ?? Math.round(Math.max(2, Math.min(100, (probRaw / maxProb) * 100)));
+        const abilityTone = ability >= 60 ? "high" : ability >= 30 ? "mid" : "low";
         const confLetter = ability >= 75 ? "A" : ability >= 50 ? "B" : ability >= 30 ? "C" : "D";
         const calRates = placeRatesFor(probRaw);
         const hv = placeMap[h.number] || { p2: null, p3: null };
@@ -2414,7 +2436,7 @@
       html += `</div>`;
       const _cal = (typeof window !== 'undefined') ? window.PLACE_CALIBRATION : null;
       const rateNote = (_cal && _cal.horses)
-        ? `※「能力」は1着予想を最上位＝100にそろえた相対値。「2着内・3着内」は過去 ${Number(_cal.races).toLocaleString()} レース・${Number(_cal.horses).toLocaleString()} 頭の<b>実績にもとづく実測値</b>（同じくらいの予想だった馬が、実際に2着・3着以内に入った割合）。`
+        ? `※「能力」「2着内・3着内」は過去 ${Number(_cal.races).toLocaleString()} レース・${Number(_cal.horses).toLocaleString()} 頭の<b>実績にもとづく数字</b>です。能力＝同じくらいの予想だった馬の「勝率・2着内」の実績を、最強クラス＝100にそろえた絶対スコア（どのレースでも同じ意味）。2着内・3着内＝実際にその着順以内に入った割合。`
         : `※「能力」は1着予想を最上位＝100にそろえた相対値。「2着内・3着内」は全馬の1着予想からの推定（参考値）です。`;
       html += `<div class="rate-note">${rateNote}</div>`;
     }

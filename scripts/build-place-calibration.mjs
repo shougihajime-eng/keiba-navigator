@@ -103,12 +103,22 @@ async function main() {
     bins[i].win = Math.max(bins[i].win, bins[i - 1].win);
   }
 
+  // 絶対値の「実力スコア」str（0-100）。
+  // 強さ = 勝率×0.6 + 2着内×0.4 を、過去の最強帯=100 に正規化。
+  // → どのレースでも同じ意味（相対値ではない）。pMid は prob 補間用の帯の中央値。
+  const anchor = Math.max(...bins.map((b) => 0.6 * b.win + 0.4 * b.in2)) || 1;
+  for (const b of bins) {
+    b.pMid = Number(((b.pMin + b.pMax) / 2).toFixed(5));
+    b.str = Math.max(1, Math.round((100 * (0.6 * b.win + 0.4 * b.in2)) / anchor));
+  }
+
   const out = {
     generatedAt: new Date().toISOString(),
     model: modelVersion || 'unknown',
     races: racesUsed,
     horses: rows.length,
     numBins: bins.length,
+    abilityAnchor: Number(anchor.toFixed(4)),
     bins,
   };
 
