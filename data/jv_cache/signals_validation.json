@@ -1,8 +1,8 @@
 {
-  "races_scored": 48,
-  "base_top3_rate": 0.2057,
-  "base_win_rate": 0.0686,
-  "base_n": 700,
+  "races_scored": 96,
+  "base_top3_rate": 0.2076,
+  "base_win_rate": 0.0692,
+  "base_n": 1387,
   "min_sample": 30,
   "findings": [
     {
@@ -32,34 +32,34 @@
     {
       "kind": "weight_up",
       "label": "馬体重が大きく増えた",
-      "n": 5,
-      "top3_rate": 0.2,
-      "win_rate": 0.2,
-      "verdict": "データ不足 (あと 25 頭ぶん必要)"
+      "n": 20,
+      "top3_rate": 0.15,
+      "win_rate": 0.15,
+      "verdict": "データ不足 (あと 10 頭ぶん必要)"
     },
     {
       "kind": "weight_down",
       "label": "馬体重が大きく減った",
-      "n": 1,
-      "top3_rate": 0.0,
+      "n": 5,
+      "top3_rate": 0.2,
       "win_rate": 0.0,
-      "verdict": "データ不足 (あと 29 頭ぶん必要)"
+      "verdict": "データ不足 (あと 25 頭ぶん必要)"
     },
     {
       "kind": "blinker",
       "label": "ブリンカー着用",
-      "n": 95,
-      "top3_rate": 0.1684,
-      "win_rate": 0.0632,
+      "n": 195,
+      "top3_rate": 0.1897,
+      "win_rate": 0.0615,
       "verdict": "差が無い (効かない)"
     },
     {
       "kind": "rento",
       "label": "連闘(中6日以内)",
-      "n": 10,
-      "top3_rate": 0.2,
-      "win_rate": 0.0,
-      "verdict": "データ不足 (あと 20 頭ぶん必要)"
+      "n": 14,
+      "top3_rate": 0.2143,
+      "win_rate": 0.0714,
+      "verdict": "データ不足 (あと 16 頭ぶん必要)"
     },
     {
       "kind": "layoff",
