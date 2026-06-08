@@ -2325,6 +2325,14 @@
         return map;
       };
 
+      // 実測キャリブレーション（過去実績）を引く。無ければ null → Harville推定にフォールバック。
+      const placeRatesFor = (prob) => {
+        const cal = (typeof window !== 'undefined') ? window.PLACE_CALIBRATION : null;
+        if (!cal || !Array.isArray(cal.bins) || cal.bins.length === 0 || !(prob > 0)) return null;
+        const bin = cal.bins.find((b) => prob <= b.pMax) || cal.bins[cal.bins.length - 1];
+        return { in2: bin.in2, in3: bin.in3 };
+      };
+
       html += `<div class="runner-list runner-list-rich">`;
       const top18 = sortedH.slice(0, 18);
       // 能力値バーの正規化用（最上位=100の相対値）
@@ -2338,9 +2346,12 @@
         const ability = Math.round(Math.max(2, Math.min(100, (probRaw / maxProb) * 100)));
         const abilityTone = probPct >= 30 ? "high" : probPct >= 15 ? "mid" : "low";
         const confLetter = ability >= 75 ? "A" : ability >= 50 ? "B" : ability >= 30 ? "C" : "D";
-        const pl = placeMap[h.number] || { p2: null, p3: null };
-        const rate2 = pl.p2 != null ? `${Math.round(pl.p2 * 100)}%` : "—";
-        const rate3 = pl.p3 != null ? `${Math.round(pl.p3 * 100)}%` : "—";
+        const calRates = placeRatesFor(probRaw);
+        const hv = placeMap[h.number] || { p2: null, p3: null };
+        const r2v = calRates ? calRates.in2 : hv.p2;
+        const r3v = calRates ? calRates.in3 : hv.p3;
+        const rate2 = r2v != null ? `${Math.round(r2v * 100)}%` : "—";
+        const rate3 = r3v != null ? `${Math.round(r3v * 100)}%` : "—";
         const oddsVal = h.win_odds ?? h.odds ?? null;
         const oddsText = oddsVal != null ? `${Number(oddsVal).toFixed(1)}倍` : "—";
         const popText = h.popularity ? `${h.popularity}人気` : "";
@@ -2401,7 +2412,11 @@
         </div>`;
       });
       html += `</div>`;
-      html += `<div class="rate-note">※「能力」は1着予想を最上位＝100にそろえた相対値。「2着内・3着内」は全馬の1着予想から計算した推定（参考値）です。</div>`;
+      const _cal = (typeof window !== 'undefined') ? window.PLACE_CALIBRATION : null;
+      const rateNote = (_cal && _cal.horses)
+        ? `※「能力」は1着予想を最上位＝100にそろえた相対値。「2着内・3着内」は過去 ${Number(_cal.races).toLocaleString()} レース・${Number(_cal.horses).toLocaleString()} 頭の<b>実績にもとづく実測値</b>（同じくらいの予想だった馬が、実際に2着・3着以内に入った割合）。`
+        : `※「能力」は1着予想を最上位＝100にそろえた相対値。「2着内・3着内」は全馬の1着予想からの推定（参考値）です。`;
+      html += `<div class="rate-note">${rateNote}</div>`;
     }
 
     if (Array.isArray(c.reasonList) && c.reasonList.length > 0) {
