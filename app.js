@@ -2297,18 +2297,62 @@
       });
       const sortedH = [...evHorses].sort((a, b) => (b.pickInfo?.prob ?? 0) - (a.pickInfo?.prob ?? 0));
       html += `<div class="sec-title"><span class="bar gold"></span><h2>AI の推定 順位</h2></div>`;
+      // 複勝圏（2着内・3着内）の推定。全馬の1着予想確率から Harville 法で算出する。
+      // ※1着確率しか無いため厳密値ではない＝表示で「推定（参考値）」と明記する。競馬で一般的な近似法。
+      const harvillePlace = (arr) => {
+        const map = {};
+        const sum = arr.reduce((a, b) => a + (b.p || 0), 0);
+        if (sum <= 0) { arr.forEach((x) => { map[x.n] = { p2: null, p3: null }; }); return map; }
+        const ps = arr.map((x) => ({ n: x.n, p: (x.p || 0) / sum }));
+        for (const A of ps) {
+          if (A.p <= 0) { map[A.n] = { p2: null, p3: null }; continue; }
+          let p2 = A.p, p3 = A.p;
+          for (const B of ps) {
+            if (B.n === A.n) continue;
+            const d1 = 1 - B.p;
+            if (d1 < 1e-6) continue;
+            const bThenA = B.p * (A.p / d1);
+            p2 += bThenA; p3 += bThenA;
+            for (const C of ps) {
+              if (C.n === A.n || C.n === B.n) continue;
+              const d2 = 1 - B.p - C.p;
+              if (d2 < 1e-6) continue;
+              p3 += B.p * (C.p / d1) * (A.p / d2);
+            }
+          }
+          map[A.n] = { p2: Math.min(1, p2), p3: Math.min(1, p3) };
+        }
+        return map;
+      };
+
       html += `<div class="runner-list runner-list-rich">`;
-      // 確率最大値を取得 (確率バーの正規化用)
-      const maxProb = Math.max(0.01, ...sortedH.slice(0, 18).map(h => h.pickInfo?.prob || 0));
-      sortedH.slice(0, 18).forEach((h, idx) => {
+      const top18 = sortedH.slice(0, 18);
+      // 能力値バーの正規化用（最上位=100の相対値）
+      const maxProb = Math.max(0.01, ...top18.map(h => h.pickInfo?.prob || 0));
+      const placeMap = harvillePlace(top18.map(h => ({ n: h.number, p: h.pickInfo?.prob || 0 })));
+      top18.forEach((h, idx) => {
         const rankCls = idx < 3 ? `rank-${idx + 1}` : "";
         const probRaw = h.pickInfo?.prob || 0;
         const probPct = probRaw * 100;
         const probText = h.pickInfo?.prob ? `${probPct.toFixed(1)}%` : "—";
-        const probBarWidth = Math.max(2, Math.min(100, (probRaw / maxProb) * 100));
-        const probTone = probPct >= 30 ? "high" : probPct >= 15 ? "mid" : "low";
+        const ability = Math.round(Math.max(2, Math.min(100, (probRaw / maxProb) * 100)));
+        const abilityTone = probPct >= 30 ? "high" : probPct >= 15 ? "mid" : "low";
+        const confLetter = ability >= 75 ? "A" : ability >= 50 ? "B" : ability >= 30 ? "C" : "D";
+        const pl = placeMap[h.number] || { p2: null, p3: null };
+        const rate2 = pl.p2 != null ? `${Math.round(pl.p2 * 100)}%` : "—";
+        const rate3 = pl.p3 != null ? `${Math.round(pl.p3 * 100)}%` : "—";
         const oddsVal = h.win_odds ?? h.odds ?? null;
-        const odds = oddsVal != null ? `${Number(oddsVal).toFixed(1)}倍 (${h.popularity || "?"}人気)` : "—";
+        const oddsText = oddsVal != null ? `${Number(oddsVal).toFixed(1)}倍` : "—";
+        const popText = h.popularity ? `${h.popularity}人気` : "";
+        const evVal = h.pickInfo?.ev ?? null;
+        const evText = evVal != null ? `EV ×${Number(evVal).toFixed(2)}` : "";
+        const evCls = evVal == null ? "" : evVal >= 1.3 ? "ev-hot" : evVal >= 1.0 ? "ev-ok" : "ev-low";
+        const signal = idx === 0 ? { icon: "◎", label: "本命", cls: "main" }
+                     : idx === 1 ? { icon: "○", label: "対抗", cls: "sub" }
+                     : idx === 2 ? { icon: "▲", label: "単穴", cls: "warn" }
+                     : idx === 3 ? { icon: "△", label: "連下", cls: "hold" }
+                     : null;
+        const signalTag = signal ? `<span class="signal-tag tag-${signal.cls}">${signal.icon} ${signal.label}</span>` : "";
         const name = h.name || `${h.number}番`;
         const sub = [h.jockey, h.trainer, h.sex_age].filter(Boolean).join(" / ");
         const num = parseInt(h.number, 10) || 1;
@@ -2334,17 +2378,30 @@
             <div class="runner-row1">
               ${rankBadge}
               <div class="name">${escapeHtml(name)}</div>
+              ${signalTag}
             </div>
             <div class="sub">${escapeHtml(sub)}</div>
-            <div class="prob-bar"><div class="prob-bar-fill tone-${probTone}" style="width:${probBarWidth.toFixed(0)}%"></div></div>
+            <div class="ability-wrap">
+              <span class="ability-label">能力</span>
+              <div class="ability-bar"><div class="ability-bar-fill tone-${abilityTone}" style="width:${ability}%"></div></div>
+              <span class="ability-val">${ability}</span>
+            </div>
+            <div class="rate-row">
+              <div class="rate-cell"><strong>${probText}</strong><small>勝率</small></div>
+              <div class="rate-cell"><strong>${rate2}</strong><small>2着内</small></div>
+              <div class="rate-cell"><strong>${rate3}</strong><small>3着内</small></div>
+            </div>
           </div>
           <div class="prob">
-            <div class="pct">${probText}</div>
-            <div class="odds">${odds}</div>
+            <div class="conf-badge cf-${confLetter}" title="信頼度">${confLetter}</div>
+            <div class="odds">${oddsText}</div>
+            <div class="pop">${popText}</div>
+            ${evText ? `<div class="ev ${evCls}">${evText}</div>` : ""}
           </div>
         </div>`;
       });
       html += `</div>`;
+      html += `<div class="rate-note">※「能力」は1着予想を最上位＝100にそろえた相対値。「2着内・3着内」は全馬の1着予想から計算した推定（参考値）です。</div>`;
     }
 
     if (Array.isArray(c.reasonList) && c.reasonList.length > 0) {
