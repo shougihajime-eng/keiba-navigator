@@ -36,20 +36,21 @@ function Reg($name, $action, $trigger, $desc) {
     Write-Host "  registered: $name"
 }
 
-# --- 1) 早朝の空白を埋める cheap な生データ取得 (毎日) ---
-foreach ($t in @("00:30", "03:30", "06:30")) {
-    $name = "KeibaDiffFetch-" + ($t -replace ":", "")
-    $a = New-ScheduledTaskAction -Execute "powershell.exe" `
-        -Argument ("-ExecutionPolicy Bypass -WindowStyle Hidden -File `"" + $fetchPs + "`"") `
-        -WorkingDirectory $root
-    $tr = New-ScheduledTaskTrigger -Daily -At $t
-    Reg $name $a $tr "blank-hour raw fetch (option=2 diff)"
-}
+# --- 1) (2026-06-09 撤去) 深夜 0030/0330/0630 の生データ取得 ---
+#   理由(本人指摘): 0030/0330 は JRA-VAN サーバーのメンテ時間帯で rc=-504 門前払い=ムダ。
+#   0630 も下の毎日 07:00 完全版リフレッシュと重複。開催日の毎時取得は
+#   register_diff_hourly.ps1 (土日月の日中 + 金夕方の前売り・開催日ゲート付き) に一本化した。
 
-# --- 2) 毎日 07:00 完全版リフレッシュ (予想+カード+push) ---
+# --- 2) 毎日 08:00 完全版リフレッシュ (予想+カード+push) ---
+# 2026-06-09: 07:00→08:00 に変更。07:00 は JRA-VAN メンテのシッポに時々ぶつかり
+#   aggregate が rc=-504 で失敗 → status="aggregate_failed" の偽アラームが出ていた。
+#   8時なら通常メンテ明け。失敗しても pipeline は既存データで予想/push まで続行する設計。
+# ⚠ 実タスク(ライブ)は窓ゼロのため かくれ実行.vbs 経由で起動している(2026-06-08 窓ゼロ統一)。
+#   この台本は $py64 を直接起動する旧形のままなので、再登録するとこのタスクだけ黒窓が出る。
+#   再登録する場合は wscript.exe "…\かくれ実行.vbs" <py64> "<pipeline>" <args> 形にラップし直すこと。
+$tr = New-ScheduledTaskTrigger -Daily -At "08:00"
 $a = New-ScheduledTaskAction -Execute $py64 -Argument ("`"" + $pipeline + "`" " + $pipeArgs) -WorkingDirectory $root
-$tr = New-ScheduledTaskTrigger -Daily -At "07:00"
-Reg "KeibaGapFill-0700" $a $tr "daily full refresh: fetch(option1)+predict+card+recommend+push"
+Reg "KeibaGapFill-0800" $a $tr "daily full refresh 08:00 (post-maintenance): fetch(option1)+predict+card+recommend+push"
 
 # --- 3) 6/1 限定: 確定データ配信を早く拾う早朝 comprehensive (one-time) ---
 foreach ($t in @("01:30", "04:30")) {

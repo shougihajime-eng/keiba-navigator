@@ -39,6 +39,26 @@ if (-not $fromtime -or $fromtime.Length -lt 8) {
 }
 Write-Log ("fromtime = " + $fromtime)
 
+# ── 開催日ゲート (2026-06-09 追加・本人指摘「レースやってる時に取りに行け」) ──
+# JRA中央競馬は土日(と3連休の月曜・祝日)のみ開催。前売りは前日(主に金)夕方〜。
+# JV-Linkを叩く前に「本物のレースカレンダー(races\*.json)」を見て判断する:
+#   ・土日 → 必ず実行
+#   ・今日レースあり(祝日開催もカレンダーを見るので自動で拾える) → 実行
+#   ・明日レースあり(前売り) → 実行
+#   ・それ以外(平日でレース無し) → JV-Linkを叩かず即終了 (ムダ打ち・深夜rc=-504門前払いを防ぐ)
+$dow = (Get-Date).DayOfWeek
+$isWeekend = ($dow -eq [System.DayOfWeek]::Saturday) -or ($dow -eq [System.DayOfWeek]::Sunday)
+$gateTodayStr = (Get-Date).ToString("yyyyMMdd")
+$gateTomorrowStr = (Get-Date).AddDays(1).ToString("yyyyMMdd")
+$gateRacesDir = Join-Path $KEIBA_ROOT "data\jv_cache\races"
+$raceToday = @(Get-ChildItem $gateRacesDir -Filter ($gateTodayStr + "*.json") -ErrorAction SilentlyContinue).Count -gt 0
+$raceTomorrow = @(Get-ChildItem $gateRacesDir -Filter ($gateTomorrowStr + "*.json") -ErrorAction SilentlyContinue).Count -gt 0
+if (-not ($isWeekend -or $raceToday -or $raceTomorrow)) {
+    Write-Log ("開催日ゲート: 今日も明日もレース無しの平日 (" + $dow + ")。JV-Linkを叩かず終了。")
+    exit 0
+}
+Write-Log ("開催日ゲート通過 (weekend=" + $isWeekend + " raceToday=" + $raceToday + " raceTomorrow=" + $raceTomorrow + ")")
+
 # Run JV-Link fetch
 # QA-1 FIX: Detect new records via filesystem (raw_*.bin newest mtime),
 # not by parsing cp932-mangled stdout from jv_fetch.py.

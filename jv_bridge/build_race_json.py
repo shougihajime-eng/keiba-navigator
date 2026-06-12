@@ -171,6 +171,11 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
         "course":        _course_label(ra),
         "surface":       surface,
         "distance":      ra.get("distance"),
+        # 発走時刻 HHMM (例 "1540")。2026-06-09 追加: 競艇式「発走◯分前だけ取りに行く」
+        # 判定の土台。RA レコードは元から hassou_time を持っていたが、merge の出力に
+        # 入れ忘れていたため、apply_tc (発走時刻"変更"があった時だけ後付け) 以外では
+        # 一生入らず、全レースで欠損していた (races/*.json 3,732件すべてで 0件)。
+        "hassou_time":   ra.get("hassou_time"),
         "going":         _going_from_ra(ra, surface),
         "weather":       WEATHER_LABELS.get(str(ra.get("weather") or "").strip()),
         "is_g1":         (str(ra.get("grade_code") or "").strip() == "1"),
