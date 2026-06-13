@@ -1463,21 +1463,25 @@
         el("span", { class: "name" }, d.short_label || d.key.toUpperCase()),
         el("span", { class: "stars" }, stars)
       ));
-      // Wave28: 真の期待 ROI (final_period_roi = pure test) を主役にし、mean は補助
+      // 「平均の罠」対策 (2026-06-13): お金ベースの本当の回収率 (総払戻÷総投資) を主役にする。
+      // 「期間別の平均」は時々の大当たりで釣り上がるので、本当の回収率より高い時は警告を出す。
       const finalRoi = s.final_period_roi ?? wf.final_period_roi;
-      // Wave32-X: 真の WF (leak-free) があればそちらを最優先
       const overallV2_2 = s.overall_roi_pct_v2;
-      const mainRoi = overallV2_2 != null
-        ? overallV2_2.toFixed(1) + "%"
-        : (finalRoi != null
-            ? finalRoi.toFixed(1) + "%"
-            : (s.roi_pct ? s.roi_pct.toFixed(1) + "%" : "—"));
-      const mainLabel = overallV2_2 != null ? "本当の回収率 ✓" : (finalRoi != null ? "最後の期間で検証" : "1 期間だけ検証");
-      card.appendChild(el("div", { class: "big-roi" }, mainRoi));
-      card.appendChild(el("div", { class: "big-roi-label" }, mainLabel));
-      card.appendChild(el("div", { class: "meta", html:
-        `過去 ${s.fired_count} 回・当たり ${s.hit_rate_pct}%${wfRoi ? `<br>期間別の平均 ${wfRoi} (${wfWin || "—"})` : ""}`
-      }));
+      // 主役 = お金ベースの本当の回収率を最優先 (overall_roi_pct_v2 → roi_pct → 最後の期間)
+      const trueRoi = overallV2_2 ?? s.roi_pct ?? finalRoi;
+      const mainRoi = trueRoi != null ? trueRoi.toFixed(1) + "%" : "—";
+      card.appendChild(el("div", { class: "big-roi" + (trueRoi != null && trueRoi < 100 ? " is-loss" : "") }, mainRoi));
+      card.appendChild(el("div", { class: "big-roi-label" }, "お金ベースの本当の回収率"));
+      // 期間別の平均が本当の回収率より目立って高い = 大当たりで釣り上がった「平均の罠」
+      const meanRoiNum = wf.mean_roi_pct;
+      const inflated = meanRoiNum != null && trueRoi != null && (meanRoiNum - trueRoi) >= 5;
+      let metaHtml = `過去 ${s.fired_count} 回・当たり ${s.hit_rate_pct}%`;
+      if (wfRoi) metaHtml += `<br>期間別の平均 ${wfRoi} (${wfWin || "—"})`;
+      if (inflated) {
+        metaHtml += `<br><span class="trap-warn">⚠ この「平均 ${wfRoi}」は時々の大当たりで釣り上がっています。本当の回収率は上の ${trueRoi.toFixed(1)}%（お金ベース）です</span>`;
+      }
+      if (s.trust_label) metaHtml += `<br><span class="trust-note">判定: ${s.trust_label}</span>`;
+      card.appendChild(el("div", { class: "meta", html: metaHtml }));
       if (d.label) card.appendChild(el("div", { class: "desc" }, d.label));
       grid.appendChild(card);
     });

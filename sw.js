@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v71"; // 開催日の自動更新停止アラート (6/7 オッズ全滅事故の再発防止)
+const CACHE_VERSION = "keiba-nav-v72"; // 「平均の罠」対策: お金ベースの本当の回収率を主役+平均が釣り上がってる時は警告 (6/13)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

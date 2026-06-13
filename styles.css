@@ -8092,3 +8092,30 @@ main .hideable:last-of-type { border-bottom: 1px solid var(--hair) !important; }
   50%      { box-shadow: 0 0 0 2px rgba(232, 96, 96, 0.45), 0 6px 30px rgba(200, 40, 40, 0.45); }
 }
 @media (prefers-reduced-motion: reduce) { .stale-alert { animation: none; } }
+
+/* ───────────────────────────────────────────────────────────
+   「平均の罠」対策 (2026-06-13)
+   見せかけの「平均回収率」に騙されないための、お金ベース正直表示。
+   危険系は静かな弱バラ色テキスト(NOIR方針)・金一色を崩さない。
+   ─────────────────────────────────────────────────────────── */
+.strat-trust-card .big-roi.is-loss {
+  color: #C99AA0;            /* 100%未満(負け) = 静かな弱バラ色 */
+}
+.strat-trust-card .trap-warn {
+  display: block;
+  margin-top: 6px;
+  padding: 5px 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #D7A9AE;            /* 静かな弱バラ色 */
+  border-left: 2px solid rgba(199, 154, 160, 0.45);
+  background: rgba(199, 154, 160, 0.06);
+  border-radius: 2px;
+}
+.strat-trust-card .trust-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--gold-deep);
+  letter-spacing: 0.02em;
+}
