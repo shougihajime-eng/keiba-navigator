@@ -58,14 +58,80 @@ def cool_factor(odds: Optional[float]) -> float:
     return 0.42
 
 
+# ---------------------------------------------------------------------------
+# 1b. データ駆動の2次元補正 (2026-06-13・調査で判明した favorite-longshot bias 対策)
+# ---------------------------------------------------------------------------
+# build_2d_calibration.py が作る calibration_2d.json があれば、手調整の cool_factor の
+# 代わりに「(予想勝率帯 × オッズ帯) ごとの過去の実1着率」で勝率を補正して EV を出す。
+# 表が無い/帯が薄いときは従来の cool_factor へ自動フォールバック(=絶対に今より壊さない)。
+import os as _os
+from pathlib import Path as _Path
+
+_CAL2D = None  # None=未ロード / False=無し / dict=ロード済
+
+
+def _load_cal2d():
+    global _CAL2D
+    if _CAL2D is not None:
+        return _CAL2D
+    try:
+        p = _Path(__file__).resolve().parent.parent / "data" / "jv_cache" / "calibration_2d.json"
+        # 二重の安全装置: 環境変数 ENABLE_CAL2D=1 を明示的に立てた時だけ有効。
+        # 既定はOFF=従来の cool_factor へフォールバック(検証で過大評価の罠が無いと確認できるまで本番無効)。
+        if _os.environ.get("ENABLE_CAL2D") != "1" or not p.exists():
+            _CAL2D = False
+            return _CAL2D
+        import json as _json
+        _CAL2D = _json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        _CAL2D = False
+    return _CAL2D
+
+
+def _bin(value, edges):
+    if value is None:
+        return None
+    for i in range(len(edges) - 1):
+        if edges[i] <= value < edges[i + 1]:
+            return i
+    return len(edges) - 2
+
+
+def _calibrated_prob(raw_prob: Optional[float], odds: Optional[float]) -> Optional[float]:
+    """素の予想勝率を、その馬が属する(勝率帯×オッズ帯)の過去実勝率へ補正。
+    表が無い/薄い帯は素の勝率をそのまま返す。"""
+    cal = _load_cal2d()
+    if not cal or raw_prob is None or odds is None:
+        return raw_prob
+    pi = _bin(raw_prob, cal["prob_edges"])
+    oi = _bin(odds, cal["odds_edges"])
+    if pi is None or oi is None:
+        return raw_prob
+    cell = cal["cells"].get(f"{pi}_{oi}")
+    if not cell or cell["count"] < cal.get("min_cell", 8):
+        return raw_prob
+    k = cal.get("shrink_k", 25.0)
+    return (cell["wins"] + k * raw_prob) / (cell["count"] + k)
+
+
 def honest_ev(raw_ev: Optional[float], odds: Optional[float]) -> Optional[float]:
     """生 EV(=AI勝率×オッズ)を実績ベースに冷ました「正直な期待値」。
 
     100円が平均で何円に戻るかの“現実的な”見込み。1.00 を超えれば理論上お買い得だが、
     競馬では市場が賢いためほぼ 1.00 未満に冷える(=お買い得は基本無い)のが正直な結果。
+
+    2026-06-13〜: calibration_2d.json があれば手調整でなく実測の2次元補正で EV を出す
+    (favorite-longshot bias を実データで補正)。無ければ従来の cool_factor へフォールバック。
     """
     if raw_ev is None:
         return None
+    if odds and odds > 1.0:
+        cal = _load_cal2d()
+        if cal:
+            raw_prob = raw_ev / odds
+            cprob = _calibrated_prob(raw_prob, odds)
+            if cprob is not None:
+                return round(cprob * odds, 2)
     return round(raw_ev * cool_factor(odds), 2)
 
 
