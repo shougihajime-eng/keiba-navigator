@@ -59,6 +59,29 @@ if (-not ($isWeekend -or $raceToday -or $raceTomorrow)) {
 }
 Write-Log ("開催日ゲート通過 (weekend=" + $isWeekend + " raceToday=" + $raceToday + " raceTomorrow=" + $raceTomorrow + ")")
 
+# ── 単一起動ロック (2026-06-13 追加・「オッズ全滅事故」の根治) ──
+# 毎時取得タスクが複数同時に走ると JV-Link(データの受け口) と features.json を
+# 奪い合い、どれも完走できずオッズ更新が止まる (6/13 の事故の原因)。1本だけ走らせる。
+# 鍵を持つプロセスが死んでいる/25分以上古い場合は自動的に失効として奪い返す(自己修復)。
+$LOCK_PATH = Join-Path $KEIBA_ROOT "data\jv_cache\fetch_diff.lock"
+$lockBusy = $false
+if (Test-Path $LOCK_PATH) {
+    try {
+        $lkPid = [int]((Get-Content $LOCK_PATH -Raw).Trim() -split '\s+')[0]
+        $lkProc = Get-Process -Id $lkPid -ErrorAction SilentlyContinue
+        $lkAgeMin = ((Get-Date) - (Get-Item $LOCK_PATH).LastWriteTime).TotalMinutes
+        if ($lkProc -and ($lkProc.ProcessName -like 'powershell*') -and ($lkAgeMin -lt 25)) {
+            $lockBusy = $true
+        }
+    } catch { $lockBusy = $false }
+}
+if ($lockBusy) {
+    Write-Log ("別の取得が実行中のため終了 (二重起動を防止・lock PID=" + $lkPid + ")。")
+    exit 0
+}
+Set-Content -Path $LOCK_PATH -Value ($PID.ToString() + " " + (Get-Date -Format "yyyy-MM-dd HH:mm:ss")) -Encoding ASCII
+Write-Log ("単一起動ロック取得 (PID=" + $PID + ")")
+
 # Run JV-Link fetch
 # QA-1 FIX: Detect new records via filesystem (raw_*.bin newest mtime),
 # not by parsing cp932-mangled stdout from jv_fetch.py.
@@ -229,5 +252,7 @@ try {
     Pop-Location
 }
 
+# 鍵を返す (正常完了時)。途中で落ちた場合もPID失効で自動的に奪い返せる。
+Remove-Item -Path $LOCK_PATH -Force -ErrorAction SilentlyContinue
 Write-Log "fetch_diff_hourly completed"
 exit 0
