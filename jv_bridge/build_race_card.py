@@ -64,10 +64,23 @@ def _has_real_data(rid: str) -> bool:
     return bool(race and any(h.get("win_odds") for h in (race.get("horses") or [])))
 
 
+def _has_result(rid: str) -> bool:
+    """そのレースが確定済み(着順が出た)か。"""
+    return _winner_number(_load(RESULTS / f"{rid}.json")) is not None
+
+
 def _pick_latest_real_date(all_ids: list[str]) -> str:
-    """最新の「本物データ(オッズ+予想)が揃った開催日」を選ぶ。
-    無ければ最大日付(出走前の空枠日)にフォールバック。
-    → 開催当日にオッズが届けばその日・無ければ直近の確定日を自動表示。"""
+    """表示する開催日を選ぶ。
+    ・今日が開催日で、まだ結果が出ていない(これからの)レースがあるなら必ず「今日」を表示。
+      → 翌日(日曜)の前売りオッズが土曜の午後に出始めても、今日のレースを横取りされない。
+        (2026-06-13 修正: 前売り開始で当日カードが翌日へ飛んでしまうバグの根治)
+    ・今日が全部終わった/今日は開催なしなら、本物データ(オッズ+予想)が揃った最大日付。
+      → 夜は自動的に翌日の前売りカードへ、平日は直近の確定日へ。"""
+    from datetime import timedelta
+    today8 = (datetime.now(timezone.utc) + timedelta(hours=9)).strftime("%Y%m%d")
+    today_ids = [rid for rid in all_ids if rid.startswith(today8)]
+    if any(_has_real_data(rid) for rid in today_ids) and any(not _has_result(rid) for rid in today_ids):
+        return today8
     dates = sorted({rid[:8] for rid in all_ids}, reverse=True)
     for d in dates:
         for rid in (rid for rid in all_ids if rid.startswith(d)):
