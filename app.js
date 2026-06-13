@@ -1332,11 +1332,18 @@
         el("span", { class: "name" }, d.short_label || d.key.toUpperCase()),
         el("span", { class: "stars" }, stars)
       ));
-      card2.appendChild(el("div", { class: "big-roi" }, s.roi_pct ? s.roi_pct.toFixed(1) + "%" : "—"));
-      card2.appendChild(el("div", { class: "meta", html:
-        `${s.fired_count}件・的中${s.hit_rate_pct}%${
-          wf.mean_roi_pct != null ? `<br>Walk-fwd 平均 ${wf.mean_roi_pct.toFixed(1)}%` : ""}`
-      }));
+      // 「平均の罠」対策 (2026-06-13): お金ベースの本当の回収率を主役 + 平均が釣り上がってたら警告
+      const trueRoi2 = s.overall_roi_pct_v2 ?? s.roi_pct ?? (s.final_period_roi ?? wf.final_period_roi);
+      card2.appendChild(el("div", { class: "big-roi" + (trueRoi2 != null && trueRoi2 < 100 ? " is-loss" : "") },
+        trueRoi2 != null ? trueRoi2.toFixed(1) + "%" : "—"));
+      card2.appendChild(el("div", { class: "big-roi-label" }, "お金ベースの本当の回収率"));
+      const meanRoi2 = wf.mean_roi_pct;
+      const inflated2 = meanRoi2 != null && trueRoi2 != null && (meanRoi2 - trueRoi2) >= 5;
+      let meta2 = `${s.fired_count}件・的中${s.hit_rate_pct}%`;
+      if (meanRoi2 != null) meta2 += `<br>期間別の平均 ${meanRoi2.toFixed(1)}%`;
+      if (inflated2) meta2 += `<br><span class="trap-warn">⚠ この「平均 ${meanRoi2.toFixed(1)}%」は時々の大当たりで釣り上がっています。本当の回収率は上の ${trueRoi2.toFixed(1)}%（お金ベース）です</span>`;
+      if (s.trust_label) meta2 += `<br><span class="trust-note">判定: ${s.trust_label}</span>`;
+      card2.appendChild(el("div", { class: "meta", html: meta2 }));
       grid.appendChild(card2);
     });
     if (grid.children.length > 0) body.appendChild(grid);
