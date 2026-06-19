@@ -1,0 +1,96 @@
+# Workspace-specific (Claude Code)
+.claude/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Vercel
+.vercel/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+.env.preview
+.env.development
+
+# OS
+.DS_Store
+Thumbs.db
+
+# JV-Link runtime cache (machine-local data)
+data/jv_cache/*
+!data/jv_cache/.gitkeep
+# 例外: 訓練済モデル + メタは Vercel デプロイに乗せる (推論で必要)
+!data/jv_cache/model_lgbm.json
+!data/jv_cache/model_lgbm_meta.json
+# Wave18: 人気を見ない実力派モデル (value pick 戦略で primary との差分を取る)
+!data/jv_cache/model_lgbm_nopop.json
+!data/jv_cache/model_lgbm_nopop_meta.json
+# 例外: 集計済特徴量 + 馬マスタも乗せる (rankings / UI から参照)
+!data/jv_cache/features.json
+!data/jv_cache/horse_master.json
+# 例外: 事前計算予想 (スマホ瞬時応答用・/api/races が最優先で読む)
+!data/jv_cache/predictions.json
+# 2026-06-07: 当日+翌日の完全レースデータ (本番の /api/win5 が読む。races/ は本番に無いため)
+!data/jv_cache/today_races.json
+# 例外: 回収率実証結果 (UI に正直に表示する用)
+!data/jv_cache/backtest_result.json
+# 例外: 推奨買い目集約 (Wave19・100% 越え戦略の今日のレース)
+!data/jv_cache/recommendations.json
+# 2026-05-26: 直近開催日の全レースカード (全レース予想を /api/race-card で配信)
+!data/jv_cache/race_card_latest.json
+# 2026-05-26: 騎手・調教師ランキング (/api/rankings で配信)
+!data/jv_cache/rankings.json
+# Wave19.7: Walk-forward 安定性検証結果
+!data/jv_cache/walk_forward_result.json
+# Wave30: 期間別再学習 (真の look-ahead 排除) 結果
+!data/jv_cache/walk_forward_v2_result.json
+# Wave29: V-馬連 フィルタスイープ
+!data/jv_cache/value_uren_filter_sweep.json
+# Wave27-30: nopop 閾値スイープ・複数券種・組合せ
+!data/jv_cache/value_threshold_sweep.json
+!data/jv_cache/value_multi_bet.json
+!data/jv_cache/value_combo_sweep.json
+!data/jv_cache/value_g1_sweep.json
+# 2026-05-30: 自己成長する実験モード(実験室) の成績表と成長ログ
+!data/jv_cache/experiment_status.json
+!data/jv_cache/experiment_history.json
+# 2026-05-30: 硬い事実シグナル(オッズ変動/取消/馬体重/装備)を日付つきで貯める箱
+# 当日のレースだけ時刻つきで蓄積し、後日リークなしで「効くか」を検証する生ログ
+!data/jv_cache/signals/
+# 事実シグナルの採点結果 (validate_signals.py の出力)
+!data/jv_cache/signals_validation.json
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# JRA-VAN SDK 同梱ドキュメント (利用規約上、公開しない)
+_jvdata_spec.*
+_jvlink_spec.*
+_sdk_*.pdf
+_sdk_*.txt
+
+.vercel
+
+# Race day pipeline logs
+logs/
+catboost_info/
+!data/jv_cache/value_tan3_filter_sweep.json
+!data/jv_cache/walk_forward_stacking_pure.json
+!data/jv_cache/win5/
+!data/jv_cache/walk_forward_win5_v1_result.json
+Usersshoug*_review_*
+_prod.tmp
+
+.env*.local
+data/jv_cache/fetch_diff.lock

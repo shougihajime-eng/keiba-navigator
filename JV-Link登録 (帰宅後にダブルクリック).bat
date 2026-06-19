@@ -76,7 +76,7 @@ echo [5/5] 接続テストを試行 (Python 32bit が居れば)...
 set "PY32=C:\Users\shoug\AppData\Local\Programs\Python\Python312-32\python.exe"
 if exist "%PY32%" (
   echo   Python 32bit を検出。jv_fetch.py init を実行...
-  pushd "C:\Users\shoug\競馬"
+  pushd "%~dp0"
   "%PY32%" jv_bridge\jv_fetch.py init
   popd
 ) else (
