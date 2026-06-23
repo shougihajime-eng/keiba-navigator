@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import glob
 import json
-from datetime import date
+from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -66,14 +66,98 @@ def _days_between(a: str, b: str):
         return None
 
 
+# 発走時刻のこの分数だけ前以降のスナップショットは「締切後の確定オッズ」とみなして外す。
+# (締切ぎりぎりのスナップショットも確定オッズに置き換わっていることがあるので少し前で切る)
+_PRECLOSE_MARGIN_MIN = 2
+_JST = timezone(timedelta(hours=9))
+
+
+def _hassou_dt(rid: str) -> datetime | None:
+    """race_id 先頭8桁(YYYYMMDD) + races の hassou_time(HHMM) から発走時刻(JST)を作る。"""
+    d8 = str(rid)[:8]
+    if not (len(d8) == 8 and d8.isdigit()):
+        return None
+    race = _load(RACES / f"{rid}.json")
+    ht = str((race or {}).get("hassou_time") or "").strip()
+    if not (len(ht) == 4 and ht.isdigit()):
+        return None
+    try:
+        return datetime(int(d8[:4]), int(d8[4:6]), int(d8[6:8]),
+                        int(ht[:2]), int(ht[2:]), tzinfo=_JST)
+    except ValueError:
+        return None
+
+
+def _snap_ts(snap: dict) -> datetime | None:
+    ts = snap.get("ts")
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(ts)
+    except (TypeError, ValueError):
+        return None
+
+
 def signal_odds_moves(rid: str) -> dict:
-    """signals/<rid>.json から、最初の本物オッズと最新オッズの変化率%を馬番ごとに。
-    (マイナス=下がった=お金が入った)"""
+    """signals/<rid>.json から、発走前の最初の本物オッズと最後の本物オッズの変化率%を馬番ごとに。
+    (マイナス=下がった=お金が入った)
+
+    結果リーク対策: 締切後に取り込まれた「確定オッズ(SE win_odds)」を含むスナップショットを
+    使うと、直前下落(money_in)の判定が結果リークで甘く出る。よって
+      - 発走時刻(hassou_time)が分かるレースは、発走の約2分前より後のスナップショットを除外する。
+      - 発走時刻が不明なレースは、確定オッズ(SE win_odds)と完全一致する最終スナップショットを
+        フォールバックで除外する。
+    発走前スナップショットが2個未満で変化率が作れないレースは「判定不能」(空dict)にする。"""
     hist = _load(SIGNALS / f"{rid}.json")
     if not isinstance(hist, list) or len(hist) < 2:
         return {}
+
+    hassou = _hassou_dt(rid)
+    snaps = list(hist)
+
+    if hassou is not None:
+        # 発走の約2分前より後のスナップショット(=締切後の確定オッズ)を除外する。
+        cutoff = hassou - timedelta(minutes=_PRECLOSE_MARGIN_MIN)
+        kept = []
+        for snap in snaps:
+            ts = _snap_ts(snap)
+            # 時刻が読めないスナップショットは安全側に倒して残す (古い形式の保険)。
+            if ts is None or ts < cutoff:
+                kept.append(snap)
+        snaps = kept
+    else:
+        # 発走時刻が不明: 確定オッズ(SE win_odds)と全頭一致する最終スナップショットを外す。
+        race = _load(RACES / f"{rid}.json")
+        se = {}
+        for h in ((race or {}).get("horses") or []):
+            n, o = h.get("number"), h.get("win_odds")
+            if isinstance(n, int):
+                try:
+                    se[n] = round(float(o), 1) if o not in (None, 0) else None
+                except (TypeError, ValueError):
+                    se[n] = None
+        while len(snaps) >= 2:
+            tail = snaps[-1]
+            tail_odds = {}
+            for h in (tail.get("horses") or []):
+                n, o = h.get("n"), h.get("o")
+                if isinstance(n, int):
+                    try:
+                        tail_odds[n] = round(float(o), 1) if o not in (None, 0) else None
+                    except (TypeError, ValueError):
+                        tail_odds[n] = None
+            common = [n for n in tail_odds if n in se
+                      and tail_odds[n] is not None and se[n] is not None]
+            if common and all(tail_odds[n] == se[n] for n in common):
+                snaps = snaps[:-1]  # 確定オッズの最終スナップショットを外す
+            else:
+                break
+
+    if len(snaps) < 2:
+        return {}  # 発走前のスナップショットが足りない=判定不能
+
     first, last = {}, {}
-    for snap in hist:
+    for snap in snaps:
         for h in (snap.get("horses") or []):
             n, o = h.get("n"), h.get("o")
             if not isinstance(n, int) or o in (None, 0):
