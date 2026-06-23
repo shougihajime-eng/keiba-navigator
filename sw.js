@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v72"; // 「平均の罠」対策: お金ベースの本当の回収率を主役+平均が釣り上がってる時は警告 (6/13)
+const CACHE_VERSION = "keiba-nav-v73"; // UX修正: selectの白いお墓対策+戦略名を日本語化+設定タブ撤去+AUC非表示+モーダルsvh化 (6/23)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

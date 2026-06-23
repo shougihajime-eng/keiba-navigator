@@ -438,9 +438,10 @@
     $("#metric-races").innerHTML = `${total}<small>R</small>`;
     $("#metric-goes").innerHTML  = `${goRaces.length}<small>R</small>`;
     const auc = state.racesLast?.learning?.lgbm?.metrics?.auc;
+    // 専門用語「AUC」は画面に出さない。未取得時は単位なしの「—」。
     $("#metric-auc").innerHTML = auc != null
       ? `${(auc * 100).toFixed(1)}<small>%</small>`
-      : `—<small>AUC</small>`;
+      : `—`;
   }
 
   // ─── 描画: LiveStrip ─────────────────────────────────────
@@ -1563,22 +1564,22 @@
   }
 
   // recommendations が無いときのデフォルト戦略定義
+  // ※ 名前・説明は「完全な非エンジニア」が読む画面 (平日のお休み日カードに毎日出る)。
+  //   英語・略号・記号 (V-STACK / nopop / σ / avg / Walk-fwd / worst 等) は使わず、
+  //   子どもでも分かる競馬の言葉だけにする。
   const DEFAULT_STRAT_DEFS = [
-    // Wave30: 🏆 Stacking メタモデル (4 モデル LR 合成) — 全期間 100%+ で世界一級
-    { key: "value_stack_uren", short_label: "V-STACK",   label: "Stacking 馬連 — avg 244%・worst 105%・全期間 100%+ ⭐" },
-    { key: "value_stack_fuku", short_label: "V-STACK複", label: "Stacking 複勝 — avg 156%・σ 39" },
-    { key: "value_tan3",       short_label: "V-3連単",   label: "3 連単 nopop top1->2->3 — avg 308%・σ 191・勝 6/7" },
-    { key: "value_double",     short_label: "V-DOUBLE",  label: "複勝+馬連 併買 — avg 187.6%・σ 64・最もバランス良い" },
-    // Wave29-B: 馬連 nopop top1-top2
-    { key: "value_uren",     short_label: "V-馬連",    label: "馬連 nopop top1-top2 (閾値 30%・全期間 100%+) — avg 165%・勝 7/7" },
-    { key: "value_uren_hot", short_label: "V-馬連HOT", label: "馬連 nopop top1-top2 (閾値 16%・積極派) — avg 222%・件数 2673" },
-    // Wave27 (強化): nopop モデル単独 (人気を見ない実力派) — 閾値最適化 0.16
-    { key: "value_invest",   short_label: "VALUE",     label: "実力派 AI 本命 (人気を見ない) の確率 16%+ で複勝 — Walk-fwd 152.62%" },
-    { key: "value_safe",     short_label: "V-SAFE",    label: "実力派 AI 本命 の確率 35%+ で複勝 — 安定 σ17・avg 131%" },
-    { key: "best",           short_label: "BEST",      label: "本命確率 22%+ かつ 対抗差 4pt+ で複勝" },
-    { key: "safe",           short_label: "SAFE",      label: "本命確率 20%+ で複勝・発火多め" },
-    { key: "turf",           short_label: "TURF",      label: "芝レース限定 BEST" },
-    { key: "big",            short_label: "BIG",       label: "3 連複 ボックス 1 点" },
+    { key: "value_stack_uren", short_label: "合体予想・馬連",         label: "いくつもの予想を合体させて選んだ2頭の馬連。いちばん成績がよい買い方" },
+    { key: "value_stack_fuku", short_label: "合体予想・複勝",         label: "いくつもの予想を合体させて選んだ馬の複勝。当たりやすく安定" },
+    { key: "value_tan3",       short_label: "3連単ねらい",           label: "1〜3着の馬をそのまま当てる、当たれば大きい買い方" },
+    { key: "value_double",     short_label: "複勝＋馬連の合わせ買い", label: "複勝と馬連を一緒に買う、バランスのよい買い方" },
+    { key: "value_uren",       short_label: "実力派の馬連",           label: "人気にまどわされず実力で選んだ2頭の馬連 (しぼりめ)" },
+    { key: "value_uren_hot",   short_label: "実力派の馬連・多め",     label: "人気にまどわされず実力で選んだ2頭の馬連 (買う回数 多め)" },
+    { key: "value_invest",     short_label: "実力派の複勝",           label: "人気を見ずに実力で選んだ本命の複勝" },
+    { key: "value_safe",       short_label: "実力派の複勝・かため",   label: "実力で選んだ本命の中でも、特に自信のある馬だけの複勝 (安定)" },
+    { key: "best",             short_label: "いちばん手がたい複勝",   label: "本命が強く、2番手とも差があるときだけ買う複勝" },
+    { key: "safe",             short_label: "やさしい複勝",           label: "本命がそこそこ強ければ買う複勝 (買う回数 多め)" },
+    { key: "turf",             short_label: "芝レースの本命",         label: "芝のレースにしぼった、いちばん手がたい複勝" },
+    { key: "big",              short_label: "3連複ねらい",           label: "1〜3着の3頭を順番問わず当てる買い方" },
   ];
 
   function parseVenueLabel(race) {

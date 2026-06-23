@@ -1100,8 +1100,10 @@ a { color: inherit; text-decoration: none; }
   backdrop-filter: blur(24px) saturate(150%);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
   box-shadow: var(--shadow-hero);
-  max-height: 92vh;
+  /* iOS Safari のバー出入りで高さが揺れない svh を使う。中身が多くてもボタンまで届くよう本文をスクロール可に。 */
+  max-height: 92svh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: modalSlideUp 0.32s var(--ease-spring);
   border: 1px solid rgba(255,255,255,0.9);
 }
@@ -1127,7 +1129,7 @@ a { color: inherit; text-decoration: none; }
   font-size: 18px; font-weight: 900;
 }
 .modal-close:hover { background: rgba(15,23,42,0.12); }
-.modal-body { padding: 18px; }
+.modal-body { padding: 18px; overflow-y: auto; overscroll-behavior: contain; }
 
 .form-group { margin-bottom: 14px; }
 .form-group .label {
@@ -1148,6 +1150,16 @@ a { color: inherit; text-decoration: none; }
   outline: none;
   font-family: inherit;
   transition: border-color 0.15s, box-shadow 0.15s;
+}
+/* iOS Safari の「白いお墓」対策: select はネイティブ描画を切り、暗いテーマに馴染ませる。
+   消える▼は背景 SVG (金色) で補う。 */
+.form-group select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23c9a85c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
 }
 .form-group input:focus,
 .form-group select:focus,
@@ -7453,6 +7465,16 @@ main .hideable:last-of-type { border-bottom: 1px solid var(--hair) !important; }
   border: 1px solid var(--hair-strong) !important;
   color: var(--c-ink) !important;
   border-radius: 10px !important;
+}
+/* iOS Safari の「白いお墓」対策 (NOIR 上書き・後勝ちなので !important)。
+   select のネイティブ描画を切り、暗背景を効かせ、消える▼を金の SVG で補う。 */
+.modal-body select {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  padding-right: 34px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23c9a85c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
 }
 .modal-body input:focus, .modal-body select:focus, .modal-body textarea:focus {
   border-color: var(--gold-line) !important;
