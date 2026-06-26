@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-25T23:04:30.712500+00:00",
+  "generatedAt": "2026-06-26T09:32:13.801216+00:00",
   "todayJst": "2026-06-26",
   "strategies_def": [
     {
@@ -1356,6 +1356,62 @@
   },
   "recommendations_today": [],
   "recommendations_recent": [
+    {
+      "race_id": "202606271002010100",
+      "race_name": null,
+      "course": "小倉芝1200",
+      "distance": 1200,
+      "going": null,
+      "weather": null,
+      "is_g1": false,
+      "hassou_time": "0955",
+      "strategies": [
+        "value_stack_uren",
+        "value_stack_fuku",
+        "value_double",
+        "value_uren_hot",
+        "value_invest",
+        "big"
+      ],
+      "horse": {
+        "number": 6,
+        "name": "ニドヅケキンシ",
+        "win_prob": 0.166667,
+        "nopop_prob": 0.192693,
+        "value_signal": 0.026026,
+        "odds": null,
+        "popularity": null,
+        "ev": null,
+        "rank_nopop": 1
+      },
+      "top3": [
+        {
+          "number": 1,
+          "name": "シスキンブルーム",
+          "win_prob": 0.166667,
+          "odds": null,
+          "popularity": null
+        },
+        {
+          "number": 2,
+          "name": "スマートメモリー",
+          "win_prob": 0.166667,
+          "odds": null,
+          "popularity": null
+        },
+        {
+          "number": 3,
+          "name": "ペプチドニンバス",
+          "win_prob": 0.166667,
+          "odds": null,
+          "popularity": null
+        }
+      ],
+      "top3_prob_sum": 0.500001,
+      "race_date": "2026-06-27",
+      "predicted_at": "2026-06-26T09:30:46.094780+00:00",
+      "model_auc": 0.8184261619908005
+    },
     {
       "race_id": "202606210903061200",
       "race_name": null,
@@ -4128,86 +4184,28 @@
       "race_date": "2026-06-20",
       "predicted_at": "2026-06-25T23:04:01.343511+00:00",
       "model_auc": 0.8184261619908005
-    },
-    {
-      "race_id": "202606200503050300",
-      "race_name": null,
-      "course": "東京芝1800",
-      "distance": 1800,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1110",
-      "strategies": [
-        "value_uren_turf",
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_tan3",
-        "value_uren",
-        "value_uren_hot",
-        "value_invest"
-      ],
-      "horse": {
-        "number": 7,
-        "name": "ジュナベーラ",
-        "win_prob": 0.180061,
-        "nopop_prob": 0.334849,
-        "value_signal": 0.154788,
-        "odds": 2.2,
-        "popularity": 1,
-        "ev": 0.3961,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 7,
-          "name": "ジュナベーラ",
-          "win_prob": 0.180061,
-          "odds": 2.2,
-          "popularity": 1
-        },
-        {
-          "number": 3,
-          "name": "セキテイリノ",
-          "win_prob": 0.148483,
-          "odds": 3.9,
-          "popularity": 2
-        },
-        {
-          "number": 10,
-          "name": "クレアノア",
-          "win_prob": 0.097323,
-          "odds": 5.8,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.425867,
-      "race_date": "2026-06-20",
-      "predicted_at": "2026-06-25T23:04:01.309938+00:00",
-      "model_auc": 0.8184261619908005
     }
   ],
   "recommendations_fallback": [],
   "count_today": 0,
-  "count_recent": 443,
+  "count_recent": 205,
   "count_fallback": 0,
-  "total_predictions": 3876,
+  "total_predictions": 3912,
   "fired_by_key": {
     "value_uren_turf": 392,
     "value_uren_short": 204,
     "value_uren_short_ultra": 87,
-    "value_stack_uren": 3194,
-    "value_stack_fuku": 3194,
-    "value_double": 3194,
+    "value_stack_uren": 3195,
+    "value_stack_fuku": 3195,
+    "value_double": 3195,
     "value_tan3": 803,
     "value_tan3_long": 165,
     "value_tan3_dirt_mid": 239,
     "value_uren": 803,
-    "value_uren_hot": 3194,
-    "value_invest": 3194,
+    "value_uren_hot": 3195,
+    "value_invest": 3195,
     "value_safe": 413,
-    "big": 1030,
+    "big": 1031,
     "turf": 649,
     "ultra": 890,
     "best": 1306,
