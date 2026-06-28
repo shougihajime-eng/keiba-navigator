@@ -893,6 +893,15 @@
     if (race.topPick) {
       const silkRow = renderSilkPickRow(race, tier);
       if (silkRow) body.appendChild(silkRow);
+      // ★なぜこの本命か(やさしい言葉・正直に)
+      const why = buildHonmeiReason(race);
+      if (why) {
+        body.appendChild(el("div", { class: "honmei-why",
+          style: "margin:6px 0 2px;padding:10px 12px;border-radius:10px;background:rgba(120,90,30,.14);border-left:3px solid var(--c-gold,#d8a23a);font-size:13px;line-height:1.7;color:var(--c-ink,#eadfc6)" },
+          el("span", { style: "font-weight:800;color:var(--c-gold,#e0b24a);margin-right:6px" }, "なぜこの本命？"),
+          why
+        ));
+      }
     }
 
     // (2) 買い目 (主軸/本命/押さえ/保険・最大 5 点) — 結論カード内で最重要
@@ -1164,7 +1173,7 @@
     const horses = [
       { h: tp, role: "本命", roleIcon: "◎", main: true },
       { h: race.second, role: "対抗", roleIcon: "○", main: false },
-      { h: race.third,  role: "3着",  roleIcon: "▲", main: false },
+      { h: race.third,  role: "単穴", roleIcon: "▲", main: false },
     ].filter(x => x.h && x.h.number);
 
     horses.forEach(({ h, role, roleIcon, main }) => {
@@ -1201,6 +1210,37 @@
     });
     wrap.appendChild(row);
     return wrap;
+  }
+
+  // ★やさしい言葉で「なぜこの本命か」を1〜2行で作る(option3・正直に)
+  function buildHonmeiReason(race) {
+    const tp = race.topPick;
+    if (!tp) return null;
+    const prob = Number.isFinite(tp.prob) ? tp.prob : null;
+    const pct = prob != null ? Math.round(prob * 100) : null;
+    const pop = Number.isFinite(tp.popularity) ? tp.popularity : null;
+    const odds = Number.isFinite(tp.odds) ? tp.odds : null;
+    const name = scrubName(tp.name, "");
+    const parts = [];
+    // 人気と予想の関係(正直に)
+    if (pop === 1) {
+      parts.push(`${name ? name + "は" : ""}1番人気。みんなの評価もアプリの予想も一致した、いちばん勝ちそうな馬です`);
+    } else if (pop != null && pop >= 4) {
+      parts.push(`${name ? name + "は" : ""}${pop}番人気と人気は下ですが、アプリは「人気以上に勝ちそう」とみて本命にしました`);
+    } else if (pop != null) {
+      parts.push(`${name ? name + "は" : ""}${pop}番人気。上位人気の中でいちばん勝ちそうとみています`);
+    } else if (name) {
+      parts.push(`${name}を本命にしました`);
+    }
+    // 勝率の強さ(正直に)
+    if (pct != null) {
+      if (pct >= 40) parts.push(`推定勝率 約${pct}% は抜けた数字で、かなり堅い本命です`);
+      else if (pct >= 30) parts.push(`推定勝率 約${pct}% と、勝つ可能性が高めです`);
+      else if (pct >= 20) parts.push(`推定勝率 約${pct}%。中心ですが他にもチャンスのある混戦ぎみです`);
+      else parts.push(`推定勝率 約${pct}%。大混戦で、本命でも波乱は十分ありえます`);
+    }
+    if (odds != null) parts.push(`単勝オッズは約${odds.toFixed(1)}倍`);
+    return parts.join("。") + "。";
   }
 
   function buildReasons(race) {

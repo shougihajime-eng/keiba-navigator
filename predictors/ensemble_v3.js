@@ -107,7 +107,9 @@ function predict(race) {
   //   final ∝ market^(1-β) × model^β
   //   β = モデルのズレをどれだけ信用するか (小さいほど市場寄り＝堅実)。
   //   市場オッズが無いレースはモデル確率のみで動く (発走前でオッズ未配信など)。
-  const BETA = clamp(Number(process.env.KEIBA_MODEL_BETA) || 0.25, 0, 1);
+  // ★ "0" は falsy なので `|| 0.25` だと BETA=0 が指定できないバグ → isFinite で判定。
+  const _betaEnv = Number(process.env.KEIBA_MODEL_BETA);
+  const BETA = clamp(Number.isFinite(_betaEnv) ? _betaEnv : 0.25, 0, 1);
 
   const out = base.horses.map(h => {
     const m  = hasMarket ? (market[h.number] ?? null) : null;
