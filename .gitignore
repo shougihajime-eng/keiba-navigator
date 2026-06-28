@@ -94,3 +94,9 @@ _prod.tmp
 
 .env*.local
 data/jv_cache/fetch_diff.lock
+
+# 一時ファイル(バックテスト等の作業出力)。毎時パイプラインの git add -A が拾わないよう除外。
+_bt_*.txt
+_kb_*.cjs
+_kb_*.mjs
+_*.tmp.*

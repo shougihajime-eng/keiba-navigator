@@ -108,8 +108,16 @@ function predict(race) {
   //   β = モデルのズレをどれだけ信用するか (小さいほど市場寄り＝堅実)。
   //   市場オッズが無いレースはモデル確率のみで動く (発走前でオッズ未配信など)。
   // ★ "0" は falsy なので `|| 0.25` だと BETA=0 が指定できないバグ → isFinite で判定。
+  // ★2026-06-28 既定を 0.25→0 に変更(過去3777レースのバックテスト=scripts/backtest-honmei.cjs):
+  //   ・自家製ヒューリスティックモデルで一番人気を覆すと、過去全体ではむしろ本命の的中が
+  //     下がった(意見が割れた384レースで モデル19.0% < 市場23.4%)。市場(オッズ＝集合知)が
+  //     単勝の勝者予測では最強で、このモデルに上回る実力は無いと実証された。
+  //   ・BETA=0(=市場de-vigをそのまま信用)にすると本命的中は市場と同等(31.9%≒32.2%)で、
+  //     かつ表示する「推定勝率%」が実測とほぼ一致(較正ズレ 3.5pt→0.4pt)＝最も正直。
+  //   ＝「いちばん勝ちそうな馬を当てる」「勝率%を正直に出す」という今の目的に最適。
+  //   将来ちゃんと学習した強いモデルができたら KEIBA_MODEL_BETA で再び上げて再検証する。
   const _betaEnv = Number(process.env.KEIBA_MODEL_BETA);
-  const BETA = clamp(Number.isFinite(_betaEnv) ? _betaEnv : 0.25, 0, 1);
+  const BETA = clamp(Number.isFinite(_betaEnv) ? _betaEnv : 0, 0, 1);
 
   const out = base.horses.map(h => {
     const m  = hasMarket ? (market[h.number] ?? null) : null;
