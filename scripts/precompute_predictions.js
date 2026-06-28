@@ -72,6 +72,7 @@ function summarizePick(p) {
     odds:       Number.isFinite(p.odds) ? p.odds : null,
     popularity: Number.isFinite(p.popularity) ? p.popularity : null,
     prob:       Number.isFinite(p.prob) ? p.prob : null,
+    place:      Number.isFinite(p.place) ? p.place : null,
     ev,
     evGrade:    typeof evGrade === "function" && ev != null ? evGrade(ev) : null,
     role:       p.role ?? null,
@@ -243,6 +244,14 @@ function main() {
   const trKb = (fs.statSync(TODAY_RACES_PATH).size / 1024).toFixed(1);
   console.log(`[OK] today_races.json 書き出し: ${todayRaces.length} レース ${trKb} KB (本番 WIN5 用)`);
   if (lgbm) console.log(`     LightGBM: ${lgbm.state ?? "?"} / AUC ${lgbm.metrics?.auc ?? "?"} / trained ${lgbm.trained_at ?? "?"}`);
+
+  // ★本命の答え合わせログを1日1回(stale時のみ)更新。重い処理なので try/catch で
+  //   絶対に本体(予想生成)を巻き込まないようにする(失敗しても無視)。
+  try {
+    const { buildIfStale } = require("./build-honmei-log.cjs");
+    const r = buildIfStale(20, 150);
+    if (r) console.log(`[OK] honmei_log.json 更新: ${r.count}レース 単勝${(r.winRate*100).toFixed(1)}% 複勝${(r.placeRate*100).toFixed(1)}%`);
+  } catch (e) { console.error("[warn] honmei_log 更新スキップ:", e.message); }
 }
 
 try {

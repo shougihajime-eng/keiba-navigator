@@ -407,9 +407,11 @@
         state.races = Array.isArray(races.races) ? races.races : [];
         state.fetchedAt = races.fetchedAt || new Date().toISOString();
         state.racesLast = races;
+        if (races.honmeiLog) state.honmeiLog = races.honmeiLog;
       } else if (races) {
         state.races = [];
         state.racesLast = races;
+        if (races.honmeiLog) state.honmeiLog = races.honmeiLog;
       }
       if (win5) state.win5 = win5;
       if (autostatus) state.autostatus = autostatus;
@@ -463,6 +465,70 @@
     }
     $("#live-pred-count").textContent = state.races.length;
     $("#live-updated-val").textContent = ageSec != null ? fmtAge(ageSec) : "—";
+  }
+
+  // ─── 描画: 本命の答え合わせ (最近の成績・正直な実績) ───────
+  //   honmei_log.json = 直近の決着済みレースで「今のモデルの本命」が1着/3着内だったか。
+  //   「当たった感」が出る複勝(3着内)率を主役に、嘘なく実績を見せる。
+  function renderHonmeiRecord() {
+    const mount = $("#honmei-record-mount");
+    if (!mount) return;
+    const log = state.honmeiLog;
+    if (!log || !log.count || !Array.isArray(log.entries) || log.entries.length === 0) {
+      mount.hidden = true; mount.innerHTML = ""; return;
+    }
+    mount.hidden = false;
+    mount.innerHTML = "";
+    const winPct = log.winRate != null ? Math.round(log.winRate * 100) : null;
+    const placePct = log.placeRate != null ? Math.round(log.placeRate * 100) : null;
+
+    const card = el("section", { class: "honmei-record-card",
+      style: "margin:14px 0;padding:16px;border-radius:14px;background:linear-gradient(160deg,rgba(40,30,12,.55),rgba(20,16,8,.55));border:1px solid rgba(200,160,60,.28)" });
+    card.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:4px" },
+      el("span", { style: "font-size:18px" }, "🎯"),
+      el("h2", { style: "font-size:15px;font-weight:900;margin:0;color:var(--c-gold,#e0b24a)" }, "本命の答え合わせ（最近の成績）")
+    ));
+    card.appendChild(el("p", { style: "font-size:11.5px;color:var(--c-ink-soft,#b8ad95);margin:0 0 12px;line-height:1.6" },
+      `直近 ${log.count} レースで、アプリの本命（いちばん勝ちそうとみた馬）が実際にどうだったかの正直な記録です。`
+    ));
+
+    // 大きな2つの数字: 単勝的中 / 複勝(3着内)
+    const big = el("div", { style: "display:flex;gap:10px;margin-bottom:12px" });
+    const stat = (label, pct, sub, hot) => el("div", { style:
+      `flex:1;text-align:center;padding:12px 6px;border-radius:12px;background:${hot?"rgba(80,150,80,.16)":"rgba(120,90,30,.14)"};border:1px solid ${hot?"rgba(110,190,110,.4)":"rgba(200,160,60,.3)"}` },
+      el("div", { style: "font-size:11px;color:var(--c-ink-soft,#b8ad95);margin-bottom:2px" }, label),
+      el("div", { style: `font-size:30px;font-weight:900;line-height:1;color:${hot?"#8fe39a":"var(--c-gold,#e7c468)"}` }, pct != null ? pct + "%" : "—"),
+      el("div", { style: "font-size:10.5px;color:var(--c-ink-soft,#b8ad95);margin-top:3px" }, sub)
+    );
+    big.appendChild(stat("1着になった率（単勝）", winPct, `${log.wins ?? "—"} / ${log.count} レース`, false));
+    big.appendChild(stat("3着以内に入った率（複勝）", placePct, `${log.places ?? "—"} / ${log.count} レース`, true));
+    card.appendChild(big);
+
+    // 直近の1レースずつ (新しい順・最大12件)
+    const list = el("div", { style: "display:flex;flex-direction:column;gap:5px" });
+    log.entries.slice(0, 12).forEach((e) => {
+      const vl = parseVenueLabel({ course: e.course, raceId: e.race_id });
+      const won = e.won, placed = e.placed;
+      const mark = won ? "◎的中（1着）" : placed ? "○3着以内" : "✕";
+      const markColor = won ? "#8fe39a" : placed ? "#e7c468" : "#9a8f78";
+      const nm = scrubName(e.honmei?.name, "");
+      const row = el("div", { style:
+        "display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;background:rgba(255,255,255,.03);font-size:12px" });
+      row.appendChild(el("span", { style: "color:var(--c-ink-soft,#b8ad95);min-width:62px;font-size:11px" },
+        `${vl.venue || "?"}${vl.raceNo ? " " + vl.raceNo + "R" : ""}`));
+      row.appendChild(el("span", { style: "flex:1;color:var(--c-ink,#eadfc6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" },
+        `本命 ${e.honmei?.number ?? "?"} ${nm}`));
+      row.appendChild(el("span", { style: "color:var(--c-ink-soft,#b8ad95);min-width:42px;text-align:right" },
+        e.rank != null ? e.rank + "着" : "—"));
+      row.appendChild(el("span", { style: `font-weight:800;min-width:80px;text-align:right;color:${markColor}` }, mark));
+      list.appendChild(row);
+    });
+    card.appendChild(list);
+
+    card.appendChild(el("p", { style: "font-size:10.5px;color:var(--c-ink-soft,#9a8f78);margin:11px 0 0;line-height:1.6" },
+      "※「本命」は、その時点のオッズから“いちばん勝ちそう”と判定した馬です。複勝（3着以内）はよく当たりますが、馬券は控除20%で長い目ではマイナスになります。当たる＝儲かるではありません。"
+    ));
+    mount.appendChild(card);
   }
 
   // ─── 描画: DecisionCard / ブロックA: 本日の勝負レース ─────
@@ -908,17 +974,22 @@
     const buyBox = buildBuyBox(race, tier);
     if (buyBox) body.appendChild(buyBox);
 
-    // (3) BigStat 3 列: 期待値 / 1着確率 (円グラフ) / AI 信頼度
+    // (3) BigStat 3 列: 1着の確率 / 3着以内の確率(複勝) / 期待値
+    //   ★正直な2つの確率(勝率・3着内率)を主役に。3着内率は較正表の実測値なので「当たった感」が出る。
     const stats = el("div", { class: "bigstat-grid" });
     const ev = race.topPick.ev;
     const evTone = ev >= 1.5 ? "gold" : ev >= 1.1 ? "go" : ev >= 0.95 ? "ink" : "mute";
     const probPct = (race.topPick.prob ?? 0) * 100;
     const probTone = probPct >= 40 ? "go" : probPct >= 25 ? "warn" : "mute";
+    const placeRaw = race.topPick.place;
+    const placePct = Number.isFinite(placeRaw) ? placeRaw * 100 : null;
+    const placeTone = placePct >= 60 ? "go" : placePct >= 40 ? "warn" : "mute";
     const confPct = (race.confidence ?? 0) * 100;
     const confTone = confPct >= 60 ? "gold" : confPct >= 35 ? "go" : "mute";
+    stats.appendChild(makeBigStatDonut("1着の確率", probPct, probTone));
+    if (placePct != null) stats.appendChild(makeBigStatDonut("3着以内(複勝)", placePct, placeTone));
+    else stats.appendChild(makeBigStatBars("AI 信頼度", confPct, confTone));
     stats.appendChild(makeBigStat("期待値", `×${ev.toFixed(2)}`, evTone, true));
-    stats.appendChild(makeBigStatDonut("1着確率", probPct, probTone));
-    stats.appendChild(makeBigStatBars("AI 信頼度", confPct, confTone));
     body.appendChild(stats);
 
     // (4) 補足情報 (Walk-forward 検証 + AI 思考プロセス) を折りたたみに集約
@@ -1240,6 +1311,12 @@
       else parts.push(`推定勝率 約${pct}%。大混戦で、本命でも波乱は十分ありえます`);
     }
     if (odds != null) parts.push(`単勝オッズは約${odds.toFixed(1)}倍`);
+    // 複勝(3着以内)の手堅さ(実測ベース・正直に)
+    const placePct = Number.isFinite(tp.place) ? Math.round(tp.place * 100) : null;
+    if (placePct != null) {
+      if (placePct >= 60) parts.push(`3着以内なら約${placePct}%とよく来るので、手堅く狙うなら複勝向きです`);
+      else if (placePct >= 45) parts.push(`3着以内の可能性は約${placePct}%`);
+    }
     return parts.join("。") + "。";
   }
 
@@ -2818,6 +2895,7 @@
       memoRender("topwin", [state.bets], renderTopWinBanner);
       // ── トップ3ブロック (リニューアル後の本体) ──
       memoRender("decision", [state.racesLast, state.bets, minuteBucket], renderDecisionCard);
+      memoRender("honmeiRecord", [state.honmeiLog], renderHonmeiRecord);
       memoRender("reflect", [state.bets], renderRecentMiss);
       memoRender("profit", [state.bets], renderProfitSummary);
       // ── 折りたたみセクション群 ──

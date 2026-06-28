@@ -239,6 +239,7 @@ async function serve(req, res) {
             source: "precomputed",
             computedAt: predCache.predictionsMeta()?.fetchedAt,
             learning: predCache.readLearningStatus(),
+            honmeiLog: predCache.readHonmeiLog(),
             raceCount: summaries.length,
             races: summaries,
           });
@@ -289,9 +290,9 @@ async function serve(req, res) {
           verdict: c.verdict,
           verdictTitle: c.verdictTitle,
           topGrade: c.topGrade,
-          topPick: c.picks?.[0] ? { number: c.picks[0].number, name: c.picks[0].name, odds: c.picks[0].odds, ev: c.picks[0].ev, grade: c.picks[0].grade, prob: c.picks[0].prob } : null,
-          second: c.picks?.[1] ? { number: c.picks[1].number, name: c.picks[1].name, odds: c.picks[1].odds, ev: c.picks[1].ev, grade: c.picks[1].grade, prob: c.picks[1].prob } : null,
-          third: c.picks?.[2] ? { number: c.picks[2].number, name: c.picks[2].name, odds: c.picks[2].odds, ev: c.picks[2].ev, grade: c.picks[2].grade, prob: c.picks[2].prob } : null,
+          topPick: c.picks?.[0] ? { number: c.picks[0].number, name: c.picks[0].name, odds: c.picks[0].odds, ev: c.picks[0].ev, grade: c.picks[0].grade, prob: c.picks[0].prob, place: c.picks[0].place } : null,
+          second: c.picks?.[1] ? { number: c.picks[1].number, name: c.picks[1].name, odds: c.picks[1].odds, ev: c.picks[1].ev, grade: c.picks[1].grade, prob: c.picks[1].prob, place: c.picks[1].place } : null,
+          third: c.picks?.[2] ? { number: c.picks[2].number, name: c.picks[2].name, odds: c.picks[2].odds, ev: c.picks[2].ev, grade: c.picks[2].grade, prob: c.picks[2].prob, place: c.picks[2].place } : null,
           confidence: c.confidence,
           hasOverpop: (c.overpopular || []).length > 0,
           hasUnderval: (c.undervalued || []).length > 0,
@@ -308,6 +309,7 @@ async function serve(req, res) {
         fetchedAt: new Date().toISOString(),
         source: "on-the-fly",
         learning: predCache.readLearningStatus(),
+        honmeiLog: predCache.readHonmeiLog(),
         raceCount: summaries.length,
         races: summaries,
       });

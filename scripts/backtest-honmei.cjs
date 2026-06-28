@@ -48,8 +48,8 @@ function main() {
   const market = mk();     // 市場一番人気
   let sameAsMarket = 0;    // モデル本命=市場一番人気だった回数
   let modelWinWhenDiffer = 0, marketWinWhenDiffer = 0, differN = 0; // 意見が割れた時どちらが当たったか
-  // 較正チェック: モデル本命の予想勝率の合計 vs 実際の勝ち数
-  let probSum = 0;
+  // 較正チェック: モデル本命の予想勝率/予想複勝率の合計 vs 実際
+  let probSum = 0, placeSum = 0, placeN = 0;
 
   for (const f of resFiles) {
     const res = readJson(path.join(RESULTS, f));
@@ -91,6 +91,7 @@ function main() {
     // モデル本命
     model.n++; if (hRank === 1) model.win++; if (hRank <= 3) model.place++;
     if (Number.isFinite(honmei.prob)) probSum += honmei.prob;
+    if (Number.isFinite(honmei.place)) { placeSum += honmei.place; placeN++; }
     // 市場一番人気
     market.n++; if (fRank === 1) market.win++; if (fRank <= 3) market.place++;
 
@@ -113,8 +114,9 @@ function main() {
   console.log(`意見が割れたレース: ${differN}件 → そのうち`);
   console.log(`  モデル本命が1着: ${pct(modelWinWhenDiffer, differN)} (${modelWinWhenDiffer}/${differN})`);
   console.log(`  市場一番人気が1着: ${pct(marketWinWhenDiffer, differN)} (${marketWinWhenDiffer}/${differN})`);
-  console.log(`\n較正チェック: モデル本命の予想勝率 平均 ${pct(probSum, model.n)} vs 実際の単勝的中 ${pct(model.win, model.n)}`);
-  console.log(`  (この2つが近いほど「勝率○○%」表示が正直＝信用できる)`);
+  console.log(`\n較正チェック(勝率): モデル本命の予想勝率 平均 ${pct(probSum, model.n)} vs 実際の単勝的中 ${pct(model.win, model.n)}`);
+  if (placeN > 0) console.log(`較正チェック(複勝): モデル本命の予想3着内率 平均 ${pct(placeSum, placeN)} vs 実際の3着内 ${pct(model.place, model.n)}`);
+  console.log(`  (この2つが近いほど「○○%」表示が正直＝信用できる)`);
 
   // 判定材料(改善があったかの目安)
   const modelWin = model.n ? model.win / model.n : 0;
