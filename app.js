@@ -324,11 +324,15 @@
     //   両表記を見て、どちらも分からない時だけ除外する。
     const hc = race.horseCount ?? race.horse_count;
     if (hc != null && hc === 0) return "none";
-    if (ev >= 1.50 && conf >= 0.45) return "ultra";
-    if (ev >= 1.30) return "prime";
-    if (ev >= 1.10) return "go";
+    // ★2026-06-28 EVスケール改定: 勝率計算を市場アンカー+実測較正に作り直した結果、
+    //   EVは現実的な水準(控除20%を本当に超える馬だけ>1.0)に“地に足が着いた”。
+    //   旧しきい値(1.50/1.30)は壊れた過大EV前提で高すぎ、健全EVでは誰も届かず
+    //   毎日「休む日」になってしまう。新しい正直なEV分布に合わせて引き下げる。
+    if (ev >= 1.15 && conf >= 0.40) return "ultra";
+    if (ev >= 1.08) return "prime";
+    if (ev >= 1.04) return "go";
     if (ev >= 1.00) return "cond";
-    if (ev >= 0.92) return "best";
+    if (ev >= 0.96) return "best";
     return "none";
   }
   function tierStars(t) {

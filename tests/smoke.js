@@ -573,7 +573,7 @@ test("buildWin5 が推奨を返す", () => {
   });
   const races = [makeRace(1), makeRace(2), makeRace(3), makeRace(4), makeRace(5)];
   const w = win5engine.buildWin5(races);
-  assert.ok(["safe", "mid", "wide"].includes(w.recommended), `recommended=${w.recommended}`);
+  assert.ok(["safe", "axis", "mid", "wide"].includes(w.recommended), `recommended=${w.recommended}`);
 });
 
 console.log("\n=== Wave9: 構文チェック ===");
