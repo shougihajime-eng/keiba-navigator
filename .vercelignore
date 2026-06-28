@@ -36,6 +36,10 @@ data/jv_cache/*
 !data/jv_cache/predictions.json
 # 2026-06-07: 当日+翌日の完全レースデータ (本番の /api/win5 が読む。races/ は本番に無いため)
 !data/jv_cache/today_races.json
+# 2026-06-28: 本命の答え合わせ(最近の成績) を /api/races で配信
+!data/jv_cache/honmei_log.json
+# 2026-06-28: 実測較正表(勝率/複勝の正直な数字の土台)。on-the-fly計算でも較正が効くよう同梱
+!data/jv_cache/place_calibration.json
 # 例外: 回収率実証結果 (UI に正直に表示する用)
 !data/jv_cache/backtest_result.json
 # 例外: 推奨買い目集約 (Wave19・100% 越え戦略の今日のレース)
