@@ -40,6 +40,8 @@ data/jv_cache/*
 !data/jv_cache/honmei_log.json
 # 2026-06-28: 実測較正表(勝率/複勝の正直な数字の土台)。on-the-fly計算でも較正が効くよう同梱
 !data/jv_cache/place_calibration.json
+# 2026-06-28: 連系・3連系の的中率較正表(ディスカウントHarville)。ワイド/3連複の正直な的中率
+!data/jv_cache/exotic_calibration.json
 # 例外: 回収率実証結果 (UI に正直に表示する用)
 !data/jv_cache/backtest_result.json
 # 例外: 推奨買い目集約 (Wave19・100% 越え戦略の今日のレース)

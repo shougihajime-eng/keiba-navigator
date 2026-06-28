@@ -107,6 +107,7 @@ function compactConclusion(c, race) {
     second:        top2,
     third:         top3,
     picks,
+    exotic:        c.exotic ?? null,   // ★連系・3連系の正直な的中率(ワイド/3連複)
     underval:      c.underval  ? summarizePick(c.underval)  : null,
     overpop:       c.overpop   ? summarizePick(c.overpop)   : null,
     hasUnderval:   !!c.underval,

@@ -974,6 +974,11 @@
     const buyBox = buildBuyBox(race, tier);
     if (buyBox) body.appendChild(buyBox);
 
+    // (2.5) ★連系・3連系の「正直な的中率」(ディスカウントHarville＋実測較正)
+    //   ワイド/3連複が“だいたい何回に1回当たるか”を本物の数字で。儲け保証ではない。
+    const exoticBox = buildExoticBox(race);
+    if (exoticBox) body.appendChild(exoticBox);
+
     // (3) BigStat 3 列: 1着の確率 / 3着以内の確率(複勝) / 期待値
     //   ★正直な2つの確率(勝率・3着内率)を主役に。3着内率は較正表の実測値なので「当たった感」が出る。
     const stats = el("div", { class: "bigstat-grid" });
@@ -1280,6 +1285,53 @@
       row.appendChild(card);
     });
     wrap.appendChild(row);
+    return wrap;
+  }
+
+  // ★連系・3連系の「正直な的中率」パネル(ディスカウントHarville＋実測較正)
+  //   ワイド本命-対抗 / 3連複 上位3頭BOX が、だいたい何回に1回当たるかを本物の数字で見せる。
+  function buildExoticBox(race) {
+    const ex = race.exotic;
+    if (!ex || (!ex.wide && !ex.trio)) return null;
+    const nameOf = (num) => {
+      for (const p of [race.topPick, race.second, race.third]) {
+        if (p && Number(p.number) === Number(num)) return scrubName(p.name, "");
+      }
+      return "";
+    };
+    const oneIn = (rate) => {
+      if (!Number.isFinite(rate) || rate <= 0) return "";
+      const n = Math.round(1 / rate);
+      return n >= 2 ? `およそ${n}回に1回` : "かなり高め";
+    };
+    const wrap = el("div", { class: "exotic-box",
+      style: "margin:8px 0 2px;padding:11px 13px;border-radius:11px;background:rgba(40,80,110,.16);border-left:3px solid #4a9fd8;font-size:13px;line-height:1.7;color:var(--c-ink,#eadfc6)" });
+    wrap.appendChild(el("div", { style: "font-weight:800;color:#7cc4ee;margin-bottom:5px" },
+      "あたりやすい買い方（正直な的中率）"));
+    const line = (label, combo, rate) => {
+      if (!combo || !Number.isFinite(rate)) return;
+      const pct = Math.round(rate * 100);
+      const row = el("div", { style: "margin:3px 0" });
+      row.appendChild(el("span", { style: "font-weight:700;color:#9fd4f2" }, label + "："));
+      row.appendChild(document.createTextNode(`${combo}　`));
+      row.appendChild(el("b", { style: "color:#bfe3ff;font-size:15px" }, `約${pct}%`));
+      const sub = oneIn(rate);
+      if (sub) row.appendChild(el("span", { style: "color:var(--c-mute,#b6a98a);margin-left:6px;font-size:12px" }, `（${sub}）`));
+      wrap.appendChild(row);
+    };
+    if (ex.wide && ex.wide.pair) {
+      const [a, b] = ex.wide.pair;
+      const lab = `ワイド 本命${a}-対抗${b}`;
+      const combo = `${nameOf(a)}・${nameOf(b)} が2頭とも3着以内`.replace(/^・| ・$/g, "");
+      line(lab, combo || `${a}-${b}`, ex.wide.rate);
+    }
+    if (ex.trio && ex.trio.combo) {
+      const [a, b, c] = ex.trio.combo;
+      const lab = `3連複 上位3頭BOX`;
+      line(lab, `${a}-${b}-${c} で1・2・3着`, ex.trio.rate);
+    }
+    wrap.appendChild(el("div", { style: "margin-top:6px;font-size:11.5px;color:var(--c-mute,#b6a98a);line-height:1.6" },
+      "※過去の本当の結果で確かめた的中率です（楽観なし）。当たりやすい買い方でも、払戻は控除で平均マイナス＝当たる＝儲かる ではありません。"));
     return wrap;
   }
 
