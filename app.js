@@ -317,8 +317,13 @@
     //   になった事故の予防策。
     if (race.verdict === "judgement_unavailable") return "none";
     if (race.verdict === "pass") return "none";
-    // 出走馬データ未取得 (horse_count=0) も結論カードから除外
-    if ((race.horse_count ?? 0) === 0) return "none";
+    // 出走馬データ未取得 (馬の数=0) も結論カードから除外。
+    // ★2026-06-28 バグ修正: API が返すフィールド名は horseCount (キャメル)。
+    //   旧コードは horse_count (スネーク) を見ており、常に undefined → (undefined ?? 0)===0
+    //   が必ず真になり、全レースを "none" に落として「毎日 休む日」になっていた。
+    //   両表記を見て、どちらも分からない時だけ除外する。
+    const hc = race.horseCount ?? race.horse_count;
+    if (hc != null && hc === 0) return "none";
     if (ev >= 1.50 && conf >= 0.45) return "ultra";
     if (ev >= 1.30) return "prime";
     if (ev >= 1.10) return "go";
