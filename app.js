@@ -301,55 +301,48 @@
     }
   }
 
-  // ─── ティア判定 (5 段階 + 推奨戦略連動) ──────────────────
-  // ULTRA: EV >= 1.5 かつ AI 信頼度 >= 0.45 (究極の絶好機)
-  // PRIME: EV >= 1.3 (絶好機)
-  // GO:    EV >= 1.1 (本命勝負)
-  // COND:  EV >= 1.0 (条件付き)
-  // BEST:  EV >= 0.92 (今日のベター候補)
+  // ─── ティア判定 (予想の自信度 = 本命の推定勝率で5段階) ──────────────────
+  // ★2026-06-28 大改定: 「儲かる買い目(EV)」での段階分けをやめ、
+  //   「予想の自信度 = 本命(いちばん勝ちそうな馬)の推定勝率」で段階分けする。
+  //   理由: バックテスト(過去3796レース)で控除20%を超える+EV買いは構造的に存在せず、
+  //   EVで段階を切ると毎日「買う馬なし=休む日」になる(=本人が怒った現象)。
+  //   本アプリは「儲け保証」ではなく「いちばん勝ちそうな馬を毎日 正直に予想する」道具にする。
+  //   → 出走馬がいるレースは必ず予想が出る(=もう二度と全レース"none"=休む日にならない)。
+  // ULTRA: 本命の勝率 >= 42% (抜けた1強・自信の予想)
+  // PRIME: 勝率 >= 33% (堅い本命)
+  // GO:    勝率 >= 26% (本命やや堅め)
+  // COND:  勝率 >= 20% (本命中心だが混戦ぎみ)
+  // BEST:  それ未満 (大混戦・本命の信頼は控えめ) — それでも予想は出す
   function tierOfRace(race) {
-    const ev = race.topPick?.ev ?? null;
-    const conf = race.confidence ?? 0;
-    if (ev == null) return "none";
-    // ★ プレースホルダー pass を結論カードに大写しさせない (Bug ⑨ 予防)
-    //   verdict が "judgement_unavailable" や "pass" のレースは ev が偶然高くても
-    //   結論カードに昇格させない。 必殺１ごうてい(競艇)で「展示走行前 pass が大写し」
-    //   になった事故の予防策。
+    // 判定できないレースだけ除外 (本命が無い/出走馬データ未取得)。
     if (race.verdict === "judgement_unavailable") return "none";
-    if (race.verdict === "pass") return "none";
-    // 出走馬データ未取得 (馬の数=0) も結論カードから除外。
-    // ★2026-06-28 バグ修正: API が返すフィールド名は horseCount (キャメル)。
-    //   旧コードは horse_count (スネーク) を見ており、常に undefined → (undefined ?? 0)===0
-    //   が必ず真になり、全レースを "none" に落として「毎日 休む日」になっていた。
-    //   両表記を見て、どちらも分からない時だけ除外する。
     const hc = race.horseCount ?? race.horse_count;
     if (hc != null && hc === 0) return "none";
-    // ★2026-06-28 EVスケール改定: 勝率計算を市場アンカー+実測較正に作り直した結果、
-    //   EVは現実的な水準(控除20%を本当に超える馬だけ>1.0)に“地に足が着いた”。
-    //   旧しきい値(1.50/1.30)は壊れた過大EV前提で高すぎ、健全EVでは誰も届かず
-    //   毎日「休む日」になってしまう。新しい正直なEV分布に合わせて引き下げる。
-    if (ev >= 1.15 && conf >= 0.40) return "ultra";
-    if (ev >= 1.08) return "prime";
-    if (ev >= 1.04) return "go";
-    if (ev >= 1.00) return "cond";
-    if (ev >= 0.96) return "best";
-    return "none";
+    const tp = race.topPick;
+    if (!tp) return "none";
+    const p = Number.isFinite(tp.prob) ? tp.prob : null;
+    if (p == null) return "best"; // 勝率不明でも本命がいれば予想は出す
+    if (p >= 0.42) return "ultra";
+    if (p >= 0.33) return "prime";
+    if (p >= 0.26) return "go";
+    if (p >= 0.20) return "cond";
+    return "best";
   }
   function tierStars(t) {
     return { ultra: "★★★★", prime: "★★★", go: "★★", cond: "★", best: "☆", none: "" }[t] || "";
   }
   function tierTitle(t) {
     return {
-      ultra: `AI の究極予想 ${tierStars("ultra")} ・ 今日いちばん買う1点`,
-      prime: `AI の絶好機予想 ${tierStars("prime")} ・ 本気で買う`,
-      go:    `AI の本命予想 ${tierStars("go")} ・ ここを買え!`,
-      cond:  `AI の今日の予想 ${tierStars("cond")} ・ 条件付きで買う`,
-      best:  `今日のおすすめ ${tierStars("best")} ・ 自信控えめ・お試し買いに`,
-      none:  "AI は今日は休みたい ・ 買う価値のあるレースが見当たらない",
+      ultra: `自信の予想 ${tierStars("ultra")} ・ 抜けた1強 (本命の勝率が高い)`,
+      prime: `堅い本命予想 ${tierStars("prime")} ・ 本命中心で堅そう`,
+      go:    `本命予想 ${tierStars("go")} ・ 本命やや堅め`,
+      cond:  `本命予想 ${tierStars("cond")} ・ 混戦ぎみ・本命中心`,
+      best:  `予想 ${tierStars("best")} ・ 大混戦・自信は控えめ`,
+      none:  "予想を出せるレースがありません",
     }[t] || "—";
   }
   function tierLabel(t) {
-    return { ultra: "絶好機", prime: "絶好機", go: "勝負", cond: "条件付き", best: "ベター", none: "見送り" }[t] || "—";
+    return { ultra: "自信", prime: "堅い", go: "本命", cond: "混戦", best: "大混戦", none: "—" }[t] || "—";
   }
 
   // ─── API ─────────────────────────────────────────────────
@@ -484,27 +477,34 @@
       return;
     }
 
+    // ★2026-06-28 正直化: 自信度(本命の勝率)が高い順に並べる。
     const sorted = [...state.races].sort((a, b) => {
-      const aEv = a.topPick?.ev ?? -Infinity;
-      const bEv = b.topPick?.ev ?? -Infinity;
-      return bEv - aEv;
+      const aP = a.topPick?.prob ?? -Infinity;
+      const bP = b.topPick?.prob ?? -Infinity;
+      return bP - aP;
     });
 
-    // ★5 / ★4 のみ抽出 (買うべきレース)
-    const battleRaces = sorted.filter((r) => {
-      const t = tierOfRace(r);
-      return (t === "ultra" || t === "prime") && r.topPick;
-    });
+    // 予想を出せるレース全部 (本命がいるレース)。tierが none=判定不可のものだけ除く。
+    const pickable = sorted.filter((r) => r.topPick && tierOfRace(r) !== "none");
 
-    // ★3 以下 (見送り推奨)
-    const passRaces = sorted.filter((r) => {
+    // 自信のある予想 (ultra/prime) を大きく特集。
+    let featured = pickable.filter((r) => {
       const t = tierOfRace(r);
-      return (t === "go" || t === "cond" || t === "best") && r.topPick;
+      return t === "ultra" || t === "prime";
     });
+    // ★絶対に「休む日」にしない: 自信ティアが無い日でも、その日いちばん自信のある
+    //   予想を最大3つ必ず特集する(出走馬がいる限り予想は必ず出る)。
+    if (featured.length === 0 && pickable.length > 0) {
+      featured = pickable.slice(0, Math.min(3, pickable.length));
+    }
+    const battleRaces = featured;
+    const featuredIds = new Set(battleRaces.map((r) => r.raceId));
+    // 特集に入らなかった残りの予想 (1行リスト)
+    const passRaces = pickable.filter((r) => !featuredIds.has(r.raceId));
 
     mount.innerHTML = "";
 
-    // 勝負レースが 1 つも無いとき = 「今日は見送りの日」
+    // 予想を出せるレースが1つも無い (開催前/判定不可) ときだけ見送り表示
     if (battleRaces.length === 0) {
       mount.appendChild(renderNoBetCard(sorted));
       if (passRaces.length > 0) {
@@ -513,16 +513,21 @@
       return;
     }
 
-    // バトルヘッダ
+    // 予想ヘッダ
     const head = el("div", { class: "battle-header" });
-    head.appendChild(el("div", { class: "battle-overline" }, "TODAY'S BATTLE"));
+    head.appendChild(el("div", { class: "battle-overline" }, "TODAY'S PICKS"));
     head.appendChild(el("h1", { class: "battle-title" },
-      `今日の勝負レース ${battleRaces.length}R`
+      `今日の注目予想 ${battleRaces.length}R`
     ));
     head.appendChild(el("div", { class: "battle-sub" },
-      battleRaces.length === 1 ? "ここに集中して買おう" : `${battleRaces.length} レース全部 ★4 以上の絶好機`
+      battleRaces.length === 1 ? "本命の勝率がいちばん高いレース" : `本命の勝率が高い順 ${battleRaces.length} レース`
     ));
     mount.appendChild(head);
+    // ★正直な注意書き: 馬券は控除20%で長期的にはマイナス。これは「予想」であって儲け保証ではない。
+    mount.appendChild(el("div", { class: "honest-note",
+      style: "margin:8px 0 14px;padding:10px 12px;border-radius:10px;background:rgba(180,140,40,.12);border:1px solid rgba(200,160,60,.35);font-size:12px;line-height:1.6;color:var(--c-ink,#e8dcc0)" },
+      "ℹ️ これは「いちばん勝ちそうな馬」の予想です。馬券は払戻しが賭け金の約80%(控除20%)のため、買い続ければ長い目では誰でもマイナスになります。当たる予想＝儲かるではありません。遊べる範囲で楽しんでください。"
+    ));
 
     // ★5/★4 のレースを 1 件ずつ大きなカードで描画
     battleRaces.forEach((r) => {
@@ -813,12 +818,12 @@
     });
     card.appendChild(grid);
 
-    // 累計 100%+ 達成バナー (派手目に祝う)
+    // 累計 100%+ バナー (ここまで好調・ただし短期の結果と正直に)
     if (a.total >= 5 && a.recov >= 100) {
       card.appendChild(el("div", { class: "ps-celebrate" },
         el("span", { class: "psc-icon" }, "🏆"),
         el("span", { class: "psc-text" },
-          `累計回収率 100% 突破! (${a.recov.toFixed(1)}%) — 長期で勝てるユーザーです`
+          `ここまで好調! 累計回収率 ${a.recov.toFixed(1)}% (${a.total}件の結果) — 馬券は控除20%で長期はマイナスが基本。短期の好調です`
         )
       ));
     }
@@ -844,15 +849,15 @@
     // (0) Wave24: 「今日いちばん買う 1 点」+ ティア — 1 行に統合 (重複削除)
     const tierEmoji = "";
     const tierColor = tier === "ultra" ? "gold" : tier === "prime" ? "gold" : tier === "go" ? "turf" : tier === "cond" ? "sky" : "mute";
-    const tierMsg = tier === "ultra" ? "究極の絶好機・今日いちばん買う 1 点" :
-                    tier === "prime" ? "絶好機・本気で買おう" :
-                    tier === "go"    ? "AI の本命・このレースを買おう" :
-                    tier === "cond"  ? "条件付き・慎重に・お試し金額で" :
-                                        "自信は控えめだが見守りたい 1 点";
+    const tierMsg = tier === "ultra" ? "抜けた1強・本命の勝率がいちばん高い" :
+                    tier === "prime" ? "堅い本命・勝率が高い予想" :
+                    tier === "go"    ? "本命やや堅め・中心はこの馬" :
+                    tier === "cond"  ? "混戦ぎみ・本命中心の予想" :
+                                        "大混戦・本命の自信は控えめ";
     const overline = el("div", { class: `today-best-overline today-best-${tierColor}` },
       el("div", { class: "tbo-emoji" }, tierEmoji),
       el("div", { class: "tbo-stack" },
-        el("div", { class: "tbo-eyebrow" }, "TODAY'S BEST PICK"),
+        el("div", { class: "tbo-eyebrow" }, "本命予想"),
         el("div", { class: "tbo-headline" }, tierMsg)
       ),
       el("div", { class: "tbo-tier-pill" }, tierTitle(tier))
@@ -956,7 +961,7 @@
       // AI 思考プロセス
       if (reasons.length > 0) {
         const proc = el("div", { class: "ai-process-box" });
-        proc.appendChild(el("div", { class: "header" }, "AI の思考プロセス — この1点で勝負する理由"));
+        proc.appendChild(el("div", { class: "header" }, "AI の思考プロセス — この本命を推す理由"));
         const ul = el("ol", { class: "ai-process-steps" });
         reasons.slice(0, 4).forEach((r, i) =>
           ul.appendChild(el("li", { class: "ai-process-step" },
@@ -1220,11 +1225,7 @@
     if (!tp) return null;
     const box = el("div", { class: "buy-box" });
     const head = el("div", { class: "buy-head" });
-    const titleTxt = (tier === "ultra" || tier === "prime")
-      ? "このとおりに買おう (絶好機・5点)"
-      : (tier === "cond" || tier === "best")
-        ? "お試し買い目 (慎重に・お試し金額で)"
-        : "このとおりに買おう (5点)";
+    const titleTxt = "予想の印 (買い目の例・遊べる範囲で)";
     head.appendChild(el("div", { class: "title" }, titleTxt));
     const items = makeBuyItems(race, tier);
     const total = items.reduce((a, x) => a + x.amount, 0);
@@ -1308,21 +1309,21 @@
   function renderNoBetCard(sorted) {
     const card = el("div", { class: "decision-card tier-none fade-in" });
     card.appendChild(el("div", { class: "decision-head" },
-      el("div", { class: "decision-tier-label" }, "AI は今日は買わない方が安全 ・ 期待値プラスの馬がいません")
+      el("div", { class: "decision-tier-label" }, "まだ予想を出せるレースがありません")
     ));
     const body = el("div", { class: "decision-body card-enter-stagger" });
 
     body.appendChild(el("div", { class: "decision-prelabel" },
       el("span", { class: "pl-bar" }),
-      el("span", null, "AI の判定 — 本日は見送り推奨")
+      el("span", null, "出走馬・オッズの取得を待っています")
     ));
     body.appendChild(el("div", { html: `
-      <p style="text-align:center;font-size:32px;font-weight:900;line-height:1.2;margin:8px 0">
-        今日は <span class="text-grad-sky">休む日</span> です
+      <p style="text-align:center;font-size:30px;font-weight:900;line-height:1.2;margin:8px 0">
+        予想は <span class="text-grad-sky">準備中</span> です
       </p>
       <p style="text-align:center;font-size:14px;color:var(--c-ink-soft);line-height:1.6">
-        ${sorted.length} レース解析しましたが、<b style="color:var(--c-ink)">期待値が +0% を超える馬が見つかりませんでした</b>。<br>
-        無理に買わずに、過去の答え合わせを見て明日に備えましょう。
+        ${sorted.length} レースを確認しましたが、<b style="color:var(--c-ink)">まだ出走馬やオッズが取得できていません</b>。<br>
+        出走表が出れば、いちばん勝ちそうな本命を自動で予想します。少し待ってからまた開いてください。
       </p>
     `}));
 
@@ -2961,16 +2962,16 @@
     const wd = ["日","月","火","水","木","金","土"][now.getDay()];
     const isWeekend = now.getDay() === 0 || now.getDay() === 6;
     const headline = goldRaces.length > 0
-      ? `おはよう・今日の絶好機 ${goldRaces.length} R`
+      ? `おはよう・今日の自信予想 ${goldRaces.length} R`
       : goRaces.length > 0
-        ? `おはよう・今日の勝負 ${goRaces.length} R`
+        ? `おはよう・今日の注目予想 ${goRaces.length} R`
         : isWeekend
           ? `おはよう・データ取得中`
-          : `おはよう・今日 (${wd}) は休む日`;
+          : `おはよう・今日 (${wd}) は開催なし`;
 
     const parts = [];
-    if (goldRaces.length > 0) parts.push(`<span style="color:var(--c-gold);font-weight:900">絶好機 ${goldRaces.length}R</span>`);
-    if (goRaces.length > goldRaces.length) parts.push(`<span style="color:var(--c-deep);font-weight:800">勝負 ${goRaces.length - goldRaces.length}R</span>`);
+    if (goldRaces.length > 0) parts.push(`<span style="color:var(--c-gold);font-weight:900">自信予想 ${goldRaces.length}R</span>`);
+    if (goRaces.length > goldRaces.length) parts.push(`<span style="color:var(--c-deep);font-weight:800">注目 ${goRaces.length - goldRaces.length}R</span>`);
     if (firstHM) parts.push(`<span style="color:var(--c-ink-soft)">最初の締切 ${firstHM}</span>`);
 
     root.hidden = false;
@@ -3033,21 +3034,21 @@
     root.hidden = false;
     const STRAT_LABELS = {
       // Wave30: Stacking 戦略 + 併買 + 3 連単
-      value_stack_uren_016: "V-STACK Stacking 馬連 (4 モデル LR) — avg 244%・全期間 100%+ ⭐",
-      value_stack_fuku_016: "V-STACK複 Stacking 複勝 (4 モデル LR) — avg 156%・σ 39",
-      value_tan3_nopop_020: "V-3連単 nopop top1->2->3 (閾値 20%) — avg 308%・σ 191",
-      value_double_nopop_016: "V-DOUBLE 複勝+馬連 併買 (閾値 16%) — avg 187.6%・σ 64",
+      value_stack_uren_016: "V-STACK Stacking 馬連 (4 モデル LR)",
+      value_stack_fuku_016: "V-STACK複 Stacking 複勝 (4 モデル LR)",
+      value_tan3_nopop_020: "V-3連単 nopop top1->2->3 (閾値 20%)",
+      value_double_nopop_016: "V-DOUBLE 複勝+馬連 併買 (閾値 16%)",
       // Wave29-B: 馬連 nopop top1-top2
-      value_uren_nopop_016: "V-馬連HOT nopop top1-top2 (閾値 16%) — avg 222.57%",
-      value_uren_nopop_030: "V-馬連 nopop top1-top2 (閾値 30%・勝 7/7) — avg 165.29%",
+      value_uren_nopop_016: "V-馬連HOT nopop top1-top2 (閾値 16%)",
+      value_uren_nopop_030: "V-馬連 nopop top1-top2 (閾値 30%)",
       // Wave27 強化: nopop モデル単独 最強 + 安定派
-      value_invest_nopop_016: "VALUE 実力派 AI 本命 (人気を見ない) 16%+ 複勝 — Walk-fwd 152.62%",
+      value_invest_nopop_016: "VALUE 実力派 AI 本命 (人気を見ない) 16%+ 複勝",
       value_invest_nopop_022: "VALUE 実力派 AI 本命 (人気を見ない) 22%+ 複勝",
-      value_invest_nopop_035: "V-SAFE 実力派 AI 本命 35%+ 複勝 (安定派・avg 131%)",
+      value_invest_nopop_035: "V-SAFE 実力派 AI 本命 35%+ 複勝 (安定派)",
       tan_top1_always:        "単勝 本命",
       tan_top1_ev100:         "単勝 EV1.0+",
       tan_top1_ev110:         "単勝 EV1.1+",
-      tan_top1_ev130:         "単勝 EV1.3+ (絶好機のみ)",
+      tan_top1_ev130:         "単勝 EV1.3+",
       tan_top1_value3:        "単勝 価値投資 (人気 3 番以下)",
       tan_top1_kelly:         "単勝 ケリー基準",
       fuku_top1_always:       "複勝 本命",
@@ -3116,8 +3117,8 @@
     root.innerHTML = `
       <div class="ml-head">
         <span class="ml-icon" aria-hidden="true">📊</span>
-        <span class="ml-title">AI モデル実証成績</span>
-        <span class="ml-pill ${pillCls}">${bestRoi != null ? "ベスト " + bestRoi.toFixed(1) + "%" : "—"}</span>
+        <span class="ml-title">AI モデルの精度と過去検証 (参考)</span>
+        <span class="ml-pill ${pillCls}">${bestRoi != null ? "過去 " + bestRoi.toFixed(1) + "%" : "—"}</span>
       </div>
       <div class="ml-grid">
         <div class="ml-cell">
@@ -3140,7 +3141,7 @@
       <div class="ml-recommended">
         <div class="ml-rec-head">
           <span class="ml-rec-icon">★</span>
-          <span class="ml-rec-title">100% 越えの推奨買い方</span>
+          <span class="ml-rec-title">過去データで100%を超えていた買い方 (見かけの成績)</span>
           <span class="ml-rec-pill">${reliableWins.length} 戦略</span>
         </div>
         <div class="ml-rec-list">
@@ -3155,8 +3156,9 @@
           `).join("")}
         </div>
         <p class="ml-rec-note">
-          過去 ${bt.testRaces} R のうち <b>${reliableWins.reduce((sum, s) => sum + s.bets, 0)} R</b> で発火 →
-          機械的に全レース買うと負けますが、この条件のときだけ買えば長期で <b>プラス</b> に。
+          過去 ${bt.testRaces} R のうち <b>${reliableWins.reduce((sum, s) => sum + s.bets, 0)} R</b> で発火。
+          ⚠ これは<b>過去データに当てはめた「見かけの成績」</b>で、将来も同じになる保証はありません(過去に合わせすぎ＝over-fit の可能性)。
+          馬券は払戻し約80%(控除20%)のため、長い目ではマイナスが基本です。儲けを約束するものではありません。
         </p>
       </div>
       ` : ""}
@@ -3194,9 +3196,8 @@
         ${stratsActive.length === 0 ? '<div class="ml-strat is-mute"><span class="ml-strat-name">期待値 1.0+ で買える局面は検証期間に 0 件でした</span></div>' : ""}
       </div>
       <p class="ml-note">
-        <b>正直な現状:</b> ${reliableWins.length > 0
-          ? `★ の推奨買い方なら過去データで <b>プラス</b>。ただし完全データではなく 8 ヶ月分での検証なので、今後の運用で安定するか継続観察します。`
-          : (bestRoi >= 100 ? "ベスト戦略はプラスを達成。" : "機械的に AI 本命を毎レース買うと回収率 70-90% で負けます。")}
+        <b>正直な現状:</b> 上の数字は<b>過去データに当てはめた「見かけの成績」</b>です。実際の長期バックテストでは、どの期待値基準で買っても回収率はマイナス(控除20%の壁)でした。
+        ＝<b>馬券で確実に儲ける方法は見つかっていません</b>。このアプリは「いちばん勝ちそうな本命を当てる予想」であって、儲けを約束する道具ではありません。遊べる範囲でお楽しみください。
       </p>
     `;
   }

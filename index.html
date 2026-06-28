@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#060606" />
-  <meta name="description" content="長期回収率100%超を狙う期待値判定 — KEIBA NAVIGATOR" />
+  <meta name="description" content="いちばん勝ちそうな本命を毎日 正直に予想 — KEIBA NAVIGATOR" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="KEIBA" />
@@ -12,7 +12,7 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <title>KEIBA NAVIGATOR — 今日の勝負レース</title>
+  <title>KEIBA NAVIGATOR — 今日の注目予想</title>
   <script>
   /* 先行フェッチ: app.js の読み込みを待たずに API 取得を開始する (初回表示の高速化)。
      app.js 側の api() がこの Promise を 1 回だけ消費する。 */
@@ -82,13 +82,13 @@ button, a, [role="button"], summary, label, select { touch-action: manipulation;
       <h1 class="nm-title"><b>競馬</b>ナビゲーター</h1>
       <span class="nm-rule nm-rule-r" aria-hidden="true"></span>
     </div>
-    <p class="nm-tag">期待値で選ぶ、買わないAI</p>
+    <p class="nm-tag">勝ちそうな本命を毎日 正直に予想</p>
     <div class="nm-meta">
       <span class="nm-date"><b id="brand-day">--/--</b> <span id="brand-wd">(--)</span></span>
       <span class="nm-dot" aria-hidden="true">·</span>
       <span class="nm-m">本日 <b id="metric-races">—</b></span>
       <span class="nm-dot" aria-hidden="true">·</span>
-      <span class="nm-m">勝負 <b id="metric-goes">—</b></span>
+      <span class="nm-m">注目予想 <b id="metric-goes">—</b></span>
       <span class="nm-dot" aria-hidden="true">·</span>
       <span class="nm-m">AI精度 <b id="metric-auc">—</b></span>
     </div>
@@ -276,8 +276,8 @@ button, a, [role="button"], summary, label, select { touch-action: manipulation;
       <div class="section-body">
         <div class="all-races-toolbar">
           <button class="chip-filter is-active" data-filter="all">全て</button>
-          <button class="chip-filter" data-filter="go">勝負レース</button>
-          <button class="chip-filter" data-filter="gold">絶好機 (期待値1.3+)</button>
+          <button class="chip-filter" data-filter="go">本命予想</button>
+          <button class="chip-filter" data-filter="gold">自信の予想 (勝率高め)</button>
           <button class="chip-filter" data-filter="g1">重賞のみ</button>
           <button class="chip-filter" data-sort="time">発走時刻順</button>
           <button class="chip-filter" data-sort="ev">期待値順</button>
