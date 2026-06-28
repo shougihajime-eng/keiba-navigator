@@ -23,6 +23,41 @@ const OUT = path.join(ROOT, "data", "jv_cache", "honmei_log.json");
 
 function readJson(p) { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return null; } }
 
+// 「本命を全レース買ったら」の本当の回収率(単勝/複勝)を、結果確定の全レースで計算する。
+// 本命=オッズ最小(50倍超は除外＝アプリのODDS_CAPと同じ。βは0なのでアプリ本命とほぼ一致)。
+// 払戻(tan/fuku は100円あたり)で正直に集計。嘘なし＝「機械的に買うと負ける」を見せるため。
+function computeRecovery() {
+  if (!fs.existsSync(RESULTS)) return null;
+  const files = fs.readdirSync(RESULTS).filter(f => f.endsWith(".json"));
+  let races = 0, tanSpent = 0, tanRet = 0, tanHit = 0, fukuRet = 0, fukuHit = 0;
+  for (const f of files) {
+    const res = readJson(path.join(RESULTS, f));
+    if (!res || !Array.isArray(res.results) || !res.payouts) continue;
+    let fav = null;
+    for (const r of res.results) {
+      const o = Number(r.win_odds), n = Number(r.number);
+      if (Number.isFinite(o) && o > 1 && o <= 50) { if (!fav || o < fav.o) fav = { n, o }; }
+    }
+    if (!fav) continue;
+    const P = res.payouts;
+    races++; tanSpent += 100;
+    if (P.tan && Number(P.tan.winner) === fav.n) { tanRet += Number(P.tan.amount) || 0; tanHit++; }
+    const fk = (P.fuku || []).find(z => Number(z.number) === fav.n);
+    if (fk) { fukuRet += Number(fk.amount) || 0; fukuHit++; }
+  }
+  if (races < 20) return null;
+  const spent = races * 100;
+  return {
+    races,
+    tanRoi: Number((tanRet / spent).toFixed(4)),     // 単勝 回収率
+    tanHit: Number((tanHit / races).toFixed(4)),     // 本命が1着の率
+    fukuRoi: Number((fukuRet / spent).toFixed(4)),   // 複勝 回収率
+    fukuHit: Number((fukuHit / races).toFixed(4)),   // 本命が3着内の率
+    tanPnl: Math.round(tanRet - spent),              // 単勝 収支(100円ずつ)
+    fukuPnl: Math.round(fukuRet - spent),            // 複勝 収支(100円ずつ)
+  };
+}
+
 function buildHonmeiLog(limit = 150) {
   if (!fs.existsSync(RESULTS)) return null;
   // 新しい順(race_id 先頭8桁=日付の降順)
@@ -80,6 +115,7 @@ function buildHonmeiLog(limit = 150) {
     winRate: n ? Number((win / n).toFixed(4)) : null,
     placeRate: n ? Number((place / n).toFixed(4)) : null,
     wins: win, places: place,
+    recovery: computeRecovery(),   // ★全レース買ったらの本当の回収率(単勝/複勝・正直)
     entries,  // 新しい順
   };
   fs.writeFileSync(OUT, JSON.stringify(out), "utf8");

@@ -504,6 +504,30 @@
     big.appendChild(stat("3着以内に入った率（複勝）", placePct, `${log.places ?? "—"} / ${log.count} レース`, true));
     card.appendChild(big);
 
+    // ★正直な現実: 本命を「全レース買っていたら」の本当の回収率(単勝/複勝)。どちらも100%未満=負け。
+    const rec = log.recovery;
+    if (rec && rec.races) {
+      const tan = Math.round((rec.tanRoi ?? 0) * 100);
+      const fuku = Math.round((rec.fukuRoi ?? 0) * 100);
+      const yen = (v) => (v >= 0 ? "+" : "") + Math.round(v).toLocaleString() + "円";
+      const recBox = el("div", { style:
+        "margin-bottom:12px;padding:11px 13px;border-radius:12px;background:rgba(150,60,40,.14);border-left:3px solid #d8744a" });
+      recBox.appendChild(el("div", { style: "font-weight:800;color:#f0a584;font-size:12.5px;margin-bottom:6px" },
+        `もし本命を全レース買っていたら（過去${rec.races.toLocaleString()}レースの本当の回収率）`));
+      const line = (label, roi, pnl) => {
+        const row = el("div", { style: "display:flex;align-items:baseline;gap:8px;margin:3px 0;font-size:13px" });
+        row.appendChild(el("span", { style: "min-width:84px;color:var(--c-ink,#eadfc6);font-weight:700" }, label));
+        row.appendChild(el("b", { style: `font-size:18px;color:${roi >= 100 ? "#8fe39a" : "#f0a584"}` }, `${roi}%`));
+        row.appendChild(el("span", { style: "color:var(--c-ink-soft,#b8ad95);font-size:11.5px" }, `（100円ずつで ${yen(pnl)}）`));
+        recBox.appendChild(row);
+      };
+      line("単勝", tan, rec.tanPnl ?? 0);
+      line("複勝", fuku, rec.fukuPnl ?? 0);
+      recBox.appendChild(el("div", { style: "margin-top:6px;font-size:10.5px;color:#e8b9a6;line-height:1.6" },
+        "※100%を超えないと勝ちではありません。いちばんマシな複勝でも100%に届かず＝機械的に買うと損します（控除20%の壁）。当たりやすさ≠儲かる、を正直に。"));
+      card.appendChild(recBox);
+    }
+
     // 直近の1レースずつ (新しい順・最大12件)
     const list = el("div", { style: "display:flex;flex-direction:column;gap:5px" });
     log.entries.slice(0, 12).forEach((e) => {
