@@ -46,6 +46,39 @@ try {
   process.exit(2);
 }
 
+// ─── うまみ(overlay)候補を直前オッズから計算して予想に同梱 ─────────────
+// KeibaExoticOdds が貯めた data/jv_cache/exotic_odds/<raceid16>/*.json の最終スナップを読み、
+// lib/overlay.js で「単勝由来の本当の確率 × 連系オッズ > 1」の割安な組合せを探す。
+// スナップが無ければ null(=画面に出さない)。本体を壊さないよう必ず try/catch。
+let _overlayMod = null;
+try { _overlayMod = require(path.join(ROOT, "lib", "overlay")); } catch { _overlayMod = null; }
+const EXOTIC_ODDS_DIR = path.join(ROOT, "data", "jv_cache", "exotic_odds");
+function loadOverlaysFor(raceId) {
+  if (!_overlayMod) return null;
+  try {
+    let rid = String(raceId || "");
+    if (rid.length === 18 && rid.endsWith("00")) rid = rid.slice(0, 16);
+    const dir = path.join(EXOTIC_ODDS_DIR, rid);
+    if (!fs.existsSync(dir)) return null;
+    const files = fs.readdirSync(dir).filter(f => f.endsWith(".json"));
+    if (!files.length) return null;
+    files.sort((a, b) => Number(a.replace(".json", "")) - Number(b.replace(".json", "")));
+    const snap = JSON.parse(fs.readFileSync(path.join(dir, files[files.length - 1]), "utf-8"));
+    if (!snap || !snap.odds || !snap.odds.tansho) return null;
+    const wp = _overlayMod.buildWinProb(snap.odds.tansho.items);
+    const ov = _overlayMod.findOverlays(wp, snap, { minEV: 1.15, minProb: 0.03 });
+    if (!ov.length) return null;
+    return {
+      fetchedAt: snap.fetchedAt || null,
+      items: ov.slice(0, 6).map(x => ({
+        type: x.type, key: x.key,
+        prob: Math.round(x.prob * 1000) / 1000,
+        odds: x.odds, ev: Math.round(x.ev * 100) / 100,
+      })),
+    };
+  } catch { return null; }
+}
+
 // LightGBM モデル meta を一緒に乗せる (UI で「最後の学習時刻」を出すため)
 function readLgbmMeta() {
   try {
@@ -108,6 +141,7 @@ function compactConclusion(c, race) {
     third:         top3,
     picks,
     exotic:        c.exotic ?? null,   // ★連系・3連系の正直な的中率(ワイド/3連複)
+    overlays:      loadOverlaysFor(race.race_id),  // ★直前オッズ由来の「うまみ候補」(あれば)
     underval:      c.underval  ? summarizePick(c.underval)  : null,
     overpop:       c.overpop   ? summarizePick(c.overpop)   : null,
     hasUnderval:   !!c.underval,

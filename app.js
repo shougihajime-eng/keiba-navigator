@@ -979,6 +979,10 @@
     const exoticBox = buildExoticBox(race);
     if (exoticBox) body.appendChild(exoticBox);
 
+    // (2.6) ★うまみ候補(直前オッズ由来・割安かもしれない組合せ)。検証中＝保証なし。
+    const umamiBox = buildUmamiBox(race);
+    if (umamiBox) body.appendChild(umamiBox);
+
     // (3) BigStat 3 列: 1着の確率 / 3着以内の確率(複勝) / 期待値
     //   ★正直な2つの確率(勝率・3着内率)を主役に。3着内率は較正表の実測値なので「当たった感」が出る。
     const stats = el("div", { class: "bigstat-grid" });
@@ -1332,6 +1336,32 @@
     }
     wrap.appendChild(el("div", { style: "margin-top:6px;font-size:11.5px;color:var(--c-mute,#b6a98a);line-height:1.6" },
       "※過去の本当の結果で確かめた的中率です（楽観なし）。当たりやすい買い方でも、払戻は控除で平均マイナス＝当たる＝儲かる ではありません。"));
+    return wrap;
+  }
+
+  // ★うまみ候補パネル(直前オッズ由来・クロスプール overlay)。
+  //   「単勝から見た本当の確率 × その組合せのオッズ > 1」＝みんなが安く売りすぎたかも、な目。
+  //   ⚠まだ過去検証(答え合わせ)が貯まっていない＝当たる/儲かる保証は一切ない。少額で。
+  function buildUmamiBox(race) {
+    const ov = race.overlays;
+    if (!ov || !Array.isArray(ov.items) || !ov.items.length) return null;
+    const wrap = el("div", { class: "umami-box",
+      style: "margin:8px 0 2px;padding:11px 13px;border-radius:11px;background:rgba(110,70,140,.16);border-left:3px solid #b07cd8;font-size:13px;line-height:1.7;color:var(--c-ink,#eadfc6)" });
+    const head = el("div", { style: "font-weight:800;color:#d2a6ee;margin-bottom:5px" }, "うまみ候補（割安かもしれない組合せ）");
+    wrap.appendChild(head);
+    wrap.appendChild(el("div", { style: "font-size:11.5px;color:var(--c-mute,#b6a98a);margin-bottom:6px;line-height:1.6" },
+      "単勝から見た“本当の強さ”より、オッズが高め＝みんなが安く見ているかも、という目です。"));
+    for (const x of ov.items.slice(0, 5)) {
+      const row = el("div", { style: "margin:3px 0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap" });
+      row.appendChild(el("span", { style: "font-weight:700;color:#caa0e8;min-width:54px" }, x.type));
+      row.appendChild(el("b", { style: "color:#e6cffa;font-size:15px" }, x.key));
+      row.appendChild(el("span", { style: "color:var(--c-mute,#b6a98a);font-size:12px" },
+        `${x.odds}倍 / 当たる確率 約${Math.round((x.prob || 0) * 100)}%`));
+      wrap.appendChild(row);
+    }
+    wrap.appendChild(el("div", { style: "margin-top:7px;font-size:11.5px;color:#e7b7b7;line-height:1.6;background:rgba(150,40,40,.16);padding:7px 9px;border-radius:8px" },
+      "⚠ これは「理屈の上では割安かも」という候補で、まだ過去の答え合わせ（本当に勝てたか）を集めている最中です。"
+      + "当たる保証も儲かる保証もありません。買うなら必ず“なくなってもいい少額”で楽しんでください。"));
     return wrap;
   }
 

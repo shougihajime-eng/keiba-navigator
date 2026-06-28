@@ -224,6 +224,7 @@ async function serve(req, res) {
             second: r.second,
             third: r.third,
             exotic: r.exotic || null,
+            overlays: r.overlays || null,
             confidence: r.confidence,
             hasOverpop: !!r.hasOverpop,
             hasUnderval: !!r.hasUnderval,
