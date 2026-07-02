@@ -605,7 +605,7 @@
 
     // 予想ヘッダ
     const head = el("div", { class: "battle-header" });
-    head.appendChild(el("div", { class: "battle-overline" }, "TODAY'S PICKS"));
+    head.appendChild(el("div", { class: "battle-overline" }, "きょうの狙い目"));
     head.appendChild(el("h1", { class: "battle-title" },
       `今日の注目予想 ${battleRaces.length}R`
     ));
@@ -613,10 +613,10 @@
       battleRaces.length === 1 ? "本命の勝率がいちばん高いレース" : `本命の勝率が高い順 ${battleRaces.length} レース`
     ));
     mount.appendChild(head);
-    // ★正直な注意書き: 馬券は控除20%で長期的にはマイナス。これは「予想」であって儲け保証ではない。
+    // ★正直な注意書き(短く1行): くわしい正直コメントは各カードの下に。
     mount.appendChild(el("div", { class: "honest-note",
-      style: "margin:8px 0 14px;padding:10px 12px;border-radius:10px;background:rgba(180,140,40,.12);border:1px solid rgba(200,160,60,.35);font-size:12px;line-height:1.6;color:var(--c-ink,#e8dcc0)" },
-      "ℹ️ これは「いちばん勝ちそうな馬」の予想です。馬券は払戻しが賭け金の約80%(控除20%)のため、買い続ければ長い目では誰でもマイナスになります。当たる予想＝儲かるではありません。遊べる範囲で楽しんでください。"
+      style: "margin:6px 0 12px;padding:8px 12px;border-radius:10px;background:rgba(180,140,40,.12);border:1px solid rgba(200,160,60,.35);font-size:12px;line-height:1.6;color:var(--c-ink,#e8dcc0)" },
+      "ℹ️ 「いちばん勝ちそうな馬」の予想です。当たる＝儲かるではないので、遊べる範囲で。"
     ));
 
     // ★5/★4 のレースを 1 件ずつ大きなカードで描画
@@ -936,23 +936,7 @@
     // ── 本体 (card-enter-stagger で子要素がぬるっと入場)
     const body = el("div", { class: "decision-body card-enter-stagger" });
 
-    // (0) Wave24: 「今日いちばん買う 1 点」+ ティア — 1 行に統合 (重複削除)
-    const tierEmoji = "";
-    const tierColor = tier === "ultra" ? "gold" : tier === "prime" ? "gold" : tier === "go" ? "turf" : tier === "cond" ? "sky" : "mute";
-    const tierMsg = tier === "ultra" ? "抜けた1強・本命の勝率がいちばん高い" :
-                    tier === "prime" ? "堅い本命・勝率が高い予想" :
-                    tier === "go"    ? "本命やや堅め・中心はこの馬" :
-                    tier === "cond"  ? "混戦ぎみ・本命中心の予想" :
-                                        "大混戦・本命の自信は控えめ";
-    const overline = el("div", { class: `today-best-overline today-best-${tierColor}` },
-      el("div", { class: "tbo-emoji" }, tierEmoji),
-      el("div", { class: "tbo-stack" },
-        el("div", { class: "tbo-eyebrow" }, "本命予想"),
-        el("div", { class: "tbo-headline" }, tierMsg)
-      ),
-      el("div", { class: "tbo-tier-pill" }, tierTitle(tier))
-    );
-    body.appendChild(overline);
+    // (0) 2026-07-02: ごちゃつく「本命予想」帯は撤去。ティアは上のヘッダ帯に表示ずみ。
 
     // (1) 場名 (デカ) + R + 馬場・距離 + Countdown
     const headline = el("div", { class: "decision-headline" });
@@ -976,66 +960,73 @@
     headline.appendChild(cd);
     body.appendChild(headline);
 
-    // Wave24: 順序を「何を買うか最優先」に並び替え
-    //   (1) 本命3頭シルク → (2) 買い目 5 点 → (3) ステータス → (4) 補足 (折りたたみ)
+    // ★2026-07-02 全面「見やすく」: 「これを買えばいい」を大きく先頭に。
+    //   むずかしい数字(期待値・信頼度・検証)は下の「くわしく見る」に隠す。
 
-    // (1) 本命馬を「勝負服馬番タグ」で大型表示
+    // (1) 本命 3 頭を勝負服タグで大きく表示
     if (race.topPick) {
       const silkRow = renderSilkPickRow(race, tier);
       if (silkRow) body.appendChild(silkRow);
-      // ★なぜこの本命か(やさしい言葉・正直に)
-      const why = buildHonmeiReason(race);
-      if (why) {
-        body.appendChild(el("div", { class: "honmei-why",
-          style: "margin:6px 0 2px;padding:10px 12px;border-radius:10px;background:rgba(120,90,30,.14);border-left:3px solid var(--c-gold,#d8a23a);font-size:13px;line-height:1.7;color:var(--c-ink,#eadfc6)" },
-          el("span", { style: "font-weight:800;color:var(--c-gold,#e0b24a);margin-right:6px" }, "なぜこの本命？"),
-          why
-        ));
-      }
     }
 
-    // (2) 買い目 (主軸/本命/押さえ/保険・最大 5 点) — 結論カード内で最重要
-    const buyBox = buildBuyBox(race, tier);
-    if (buyBox) body.appendChild(buyBox);
+    // (2) ★主役: 「この買い方がおすすめ」— どの券種がお得か・当たりやすさ付きで大きく
+    const reco = buildRecommendedBuys(race, tier);
+    if (reco) body.appendChild(reco);
 
-    // (2.5) ★連系・3連系の「正直な的中率」(ディスカウントHarville＋実測較正)
-    //   ワイド/3連複が“だいたい何回に1回当たるか”を本物の数字で。儲け保証ではない。
-    const exoticBox = buildExoticBox(race);
-    if (exoticBox) body.appendChild(exoticBox);
-
-    // (2.6) ★うまみ候補(直前オッズ由来・割安かもしれない組合せ)。検証中＝保証なし。
-    const umamiBox = buildUmamiBox(race);
-    if (umamiBox) body.appendChild(umamiBox);
-
-    // (3) BigStat 3 列: 1着の確率 / 3着以内の確率(複勝) / 期待値
-    //   ★正直な2つの確率(勝率・3着内率)を主役に。3着内率は較正表の実測値なので「当たった感」が出る。
-    const stats = el("div", { class: "bigstat-grid" });
-    const ev = race.topPick.ev;
-    const evTone = ev >= 1.5 ? "gold" : ev >= 1.1 ? "go" : ev >= 0.95 ? "ink" : "mute";
-    const probPct = (race.topPick.prob ?? 0) * 100;
-    const probTone = probPct >= 40 ? "go" : probPct >= 25 ? "warn" : "mute";
-    const placeRaw = race.topPick.place;
-    const placePct = Number.isFinite(placeRaw) ? placeRaw * 100 : null;
-    const placeTone = placePct >= 60 ? "go" : placePct >= 40 ? "warn" : "mute";
-    const confPct = (race.confidence ?? 0) * 100;
-    const confTone = confPct >= 60 ? "gold" : confPct >= 35 ? "go" : "mute";
-    stats.appendChild(makeBigStatDonut("1着の確率", probPct, probTone));
-    if (placePct != null) stats.appendChild(makeBigStatDonut("3着以内(複勝)", placePct, placeTone));
-    else stats.appendChild(makeBigStatBars("AI 信頼度", confPct, confTone));
-    stats.appendChild(makeBigStat("期待値", `×${ev.toFixed(2)}`, evTone, true));
-    body.appendChild(stats);
-
-    // (4) 補足情報 (Walk-forward 検証 + AI 思考プロセス) を折りたたみに集約
-    const recStats = state.recommendations?.stats;
-    const reasons = buildReasons(race);
-    const hasWf = recStats && (recStats.best || recStats.safe);
-    if (hasWf || reasons.length > 0) {
+    // (3) くわしく見る (なぜこの本命・買い目の例・的中率・うまみ・数字・AI検証) は折りたたみ
+    {
       const det = el("details", { class: "decision-suppl" });
       const sum = el("summary", { class: "decision-suppl-summary" });
       sum.appendChild(el("span", { class: "ds-arrow" }, "▶"));
-      sum.appendChild(el("span", { class: "ds-text" }, "AI の根拠を見る (検証データ・思考プロセス)"));
+      sum.appendChild(el("span", { class: "ds-text" }, "くわしく見る（買い目の例・数字・AI の根拠）"));
       det.appendChild(sum);
       const dbody = el("div", { class: "decision-suppl-body" });
+
+      // なぜこの本命か(やさしい言葉・正直に)
+      if (race.topPick) {
+        const why = buildHonmeiReason(race);
+        if (why) {
+          dbody.appendChild(el("div", { class: "honmei-why",
+            style: "margin:6px 0 2px;padding:10px 12px;border-radius:10px;background:rgba(120,90,30,.14);border-left:3px solid var(--c-gold,#d8a23a);font-size:13px;line-height:1.7;color:var(--c-ink,#eadfc6)" },
+            el("span", { style: "font-weight:800;color:var(--c-gold,#e0b24a);margin-right:6px" }, "なぜこの本命？"),
+            why
+          ));
+        }
+      }
+
+      // 買い目の例 (主軸/本命/押さえ/保険・最大 5 点)
+      const buyBox = buildBuyBox(race, tier);
+      if (buyBox) dbody.appendChild(buyBox);
+
+      // 連系・3連系の「正直な的中率」(ディスカウントHarville＋実測較正)
+      const exoticBox = buildExoticBox(race);
+      if (exoticBox) dbody.appendChild(exoticBox);
+
+      // うまみ候補(直前オッズ由来・検証中＝保証なし)
+      const umamiBox = buildUmamiBox(race);
+      if (umamiBox) dbody.appendChild(umamiBox);
+
+      // 数字 3 列: 1着の確率 / 3着以内(複勝) / 期待値
+      const stats = el("div", { class: "bigstat-grid" });
+      const ev = race.topPick.ev;
+      const evTone = ev >= 1.5 ? "gold" : ev >= 1.1 ? "go" : ev >= 0.95 ? "ink" : "mute";
+      const probPct = (race.topPick.prob ?? 0) * 100;
+      const probTone = probPct >= 40 ? "go" : probPct >= 25 ? "warn" : "mute";
+      const placeRaw = race.topPick.place;
+      const placePct = Number.isFinite(placeRaw) ? placeRaw * 100 : null;
+      const placeTone = placePct >= 60 ? "go" : placePct >= 40 ? "warn" : "mute";
+      const confPct = (race.confidence ?? 0) * 100;
+      const confTone = confPct >= 60 ? "gold" : confPct >= 35 ? "go" : "mute";
+      stats.appendChild(makeBigStatDonut("1着の確率", probPct, probTone));
+      if (placePct != null) stats.appendChild(makeBigStatDonut("3着以内(複勝)", placePct, placeTone));
+      else stats.appendChild(makeBigStatBars("AI 信頼度", confPct, confTone));
+      stats.appendChild(makeBigStat("期待値", `×${ev.toFixed(2)}`, evTone, true));
+      dbody.appendChild(stats);
+
+      // Walk-forward 検証 + AI 思考プロセス
+      const recStats = state.recommendations?.stats;
+      const reasons = buildReasons(race);
+      const hasWf = recStats && (recStats.best || recStats.safe);
 
       // Walk-forward
       if (hasWf) {
@@ -1441,6 +1432,83 @@
     if (race.hasOverpop) out.push("上位人気馬に「過剰人気」を検知 — 妙味の高い穴馬あり");
     if (race.hasUnderval) out.push("人気薄に「過小評価」を検知 — オッズが付きすぎている");
     return out;
+  }
+
+  // ★2026-07-02 「これを買えばいい」を大きく1枚で。どの券種がお得か・当たりやすさ(実測)付き。
+  //   むずかしい数字は使わず、かたく/お得/大きく の券種を大きく提示する。
+  function buildRecommendedBuys(race, tier) {
+    const tp = race.topPick;
+    if (!tp) return null;
+    const baseAmt = (tier === "ultra") ? 1000 : (tier === "prime") ? 600 : (tier === "go") ? 500 : 300;
+    const nm = (p) => scrubName(p && p.name, "");
+    const opts = [];
+
+    // ① かたく当てる = 複勝(本命)。当たりやすさは実測(place calibration)。
+    const placePct = Number.isFinite(tp.place) ? Math.round(tp.place * 100) : null;
+    opts.push({
+      tag: "かたく当てたいなら", ticket: "複勝",
+      pick: `${tp.number}番 ${nm(tp)}`.trim(),
+      note: "本命が3着以内に入れば当たり",
+      rate: placePct, amount: baseAmt, tone: "go",
+    });
+
+    // ② お得をねらう = ワイド(本命-対抗)。当たりやすさは実測(exotic.wide)。無ければ馬連。
+    if (race.exotic && race.exotic.wide && race.exotic.wide.pair) {
+      const [a, b] = race.exotic.wide.pair;
+      opts.push({
+        tag: "お得をねらうなら", ticket: "ワイド", pick: `${a}-${b}番`,
+        note: "この2頭がどちらも3着以内",
+        rate: Number.isFinite(race.exotic.wide.rate) ? Math.round(race.exotic.wide.rate * 100) : null,
+        amount: baseAmt, tone: "gold",
+      });
+    } else if (race.second) {
+      opts.push({
+        tag: "お得をねらうなら", ticket: "馬連",
+        pick: `${tp.number}-${race.second.number}番`,
+        note: "この2頭で1・2着(順番自由)",
+        rate: null, amount: baseAmt, tone: "gold",
+      });
+    }
+
+    // ③ 自信のある日(ultra/prime)かつ3連複データがあれば「大きく狙う」
+    if ((tier === "ultra" || tier === "prime") && race.exotic && race.exotic.trio && race.exotic.trio.combo) {
+      const [a, b, c] = race.exotic.trio.combo;
+      opts.push({
+        tag: "大きく狙うなら", ticket: "3連複", pick: `${a}-${b}-${c}番`,
+        note: "上位3頭で1・2・3着(順番自由)",
+        rate: Number.isFinite(race.exotic.trio.rate) ? Math.round(race.exotic.trio.rate * 100) : null,
+        amount: baseAmt, tone: "gold",
+      });
+    }
+
+    if (!opts.length) return null;
+
+    const box = el("div", { class: "reco-buy" });
+    box.appendChild(el("div", { class: "reco-buy-head" }, "この買い方がおすすめ"));
+    const list = el("div", { class: "reco-buy-list" });
+    opts.forEach((o) => {
+      const row = el("div", { class: `reco-opt reco-${o.tone}` });
+      row.appendChild(el("div", { class: "reco-tag" }, o.tag));
+      const main = el("div", { class: "reco-main" });
+      main.appendChild(el("span", { class: "reco-ticket" }, o.ticket));
+      main.appendChild(el("span", { class: "reco-pick" }, o.pick));
+      row.appendChild(main);
+      if (o.note) row.appendChild(el("div", { class: "reco-note" }, o.note));
+      const foot = el("div", { class: "reco-foot" });
+      if (o.rate != null) {
+        foot.appendChild(el("span", { class: "reco-rate" },
+          el("span", { class: "reco-rate-label" }, "当たりやすさ "),
+          el("b", null, `約${o.rate}%`)
+        ));
+      }
+      foot.appendChild(el("span", { class: "reco-amt" }, `おすすめ ${fmtYen(o.amount)}円`));
+      row.appendChild(foot);
+      list.appendChild(row);
+    });
+    box.appendChild(list);
+    box.appendChild(el("div", { class: "reco-honest" },
+      "※「当たりやすさ」は過去の本当の結果で確かめた数字です。馬券は平均マイナスなので、当たっても長い目では儲けは出にくい＝遊べる範囲で。"));
+    return box;
   }
 
   function buildBuyBox(race, tier) {
