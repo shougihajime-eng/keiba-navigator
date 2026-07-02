@@ -832,6 +832,79 @@
     }
   }
 
+  // ─── ③損を減らす規律: 今月の予算まもり (2026-07-02) ─────────
+  //   月の予算を決めて「使った/残り/使いすぎ」を大きく表示。使いすぎを止めるのが長期の勝ち方。
+  const MONTH_BUDGET_KEY = "keiba_month_budget";
+  function setMonthBudget(v) {
+    localStorage.setItem(MONTH_BUDGET_KEY, String(v));
+    renderBudgetGuard();
+    toast(`今月の予算を ¥${fmtYen(v)} にしました`);
+  }
+  function askMonthBudget(current) {
+    const raw = prompt("月にいくらまで遊ぶか、円で入れてください（例: 15000）。空欄で予算を消します。", current ? String(current) : "");
+    if (raw == null) return;
+    if (String(raw).trim() === "") { localStorage.removeItem(MONTH_BUDGET_KEY); renderBudgetGuard(); toast("予算を消しました"); return; }
+    const v = parseInt(String(raw).replace(/[^0-9]/g, ""), 10);
+    if (Number.isFinite(v) && v >= 1000) setMonthBudget(v);
+    else toast("1000 円以上で入れてください");
+  }
+  function renderBudgetGuard() {
+    const mount = $("#budget-mount");
+    if (!mount) return;
+    const budget = parseInt(localStorage.getItem(MONTH_BUDGET_KEY), 10) || 0;
+    const ym = todayJst().slice(0, 7);
+    const spent = state.bets
+      .filter((b) => (b.date || "").slice(0, 7) === ym)
+      .reduce((a, b) => a + (b.amount || 0), 0);
+
+    mount.innerHTML = "";
+    const card = el("section", { class: "budget-guard" });
+    card.appendChild(el("div", { class: "bg-head" },
+      el("span", { class: "bg-icon" }, "🛡"),
+      el("span", { class: "bg-title" }, "今月の予算まもり"),
+      el("span", { class: "bg-sub" }, "使いすぎない＝長い目で勝つコツ")
+    ));
+
+    // 予算 未設定 → 決めてもらう
+    if (!budget) {
+      card.appendChild(el("div", { class: "bg-ask" }, "月にいくらまで遊ぶか決めましょう（使いすぎ防止）"));
+      const btns = el("div", { class: "bg-preset" });
+      [3000, 10000, 20000, 30000].forEach((v) => {
+        btns.appendChild(el("button", { class: "bg-preset-btn", onclick: () => setMonthBudget(v) }, `${fmtYen(v)}円`));
+      });
+      btns.appendChild(el("button", { class: "bg-preset-btn bg-custom", onclick: () => askMonthBudget(0) }, "自分で"));
+      card.appendChild(btns);
+      mount.appendChild(card);
+      return;
+    }
+
+    const remain = budget - spent;
+    const pct = Math.min(100, Math.round((spent / budget) * 100));
+    const over = spent > budget;
+    const near = !over && pct >= 80;
+    const tone = over ? "over" : near ? "near" : "ok";
+
+    const bar = el("div", { class: `bg-bar tone-${tone}` });
+    bar.appendChild(el("div", { class: "bg-bar-fill", style: `width:${pct}%` }));
+    card.appendChild(bar);
+
+    const grid = el("div", { class: "bg-grid" });
+    grid.appendChild(el("div", { class: "bg-cell" }, el("div", { class: "l" }, "今月 使った"), el("div", { class: "v" }, `¥${fmtYen(spent)}`)));
+    grid.appendChild(el("div", { class: "bg-cell" }, el("div", { class: "l" }, "予算"), el("div", { class: "v" }, `¥${fmtYen(budget)}`)));
+    grid.appendChild(el("div", { class: `bg-cell ${over ? "is-over" : ""}` }, el("div", { class: "l" }, "残り"), el("div", { class: "v" }, over ? `−¥${fmtYen(-remain)}` : `¥${fmtYen(remain)}`)));
+    card.appendChild(grid);
+
+    const msg = over ? "⛔ 今月は予算オーバー。ここで止めるのが“損を減らす勝ち方”です。来月まで見送りましょう。"
+              : near ? "⚠ 予算の8割を使いました。ここからは特に自信のあるレースだけに絞りましょう。"
+              :        "✅ 予算内です。見送りも立派な勝ちの判断。あせらず絶好機だけ狙いましょう。";
+    card.appendChild(el("div", { class: `bg-msg tone-${tone}` }, msg));
+
+    const perRace = Math.max(100, Math.floor((budget * 0.03) / 100) * 100);
+    card.appendChild(el("div", { class: "bg-perrace" }, `1レースの目安：¥${fmtYen(perRace)}（予算の3%）。大きく賭けるほど早く尽きます。`));
+    card.appendChild(el("button", { class: "bg-change", onclick: () => askMonthBudget(budget) }, "予算を変える"));
+    mount.appendChild(card);
+  }
+
   // ─── ブロックC: 収支サマリー (今日 / 7日 / 累計) ─────────
   // 累計回収率 100% 以上で緑・未満で赤に色分け。
   function renderProfitSummary() {
@@ -3072,6 +3145,7 @@
       memoRender("honmeiRecord", [state.honmeiLog], renderHonmeiRecord);
       memoRender("reflect", [state.bets], renderRecentMiss);
       memoRender("profit", [state.bets], renderProfitSummary);
+      memoRender("budget", [state.bets, todayJst()], renderBudgetGuard);
       // ── 折りたたみセクション群 ──
       memoRender("autostatus", [state.autostatus, minuteBucket], renderAutostatus);
       memoRender("mlstatus", [state.mlStatus], renderMlStatus);

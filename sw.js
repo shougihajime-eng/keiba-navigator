@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v74"; // 見やすさ全面改修: 上に「この買い方がおすすめ」を大きく(券種別の当たりやすさ付き)+むずかしい数字は折りたたみへ (7/2)
+const CACHE_VERSION = "keiba-nav-v75"; // ③損を減らす規律: 「今月の予算まもり」(使いすぎ防止・使った/残り/警告) を追加 (7/2)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

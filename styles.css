@@ -8164,3 +8164,31 @@ main .hideable:last-of-type { border-bottom: 1px solid var(--hair) !important; }
 .reco-amt{margin-left:auto;font-size:15px;font-weight:800;color:#e4c77e}
 .reco-honest{margin-top:10px;font-size:11px;line-height:1.6;color:#9a8f75}
 @media(max-width:480px){.reco-ticket{font-size:20px}.reco-pick{font-size:17px}.reco-amt{margin-left:0}}
+
+/* ★2026-07-02 ③損を減らす規律: 今月の予算まもり */
+.budget-guard{margin:12px 0 6px;padding:14px;border-radius:16px;background:linear-gradient(180deg,rgba(24,28,24,.92),rgba(16,18,16,.94));border:1px solid rgba(120,150,120,.35);box-shadow:0 6px 20px rgba(0,0,0,.32)}
+.bg-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.bg-icon{font-size:18px}
+.bg-title{font-size:16px;font-weight:900;color:#cfe6cf}
+.bg-sub{font-size:11.5px;color:#8fa08f;margin-left:auto}
+.bg-ask{font-size:14px;color:#eadfc6;margin-bottom:10px;font-weight:700}
+.bg-preset{display:flex;gap:8px;flex-wrap:wrap}
+.bg-preset-btn{flex:1;min-width:72px;padding:12px 8px;border-radius:11px;border:1px solid rgba(150,170,150,.4);background:rgba(120,160,120,.12);color:#dff0df;font-size:15px;font-weight:800;cursor:pointer}
+.bg-preset-btn:active{filter:brightness(.9)}
+.bg-preset-btn.bg-custom{background:rgba(255,255,255,.05);color:#cfd6cf}
+.bg-bar{height:14px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:10px}
+.bg-bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#5aaa78,#7fce9f);transition:width .4s ease}
+.bg-bar.tone-near .bg-bar-fill{background:linear-gradient(90deg,#c99a3a,#e4c77e)}
+.bg-bar.tone-over .bg-bar-fill{background:linear-gradient(90deg,#b04a4a,#e07c7c)}
+.bg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.bg-cell{padding:8px;border-radius:10px;background:rgba(255,255,255,.03);text-align:center}
+.bg-cell .l{font-size:11px;color:#9aa89a;margin-bottom:3px}
+.bg-cell .v{font-size:18px;font-weight:900;color:#eef4ee}
+.bg-cell.is-over .v{color:#e88}
+.bg-msg{font-size:13px;line-height:1.6;padding:9px 11px;border-radius:10px;font-weight:700}
+.bg-msg.tone-ok{background:rgba(90,170,120,.14);color:#a7e0bd}
+.bg-msg.tone-near{background:rgba(201,154,58,.16);color:#e8c882}
+.bg-msg.tone-over{background:rgba(176,74,74,.18);color:#f0b3b3}
+.bg-perrace{font-size:11.5px;color:#8fa08f;margin-top:8px;line-height:1.6}
+.bg-change{margin-top:10px;width:100%;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#cfd6cf;font-size:13px;font-weight:700;cursor:pointer}
+.bg-change:active{filter:brightness(.9)}
