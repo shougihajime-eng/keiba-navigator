@@ -8192,3 +8192,7 @@ main .hideable:last-of-type { border-bottom: 1px solid var(--hair) !important; }
 .bg-perrace{font-size:11.5px;color:#8fa08f;margin-top:8px;line-height:1.6}
 .bg-change{margin-top:10px;width:100%;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#cfd6cf;font-size:13px;font-weight:700;cursor:pointer}
 .bg-change:active{filter:brightness(.9)}
+
+/* ★2026-07-02 規律もう一歩: 予算オーバー時のおすすめ表示 */
+.reco-overbudget{margin:2px 0 10px;padding:9px 11px;border-radius:10px;background:rgba(176,74,74,.18);border:1px solid rgba(200,90,90,.4);color:#f0b3b3;font-size:12.5px;line-height:1.6;font-weight:700}
+.reco-amt-skip{margin-left:auto;font-size:14px;font-weight:800;color:#e88}

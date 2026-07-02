@@ -835,6 +835,23 @@
   // ─── ③損を減らす規律: 今月の予算まもり (2026-07-02) ─────────
   //   月の予算を決めて「使った/残り/使いすぎ」を大きく表示。使いすぎを止めるのが長期の勝ち方。
   const MONTH_BUDGET_KEY = "keiba_month_budget";
+  // 予算の状態(今月 使った/残り/オーバー/1レース上限)を1か所で計算
+  function monthBudgetState() {
+    const budget = parseInt(localStorage.getItem(MONTH_BUDGET_KEY), 10) || 0;
+    const ym = todayJst().slice(0, 7);
+    const spent = state.bets
+      .filter((b) => (b.date || "").slice(0, 7) === ym)
+      .reduce((a, b) => a + (b.amount || 0), 0);
+    const over = budget > 0 && spent >= budget;
+    const perRaceCap = budget > 0 ? Math.max(100, Math.floor((budget * 0.03) / 100) * 100) : 0;
+    return { budget, spent, remain: budget - spent, over, perRaceCap };
+  }
+  // おすすめ金額: ティア基準額を、予算がある時は「1レース上限(予算の3%)」で頭打ちにする
+  function suggestStake(tier) {
+    const base = (tier === "ultra") ? 1000 : (tier === "prime") ? 600 : (tier === "go") ? 500 : 300;
+    const b = monthBudgetState();
+    return b.budget > 0 ? Math.min(base, b.perRaceCap) : base;
+  }
   function setMonthBudget(v) {
     localStorage.setItem(MONTH_BUDGET_KEY, String(v));
     renderBudgetGuard();
@@ -1512,7 +1529,7 @@
   function buildRecommendedBuys(race, tier) {
     const tp = race.topPick;
     if (!tp) return null;
-    const baseAmt = (tier === "ultra") ? 1000 : (tier === "prime") ? 600 : (tier === "go") ? 500 : 300;
+    const baseAmt = suggestStake(tier);
     const nm = (p) => scrubName(p && p.name, "");
     const opts = [];
 
@@ -1558,6 +1575,10 @@
 
     const box = el("div", { class: "reco-buy" });
     box.appendChild(el("div", { class: "reco-buy-head" }, "この買い方がおすすめ"));
+    const bstate = monthBudgetState();
+    if (bstate.over) {
+      box.appendChild(el("div", { class: "reco-overbudget" }, "⛔ 今月は予算オーバー。買わずに見送るのが“損を減らす勝ち方”です。"));
+    }
     const list = el("div", { class: "reco-buy-list" });
     opts.forEach((o) => {
       const row = el("div", { class: `reco-opt reco-${o.tone}` });
@@ -1574,7 +1595,11 @@
           el("b", null, `約${o.rate}%`)
         ));
       }
-      foot.appendChild(el("span", { class: "reco-amt" }, `おすすめ ${fmtYen(o.amount)}円`));
+      if (bstate.over) {
+        foot.appendChild(el("span", { class: "reco-amt reco-amt-skip" }, "今月は見送り"));
+      } else {
+        foot.appendChild(el("span", { class: "reco-amt" }, `おすすめ ${fmtYen(o.amount)}円`));
+      }
       row.appendChild(foot);
       list.appendChild(row);
     });
@@ -1635,7 +1660,7 @@
     const tp = race.topPick, s2 = race.second, s3 = race.third;
     if (!tp) return items;
     // 信頼性ティアで金額を調整
-    const baseAmt = (tier === "ultra") ? 1000 : (tier === "prime") ? 600 : (tier === "go") ? 500 : 300;
+    const baseAmt = suggestStake(tier);
     items.push({
       role: "◎ 主軸 単勝", combo: String(tp.number), name: tp.name || "",
       amount: baseAmt, odds: tp.odds,
@@ -2930,6 +2955,17 @@
     if (!race) { toast("レース名を入れてください"); return; }
     if (!pick) { toast("買い目を入れてください"); return; }
     if (!Number.isFinite(amount) || amount <= 0) { toast("金額を正しく入れてください"); return; }
+    // ★③損を減らす規律: 今月の予算を超える新規支出は、記録前に一度止めて確認する
+    const _bs = monthBudgetState();
+    const _thisMonth = date.slice(0, 7) === todayJst().slice(0, 7);
+    if (_bs.budget > 0 && _thisMonth && (_bs.spent + amount) > _bs.budget) {
+      const ok = confirm(
+        `今月の予算 ¥${fmtYen(_bs.budget)} を超えます。\n` +
+        `今月すでに ¥${fmtYen(_bs.spent)} 使っています。\n\n` +
+        `“使いすぎない”のが長い目で勝つコツです。\nそれでも記録しますか？`
+      );
+      if (!ok) { toast("記録をやめました（見送りも勝ちです）"); return; }
+    }
     const bet = {
       id: Date.now() + Math.floor(Math.random() * 1000),
       date, race, type, pick, amount,
@@ -2942,6 +2978,7 @@
     $("#modal-add-bet").hidden = true;
     toast(result === "hit" ? "的中を記録しました!" : "購入を記録しました");
     renderHistory();
+    renderBudgetGuard(); // 予算まもりを最新化 (使った額・残り)
     // Wave22.8: 的中なら紙吹雪 + ファンファーレ
     if (result === "hit" && window.kbEffects) {
       try { window.kbEffects.fireConfetti({ count: 130, duration: 3800 }); } catch {}
