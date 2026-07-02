@@ -855,12 +855,14 @@
   function setMonthBudget(v) {
     localStorage.setItem(MONTH_BUDGET_KEY, String(v));
     renderBudgetGuard();
+    renderBudgetAlert();
+    renderDecisionCard(); // おすすめ金額が予算に連動するので予想カードも更新
     toast(`今月の予算を ¥${fmtYen(v)} にしました`);
   }
   function askMonthBudget(current) {
     const raw = prompt("月にいくらまで遊ぶか、円で入れてください（例: 15000）。空欄で予算を消します。", current ? String(current) : "");
     if (raw == null) return;
-    if (String(raw).trim() === "") { localStorage.removeItem(MONTH_BUDGET_KEY); renderBudgetGuard(); toast("予算を消しました"); return; }
+    if (String(raw).trim() === "") { localStorage.removeItem(MONTH_BUDGET_KEY); renderBudgetGuard(); renderBudgetAlert(); renderDecisionCard(); toast("予算を消しました"); return; }
     const v = parseInt(String(raw).replace(/[^0-9]/g, ""), 10);
     if (Number.isFinite(v) && v >= 1000) setMonthBudget(v);
     else toast("1000 円以上で入れてください");
@@ -920,6 +922,29 @@
     card.appendChild(el("div", { class: "bg-perrace" }, `1レースの目安：¥${fmtYen(perRace)}（予算の3%）。大きく賭けるほど早く尽きます。`));
     card.appendChild(el("button", { class: "bg-change", onclick: () => askMonthBudget(budget) }, "予算を変える"));
     mount.appendChild(card);
+  }
+
+  // ★③損を減らす規律: 予算が8割超/オーバーの時だけ、画面上部に大きく警告(普段は非表示=画面スッキリ)
+  function renderBudgetAlert() {
+    const mount = $("#budget-alert-mount");
+    if (!mount) return;
+    const b = monthBudgetState();
+    if (!b.budget || (!b.over && b.spent / b.budget < 0.8)) { mount.hidden = true; mount.innerHTML = ""; return; }
+    mount.hidden = false;
+    mount.innerHTML = "";
+    const banner = el("div", { class: `budget-alert ${b.over ? "is-over" : "is-near"}`,
+      onclick: () => { const t = $("#budget-mount"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); } });
+    banner.appendChild(el("span", { class: "ba-icon" }, b.over ? "⛔" : "⚠"));
+    const txt = el("div", { class: "ba-txt" });
+    if (b.over) {
+      txt.appendChild(el("div", { class: "ba-title" }, "今月は予算オーバーです"));
+      txt.appendChild(el("div", { class: "ba-sub" }, `予算を ¥${fmtYen(-b.remain)} 超えています。今日は買わずに見送りましょう＝損を止めるのが勝ち。`));
+    } else {
+      txt.appendChild(el("div", { class: "ba-title" }, `今月あと ¥${fmtYen(b.remain)} です`));
+      txt.appendChild(el("div", { class: "ba-sub" }, "予算の8割を使いました。ここからは特に自信のあるレースだけに絞りましょう。"));
+    }
+    banner.appendChild(txt);
+    mount.appendChild(banner);
   }
 
   // ─── ブロックC: 収支サマリー (今日 / 7日 / 累計) ─────────
@@ -2979,6 +3004,8 @@
     toast(result === "hit" ? "的中を記録しました!" : "購入を記録しました");
     renderHistory();
     renderBudgetGuard(); // 予算まもりを最新化 (使った額・残り)
+    renderBudgetAlert(); // 上部の警告バナーも更新
+    renderDecisionCard(); // 予算オーバーならおすすめを「見送り」に切替
     // Wave22.8: 的中なら紙吹雪 + ファンファーレ
     if (result === "hit" && window.kbEffects) {
       try { window.kbEffects.fireConfetti({ count: 130, duration: 3800 }); } catch {}
@@ -3177,6 +3204,7 @@
       memoRender("staleAlert", [state.races, state.autostatus?.predictionsComputedAt, minuteBucket], renderStaleAlert);
       memoRender("morning", [state.races.length, state.recommendations?.recommendations_recent?.length, todayJst()], renderMorningSummary);
       memoRender("topwin", [state.bets], renderTopWinBanner);
+      memoRender("budgetAlert", [state.bets, todayJst()], renderBudgetAlert);
       // ── トップ3ブロック (リニューアル後の本体) ──
       memoRender("decision", [state.racesLast, state.bets, minuteBucket], renderDecisionCard);
       memoRender("honmeiRecord", [state.honmeiLog], renderHonmeiRecord);

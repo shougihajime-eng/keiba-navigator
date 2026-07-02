@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v76"; // 規律もう一歩: おすすめ金額を予算に連動+予算オーバーで記録を止める確認+見送り表示 (7/2)
+const CACHE_VERSION = "keiba-nav-v77"; // 予算まもり強化: 8割超/オーバーの時だけ画面上部に大きく警告バナー (7/2)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",
