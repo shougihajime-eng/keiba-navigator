@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-02T23:05:34.299107+00:00",
+  "generatedAt": "2026-07-03T09:33:00.644575+00:00",
   "todayJst": "2026-07-03",
   "strategies_def": [
     {
@@ -1356,6 +1356,63 @@
   },
   "recommendations_today": [],
   "recommendations_recent": [
+    {
+      "race_id": "202607040201070500",
+      "race_name": null,
+      "course": "函館ダ1000",
+      "distance": 1000,
+      "going": null,
+      "weather": null,
+      "is_g1": false,
+      "hassou_time": "1210",
+      "strategies": [
+        "value_stack_uren",
+        "value_stack_fuku",
+        "value_double",
+        "value_uren_hot",
+        "value_invest",
+        "big",
+        "safe"
+      ],
+      "horse": {
+        "number": 4,
+        "name": "ロゼハイスクール",
+        "win_prob": 0.2,
+        "nopop_prob": 0.248554,
+        "value_signal": 0.048554,
+        "odds": null,
+        "popularity": null,
+        "ev": null,
+        "rank_nopop": 1
+      },
+      "top3": [
+        {
+          "number": 1,
+          "name": "リキサンステラ",
+          "win_prob": 0.2,
+          "odds": null,
+          "popularity": null
+        },
+        {
+          "number": 2,
+          "name": "リアルクウカイ",
+          "win_prob": 0.2,
+          "odds": null,
+          "popularity": null
+        },
+        {
+          "number": 3,
+          "name": "ダマスク",
+          "win_prob": 0.2,
+          "odds": null,
+          "popularity": null
+        }
+      ],
+      "top3_prob_sum": 0.6000000000000001,
+      "race_date": "2026-07-04",
+      "predicted_at": "2026-07-03T09:31:04.098856+00:00",
+      "model_auc": 0.819532941947334
+    },
     {
       "race_id": "202606281002021200",
       "race_name": null,
@@ -4199,90 +4256,31 @@
       "race_date": "2026-06-27",
       "predicted_at": "2026-07-02T23:04:51.470847+00:00",
       "model_auc": 0.819532941947334
-    },
-    {
-      "race_id": "202606270302010600",
-      "race_name": null,
-      "course": "福島ダ1150",
-      "distance": 1150,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1300",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest",
-        "big",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 10,
-        "name": "マリノエスプレッソ",
-        "win_prob": 0.050593,
-        "nopop_prob": 0.163243,
-        "value_signal": 0.11265,
-        "odds": 62.0,
-        "popularity": 8,
-        "ev": 3.1368,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 9,
-          "name": "ムーンベリル",
-          "win_prob": 0.340706,
-          "odds": 1.5,
-          "popularity": 1
-        },
-        {
-          "number": 2,
-          "name": "エランヴィータ",
-          "win_prob": 0.154991,
-          "odds": 4.6,
-          "popularity": 2
-        },
-        {
-          "number": 5,
-          "name": "エコロメジャー",
-          "win_prob": 0.101323,
-          "odds": 6.6,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.59702,
-      "race_date": "2026-06-27",
-      "predicted_at": "2026-07-02T23:04:51.428768+00:00",
-      "model_auc": 0.819532941947334
     }
   ],
   "recommendations_fallback": [],
   "count_today": 0,
-  "count_recent": 483,
+  "count_recent": 242,
   "count_fallback": 0,
-  "total_predictions": 3948,
+  "total_predictions": 3984,
   "fired_by_key": {
     "value_uren_turf": 471,
     "value_uren_short": 269,
     "value_uren_short_ultra": 137,
-    "value_stack_uren": 3370,
-    "value_stack_fuku": 3370,
-    "value_double": 3370,
+    "value_stack_uren": 3371,
+    "value_stack_fuku": 3371,
+    "value_double": 3371,
     "value_tan3": 977,
     "value_tan3_long": 185,
     "value_tan3_dirt_mid": 280,
     "value_uren": 977,
-    "value_uren_hot": 3370,
-    "value_invest": 3370,
+    "value_uren_hot": 3371,
+    "value_invest": 3371,
     "value_safe": 557,
-    "big": 1444,
+    "big": 1445,
     "turf": 770,
     "ultra": 1255,
     "best": 1602,
-    "safe": 2287
+    "safe": 2288
   }
 }
