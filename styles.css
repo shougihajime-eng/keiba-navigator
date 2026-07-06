@@ -7,66 +7,82 @@
    ===================================================================== */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   /* =====================================================================
-     NOIR — 真っ黒 × 細い金の高級テーマ (2026-05-31 ゼロから作り直し)
-     設計: 装飾を削ぎ落とし、漆黒の地にヘアライン金と上質な余白だけで魅せる。
-           ガラス・虹色グラデ・グロー・弾むアニメは一掃。静かで凛とした佇まい。
+     FABLE 5 — 朝焼けの和紙 × 芝の若葉 (2026-07-06 共通デザインシステム)
+     設計: はじめアプリ共通デザインシステム（Fable5・2026-07）準拠。
+           地=朝焼けの和紙 / 文字=焙じ茶の墨 / 見出し=瑠璃 / 行動=柿 /
+           好走・的中=若葉 / ごほうび=山吹。変数名は旧NOIRのまま
+           値だけ差し替え（既存8000行のCSSを壊さない alias 方式）。
      ===================================================================== */
 
-  /* === 金（ただ一つの主役・ヘアライン） === */
-  --gold:        #C9A85C;   /* 落ち着いた本物の金 */
-  --gold-bright: #E4C77E;   /* 光が当たった金（見出し・数字の主役） */
-  --gold-deep:   #9C7E3A;   /* 沈んだ金（線・縁） */
-  --gold-line:   rgba(201, 168, 92, 0.32);   /* ヘアラインの金 */
-  --gold-line-soft: rgba(201, 168, 92, 0.16);
-  --gold-soft:   rgba(201, 168, 92, 0.08);
+  /* === Fable 5 基準色（新規・上書きブロックで使用） === */
+  --washi:       #FBEDDC;   /* 朝焼けの和紙＝地色 */
+  --washi-deep:  #F5DEC2;
+  --ruri:        #3D5A96;   /* 瑠璃＝見出し・案内 */
+  --ruri-l:      #6383BC;
+  --kaki:        #E8603C;   /* 柿＝行動ボタン */
+  --kaki-d:      #C7492B;
+  --wakaba:      #43965F;   /* 若葉＝好走・的中・芝 */
+  --wakaba-d:    #2F7A4C;
+  --yamabuki:    #DD9C2B;   /* 山吹＝ごほうび（塗り・バー用） */
+  --card:        #FFFDF6;
+  --sh:   0 10px 28px rgba(150,90,40,.14);
+  --sh-l: 0 18px 46px rgba(150,90,40,.22);
 
-  /* === 旧トークン互換（既存ルールが参照するので金/白に寄せる） === */
-  --c-turf:    #9FB89C;   /* 利益などの控えめなセージグリーン */
-  --c-deep:    #B7CBB3;
+  /* === 金（ごほうびの声部・明るい和紙の上で読める深い山吹） === */
+  --gold:        #A8771D;   /* 主の金（テキスト・線） */
+  --gold-bright: #8F5F10;   /* 強調の金（大きな数字・開いた見出し） */
+  --gold-deep:   #B08A45;   /* 控えめな金（薄い注記） */
+  --gold-line:   rgba(156, 110, 46, 0.38);   /* ヘアラインの金 */
+  --gold-line-soft: rgba(156, 110, 46, 0.20);
+  --gold-soft:   rgba(221, 156, 43, 0.14);
+
+  /* === 旧トークン互換（既存ルールが参照する＝新パレットへ alias） === */
+  --c-turf:    var(--wakaba);   /* 利益・的中＝若葉 */
+  --c-deep:    var(--wakaba-d);
   --c-gold:    var(--gold-bright);
   --c-amber:   var(--gold);
-  --c-sky:     #9DB2C4;
-  --c-cyan:    #9DB2C4;
-  --c-rose:    #C98A8A;
-  --c-bad:     #C77B7B;
-  --c-warn:    var(--gold);
-  --c-violet:  #ADA3BE;
-  --c-peach:   var(--gold);
-  --c-mint:    #9FB89C;
+  --c-sky:     var(--ruri);
+  --c-cyan:    var(--ruri);
+  --c-rose:    #B4574E;
+  --c-bad:     var(--kaki-d);
+  --c-warn:    #B07818;
+  --c-violet:  #7A6B9E;
+  --c-peach:   var(--kaki);
+  --c-mint:    var(--wakaba);
 
-  /* === テキスト === 漆黒の上で読める上質な白〜グレー === */
-  --c-ink:        #F1EFEA;   /* 見出し・主役（わずかに暖色の白） */
-  --c-ink-soft:   #C3C2BD;   /* 本文 */
-  --c-ink-mute:   #8E8D88;   /* 補足 */
-  --c-ink-dim:    #5E5D59;   /* ごく薄い注記 */
+  /* === テキスト === 和紙の上で読める焙じ茶の墨 === */
+  --c-ink:        #463527;   /* 見出し・主役（焙じ茶の墨） */
+  --c-ink-soft:   #5F4A38;   /* 本文 */
+  --c-ink-mute:   #947B62;   /* 補足 */
+  --c-ink-dim:    #B39C85;   /* ごく薄い注記 */
 
-  /* === 背景トークン === 漆黒・フラットな黒い面（ガラスをやめる） === */
-  --c-bg:         #060606;
-  --c-bg-card:    #0C0C0D;
-  --c-bg-elev:    #111112;
-  --c-bg-soft:    rgba(255, 255, 255, 0.035);
-  --c-bg-chip:    rgba(255, 255, 255, 0.05);
-  --c-bg-panel:   #0A0A0B;
+  /* === 背景トークン === 朝焼けの和紙・白いカード面 === */
+  --c-bg:         var(--washi);
+  --c-bg-card:    var(--card);
+  --c-bg-elev:    #FFF6E8;
+  --c-bg-soft:    rgba(70, 53, 39, 0.045);
+  --c-bg-chip:    rgba(70, 53, 39, 0.06);
+  --c-bg-panel:   #FDF4E6;
 
   /* === 軟質色 === */
-  --c-turf-soft:  rgba(159, 184, 156, 0.10);
+  --c-turf-soft:  rgba(67, 150, 95, 0.12);
   --c-gold-soft:  var(--gold-soft);
-  --c-sky-soft:   rgba(157, 178, 196, 0.10);
-  --c-rose-soft:  rgba(201, 138, 138, 0.10);
+  --c-sky-soft:   rgba(61, 90, 150, 0.10);
+  --c-rose-soft:  rgba(199, 73, 43, 0.10);
 
-  /* === 罫線 === 髪の毛のような細い線 === */
-  --hair:        rgba(255, 255, 255, 0.08);
-  --hair-strong: rgba(255, 255, 255, 0.14);
+  /* === 罫線 === 墨のうすい線 === */
+  --hair:        rgba(70, 53, 39, 0.14);
+  --hair-strong: rgba(70, 53, 39, 0.26);
 
-  /* === 影 === ほぼ無し。奥行きは黒で出す === */
-  --shadow-card:  0 1px 0 0 rgba(255,255,255,0.03) inset,
-                  0 16px 40px -24px rgba(0,0,0,0.9);
-  --shadow-hero:  0 1px 0 0 rgba(255,255,255,0.04) inset,
-                  0 24px 60px -30px rgba(0,0,0,0.95);
+  /* === 影 === やわらかい夕陽の影 === */
+  --shadow-card:  0 1px 0 0 rgba(255,255,255,0.65) inset,
+                  0 10px 28px rgba(150,90,40,0.14);
+  --shadow-hero:  0 1px 0 0 rgba(255,255,255,0.7) inset,
+                  0 18px 46px rgba(150,90,40,0.20);
   --shadow-gold:  0 0 0 1px var(--gold-line),
-                  0 24px 60px -30px rgba(0,0,0,0.95);
+                  0 18px 46px rgba(150,90,40,0.20);
 
   /* === イージング === 弾みを消して静かに === */
   --ease-spring: cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -85,22 +101,22 @@
 html, body {
   margin: 0;
   padding: 0;
-  font-family: "Inter", "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-feature-settings: "palt", "ss01";
+  font-family: "Zen Maru Gothic", "Inter", "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-feature-settings: "palt";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--c-ink);
-  background: #060606;
+  background: var(--washi);
   min-height: 100vh;
   overscroll-behavior-y: none;
   letter-spacing: 0.01em;
 }
 
-/* 漆黒の地。装飾は無し。上端にだけ金のひと刷毛をごく薄く。 */
+/* 朝焼けの和紙の地。上端に杏色の朝焼け・下は落ち着いた和紙。 */
 body {
   background:
-    radial-gradient(120% 50% at 50% -20%, rgba(201, 168, 92, 0.06) 0%, transparent 60%),
-    #060606;
+    radial-gradient(120% 56% at 50% -20%, var(--washi-deep) 0%, rgba(245, 222, 194, 0) 62%),
+    var(--washi);
   background-attachment: fixed;
 }
 
@@ -3387,11 +3403,11 @@ details[open] .details-summary .details-arrow { transform: rotate(90deg); }
 /* =====================================================================
    Wave22.1 — 背景メッシュの彩度UP (白すぎ問題の解消)
    ===================================================================== */
-/* NOIR: 旧Wave22.1の虹色メッシュは廃止。漆黒のまま。 */
+/* FABLE5: 旧Wave22.1の虹色メッシュは廃止。朝焼けの和紙のまま。 */
 body {
   background:
-    radial-gradient(120% 50% at 50% -20%, rgba(201, 168, 92, 0.06) 0%, transparent 60%),
-    #060606 !important;
+    radial-gradient(120% 56% at 50% -20%, var(--washi-deep) 0%, rgba(245, 222, 194, 0) 62%),
+    var(--washi) !important;
   background-attachment: fixed !important;
 }
 body::after { content: none !important; display: none !important; }
@@ -8207,3 +8223,531 @@ main .hideable:last-of-type { border-bottom: 1px solid var(--hair) !important; }
 .budget-alert.is-over .ba-title{color:#f2b6b6}
 .budget-alert.is-near .ba-title{color:#ecca85}
 .ba-sub{font-size:12px;line-height:1.6;color:#dccfb8;margin-top:3px}
+
+/* =====================================================================
+   ░░░ FABLE 5 — 朝焼けの和紙 ░░░ (2026-07-06 最終上書きブロック)
+   はじめアプリ共通デザインシステム（Fable5・2026-07）準拠の全面刷新。
+   ・地 = 朝焼けの和紙 #FBEDDC / 文字 = 焙じ茶の墨 #463527
+   ・見出し = 瑠璃 (Kaisei Decol) / 行動ボタン = 柿 / 的中・芝 = 若葉
+   ・ごほうびの数字 = 深い山吹 (Inter・桁ぶれしない等幅数字)
+   ・:root トークンは新パレットへ差し替え済み。ここでは NOIR 各ブロックが
+     ハードコードしていた漆黒・白ヘアラインだけを後勝ちで明るく直す。
+   ・JS が参照する id / class は一切変更しない（見た目のみ）。
+   ===================================================================== */
+
+/* ── F1. 書体 — 見出しは Kaisei Decol・本文は Zen Maru Gothic ── */
+body, button, input, select, textarea {
+  font-family: "Zen Maru Gothic", "Inter", "Noto Sans JP", system-ui, sans-serif;
+}
+.brand-title, .bm-logo-text,
+.nm-title, h1.nm-title,
+.decision-tier-label, .venue-display,
+.section-head .title, .sec-title h2,
+.win5-head .title, .noday-title,
+.noday-display .big, .h-title,
+.modal-head .title, .battle-title,
+.stale-alert-title, .reco-buy-head,
+.imminent-flash .if-text, .start-flash .sf-text,
+.wsc-leg, h1, h2, h3 {
+  font-family: "Kaisei Decol", "Zen Maru Gothic", serif !important;
+  font-weight: 700 !important;
+  font-style: normal !important;
+}
+
+/* 数字（オッズ・確率・期待値・時刻）は等幅で桁をそろえる */
+.num, .nm-meta, .nm-meta b,
+.bigstat .val, .donut-num,
+.countdown .big, .countdown-small,
+.race-row .time, .race-row .time .hh,
+.race-row .ev .num-big,
+.big-roi, .strat-trust-card .big-roi,
+.spr-prob, .spr-card.is-main .spr-prob, .spr-odds,
+.pl-ev, .buy-item .combo, .buy-item.is-main .combo,
+.next-date-cell .day, .noday-next-card .next-date-cell .day,
+.wsc-prob-pct, .win5-strategy .stake,
+.reco-rate b, .reco-amt,
+.bg-cell .v, .profit-cell .val,
+.mega-eval, .race-number, .rb-medal,
+.ai-process-step .idx,
+.hideable-summary::before {
+  font-family: "Inter", "Zen Maru Gothic", sans-serif !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  font-style: normal !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* ── F2. 地 — 写真の漆黒ベールを撤去し、朝焼けの和紙に ── */
+body::before { content: none !important; display: none !important; }
+::selection { background: rgba(232, 96, 60, 0.22); color: var(--c-ink); }
+::-webkit-scrollbar-track { background: rgba(70, 53, 39, 0.05); }
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 110, 46, 0.4) !important;
+  border-radius: 5px;
+}
+html { overflow-x: hidden; }
+body { word-break: keep-all; overflow-wrap: anywhere; }
+
+/* ── F3. 見出しの声部 — 瑠璃 (見出し・案内) ── */
+.section-head .title, .sec-title h2,
+.h-title, .modal-head .title, .battle-title { color: var(--ruri) !important; }
+.hideable[open] .h-title { color: var(--ruri) !important; }
+.nm-title, h1.nm-title { color: var(--c-ink) !important; }
+.nm-title b { color: var(--ruri) !important; }
+.noir-mast .nm-emblem { color: var(--wakaba); opacity: 0.95; }
+.sec-title .bar, .brand-tag .bar, .decision-prelabel .pl-bar {
+  background: var(--wakaba) !important;
+}
+
+/* ── F4. signature — ゴール前の芝ラインを駆けるサラブレッド (1点のみ) ── */
+.nm-signature {
+  margin: 10px auto 0;
+  width: min(260px, 74%);
+  line-height: 0;
+  opacity: 0.97;
+}
+.nm-signature svg { width: 100%; height: auto; display: block; overflow: visible; }
+.nm-signature .sig-horse { color: var(--c-ink); }
+.nm-signature .sig-turf { fill: var(--wakaba); opacity: 0.88; }
+.nm-signature .sig-rail {
+  stroke: #FFFDF6; stroke-width: 1.3;
+  stroke-dasharray: 7 6; stroke-linecap: round; opacity: 0.95;
+}
+.nm-signature .sig-pole { fill: var(--kaki-d); }
+.nm-signature .sig-dot { fill: var(--kaki); }
+
+/* ── F5. カードの面 — 漆黒ハードコードを白いカードへ ── */
+.decision-card, .win5-card, .section-card {
+  box-shadow: var(--sh) !important;
+}
+.decision-card,
+.decision-card.tier-gold {
+  background: linear-gradient(180deg, #FFFDF6 0%, #FDF5E6 100%) !important;
+  border: 1px solid var(--gold-line) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--sh-l) !important;
+}
+.noday-hero {
+  background: linear-gradient(180deg, #FFFDF6 0%, #FBF1DE 100%) !important;
+  border: 1px solid var(--gold-line-soft) !important;
+  box-shadow: var(--sh-l) !important;
+}
+.morning-toast, .topwin-banner {
+  background: linear-gradient(180deg, #FFFDF6, #FBF3E2) !important;
+  box-shadow: var(--sh) !important;
+}
+.strat-trust-card,
+.strat-trust-card.trusted, .strat-trust-card.stable,
+.strat-trust-card.mixed, .strat-trust-card.risky,
+.ml-rec-card, .ml-rec-card.is-possible,
+.race-row.tier-go, .race-row.tier-cond, .race-row.tier-best, .race-row.tier-none,
+.win5-strategy, .win5-strategy.is-recommended,
+.win5-story-card,
+.modal-card, .toast, .details-card {
+  background: var(--card) !important;
+}
+.strat-trust-card:hover { box-shadow: var(--sh-l) !important; }
+.modal-card {
+  border: 1px solid var(--hair-strong) !important;
+  box-shadow: 0 30px 80px -30px rgba(110, 70, 30, 0.45) !important;
+}
+.modal-mask { background: rgba(70, 53, 39, 0.42) !important; }
+.toast {
+  border: 1px solid var(--gold-line) !important;
+  color: var(--c-ink) !important;
+  box-shadow: var(--sh-l) !important;
+}
+
+/* 白い光のうす膜 (rgba白) は白地では見えない → 墨・若葉のうす膜に */
+.buy-box,
+.tier-gold .buy-box, .tier-go .buy-box,
+.tier-cond .buy-box, .tier-best .buy-box {
+  background: rgba(67, 150, 95, 0.06) !important;
+  border: 1px solid rgba(67, 150, 95, 0.28) !important;
+}
+.buy-item, .buy-item.is-main,
+.tier-gold .buy-item.is-main {
+  background: var(--card) !important;
+  border: 1px solid var(--hair) !important;
+}
+.ml-strat.is-win, .ml-strat.is-close, .ml-strat.is-lose, .ml-strat.is-mute,
+.ml-possible, .add-pick-helper,
+.spr-card, .spr-card.is-main,
+.pl-row, .pl-row.pl-tier-go, .pl-row.pl-tier-cond, .pl-row.pl-tier-best,
+.cond-stats-box, .ai-process-box,
+.win5-wf-banner, .decision-suppl {
+  background: rgba(70, 53, 39, 0.035) !important;
+}
+.spr-card.is-main { background: rgba(221, 156, 43, 0.10) !important; }
+.hideable-summary:hover { background: rgba(70, 53, 39, 0.03) !important; }
+.wsc-bar { background: rgba(70, 53, 39, 0.10) !important; }
+.heart.is-off { color: rgba(70, 53, 39, 0.18) !important; }
+.race-row .ev .aim-star.off { color: rgba(70, 53, 39, 0.18) !important; }
+
+/* ── F6. ボタン — 行動は柿・案内は瑠璃 ── */
+.btn-cta-go, .btn-cta-gold {
+  background: linear-gradient(180deg, var(--kaki), var(--kaki-d)) !important;
+  color: #FFF8F0 !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 6px 18px rgba(199, 73, 43, 0.30) !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 700 !important;
+}
+.btn-cta-go:hover, .btn-cta-gold:hover {
+  background: linear-gradient(180deg, #DE5533, var(--kaki-d)) !important;
+  box-shadow: 0 8px 22px rgba(199, 73, 43, 0.38) !important;
+  border: 0 !important;
+}
+.btn-cta-info {
+  background: var(--card) !important;
+  color: var(--ruri) !important;
+  border: 1.5px solid rgba(61, 90, 150, 0.45) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+}
+.btn-cta-info:hover {
+  border-color: var(--ruri) !important;
+  background: rgba(61, 90, 150, 0.06) !important;
+  box-shadow: none !important;
+}
+.btn-cta-mute {
+  background: transparent !important;
+  color: var(--c-ink-soft) !important;
+  border: 1px solid var(--hair-strong) !important;
+}
+.btn-cta-mute:hover { background: rgba(70, 53, 39, 0.05) !important; }
+
+/* フィルタチップの選択中も柿 (押せる・選んでいるが一目) */
+.chip-filter.is-active {
+  border-color: rgba(232, 96, 60, 0.55) !important;
+  color: var(--kaki-d) !important;
+  background: rgba(232, 96, 60, 0.09) !important;
+}
+
+/* ── F7. ボトムナビ — 和紙の上のすりガラス ── */
+.bottom-nav, .bottom-nav__bar {
+  background: rgba(255, 251, 240, 0.94) !important;
+  border-top: 1px solid var(--hair) !important;
+  box-shadow: 0 -8px 26px rgba(150, 90, 40, 0.12) !important;
+}
+.bottom-nav__item { color: var(--c-ink-mute); }
+.bottom-nav__item.active, .bottom-nav__item[data-tab].active {
+  color: var(--kaki-d) !important;
+}
+.bottom-nav__item.active::before,
+.bottom-nav__item[data-tab].active::before {
+  background: var(--kaki) !important;
+}
+
+/* ── F8. 更新ボタン・引っ張って更新 ── */
+.refresh-btn {
+  background: var(--card);
+  border: 1px solid var(--gold-line);
+  color: var(--gold);
+}
+.ptr-bar .ptr-inner {
+  color: var(--gold);
+  background: var(--card);
+  border: 1px solid var(--gold-line);
+  box-shadow: var(--sh);
+}
+.ptr-bar.is-ready .ptr-inner {
+  color: #FFF8F0;
+  background: linear-gradient(135deg, var(--kaki), var(--kaki-d));
+  border-color: transparent;
+}
+
+/* ── F9. フォーム — iOSの白いお墓対策 + 和紙の入力欄 ── */
+select {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background-color: var(--card) !important;
+  color: var(--c-ink) !important;
+}
+.modal-body input[type="text"], .modal-body input[type="number"],
+.modal-body select, .modal-body textarea {
+  background: #FFFDF6 !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink) !important;
+}
+.modal-body select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23947b62' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+}
+.modal-body input:focus, .modal-body select:focus, .modal-body textarea:focus {
+  border-color: var(--ruri) !important;
+}
+
+/* フォーカスの輪は瑠璃 (キーボード操作でも迷子にならない) */
+:focus-visible { outline: 2px solid var(--ruri) !important; outline-offset: 2px; }
+.btn-cta:focus-visible, .btn-bn:focus-visible, .chip-filter:focus-visible,
+.tab:focus-visible, button:focus-visible, a:focus-visible,
+[data-gloss]:focus-visible {
+  outline: 2px solid var(--ruri) !important;
+  outline-offset: 2px;
+}
+
+/* ── F10. 緊急警告 (自動更新停止) — 明るい地でも叫ぶ緋色 ── */
+.stale-alert {
+  background: linear-gradient(180deg, #F9E1D9 0%, #F6CFC2 100%);
+  border: 1.5px solid var(--kaki-d);
+  box-shadow: 0 0 0 1px rgba(199, 73, 43, 0.20), 0 6px 24px rgba(199, 73, 43, 0.22);
+}
+.stale-alert-eyebrow { color: #A4362A; }
+.stale-alert-title { color: #8E2418; }
+.stale-alert-body { color: #6E3327; }
+.stale-alert-body strong { color: #A4362A; }
+
+/* ── F11. 「この買い方がおすすめ」— 白いカード + ごほうびの山吹 ── */
+.reco-buy {
+  background: linear-gradient(180deg, #FFFDF6, #FBF3E2);
+  border: 1px solid var(--gold-line);
+  box-shadow: var(--sh);
+}
+.reco-buy-head { color: var(--gold-bright); }
+.reco-opt { background: rgba(70, 53, 39, 0.03); border: 1px solid var(--hair); }
+.reco-opt.reco-gold { border-color: rgba(221, 156, 43, 0.55); background: rgba(221, 156, 43, 0.10); }
+.reco-opt.reco-go { border-color: rgba(67, 150, 95, 0.5); background: rgba(67, 150, 95, 0.08); }
+.reco-tag { color: var(--c-ink-mute); }
+.reco-opt.reco-gold .reco-tag { color: var(--gold); }
+.reco-opt.reco-go .reco-tag { color: var(--wakaba-d); }
+.reco-ticket { color: var(--c-ink); }
+.reco-pick { color: var(--c-ink-soft); }
+.reco-note { color: var(--c-ink-mute); }
+.reco-rate { color: var(--c-ink-soft); }
+.reco-rate-label { color: var(--c-ink-mute); }
+.reco-rate b { color: var(--ruri); }
+.reco-opt.reco-go .reco-rate b { color: var(--wakaba-d); }
+.reco-amt { color: var(--gold-bright); }
+.reco-honest { color: var(--c-ink-mute); }
+
+/* ── F12. 今月の予算まもり — 白いカード + 若葉 ── */
+.budget-guard {
+  background: linear-gradient(180deg, #FFFDF6, #F4F7EF);
+  border: 1px solid rgba(67, 150, 95, 0.4);
+  box-shadow: var(--sh);
+}
+.bg-title { color: var(--wakaba-d); }
+.bg-sub { color: var(--c-ink-mute); }
+.bg-ask { color: var(--c-ink); }
+.bg-preset-btn {
+  border: 1px solid rgba(67, 150, 95, 0.45);
+  background: rgba(67, 150, 95, 0.12);
+  color: var(--wakaba-d);
+}
+.bg-preset-btn.bg-custom { background: rgba(70, 53, 39, 0.05); color: var(--c-ink-soft); }
+.bg-bar { background: rgba(70, 53, 39, 0.10); }
+.bg-cell { background: rgba(70, 53, 39, 0.04); }
+.bg-cell .l { color: var(--c-ink-mute); }
+.bg-cell .v { color: var(--c-ink); }
+.bg-cell.is-over .v { color: #C0392B; }
+.bg-msg.tone-ok { background: rgba(67, 150, 95, 0.14); color: var(--wakaba-d); }
+.bg-msg.tone-near { background: rgba(221, 156, 43, 0.20); color: #8A5C16; }
+.bg-msg.tone-over { background: rgba(199, 73, 43, 0.14); color: #A4362A; }
+.bg-perrace { color: var(--c-ink-mute); }
+.bg-change {
+  border: 1px solid var(--hair-strong);
+  background: rgba(70, 53, 39, 0.04);
+  color: var(--c-ink-soft);
+}
+
+/* ── F13. 予算の警告バナー ── */
+.budget-alert { box-shadow: var(--sh); }
+.budget-alert.is-over { background: #F7DAD2; border: 1px solid rgba(199, 73, 43, 0.55); }
+.budget-alert.is-near { background: #F8E9C9; border: 1px solid rgba(176, 122, 24, 0.5); }
+.budget-alert.is-over .ba-title { color: #A4362A; }
+.budget-alert.is-near .ba-title { color: #8A5C16; }
+.ba-sub { color: #6E5A47; }
+.reco-overbudget {
+  background: rgba(199, 73, 43, 0.12);
+  border: 1px solid rgba(199, 73, 43, 0.4);
+  color: #A4362A;
+}
+.reco-amt-skip { color: #C0392B; }
+
+/* ── F14. 弱いバラ色系 (負け・危険の注意) を読める色へ ── */
+.strat-trust-card .big-roi.is-loss { color: #A4544A; }
+.strat-trust-card .trap-warn {
+  color: #9E5B52;
+  border-left-color: rgba(164, 84, 74, 0.5);
+  background: rgba(164, 84, 74, 0.07);
+}
+.rec-strat-kelly-skip {
+  border-color: rgba(180, 87, 78, 0.4) !important;
+  color: #A4544A !important;
+}
+
+/* ── F15. 発走フラッシュ — 和紙の上の朝焼けの閃光 ── */
+.imminent-flash .if-bg {
+  background: radial-gradient(circle at 50% 42%, rgba(232, 96, 60, 0.35), rgba(251, 237, 220, 0.96) 72%) !important;
+}
+.start-flash .sf-bg {
+  background: radial-gradient(circle at 50% 45%, rgba(232, 96, 60, 0.45), rgba(251, 237, 220, 0.97) 75%) !important;
+}
+.imminent-flash .if-text, .start-flash .sf-text { color: var(--kaki-d) !important; }
+.start-flash .sf-sub { color: var(--c-ink-soft) !important; }
+
+/* ── F16. こまごまの取り残し (漆黒前提の色) ── */
+.live-thin .live-dot { background: var(--wakaba) !important; }
+.decision-card, .win5-card { color: var(--c-ink); }
+.buy-item .return, .tier-gold .buy-item .return { color: var(--wakaba-d) !important; }
+.text-grad-gold, .shimmer-text {
+  -webkit-text-fill-color: var(--gold-bright) !important;
+  color: var(--gold-bright) !important;
+}
+.text-grad-turf { -webkit-text-fill-color: var(--wakaba-d) !important; color: var(--wakaba-d) !important; }
+.text-grad-sky { -webkit-text-fill-color: var(--ruri) !important; color: var(--ruri) !important; }
+
+/* ── F17. 品質フロア (スマホで絶対に崩れない) ── */
+/* 主要な押しものはタップ44px以上を保証 (小さな円形ボタン・行内チップは既存寸法を尊重) */
+.btn-cta, .bg-preset-btn, .bg-change,
+.bottom-nav__item, .hideable-summary,
+#add-submit, #w5e-apply, #w5e-cancel {
+  min-height: 44px;
+}
+.modal-close { min-width: 40px; min-height: 40px; }
+@media (prefers-reduced-motion: reduce) {
+  .nm-signature * { animation: none !important; transition: none !important; }
+}
+
+/* ── F18. 取り残しの漆黒 (追検査で発見・後勝ちで白いカードへ) ── */
+.rec-strat-card.rec-strat-mixed, .rec-strat-card.rec-strat-risky {
+  background: var(--card) !important;
+}
+.donut-ring::before { background: var(--card) !important; }
+
+/* ── F19. 旧「炭ガラス」パネル (rgba(28,32,37)) の一掃 — 白いカードへ ── */
+.predict-overlay {
+  background: var(--card) !important;
+  border: 1px solid var(--hair) !important;
+  color: var(--c-ink-soft) !important;
+  box-shadow: var(--sh) !important;
+}
+.reflect-card {
+  background: linear-gradient(180deg, #FFFDF6, #FBEEE6) !important;
+  border: 1px solid rgba(199, 73, 43, 0.22) !important;
+  box-shadow: var(--sh) !important;
+}
+.reflect-card.reflect-empty {
+  background: var(--card) !important;
+  border-color: var(--hair) !important;
+}
+.reflect-card.reflect-allwin {
+  background: linear-gradient(180deg, #FFFDF6, #F0F7EE) !important;
+  border-color: rgba(67, 150, 95, 0.3) !important;
+}
+.profit-summary,
+.pass-list-card,
+.achievements-card, .ach-badge,
+.streak-card, .streak-cell,
+.autostatus-card, .mlstatus-card, .ml-cell,
+.recommend-card, .rec-strat-card,
+.history-row, .rec-item,
+.runner-list-rich .runner-item,
+.mega-dashboard, .mega-cell {
+  background: var(--card) !important;
+  border-color: var(--hair) !important;
+  box-shadow: var(--sh) !important;
+}
+.ach-badge, .streak-cell, .ml-cell, .rec-item, .history-row, .mega-cell,
+.runner-list-rich .runner-item {
+  box-shadow: none !important;
+}
+.rc-expand {
+  background: rgba(70, 53, 39, 0.05) !important;
+  border: 1px solid var(--hair) !important;
+  color: var(--c-ink-soft) !important;
+}
+.rec-empty { background: rgba(70, 53, 39, 0.035) !important; color: var(--c-ink-mute) !important; }
+.recent-hits-list li { background: rgba(67, 150, 95, 0.08) !important; }
+.runner-item .rank-no { background: rgba(70, 53, 39, 0.07) !important; color: var(--c-ink-soft) !important; }
+.win5-body { background: transparent !important; }
+.win5-toolbar .budget-input {
+  background: #FFFDF6 !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink) !important;
+}
+.form-group input, .form-group select, .form-group textarea {
+  background: #FFFDF6 !important;
+  border: 1px solid var(--hair-strong) !important;
+  color: var(--c-ink) !important;
+}
+.details-summary { background: transparent !important; }
+.details-summary:hover { background: rgba(70, 53, 39, 0.03) !important; }
+.silk-pick-row { background: transparent !important; }
+.race-row .time { background: rgba(70, 53, 39, 0.05) !important; }
+
+/* 全レース行 — 白いカード + ティアはふちの声部で */
+.race-row {
+  background: var(--card) !important;
+  border: 1px solid var(--hair) !important;
+}
+.race-row:hover {
+  background: #FFF9EE !important;
+  border-color: rgba(67, 150, 95, 0.45) !important;
+  box-shadow: 0 8px 24px -8px rgba(67, 150, 95, 0.25) !important;
+}
+.race-row.tier-gold, .race-row.tier-prime, .race-row.tier-ultra {
+  background: linear-gradient(135deg, #FFFBEF 0%, #FBF2DC 100%) !important;
+  border-color: rgba(176, 122, 24, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(221, 156, 43, 0.18), var(--sh) !important;
+}
+@keyframes ultraRowGlow {
+  0%,100% { box-shadow: 0 0 20px -6px rgba(221, 156, 43, 0.5); }
+  50%     { box-shadow: 0 0 30px -6px rgba(221, 156, 43, 0.7); }
+}
+
+/* 収支セル (プラス=若葉 / マイナス=緋) を明るい地のまま */
+.ps-cell.is-plus {
+  background: linear-gradient(180deg, rgba(67, 150, 95, 0.14), #FFFDF6) !important;
+  border-color: rgba(67, 150, 95, 0.35) !important;
+}
+.ps-cell.is-minus {
+  background: linear-gradient(180deg, rgba(199, 73, 43, 0.10), #FFFDF6) !important;
+  border-color: rgba(199, 73, 43, 0.3) !important;
+}
+.ps-cell.is-empty { background: rgba(70, 53, 39, 0.04) !important; }
+
+/* signature: 蹄跡 (sig-horse は蹄跡方式に変更・2026-07-06) */
+.nm-signature .sig-hooves { fill: var(--c-ink); opacity: 0.55; }
+
+/* ── F20. 詳細度の高い NOIR ルールへの追い上書き (数字の等幅・黒ボタン) ── */
+/* 戦略カードの大きな回収率 % (trusted/stable/mixed/risky 全変種) */
+.strat-trust-card.trusted .big-roi, .strat-trust-card.stable .big-roi,
+.strat-trust-card.mixed .big-roi, .strat-trust-card.risky .big-roi {
+  font-family: "Inter", "Zen Maru Gothic", sans-serif !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+}
+/* 全レース行の発走時刻・期待値 (ティア変種) */
+.race-row.tier-go .time .hh, .race-row.tier-cond .time .hh,
+.race-row.tier-best .time .hh, .race-row.tier-none .time .hh,
+.race-row.tier-ultra .time .hh, .race-row.tier-prime .time .hh, .race-row.tier-gold .time .hh,
+.race-row.tier-best .ev .num-big, .race-row.tier-none .ev .num-big,
+.race-row.tier-go .ev .num-big, .race-row.tier-cond .ev .num-big,
+.race-row.tier-ultra .ev .num-big, .race-row.tier-prime .ev .num-big {
+  font-family: "Inter", "Zen Maru Gothic", sans-serif !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  font-style: normal !important;
+}
+/* 円グラフ中央の数字 (tone 変種) */
+.bigstat-donut .donut-num,
+.bigstat-donut.tone-go .donut-num, .bigstat-donut.tone-gold .donut-num,
+.bigstat-donut.tone-warn .donut-num, .bigstat-donut.tone-mute .donut-num {
+  font-family: "Inter", "Zen Maru Gothic", sans-serif !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  font-style: normal !important;
+}
+/* 答え合わせ・テレボート動線ボタン — 黒塗りをやめ、瑠璃の案内ボタンに */
+.btn-cta-answers, .btn-cta-tele {
+  background: var(--card) !important;
+  color: var(--ruri) !important;
+  border: 1.5px solid rgba(61, 90, 150, 0.45) !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+}
+.btn-cta-answers:hover, .btn-cta-tele:hover {
+  border-color: var(--ruri) !important;
+  background: rgba(61, 90, 150, 0.06) !important;
+}
