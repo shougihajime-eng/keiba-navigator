@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-09T23:06:10.395516+00:00",
+  "generatedAt": "2026-07-10T09:33:24.128492+00:00",
   "todayJst": "2026-07-10",
   "strategies_def": [
     {
@@ -1356,6 +1356,61 @@
   },
   "recommendations_today": [],
   "recommendations_recent": [
+    {
+      "race_id": "202607110201091200",
+      "race_name": null,
+      "course": "函館ダ1000",
+      "distance": 1000,
+      "going": null,
+      "weather": null,
+      "is_g1": false,
+      "hassou_time": "1605",
+      "strategies": [
+        "value_stack_uren",
+        "value_stack_fuku",
+        "value_double",
+        "value_uren_hot",
+        "value_invest"
+      ],
+      "horse": {
+        "number": 1,
+        "name": "ビップムーラン",
+        "win_prob": 0.125039,
+        "nopop_prob": 0.170498,
+        "value_signal": 0.045458,
+        "odds": null,
+        "popularity": null,
+        "ev": null,
+        "rank_nopop": 1
+      },
+      "top3": [
+        {
+          "number": 1,
+          "name": "ビップムーラン",
+          "win_prob": 0.125039,
+          "odds": null,
+          "popularity": null
+        },
+        {
+          "number": 2,
+          "name": "スパークルジョイ",
+          "win_prob": 0.125039,
+          "odds": null,
+          "popularity": null
+        },
+        {
+          "number": 3,
+          "name": "タイセイブルーム",
+          "win_prob": 0.125039,
+          "odds": null,
+          "popularity": null
+        }
+      ],
+      "top3_prob_sum": 0.37511700000000003,
+      "race_date": "2026-07-11",
+      "predicted_at": "2026-07-10T09:31:12.190627+00:00",
+      "model_auc": 0.8261780934831465
+    },
     {
       "race_id": "202607051002041200",
       "race_name": null,
@@ -4120,81 +4175,26 @@
       "race_date": "2026-07-04",
       "predicted_at": "2026-07-09T23:05:23.630655+00:00",
       "model_auc": 0.8261780934831465
-    },
-    {
-      "race_id": "202607040302030800",
-      "race_name": null,
-      "course": "福島ダ1700",
-      "distance": 1700,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1400",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest"
-      ],
-      "horse": {
-        "number": 8,
-        "name": "ヤングアメリカンズ",
-        "win_prob": 0.071735,
-        "nopop_prob": 0.202236,
-        "value_signal": 0.130501,
-        "odds": 8.9,
-        "popularity": 5,
-        "ev": 0.6384,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 1,
-          "name": "ゴーゴーパンチ",
-          "win_prob": 0.135825,
-          "odds": 6.2,
-          "popularity": 3
-        },
-        {
-          "number": 6,
-          "name": "ルシャルムール",
-          "win_prob": 0.120852,
-          "odds": 3.0,
-          "popularity": 1
-        },
-        {
-          "number": 14,
-          "name": "ベルチュガダン",
-          "win_prob": 0.090003,
-          "odds": 7.0,
-          "popularity": 4
-        }
-      ],
-      "top3_prob_sum": 0.34668,
-      "race_date": "2026-07-04",
-      "predicted_at": "2026-07-09T23:05:23.588104+00:00",
-      "model_auc": 0.8261780934831465
     }
   ],
   "recommendations_fallback": [],
   "count_today": 0,
-  "count_recent": 454,
+  "count_recent": 252,
   "count_fallback": 0,
-  "total_predictions": 4020,
+  "total_predictions": 4056,
   "fired_by_key": {
     "value_uren_turf": 401,
     "value_uren_short": 204,
     "value_uren_short_ultra": 92,
-    "value_stack_uren": 3318,
-    "value_stack_fuku": 3318,
-    "value_double": 3318,
+    "value_stack_uren": 3319,
+    "value_stack_fuku": 3319,
+    "value_double": 3319,
     "value_tan3": 795,
     "value_tan3_long": 163,
     "value_tan3_dirt_mid": 229,
     "value_uren": 795,
-    "value_uren_hot": 3318,
-    "value_invest": 3318,
+    "value_uren_hot": 3319,
+    "value_invest": 3319,
     "value_safe": 382,
     "big": 503,
     "turf": 367,

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#060606" />
+  <meta name="description" content="いちばん勝ちそうな本命を毎日 正直に予想 — KEIBA NAVIGATOR" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="KEIBA" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <title>KEIBA NAVIGATOR — 今日の注目予想</title>
+  <script>
+  /* 先行フェッチ: app.js の読み込みを待たずに API 取得を開始する (初回表示の高速化)。
+     app.js 側の api() がこの Promise を 1 回だけ消費する。 */
+  (function () {
+    try {
+      var paths = ["/api/status", "/api/races", "/api/automation-status", "/api/ml-status", "/api/recommendations"];
+      // WIN5 の URL は app.js (refreshAll) と同じ組み立て順 (mode → budget → plan) にする
+      var p = [];
+      try {
+        if (localStorage.getItem("keiba_win5_mode") === "hit") p.push("mode=hit");
+        var b = parseInt(localStorage.getItem("keiba_win5_budget"), 10);
+        if (b) p.push("budget=" + b);
+        var plan = JSON.parse(localStorage.getItem("keiba_win5_plan") || "null");
+        if (Array.isArray(plan) && plan.length === 5 && plan.every(function (n) { return typeof n === "number" && isFinite(n) && n >= 1 && n <= 8; })) {
+          p.push("plan=" + plan.join(","));
+        }
+      } catch (e) {}
+      paths.push("/api/win5" + (p.length ? "?" + p.join("&") : ""));
+      var pre = {};
+      paths.forEach(function (path) { pre[path] = fetch(path, { cache: "no-store" }); });
+      window.__apiPreload = pre;
+    } catch (e) {}
+  })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- フォント CSS は非ブロッキングで読み込む (描画を止めない・読み込み完了後に適用) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet"></noscript>
+  <link rel="stylesheet" href="styles.css">
+<style id="tap-polish">
+/* ⚡ タップを世界一クラスに（あと付け・2026-06-23 本人「全アプリに入れて」）
+   長押しメニュー抑止＋押した瞬間に反応＋押した手ごたえ。入力欄の貼り付け/選択は温存。
+   :activeは geometry不変の filter(明るさ) ＝盤の駒等が崩れない。本体の見た目/操作は壊さない。 */
+* { -webkit-touch-callout: none; }
+input, textarea { -webkit-touch-callout: default; -webkit-user-select: text; user-select: text; }
+button, a, [role="button"], summary, label, select { touch-action: manipulation; }
+@media (hover: none) {
+  button:active, [role="button"]:active { filter: brightness(0.9); transition: filter .05s ease; }
+}
+</style>
+</head>
+<body>
+
+<!-- トースト -->
+<div id="toast" class="toast" hidden></div>
+
+<!-- アプリ本体 -->
+<main class="app-root section-stack stagger">
+
+  <!-- マストヘッド (NOIR II — 紋章 + 銘 + 罫線) -->
+  <header class="brand-mini noir-mast">
+    <div class="nm-emblem" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+        <path d="M4.6 20.6C3.2 18 2.5 15.2 2.5 12.7 2.5 7.1 6.8 2.9 12 2.9s9.5 4.2 9.5 9.8c0 2.5-.7 5.3-2.1 7.9"/>
+        <path d="M4.6 20.6l2.1-.7M19.4 20.6l-2.1-.7"/>
+        <circle cx="4.9" cy="13.2" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="6" cy="8.7" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="9.3" cy="5.5" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="14.7" cy="5.5" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="18" cy="8.7" r="0.55" fill="currentColor" stroke="none"/>
+        <circle cx="19.1" cy="13.2" r="0.55" fill="currentColor" stroke="none"/>
+      </svg>
+    </div>
+    <div class="nm-word">
+      <span class="nm-rule" aria-hidden="true"></span>
+      <h1 class="nm-title"><b>競馬</b>ナビゲーター</h1>
+      <span class="nm-rule nm-rule-r" aria-hidden="true"></span>
+    </div>
+    <p class="nm-tag">勝ちそうな本命を毎日 正直に予想</p>
+    <div class="nm-meta">
+      <span class="nm-date"><b id="brand-day">--/--</b> <span id="brand-wd">(--)</span></span>
+      <span class="nm-dot" aria-hidden="true">·</span>
+      <span class="nm-m">本日 <b id="metric-races">—</b></span>
+      <span class="nm-dot" aria-hidden="true">·</span>
+      <span class="nm-m">注目予想 <b id="metric-goes">—</b></span>
+      <span class="nm-dot" aria-hidden="true">·</span>
+      <span class="nm-m">AI精度 <b id="metric-auc">—</b></span>
+    </div>
+  </header>
+
+  <!-- ライブステータス (1行細い) -->
+  <section class="live-thin">
+    <span id="live-dot" class="live-dot" aria-hidden="true"></span>
+    <span id="live-label" class="live-label is-go">LIVE</span>
+    <span class="live-meta">予想<b id="live-pred-count">—</b>R</span>
+    <span class="live-meta" id="live-updated">取得<b id="live-updated-val">—</b>前</span>
+    <span class="ai-thinking" id="ai-thinking" hidden>
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>AI思考中
+    </span>
+    <span class="learning-badge" style="margin-left:auto">学習中</span>
+    <button class="refresh-btn" id="refresh-btn" type="button" aria-label="今すぐ更新">
+      <span class="rf-icon" aria-hidden="true">↻</span>
+    </button>
+    <button class="sound-toggle is-on" id="sound-toggle" type="button" aria-label="効果音 ON/OFF">
+      <span class="st-icon" id="st-icon">ON</span>
+    </button>
+  </section>
+
+  <!-- 開催日に自動更新が死んでいる時の緊急警告 (2026-06-07 事故の再発防止) -->
+  <div id="stale-alert-mount" hidden></div>
+
+  <!-- 朝の概要トースト -->
+  <div id="morning-mount" hidden></div>
+
+  <!-- 今週の最高的中バナー -->
+  <section id="topwin-mount" hidden></section>
+
+  <!-- ③損を減らす規律: 予算オーバー/8割超のときだけ上部に大きく警告 -->
+  <div id="budget-alert-mount" hidden></div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ブロックA: 本日の勝負レース (★5 / ★4 のみ) -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="decision-mount" class="block-battle fade-in">
+    <div class="predict-overlay">
+      <span class="spinner"></span>
+      <span>AI が本日のレースを読み込んでいます…</span>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- 本命の答え合わせ (最近の成績・正直な実績) -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="honmei-record-mount" class="fade-in" hidden></section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ブロックB: 直近の反省 -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="reflect-mount" class="block-reflect fade-in"></section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ブロックC: 収支サマリー -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="summary-mount" class="block-summary fade-in"></section>
+
+  <!-- ③損を減らす規律: 今月の予算まもり (使いすぎ防止) -->
+  <section id="budget-mount" class="fade-in"></section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- ↓↓ ここから下は全部 折りたたみ ↓↓ -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="collapsibles-divider"><span>もっと見る</span></div>
+
+  <!-- 競馬ニュース (placeholder) -->
+  <details class="hideable hideable-news">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-title">競馬ニュース</span>
+      <span class="h-hint">重賞・出走馬・調教情報</span>
+    </summary>
+    <section id="news-mount" class="placeholder-section">
+      <p>このセクションは後日実装予定です。</p>
+      <p class="placeholder-sub">JRA-VAN のニュース API と連携して、重賞情報や注目馬の最新ニュースをここに表示します。</p>
+    </section>
+  </details>
+
+  <!-- 騎手ランキング (placeholder) -->
+  <details class="hideable hideable-jockey-rank">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-title">騎手ランキング</span>
+      <span class="h-hint">最近勝ってる騎手 TOP10</span>
+    </summary>
+    <section id="jockey-rank-mount" class="placeholder-section">
+      <p>このセクションは後日実装予定です。</p>
+      <p class="placeholder-sub">直近4週間で勝っている騎手をランキング表示します。</p>
+    </section>
+  </details>
+
+  <!-- 厩舎ランキング (placeholder) -->
+  <details class="hideable hideable-stable-rank">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-title">厩舎ランキング</span>
+      <span class="h-hint">最近勝ってる厩舎 TOP10</span>
+    </summary>
+    <section id="stable-rank-mount" class="placeholder-section">
+      <p>このセクションは後日実装予定です。</p>
+      <p class="placeholder-sub">直近4週間で勝っている厩舎をランキング表示します。</p>
+    </section>
+  </details>
+
+  <!-- WIN5 戦略 (日曜) -->
+  <details class="hideable hideable-win5">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-title">WIN5 戦略</span>
+      <span class="h-hint">日曜 5 レース連勝で最大 6 億円</span>
+    </summary>
+    <section id="win5-mount"></section>
+  </details>
+
+  <!-- 過去検証データ (8期間検証 + AIモデル) -->
+  <details class="hideable hideable-validation">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-title">過去検証データ</span>
+      <span class="h-hint">8 期間で検証した戦略の信頼性 + AI モデル成績</span>
+    </summary>
+    <section id="recommend-mount" class="recommend-card fade-in" hidden></section>
+    <section id="ml-status-mount" class="mlstatus-card fade-in" hidden></section>
+  </details>
+
+  <!-- 達成バッジ -->
+  <details class="hideable hideable-streak">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-title">達成バッジ と 連勝記録</span>
+      <span class="h-hint">15 種のバッジ・最近の調子</span>
+    </summary>
+    <section id="achievements-mount" class="achievements-card fade-in" hidden></section>
+    <section id="streak-mount" class="streak-card fade-in" hidden></section>
+  </details>
+
+  <!-- 自動化ステータス -->
+  <details class="hideable hideable-autostatus">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-title">自動化ステータス</span>
+      <span class="h-hint">データ取得 / 予想計算 / 本番反映 / 結果照合</span>
+    </summary>
+    <section id="automation-mount" class="autostatus-card fade-in">
+      <div class="autostatus-head">
+        <span class="autostatus-icon" aria-hidden="true">⚙</span>
+        <span class="autostatus-title">自動化ステータス</span>
+        <span id="autostatus-overall" class="autostatus-pill is-ok">確認中…</span>
+      </div>
+      <div class="autostatus-grid">
+        <div class="autostatus-cell" data-key="fetch">
+          <div class="autostatus-label">データ取得</div>
+          <div class="autostatus-value" id="autostatus-fetch">—</div>
+          <div class="autostatus-sub" id="autostatus-fetch-sub">—</div>
+        </div>
+        <div class="autostatus-cell" data-key="predict">
+          <div class="autostatus-label">予想計算</div>
+          <div class="autostatus-value" id="autostatus-predict">—</div>
+          <div class="autostatus-sub" id="autostatus-predict-sub">—</div>
+        </div>
+        <div class="autostatus-cell" data-key="deploy">
+          <div class="autostatus-label">本番反映</div>
+          <div class="autostatus-value" id="autostatus-deploy">—</div>
+          <div class="autostatus-sub" id="autostatus-deploy-sub">—</div>
+        </div>
+        <div class="autostatus-cell" data-key="finalize">
+          <div class="autostatus-label">結果照合</div>
+          <div class="autostatus-value" id="autostatus-finalize">—</div>
+          <div class="autostatus-sub" id="autostatus-finalize-sub">—</div>
+        </div>
+      </div>
+      <p class="autostatus-note" id="autostatus-note">
+        4 つすべて緑なら手動操作は不要です。
+      </p>
+    </section>
+  </details>
+
+  <!-- 全レース一覧 -->
+  <details class="hideable hideable-all-races">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-title">本日の全レース</span>
+      <span class="h-hint"><span id="all-races-count-hint">—</span> レースを一覧表示</span>
+    </summary>
+    <section id="all-races-mount" class="section-card">
+      <div class="section-head">
+        <div class="title">
+          <span class="brand-tag"><span class="bar"></span></span>
+          本日の全レース
+        </div>
+        <div class="extra"><span id="all-races-count">—</span> レース</div>
+      </div>
+      <div class="section-body">
+        <div class="all-races-toolbar">
+          <button class="chip-filter is-active" data-filter="all">全て</button>
+          <button class="chip-filter" data-filter="go">本命予想</button>
+          <button class="chip-filter" data-filter="gold">自信の予想 (勝率高め)</button>
+          <button class="chip-filter" data-filter="g1">重賞のみ</button>
+          <button class="chip-filter" data-sort="time">発走時刻順</button>
+          <button class="chip-filter" data-sort="ev">期待値順</button>
+        </div>
+        <div id="all-races-list" class="race-row-list">
+          <div class="predict-overlay" style="padding:20px"><span class="spinner"></span>読み込み中…</div>
+        </div>
+      </div>
+    </section>
+  </details>
+
+  <!-- 購入履歴 / 反省履歴 -->
+  <details class="hideable hideable-history">
+    <summary class="hideable-summary">
+      <span class="h-arrow">▶</span>
+      <span class="h-title">買ったもの と 反省履歴</span>
+      <span class="h-hint">今日 / 7 日累計 / 累計収支カーブ / 過去の反省全件</span>
+    </summary>
+    <section class="section-card">
+      <div class="section-head">
+        <div class="title">
+          <span class="brand-tag"><span class="bar"></span></span>
+          買ったもの と 反省履歴
+        </div>
+        <div class="extra">
+          <button id="btn-add-bet" class="chip-filter is-active" style="margin-right:4px">+ 手動で記録</button>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="profit-grid" id="profit-grid">
+          <div class="profit-cell"><div class="label">今日 投資</div><div class="val" id="prof-spent-today">—<small>円</small></div><div class="sub" id="prof-bought-today">— R</div></div>
+          <div class="profit-cell go"><div class="label">今日 収支</div><div class="val" id="prof-profit-today">—<small>円</small></div><div class="sub" id="prof-hit-today">的中 —</div></div>
+          <div class="profit-cell"><div class="label">7日累計 投資</div><div class="val" id="prof-spent-7d">—<small>円</small></div><div class="sub" id="prof-bought-7d">— R</div></div>
+          <div class="profit-cell go"><div class="label">7日累計 収支</div><div class="val" id="prof-profit-7d">—<small>円</small></div><div class="sub" id="prof-recovery-7d">回収率 —</div></div>
+        </div>
+        <div class="profit-chart-wrap mt-3">
+          <div class="sec-title"><span class="bar go"></span><h2>累計収支カーブ</h2></div>
+          <div id="profit-chart"></div>
+        </div>
+        <div class="mt-3">
+          <div class="sec-title"><span class="bar gold"></span><h2>最近の購入履歴</h2></div>
+          <div id="history-list" class="history-list">
+            <div style="text-align:center;padding:20px;color:var(--c-ink-soft);font-size:13px;">
+              まだ購入記録がありません。「+ 手動で記録」ボタンで追加できます。
+            </div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="sec-title"><span class="bar bad"></span><h2>過去の反省すべて</h2></div>
+          <div id="reflect-list-all" class="reflect-list-all">
+            <div style="text-align:center;padding:14px;color:var(--c-ink-soft);font-size:12px;">
+              外したレースが記録されると、ここに過去全件の反省が並びます。
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </details>
+
+</main>
+
+<!-- ボトムナビ -->
+<nav class="bottom-nav" aria-label="主要ナビゲーション">
+  <div class="bottom-nav__row">
+    <a class="bottom-nav__item active" data-tab="home" href="#home">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/>
+      </svg>
+      <span>本日</span>
+    </a>
+    <a class="bottom-nav__item" data-tab="win5" href="#win5">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2 15 8l7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6z"/>
+      </svg>
+      <span>WIN5</span>
+    </a>
+    <a class="bottom-nav__item" data-tab="history" href="#history">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+      </svg>
+      <span>履歴</span>
+    </a>
+    <a class="bottom-nav__item" data-tab="add" href="#add">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>
+      </svg>
+      <span>手動入力</span>
+    </a>
+    <!-- 「設定」タブは中身が未実装で「押しても無反応」=壊れて見えるため撤去 (2026-06-23 UX修正)。
+         通知/効果音などの設定が増えたら、ここに専用タブを戻すこと。 -->
+  </div>
+</nav>
+
+<!-- WIN5 カスタム編集モーダル -->
+<div class="modal-mask" id="modal-win5-edit" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="title">WIN5 を自分で編集</div>
+      <button class="modal-close" id="w5e-close" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body" id="w5e-body">
+      <p style="font-size:13px;color:var(--c-ink-soft);margin:0 0 12px">
+        5 つのレースそれぞれに何頭ずつ買うかを 1〜5 の範囲で決められます。<br>
+        点数 (合計の組合せ数) と費用が自動で計算されます。
+      </p>
+      <div id="w5e-races" class="flex-col gap-2"></div>
+      <div class="reason-box mt-3" id="w5e-summary"></div>
+      <div class="cta-grid mt-3">
+        <button class="btn-cta btn-cta-mute" id="w5e-cancel">キャンセル</button>
+        <button class="btn-cta btn-cta-go" id="w5e-apply">この内容で確定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- レース詳細モーダル -->
+<div class="modal-mask" id="modal-race-detail" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="title" id="md-title">レース詳細</div>
+      <button class="modal-close" id="md-close" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body" id="md-body"></div>
+  </div>
+</div>
+
+<!-- 手動入力モーダル -->
+<div class="modal-mask" id="modal-add-bet" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="title">購入を記録する</div>
+      <button class="modal-close" id="add-close" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="label">日付</label>
+        <input type="text" id="add-date" placeholder="例: 2026-05-18" />
+        <div class="hint">空欄なら今日になります</div>
+      </div>
+      <div class="form-group">
+        <label class="label">レース (会場・R)</label>
+        <input type="text" id="add-race" placeholder="例: 東京11R" />
+      </div>
+      <div class="form-group">
+        <label class="label">券種</label>
+        <select id="add-type">
+          <option value="単勝">単勝</option>
+          <option value="複勝">複勝</option>
+          <option value="馬連">馬連</option>
+          <option value="ワイド">ワイド</option>
+          <option value="馬単">馬単</option>
+          <option value="3連複">3連複</option>
+          <option value="3連単">3連単</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="label">買い目</label>
+        <input type="text" id="add-pick" placeholder="例: 7  または  3-7  または  3-7-12" />
+        <div id="add-pick-helper-mount"></div>
+      </div>
+      <div class="form-group">
+        <label class="label">投資額 (円)</label>
+        <input type="number" id="add-amount" placeholder="例: 500" min="100" step="100" />
+      </div>
+      <div class="form-group">
+        <label class="label">結果 (任意・後から記録もできます)</label>
+        <select id="add-result">
+          <option value="pending">まだ結果待ち</option>
+          <option value="hit">的中</option>
+          <option value="miss">外れ</option>
+        </select>
+      </div>
+      <div class="form-group" id="add-payout-group" hidden>
+        <label class="label">払戻金 (円)</label>
+        <input type="number" id="add-payout" placeholder="例: 1200" min="0" step="10" />
+      </div>
+      <button class="btn-cta btn-cta-go" id="add-submit" style="width:100%">この内容で記録する</button>
+    </div>
+  </div>
+</div>
+
+<script src="lib/effects.js" defer></script>
+<script src="place_calibration.js"></script>
+<script src="app.js"></script>
+<!-- decorations.js (バーチャルな馬・名馬ストリップ等の装飾) は本物志向のため停止 -->
+<!-- <script src="lib/decorations.js" defer></script> -->
+<script src="lib/glossary.js" defer></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+</script>
+
+</body>
+</html>
