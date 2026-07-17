@@ -1,24 +1,24 @@
 {
-  "races_scored": 384,
-  "base_top3_rate": 0.222,
-  "base_win_rate": 0.0739,
-  "base_n": 5194,
+  "races_scored": 456,
+  "base_top3_rate": 0.2233,
+  "base_win_rate": 0.0743,
+  "base_n": 6135,
   "min_sample": 30,
   "findings": [
     {
       "kind": "money_in",
       "label": "賢いお金が入った(オッズ急落)",
-      "n": 1543,
-      "top3_rate": 0.2819,
-      "win_rate": 0.0881,
+      "n": 1993,
+      "top3_rate": 0.2815,
+      "win_rate": 0.0913,
       "verdict": "効きそう (3着内率がベースを上回る)"
     },
     {
       "kind": "money_out",
       "label": "お金が抜けた(オッズ急騰)",
-      "n": 1299,
-      "top3_rate": 0.1647,
-      "win_rate": 0.0562,
+      "n": 1616,
+      "top3_rate": 0.1646,
+      "win_rate": 0.0532,
       "verdict": "むしろ不利"
     },
     {
@@ -32,33 +32,33 @@
     {
       "kind": "weight_up",
       "label": "馬体重が大きく増えた",
-      "n": 90,
-      "top3_rate": 0.1111,
-      "win_rate": 0.0667,
+      "n": 105,
+      "top3_rate": 0.1333,
+      "win_rate": 0.0762,
       "verdict": "むしろ不利"
     },
     {
       "kind": "weight_down",
       "label": "馬体重が大きく減った",
-      "n": 39,
-      "top3_rate": 0.1538,
-      "win_rate": 0.0256,
-      "verdict": "むしろ不利"
+      "n": 51,
+      "top3_rate": 0.1765,
+      "win_rate": 0.0196,
+      "verdict": "差が無い (効かない)"
     },
     {
       "kind": "blinker",
       "label": "ブリンカー着用",
-      "n": 674,
-      "top3_rate": 0.1973,
-      "win_rate": 0.0638,
+      "n": 798,
+      "top3_rate": 0.1942,
+      "win_rate": 0.0602,
       "verdict": "差が無い (効かない)"
     },
     {
       "kind": "rento",
       "label": "連闘(中6日以内)",
-      "n": 110,
-      "top3_rate": 0.1909,
-      "win_rate": 0.0545,
+      "n": 138,
+      "top3_rate": 0.1739,
+      "win_rate": 0.0435,
       "verdict": "差が無い (効かない)"
     },
     {
