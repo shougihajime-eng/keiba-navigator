@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-19T11:32:01.796941+00:00",
-  "todayJst": "2026-07-19",
+  "generatedAt": "2026-07-20T00:08:38.452507+00:00",
+  "todayJst": "2026-07-20",
   "strategies_def": [
     {
       "key": "value_uren_short",
@@ -1354,797 +1354,7 @@
       "risk": null
     }
   },
-  "recommendations_today": [
-    {
-      "race_id": "202607190201120100",
-      "race_name": null,
-      "course": "函館芝1200",
-      "distance": 1200,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "0950",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest",
-        "big",
-        "turf",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 4,
-        "name": "ショパンコンクール",
-        "win_prob": 0.146088,
-        "nopop_prob": 0.187361,
-        "value_signal": 0.041273,
-        "odds": 6.0,
-        "popularity": 4,
-        "ev": 0.8765,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 1,
-          "name": "ステラトップガン",
-          "win_prob": 0.297438,
-          "odds": 1.7,
-          "popularity": 1
-        },
-        {
-          "number": 8,
-          "name": "キチロクタワー",
-          "win_prob": 0.176091,
-          "odds": 5.1,
-          "popularity": 3
-        },
-        {
-          "number": 5,
-          "name": "タイフーンナイン",
-          "win_prob": 0.148078,
-          "odds": 4.9,
-          "popularity": 2
-        }
-      ],
-      "top3_prob_sum": 0.621607,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.092303+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607190302080100",
-      "race_name": null,
-      "course": "福島ダ1150",
-      "distance": 1150,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "0955",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest",
-        "big",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 1,
-        "name": "ムーンベリル",
-        "win_prob": 0.48706,
-        "nopop_prob": 0.207335,
-        "value_signal": -0.279724,
-        "odds": 1.1,
-        "popularity": 1,
-        "ev": 0.5358,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 1,
-          "name": "ムーンベリル",
-          "win_prob": 0.48706,
-          "odds": 1.1,
-          "popularity": 1
-        },
-        {
-          "number": 10,
-          "name": "ユイノキャッツアイ",
-          "win_prob": 0.198009,
-          "odds": 4.9,
-          "popularity": 2
-        },
-        {
-          "number": 2,
-          "name": "ケンシロウワールド",
-          "win_prob": 0.073501,
-          "odds": 10.8,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.75857,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.485720+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607191002080100",
-      "race_name": null,
-      "course": "小倉障2860",
-      "distance": 2860,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1005",
-      "strategies": [
-        "big",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 9,
-        "name": "アウスヴァール",
-        "win_prob": 0.34345,
-        "nopop_prob": 0.107414,
-        "value_signal": -0.236037,
-        "odds": 1.7,
-        "popularity": 1,
-        "ev": 0.5839,
-        "rank_nopop": 3
-      },
-      "top3": [
-        {
-          "number": 9,
-          "name": "アウスヴァール",
-          "win_prob": 0.34345,
-          "odds": 1.7,
-          "popularity": 1
-        },
-        {
-          "number": 8,
-          "name": "メイショウソウセキ",
-          "win_prob": 0.158572,
-          "odds": 3.0,
-          "popularity": 2
-        },
-        {
-          "number": 1,
-          "name": "ニシノクードクール",
-          "win_prob": 0.083955,
-          "odds": 18.6,
-          "popularity": 5
-        }
-      ],
-      "top3_prob_sum": 0.585977,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.881560+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607190201120200",
-      "race_name": null,
-      "course": "函館ダ1000",
-      "distance": 1000,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1020",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest",
-        "big",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 8,
-        "name": "エコロセレナ",
-        "win_prob": 0.174357,
-        "nopop_prob": 0.187392,
-        "value_signal": 0.013034,
-        "odds": 2.7,
-        "popularity": 2,
-        "ev": 0.4708,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 4,
-          "name": "ジャーナーリア",
-          "win_prob": 0.36177,
-          "odds": 2.1,
-          "popularity": 1
-        },
-        {
-          "number": 8,
-          "name": "エコロセレナ",
-          "win_prob": 0.174357,
-          "odds": 2.7,
-          "popularity": 2
-        },
-        {
-          "number": 10,
-          "name": "トルークマクト",
-          "win_prob": 0.138786,
-          "odds": 6.1,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.674913,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.123781+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607191002080200",
-      "race_name": null,
-      "course": "小倉芝1200",
-      "distance": 1200,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1040",
-      "strategies": [
-        "safe"
-      ],
-      "horse": {
-        "number": 6,
-        "name": "カルロット",
-        "win_prob": 0.211701,
-        "nopop_prob": 0.106443,
-        "value_signal": -0.105258,
-        "odds": 1.8,
-        "popularity": 1,
-        "ev": 0.3811,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 6,
-          "name": "カルロット",
-          "win_prob": 0.211701,
-          "odds": 1.8,
-          "popularity": 1
-        },
-        {
-          "number": 5,
-          "name": "ルナフィオーレ",
-          "win_prob": 0.116058,
-          "odds": 5.3,
-          "popularity": 2
-        },
-        {
-          "number": 2,
-          "name": "ハクサンテドリガワ",
-          "win_prob": 0.095271,
-          "odds": 6.0,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.42303,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.917596+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607190302080300",
-      "race_name": null,
-      "course": "福島芝1800",
-      "distance": 1800,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1100",
-      "strategies": [
-        "turf",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 8,
-        "name": "ペプチドドリーム",
-        "win_prob": 0.226614,
-        "nopop_prob": 0.107843,
-        "value_signal": -0.118771,
-        "odds": 1.9,
-        "popularity": 1,
-        "ev": 0.4306,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 8,
-          "name": "ペプチドドリーム",
-          "win_prob": 0.226614,
-          "odds": 1.9,
-          "popularity": 1
-        },
-        {
-          "number": 14,
-          "name": "シャルムグリーン",
-          "win_prob": 0.144105,
-          "odds": 4.6,
-          "popularity": 2
-        },
-        {
-          "number": 6,
-          "name": "グランマエストロ",
-          "win_prob": 0.109779,
-          "odds": 5.5,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.48049800000000004,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.552801+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607191002080400",
-      "race_name": null,
-      "course": "小倉芝2000",
-      "distance": 2000,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1140",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest",
-        "big",
-        "turf",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 11,
-        "name": "アラムシャピラス",
-        "win_prob": 0.248918,
-        "nopop_prob": 0.161828,
-        "value_signal": -0.08709,
-        "odds": 1.8,
-        "popularity": 1,
-        "ev": 0.4481,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 11,
-          "name": "アラムシャピラス",
-          "win_prob": 0.248918,
-          "odds": 1.8,
-          "popularity": 1
-        },
-        {
-          "number": 8,
-          "name": "ダンツウルス",
-          "win_prob": 0.14459,
-          "odds": 3.5,
-          "popularity": 2
-        },
-        {
-          "number": 3,
-          "name": "ホウオウモチーヴ",
-          "win_prob": 0.140616,
-          "odds": 5.9,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.534124,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.984723+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607190302080500",
-      "race_name": null,
-      "course": "福島芝2000",
-      "distance": 2000,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1220",
-      "strategies": [
-        "big",
-        "turf",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 4,
-        "name": "グランオギュール",
-        "win_prob": 0.267064,
-        "nopop_prob": 0.115798,
-        "value_signal": -0.151266,
-        "odds": 1.7,
-        "popularity": 1,
-        "ev": 0.454,
-        "rank_nopop": 2
-      },
-      "top3": [
-        {
-          "number": 4,
-          "name": "グランオギュール",
-          "win_prob": 0.267064,
-          "odds": 1.7,
-          "popularity": 1
-        },
-        {
-          "number": 9,
-          "name": "ヴェルバーニア",
-          "win_prob": 0.176544,
-          "odds": 3.5,
-          "popularity": 2
-        },
-        {
-          "number": 11,
-          "name": "エンルートフライト",
-          "win_prob": 0.099896,
-          "odds": 12.3,
-          "popularity": 4
-        }
-      ],
-      "top3_prob_sum": 0.543504,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.617931+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607191002080500",
-      "race_name": null,
-      "course": "小倉芝1800",
-      "distance": 1800,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1230",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest",
-        "big",
-        "turf",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 7,
-        "name": "ユーダブルワン",
-        "win_prob": 0.214662,
-        "nopop_prob": 0.189666,
-        "value_signal": -0.024996,
-        "odds": 3.6,
-        "popularity": 3,
-        "ev": 0.7728,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 2,
-          "name": "ツーハーツ",
-          "win_prob": 0.29448,
-          "odds": 2.1,
-          "popularity": 1
-        },
-        {
-          "number": 7,
-          "name": "ユーダブルワン",
-          "win_prob": 0.214662,
-          "odds": 3.6,
-          "popularity": 3
-        },
-        {
-          "number": 8,
-          "name": "ビエントゾンダ",
-          "win_prob": 0.203943,
-          "odds": 3.2,
-          "popularity": 2
-        }
-      ],
-      "top3_prob_sum": 0.713085,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:14.016258+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607190201120800",
-      "race_name": null,
-      "course": "函館ダ1000",
-      "distance": 1000,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1340",
-      "strategies": [
-        "big",
-        "ultra",
-        "safe"
-      ],
-      "horse": {
-        "number": 5,
-        "name": "グレイトソン",
-        "win_prob": 0.244417,
-        "nopop_prob": 0.099061,
-        "value_signal": -0.145356,
-        "odds": 6.8,
-        "popularity": 3,
-        "ev": 1.662,
-        "rank_nopop": 4
-      },
-      "top3": [
-        {
-          "number": 5,
-          "name": "グレイトソン",
-          "win_prob": 0.244417,
-          "odds": 6.8,
-          "popularity": 3
-        },
-        {
-          "number": 3,
-          "name": "イングラム",
-          "win_prob": 0.208694,
-          "odds": 2.4,
-          "popularity": 1
-        },
-        {
-          "number": 4,
-          "name": "ワイドデコラシオン",
-          "win_prob": 0.118049,
-          "odds": 5.4,
-          "popularity": 2
-        }
-      ],
-      "top3_prob_sum": 0.57116,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.321320+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607190201120900",
-      "race_name": "かもめ島特別",
-      "course": "函館芝1800",
-      "distance": 1800,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1410",
-      "strategies": [
-        "big",
-        "turf",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 9,
-        "name": "モンローウォーク",
-        "win_prob": 0.397684,
-        "nopop_prob": 0.130753,
-        "value_signal": -0.266931,
-        "odds": 1.5,
-        "popularity": 1,
-        "ev": 0.5965,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 9,
-          "name": "モンローウォーク",
-          "win_prob": 0.397684,
-          "odds": 1.5,
-          "popularity": 1
-        },
-        {
-          "number": 4,
-          "name": "アストリル",
-          "win_prob": 0.097793,
-          "odds": 5.1,
-          "popularity": 2
-        },
-        {
-          "number": 2,
-          "name": "マイスターヴェルク",
-          "win_prob": 0.092253,
-          "odds": 6.5,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.58773,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.354351+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607191002080900",
-      "race_name": "不知火特別",
-      "course": "小倉芝1800",
-      "distance": 1800,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1435",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest",
-        "big",
-        "turf",
-        "ultra",
-        "best",
-        "safe"
-      ],
-      "horse": {
-        "number": 6,
-        "name": "ゼンノインヴォーク",
-        "win_prob": 0.15083,
-        "nopop_prob": 0.200547,
-        "value_signal": 0.049717,
-        "odds": 5.3,
-        "popularity": 2,
-        "ev": 0.7994,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 3,
-          "name": "タンテドヴィーヴル",
-          "win_prob": 0.341979,
-          "odds": 1.6,
-          "popularity": 1
-        },
-        {
-          "number": 6,
-          "name": "ゼンノインヴォーク",
-          "win_prob": 0.15083,
-          "odds": 5.3,
-          "popularity": 2
-        },
-        {
-          "number": 8,
-          "name": "ユメハハテシナク",
-          "win_prob": 0.114041,
-          "odds": 10.7,
-          "popularity": 5
-        }
-      ],
-      "top3_prob_sum": 0.60685,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:14.147973+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607190302081000",
-      "race_name": "猪苗代特別",
-      "course": "福島芝2000",
-      "distance": 2000,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1455",
-      "strategies": [
-        "big",
-        "safe"
-      ],
-      "horse": {
-        "number": 4,
-        "name": "アロンズロッド",
-        "win_prob": 0.203885,
-        "nopop_prob": 0.134754,
-        "value_signal": -0.069131,
-        "odds": 2.8,
-        "popularity": 1,
-        "ev": 0.5709,
-        "rank_nopop": 2
-      },
-      "top3": [
-        {
-          "number": 4,
-          "name": "アロンズロッド",
-          "win_prob": 0.203885,
-          "odds": 2.8,
-          "popularity": 1
-        },
-        {
-          "number": 7,
-          "name": "ルールーリマ",
-          "win_prob": 0.156757,
-          "odds": 3.6,
-          "popularity": 2
-        },
-        {
-          "number": 6,
-          "name": "コスモイシュタル",
-          "win_prob": 0.155958,
-          "odds": 4.9,
-          "popularity": 4
-        }
-      ],
-      "top3_prob_sum": 0.5166000000000001,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.781936+00:00",
-      "model_auc": 0.8295821668655945
-    },
-    {
-      "race_id": "202607191002081200",
-      "race_name": "筑紫特別",
-      "course": "小倉芝1800",
-      "distance": 1800,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1630",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest",
-        "big",
-        "ultra",
-        "safe"
-      ],
-      "horse": {
-        "number": 7,
-        "name": "ミッキージャンプ",
-        "win_prob": 0.248748,
-        "nopop_prob": 0.180201,
-        "value_signal": -0.068547,
-        "odds": 2.2,
-        "popularity": 1,
-        "ev": 0.5472,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 4,
-          "name": "ロングトールサリー",
-          "win_prob": 0.266442,
-          "odds": 2.4,
-          "popularity": 2
-        },
-        {
-          "number": 7,
-          "name": "ミッキージャンプ",
-          "win_prob": 0.248748,
-          "odds": 2.2,
-          "popularity": 1
-        },
-        {
-          "number": 5,
-          "name": "フレイムスター",
-          "win_prob": 0.162459,
-          "odds": 7.5,
-          "popularity": 4
-        }
-      ],
-      "top3_prob_sum": 0.677649,
-      "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:14.245148+00:00",
-      "model_auc": 0.8295821668655945
-    }
-  ],
+  "recommendations_today": [],
   "recommendations_recent": [
     {
       "race_id": "202607191002081200",
@@ -2201,7 +1411,7 @@
       ],
       "top3_prob_sum": 0.677649,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:14.245148+00:00",
+      "predicted_at": "2026-07-20T00:07:27.047063+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2261,7 +1471,7 @@
       ],
       "top3_prob_sum": 0.60685,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:14.147973+00:00",
+      "predicted_at": "2026-07-20T00:07:26.900034+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2321,7 +1531,7 @@
       ],
       "top3_prob_sum": 0.713085,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:14.016258+00:00",
+      "predicted_at": "2026-07-20T00:07:26.703996+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2381,7 +1591,7 @@
       ],
       "top3_prob_sum": 0.534124,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.984723+00:00",
+      "predicted_at": "2026-07-20T00:07:26.656979+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2432,7 +1642,7 @@
       ],
       "top3_prob_sum": 0.42303,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.917596+00:00",
+      "predicted_at": "2026-07-20T00:07:26.556532+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2486,7 +1696,7 @@
       ],
       "top3_prob_sum": 0.585977,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.881560+00:00",
+      "predicted_at": "2026-07-20T00:07:26.504019+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2538,7 +1748,7 @@
       ],
       "top3_prob_sum": 0.5166000000000001,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.781936+00:00",
+      "predicted_at": "2026-07-20T00:07:26.358484+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2593,7 +1803,7 @@
       ],
       "top3_prob_sum": 0.543504,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.617931+00:00",
+      "predicted_at": "2026-07-20T00:07:26.072911+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2646,7 +1856,7 @@
       ],
       "top3_prob_sum": 0.48049800000000004,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.552801+00:00",
+      "predicted_at": "2026-07-20T00:07:25.915392+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2705,7 +1915,7 @@
       ],
       "top3_prob_sum": 0.75857,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.485720+00:00",
+      "predicted_at": "2026-07-20T00:07:25.832622+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2760,7 +1970,7 @@
       ],
       "top3_prob_sum": 0.58773,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.354351+00:00",
+      "predicted_at": "2026-07-20T00:07:25.681013+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2813,7 +2023,7 @@
       ],
       "top3_prob_sum": 0.57116,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.321320+00:00",
+      "predicted_at": "2026-07-20T00:07:25.640868+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2872,7 +2082,7 @@
       ],
       "top3_prob_sum": 0.674913,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.123781+00:00",
+      "predicted_at": "2026-07-20T00:07:25.388617+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2932,7 +2142,7 @@
       ],
       "top3_prob_sum": 0.621607,
       "race_date": "2026-07-19",
-      "predicted_at": "2026-07-19T11:31:13.092303+00:00",
+      "predicted_at": "2026-07-20T00:07:25.347619+00:00",
       "model_auc": 0.8295821668655945
     },
     {
@@ -2986,8 +2196,8 @@
       ],
       "top3_prob_sum": 0.556196,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:13.326048+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:25.310616+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607181002071100",
@@ -3039,8 +2249,8 @@
       ],
       "top3_prob_sum": 0.440689,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:13.294479+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:25.271105+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607181002071000",
@@ -3090,8 +2300,8 @@
       ],
       "top3_prob_sum": 0.46818,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:13.262962+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:25.215104+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607181002070800",
@@ -3150,8 +2360,8 @@
       ],
       "top3_prob_sum": 0.572412,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:13.200336+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:25.122589+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607181002070600",
@@ -3201,8 +2411,8 @@
       ],
       "top3_prob_sum": 0.520986,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:13.137219+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:25.042340+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607181002070500",
@@ -3261,8 +2471,8 @@
       ],
       "top3_prob_sum": 0.802287,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:13.105651+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:25.000824+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607181002070400",
@@ -3320,8 +2530,8 @@
       ],
       "top3_prob_sum": 0.731816,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:13.075446+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.959819+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607181002070300",
@@ -3372,8 +2582,8 @@
       ],
       "top3_prob_sum": 0.511541,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:13.045385+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.917819+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607181002070200",
@@ -3427,8 +2637,8 @@
       ],
       "top3_prob_sum": 0.6371359999999999,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:13.014448+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.866904+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180302070900",
@@ -3482,8 +2692,8 @@
       ],
       "top3_prob_sum": 0.576439,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.848067+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.670782+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180302070300",
@@ -3533,8 +2743,8 @@
       ],
       "top3_prob_sum": 0.5216620000000001,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.654453+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.434290+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180302070200",
@@ -3591,8 +2801,8 @@
       ],
       "top3_prob_sum": 0.590874,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.622498+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.395779+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180302070100",
@@ -3646,8 +2856,8 @@
       ],
       "top3_prob_sum": 0.597969,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.593456+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.356773+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180201111200",
@@ -3701,8 +2911,8 @@
       ],
       "top3_prob_sum": 0.411147,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.561461+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.316771+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180201111000",
@@ -3756,8 +2966,8 @@
       ],
       "top3_prob_sum": 0.612615,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.500105+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.237378+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180201110900",
@@ -3809,8 +3019,8 @@
       ],
       "top3_prob_sum": 0.453945,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.470100+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.194860+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180201110800",
@@ -3864,8 +3074,8 @@
       ],
       "top3_prob_sum": 0.615703,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.439056+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.116853+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180201110600",
@@ -3919,8 +3129,8 @@
       ],
       "top3_prob_sum": 0.515879,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.376503+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:24.028236+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180201110200",
@@ -3978,8 +3188,8 @@
       ],
       "top3_prob_sum": 0.548744,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.247503+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.835199+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607180201110100",
@@ -4041,8 +3251,8 @@
       ],
       "top3_prob_sum": 0.809578,
       "race_date": "2026-07-18",
-      "predicted_at": "2026-07-18T23:04:12.216415+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.793114+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607121002061100",
@@ -4093,8 +3303,8 @@
       ],
       "top3_prob_sum": 0.467181,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:12.152342+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.716732+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607121002060900",
@@ -4147,8 +3357,8 @@
       ],
       "top3_prob_sum": 0.619032,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:12.090494+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.643654+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607121002060800",
@@ -4207,8 +3417,8 @@
       ],
       "top3_prob_sum": 0.624524,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:12.059952+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.607203+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607121002060600",
@@ -4265,8 +3475,8 @@
       ],
       "top3_prob_sum": 0.670076,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.996493+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.534689+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607121002060500",
@@ -4325,8 +3535,8 @@
       ],
       "top3_prob_sum": 0.729647,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.966519+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.496178+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607121002060300",
@@ -4381,8 +3591,8 @@
       ],
       "top3_prob_sum": 0.494661,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.903611+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.419173+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607121002060200",
@@ -4433,8 +3643,8 @@
       ],
       "top3_prob_sum": 0.528517,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.871411+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.378951+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607120302061000",
@@ -4485,8 +3695,8 @@
       ],
       "top3_prob_sum": 0.504023,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.738127+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.225190+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607120302060600",
@@ -4537,8 +3747,8 @@
       ],
       "top3_prob_sum": 0.465493,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.610530+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:23.053152+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607120302060400",
@@ -4588,8 +3798,8 @@
       ],
       "top3_prob_sum": 0.53588,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.546510+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:22.971637+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607120302060300",
@@ -4641,8 +3851,8 @@
       ],
       "top3_prob_sum": 0.49903,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.515672+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:22.930637+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607120302060200",
@@ -4695,8 +3905,8 @@
       ],
       "top3_prob_sum": 0.530212,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.481571+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:22.891125+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607120201101200",
@@ -4753,8 +3963,8 @@
       ],
       "top3_prob_sum": 0.689843,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.418672+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:22.805110+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607120201100800",
@@ -4807,8 +4017,8 @@
       ],
       "top3_prob_sum": 0.5088159999999999,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.290640+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:22.652050+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607120201100700",
@@ -4866,8 +4076,8 @@
       ],
       "top3_prob_sum": 0.634421,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.258095+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:22.615408+00:00",
+      "model_auc": 0.8295821668655945
     },
     {
       "race_id": "202607120201100600",
@@ -4921,13 +4131,13 @@
       ],
       "top3_prob_sum": 0.522519,
       "race_date": "2026-07-12",
-      "predicted_at": "2026-07-18T23:04:11.226828+00:00",
-      "model_auc": 0.8296679147341605
+      "predicted_at": "2026-07-20T00:07:22.579880+00:00",
+      "model_auc": 0.8295821668655945
     }
   ],
   "recommendations_fallback": [],
-  "count_today": 14,
-  "count_recent": 222,
+  "count_today": 0,
+  "count_recent": 377,
   "count_fallback": 0,
   "total_predictions": 4164,
   "fired_by_key": {
