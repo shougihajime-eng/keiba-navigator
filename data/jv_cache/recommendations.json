@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-25T00:31:24.583757+00:00",
+  "generatedAt": "2026-07-25T01:36:46.733184+00:00",
   "todayJst": "2026-07-25",
   "strategies_def": [
     {
@@ -1377,40 +1377,40 @@
       "horse": {
         "number": 6,
         "name": "エコロメジャー",
-        "win_prob": 0.116634,
+        "win_prob": 0.121875,
         "nopop_prob": 0.220925,
-        "value_signal": 0.104291,
-        "odds": 6.8,
+        "value_signal": 0.09905,
+        "odds": 7.2,
         "popularity": 3,
-        "ev": 0.7931,
+        "ev": 0.8775,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 5,
           "name": "エルダークローネ",
-          "win_prob": 0.257923,
-          "odds": 2.0,
+          "win_prob": 0.269366,
+          "odds": 1.9,
           "popularity": 1
         },
         {
           "number": 1,
           "name": "レッドネビュラ",
-          "win_prob": 0.223339,
-          "odds": 2.6,
+          "win_prob": 0.245963,
+          "odds": 2.5,
           "popularity": 2
         },
         {
           "number": 3,
           "name": "アースグリッパー",
-          "win_prob": 0.171417,
-          "odds": 8.3,
+          "win_prob": 0.152876,
+          "odds": 8.5,
           "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.652679,
+      "top3_prob_sum": 0.6682049999999999,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.676665+00:00",
+      "predicted_at": "2026-07-25T01:32:55.881311+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1428,45 +1428,47 @@
         "value_double",
         "value_uren_hot",
         "value_invest",
-        "big"
+        "big",
+        "ultra",
+        "safe"
       ],
       "horse": {
         "number": 10,
         "name": "レゾルーティオ",
-        "win_prob": 0.19141,
+        "win_prob": 0.235257,
         "nopop_prob": 0.19228,
-        "value_signal": 0.000869,
-        "odds": 2.6,
+        "value_signal": -0.042977,
+        "odds": 2.2,
         "popularity": 1,
-        "ev": 0.4977,
+        "ev": 0.5176,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 2,
           "name": "フルーツバスケット",
-          "win_prob": 0.199558,
-          "odds": 3.3,
+          "win_prob": 0.243644,
+          "odds": 2.8,
           "popularity": 2
         },
         {
           "number": 10,
           "name": "レゾルーティオ",
-          "win_prob": 0.19141,
-          "odds": 2.6,
+          "win_prob": 0.235257,
+          "odds": 2.2,
           "popularity": 1
         },
         {
           "number": 7,
           "name": "ノシェリー",
-          "win_prob": 0.130697,
-          "odds": 5.8,
+          "win_prob": 0.111607,
+          "odds": 6.2,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.521665,
+      "top3_prob_sum": 0.590508,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.270448+00:00",
+      "predicted_at": "2026-07-25T01:32:52.318710+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1486,46 +1488,45 @@
         "value_invest",
         "big",
         "ultra",
-        "best",
         "safe"
       ],
       "horse": {
         "number": 7,
         "name": "カレンココナ",
-        "win_prob": 0.192349,
+        "win_prob": 0.227746,
         "nopop_prob": 0.174336,
-        "value_signal": -0.018013,
-        "odds": 4.2,
-        "popularity": 2,
-        "ev": 0.8079,
+        "value_signal": -0.053409,
+        "odds": 3.8,
+        "popularity": 3,
+        "ev": 0.8654,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "カッサンドラ",
-          "win_prob": 0.254779,
-          "odds": 1.9,
+          "win_prob": 0.230181,
+          "odds": 2.3,
           "popularity": 1
-        },
-        {
-          "number": 5,
-          "name": "アイビーミャーオ",
-          "win_prob": 0.202412,
-          "odds": 4.4,
-          "popularity": 3
         },
         {
           "number": 7,
           "name": "カレンココナ",
-          "win_prob": 0.192349,
-          "odds": 4.2,
+          "win_prob": 0.227746,
+          "odds": 3.8,
+          "popularity": 3
+        },
+        {
+          "number": 5,
+          "name": "アイビーミャーオ",
+          "win_prob": 0.225221,
+          "odds": 3.3,
           "popularity": 2
         }
       ],
-      "top3_prob_sum": 0.64954,
+      "top3_prob_sum": 0.683148,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:55.873739+00:00",
+      "predicted_at": "2026-07-25T01:32:49.256652+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1545,40 +1546,91 @@
       "horse": {
         "number": 11,
         "name": "ブレイクアウェイ",
-        "win_prob": 0.231869,
+        "win_prob": 0.240829,
         "nopop_prob": 0.154532,
-        "value_signal": -0.077337,
-        "odds": 2.0,
+        "value_signal": -0.086298,
+        "odds": 1.9,
         "popularity": 1,
-        "ev": 0.4637,
+        "ev": 0.4576,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 11,
           "name": "ブレイクアウェイ",
-          "win_prob": 0.231869,
-          "odds": 2.0,
+          "win_prob": 0.240829,
+          "odds": 1.9,
           "popularity": 1
         },
         {
-          "number": 1,
-          "name": "エアロクリスタ",
-          "win_prob": 0.102289,
-          "odds": 6.6,
+          "number": 9,
+          "name": "レッドレヴェリー",
+          "win_prob": 0.128271,
+          "odds": 5.7,
           "popularity": 2
         },
         {
           "number": 2,
           "name": "タガノレクシア",
-          "win_prob": 0.101997,
-          "odds": 7.7,
+          "win_prob": 0.108209,
+          "odds": 6.9,
           "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.436155,
+      "top3_prob_sum": 0.477309,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.713076+00:00",
+      "predicted_at": "2026-07-25T01:32:56.029974+00:00",
+      "model_auc": 0.8284750151164771
+    },
+    {
+      "race_id": "202607250402010200",
+      "race_name": null,
+      "course": "新潟ダ1200",
+      "distance": 1200,
+      "going": null,
+      "weather": null,
+      "is_g1": false,
+      "hassou_time": "1020",
+      "strategies": [
+        "big"
+      ],
+      "horse": {
+        "number": 4,
+        "name": "ピウモッソ",
+        "win_prob": 0.180365,
+        "nopop_prob": 0.07924,
+        "value_signal": -0.101125,
+        "odds": 3.3,
+        "popularity": 1,
+        "ev": 0.5952,
+        "rank_nopop": 2
+      },
+      "top3": [
+        {
+          "number": 4,
+          "name": "ピウモッソ",
+          "win_prob": 0.180365,
+          "odds": 3.3,
+          "popularity": 1
+        },
+        {
+          "number": 9,
+          "name": "スクワミッシュ",
+          "win_prob": 0.160047,
+          "odds": 3.5,
+          "popularity": 2
+        },
+        {
+          "number": 11,
+          "name": "イニシャルポイント",
+          "win_prob": 0.159645,
+          "odds": 4.1,
+          "popularity": 3
+        }
+      ],
+      "top3_prob_sum": 0.500057,
+      "race_date": "2026-07-25",
+      "predicted_at": "2026-07-25T01:32:52.694495+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1603,40 +1655,40 @@
       "horse": {
         "number": 5,
         "name": "ヌーンベルク",
-        "win_prob": 0.20872,
+        "win_prob": 0.187353,
         "nopop_prob": 0.214087,
-        "value_signal": 0.005368,
-        "odds": 3.9,
+        "value_signal": 0.026735,
+        "odds": 3.6,
         "popularity": 2,
-        "ev": 0.814,
+        "ev": 0.6745,
         "rank_nopop": 1
       },
       "top3": [
         {
+          "number": 4,
+          "name": "コックニー",
+          "win_prob": 0.221929,
+          "odds": 3.3,
+          "popularity": 1
+        },
+        {
           "number": 2,
           "name": "ヴィヴィアンリーチ",
-          "win_prob": 0.243387,
-          "odds": 2.4,
-          "popularity": 1
+          "win_prob": 0.201483,
+          "odds": 3.7,
+          "popularity": 3
         },
         {
           "number": 5,
           "name": "ヌーンベルク",
-          "win_prob": 0.20872,
-          "odds": 3.9,
+          "win_prob": 0.187353,
+          "odds": 3.6,
           "popularity": 2
-        },
-        {
-          "number": 4,
-          "name": "コックニー",
-          "win_prob": 0.17094,
-          "odds": 4.5,
-          "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.623047,
+      "top3_prob_sum": 0.610765,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:55.909487+00:00",
+      "predicted_at": "2026-07-25T01:32:49.439558+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1655,46 +1707,45 @@
         "value_uren_hot",
         "value_invest",
         "big",
-        "ultra",
         "safe"
       ],
       "horse": {
         "number": 10,
         "name": "プレスバーン",
-        "win_prob": 0.192065,
+        "win_prob": 0.179475,
         "nopop_prob": 0.16212,
-        "value_signal": -0.029945,
-        "odds": 3.8,
+        "value_signal": -0.017355,
+        "odds": 3.7,
         "popularity": 2,
-        "ev": 0.7298,
+        "ev": 0.6641,
         "rank_nopop": 1
       },
       "top3": [
         {
+          "number": 6,
+          "name": "コスモフィレンツェ",
+          "win_prob": 0.21192,
+          "odds": 3.7,
+          "popularity": 2
+        },
+        {
           "number": 2,
           "name": "レッドブライトン",
-          "win_prob": 0.220466,
-          "odds": 3.2,
+          "win_prob": 0.196725,
+          "odds": 2.9,
           "popularity": 1
         },
         {
           "number": 10,
           "name": "プレスバーン",
-          "win_prob": 0.192065,
-          "odds": 3.8,
+          "win_prob": 0.179475,
+          "odds": 3.7,
           "popularity": 2
-        },
-        {
-          "number": 6,
-          "name": "コスモフィレンツェ",
-          "win_prob": 0.129041,
-          "odds": 4.5,
-          "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.5415719999999999,
+      "top3_prob_sum": 0.58812,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.744558+00:00",
+      "predicted_at": "2026-07-25T01:32:56.366057+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1721,40 +1772,40 @@
       "horse": {
         "number": 1,
         "name": "トルタパスカリーナ",
-        "win_prob": 0.389794,
+        "win_prob": 0.485465,
         "nopop_prob": 0.186116,
-        "value_signal": -0.203679,
-        "odds": 1.6,
+        "value_signal": -0.299349,
+        "odds": 1.3,
         "popularity": 1,
-        "ev": 0.6237,
+        "ev": 0.6311,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 1,
           "name": "トルタパスカリーナ",
-          "win_prob": 0.389794,
-          "odds": 1.6,
+          "win_prob": 0.485465,
+          "odds": 1.3,
           "popularity": 1
-        },
-        {
-          "number": 2,
-          "name": "リーベラーリア",
-          "win_prob": 0.124844,
-          "odds": 7.3,
-          "popularity": 2
         },
         {
           "number": 7,
           "name": "プレママドンナ",
-          "win_prob": 0.107461,
-          "odds": 7.3,
+          "win_prob": 0.109447,
+          "odds": 8.5,
           "popularity": 2
+        },
+        {
+          "number": 4,
+          "name": "セプタードアイル",
+          "win_prob": 0.083014,
+          "odds": 13.1,
+          "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.622099,
+      "top3_prob_sum": 0.677926,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.336132+00:00",
+      "predicted_at": "2026-07-25T01:32:53.099328+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1772,45 +1823,46 @@
         "value_double",
         "value_uren_hot",
         "value_invest",
+        "big",
         "safe"
       ],
       "horse": {
         "number": 8,
         "name": "ブルーフレア",
-        "win_prob": 0.152626,
+        "win_prob": 0.156438,
         "nopop_prob": 0.193614,
-        "value_signal": 0.040988,
+        "value_signal": 0.037176,
         "odds": 5.6,
-        "popularity": 4,
-        "ev": 0.8547,
+        "popularity": 3,
+        "ev": 0.8761,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "ヤマメイッカ",
-          "win_prob": 0.209349,
-          "odds": 2.7,
+          "win_prob": 0.20604,
+          "odds": 2.8,
           "popularity": 1
-        },
-        {
-          "number": 8,
-          "name": "ブルーフレア",
-          "win_prob": 0.152626,
-          "odds": 5.6,
-          "popularity": 4
         },
         {
           "number": 6,
           "name": "アオイミズホ",
-          "win_prob": 0.123523,
-          "odds": 4.7,
+          "win_prob": 0.166132,
+          "odds": 3.9,
           "popularity": 2
+        },
+        {
+          "number": 8,
+          "name": "ブルーフレア",
+          "win_prob": 0.156438,
+          "odds": 5.6,
+          "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.485498,
+      "top3_prob_sum": 0.52861,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:55.940192+00:00",
+      "predicted_at": "2026-07-25T01:32:49.899169+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1823,45 +1875,47 @@
       "is_g1": false,
       "hassou_time": "1140",
       "strategies": [
+        "turf",
+        "best",
         "safe"
       ],
       "horse": {
         "number": 12,
         "name": "ファルカータ",
-        "win_prob": 0.219389,
+        "win_prob": 0.237969,
         "nopop_prob": 0.10309,
-        "value_signal": -0.116299,
-        "odds": 1.8,
+        "value_signal": -0.134879,
+        "odds": 1.7,
         "popularity": 1,
-        "ev": 0.3949,
+        "ev": 0.4045,
         "rank_nopop": 2
       },
       "top3": [
         {
           "number": 12,
           "name": "ファルカータ",
-          "win_prob": 0.219389,
-          "odds": 1.8,
+          "win_prob": 0.237969,
+          "odds": 1.7,
           "popularity": 1
         },
         {
           "number": 5,
           "name": "セコンドトゥベスト",
-          "win_prob": 0.106058,
-          "odds": 6.6,
+          "win_prob": 0.107292,
+          "odds": 7.8,
           "popularity": 2
         },
         {
-          "number": 11,
-          "name": "セルヴァジオ",
-          "win_prob": 0.08274,
-          "odds": 8.4,
+          "number": 8,
+          "name": "リアライズアリス",
+          "win_prob": 0.077418,
+          "odds": 8.8,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.40818699999999997,
+      "top3_prob_sum": 0.422679,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.813213+00:00",
+      "predicted_at": "2026-07-25T01:32:56.865372+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1883,40 +1937,40 @@
       "horse": {
         "number": 5,
         "name": "フィールドノート",
-        "win_prob": 0.186585,
+        "win_prob": 0.180846,
         "nopop_prob": 0.162641,
-        "value_signal": -0.023945,
-        "odds": 2.7,
+        "value_signal": -0.018205,
+        "odds": 2.9,
         "popularity": 1,
-        "ev": 0.5038,
+        "ev": 0.5245,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 5,
           "name": "フィールドノート",
-          "win_prob": 0.186585,
-          "odds": 2.7,
+          "win_prob": 0.180846,
+          "odds": 2.9,
           "popularity": 1
         },
         {
           "number": 7,
           "name": "オルグジェシダ",
-          "win_prob": 0.137377,
-          "odds": 4.6,
+          "win_prob": 0.136376,
+          "odds": 4.5,
           "popularity": 2
         },
         {
           "number": 10,
           "name": "ヴァリスマリネリス",
-          "win_prob": 0.134467,
-          "odds": 6.4,
+          "win_prob": 0.130331,
+          "odds": 6.6,
           "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.458429,
+      "top3_prob_sum": 0.447553,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.399667+00:00",
+      "predicted_at": "2026-07-25T01:32:53.791145+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1941,40 +1995,40 @@
       "horse": {
         "number": 5,
         "name": "トロフィアス",
-        "win_prob": 0.241125,
+        "win_prob": 0.242052,
         "nopop_prob": 0.246338,
-        "value_signal": 0.005213,
-        "odds": 3.9,
-        "popularity": 3,
-        "ev": 0.9404,
+        "value_signal": 0.004286,
+        "odds": 3.3,
+        "popularity": 2,
+        "ev": 0.7988,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "ホウオウシュウ",
-          "win_prob": 0.264888,
-          "odds": 2.4,
+          "win_prob": 0.271374,
+          "odds": 2.5,
           "popularity": 1
         },
         {
           "number": 5,
           "name": "トロフィアス",
-          "win_prob": 0.241125,
-          "odds": 3.9,
-          "popularity": 3
+          "win_prob": 0.242052,
+          "odds": 3.3,
+          "popularity": 2
         },
         {
           "number": 1,
           "name": "レガメデルヴェント",
-          "win_prob": 0.210738,
-          "odds": 3.6,
-          "popularity": 2
+          "win_prob": 0.183757,
+          "odds": 4.2,
+          "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.716751,
+      "top3_prob_sum": 0.697183,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.003294+00:00",
+      "predicted_at": "2026-07-25T01:32:50.480131+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -1995,40 +2049,40 @@
       "horse": {
         "number": 12,
         "name": "ピエナオルカ",
-        "win_prob": 0.255911,
+        "win_prob": 0.234983,
         "nopop_prob": 0.115139,
-        "value_signal": -0.140772,
-        "odds": 2.4,
+        "value_signal": -0.119844,
+        "odds": 2.3,
         "popularity": 1,
-        "ev": 0.6142,
+        "ev": 0.5405,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 12,
           "name": "ピエナオルカ",
-          "win_prob": 0.255911,
-          "odds": 2.4,
+          "win_prob": 0.234983,
+          "odds": 2.3,
           "popularity": 1
         },
         {
           "number": 7,
           "name": "オンザムービー",
-          "win_prob": 0.181709,
-          "odds": 3.2,
+          "win_prob": 0.163517,
+          "odds": 3.5,
           "popularity": 2
         },
         {
           "number": 5,
           "name": "ジェネラスキング",
-          "win_prob": 0.099846,
-          "odds": 7.2,
+          "win_prob": 0.103246,
+          "odds": 7.3,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.537466,
+      "top3_prob_sum": 0.501746,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.113048+00:00",
+      "predicted_at": "2026-07-25T01:32:51.326681+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2047,96 +2101,48 @@
         "value_uren_hot",
         "value_invest",
         "big",
+        "turf",
+        "ultra",
+        "best",
         "safe"
       ],
       "horse": {
         "number": 5,
         "name": "シニャンガ",
-        "win_prob": 0.125064,
+        "win_prob": 0.148097,
         "nopop_prob": 0.160189,
-        "value_signal": 0.035125,
-        "odds": 4.9,
-        "popularity": 3,
-        "ev": 0.6128,
+        "value_signal": 0.012092,
+        "odds": 4.3,
+        "popularity": 2,
+        "ev": 0.6368,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "ルーチェフィオーレ",
-          "win_prob": 0.218593,
-          "odds": 3.0,
+          "win_prob": 0.220998,
+          "odds": 3.2,
           "popularity": 1
         },
         {
-          "number": 4,
-          "name": "ジェルブロア",
-          "win_prob": 0.143089,
-          "odds": 4.7,
+          "number": 5,
+          "name": "シニャンガ",
+          "win_prob": 0.148097,
+          "odds": 4.3,
           "popularity": 2
         },
         {
           "number": 6,
           "name": "ラコンチャビエン",
-          "win_prob": 0.141922,
-          "odds": 6.2,
+          "win_prob": 0.134923,
+          "odds": 6.4,
           "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.5036039999999999,
+      "top3_prob_sum": 0.504018,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.144529+00:00",
-      "model_auc": 0.8284750151164771
-    },
-    {
-      "race_id": "202607250101011100",
-      "race_name": "ＴＶｈ賞",
-      "course": "札幌芝1200",
-      "distance": 1200,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1525",
-      "strategies": [
-        "safe"
-      ],
-      "horse": {
-        "number": 3,
-        "name": "サウスバンク",
-        "win_prob": 0.202147,
-        "nopop_prob": 0.107127,
-        "value_signal": -0.095019,
-        "odds": 3.3,
-        "popularity": 2,
-        "ev": 0.6671,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 3,
-          "name": "サウスバンク",
-          "win_prob": 0.202147,
-          "odds": 3.3,
-          "popularity": 2
-        },
-        {
-          "number": 7,
-          "name": "ロジケープ",
-          "win_prob": 0.137082,
-          "odds": 3.1,
-          "popularity": 1
-        },
-        {
-          "number": 10,
-          "name": "アスクケンタッキー",
-          "win_prob": 0.106579,
-          "odds": 6.7,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.445808,
-      "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.205596+00:00",
+      "predicted_at": "2026-07-25T01:32:51.411927+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2153,45 +2159,46 @@
         "value_stack_fuku",
         "value_double",
         "value_uren_hot",
-        "value_invest"
+        "value_invest",
+        "big"
       ],
       "horse": {
         "number": 9,
         "name": "ミュージシャン",
-        "win_prob": 0.157846,
+        "win_prob": 0.162999,
         "nopop_prob": 0.183482,
-        "value_signal": 0.025636,
-        "odds": 3.4,
+        "value_signal": 0.020483,
+        "odds": 2.9,
         "popularity": 1,
-        "ev": 0.5367,
+        "ev": 0.4727,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 7,
           "name": "ハーツコンチェルト",
-          "win_prob": 0.189952,
-          "odds": 3.6,
+          "win_prob": 0.186832,
+          "odds": 3.7,
           "popularity": 2
         },
         {
           "number": 9,
           "name": "ミュージシャン",
-          "win_prob": 0.157846,
-          "odds": 3.4,
+          "win_prob": 0.162999,
+          "odds": 2.9,
           "popularity": 1
         },
         {
           "number": 1,
           "name": "ミッキーゴールド",
-          "win_prob": 0.147335,
+          "win_prob": 0.150336,
           "odds": 4.0,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.495133,
+      "top3_prob_sum": 0.500167,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.884195+00:00",
+      "predicted_at": "2026-07-25T01:32:57.279003+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2212,40 +2219,40 @@
       "horse": {
         "number": 8,
         "name": "ベラジオワールド",
-        "win_prob": 0.286778,
+        "win_prob": 0.301866,
         "nopop_prob": 0.133496,
-        "value_signal": -0.153283,
-        "odds": 2.1,
+        "value_signal": -0.168371,
+        "odds": 1.9,
         "popularity": 1,
-        "ev": 0.6022,
+        "ev": 0.5735,
         "rank_nopop": 2
       },
       "top3": [
         {
           "number": 8,
           "name": "ベラジオワールド",
-          "win_prob": 0.286778,
-          "odds": 2.1,
+          "win_prob": 0.301866,
+          "odds": 1.9,
           "popularity": 1
         },
         {
           "number": 5,
           "name": "セボンサデッセ",
-          "win_prob": 0.140827,
-          "odds": 4.3,
+          "win_prob": 0.137349,
+          "odds": 4.6,
           "popularity": 2
         },
         {
           "number": 9,
           "name": "ライフゲート",
-          "win_prob": 0.130092,
-          "odds": 5.5,
+          "win_prob": 0.115692,
+          "odds": 6.2,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.557697,
+      "top3_prob_sum": 0.554907,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.239041+00:00",
+      "predicted_at": "2026-07-25T01:32:52.068834+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2264,45 +2271,46 @@
         "value_uren_hot",
         "value_invest",
         "big",
+        "ultra",
         "safe"
       ],
       "horse": {
         "number": 5,
         "name": "ブラックシャリマー",
-        "win_prob": 0.127699,
+        "win_prob": 0.091825,
         "nopop_prob": 0.202116,
-        "value_signal": 0.074417,
-        "odds": 7.8,
-        "popularity": 4,
-        "ev": 0.9961,
+        "value_signal": 0.11029,
+        "odds": 9.1,
+        "popularity": 3,
+        "ev": 0.8356,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 8,
           "name": "ロードフィレール",
-          "win_prob": 0.214238,
-          "odds": 2.5,
+          "win_prob": 0.263678,
+          "odds": 1.9,
           "popularity": 1
         },
         {
           "number": 1,
           "name": "スノースケープ",
-          "win_prob": 0.209783,
-          "odds": 3.2,
+          "win_prob": 0.240631,
+          "odds": 3.3,
           "popularity": 2
         },
         {
-          "number": 5,
-          "name": "ブラックシャリマー",
-          "win_prob": 0.127699,
-          "odds": 7.8,
-          "popularity": 4
+          "number": 3,
+          "name": "サンダーバード",
+          "win_prob": 0.096165,
+          "odds": 12.9,
+          "popularity": 6
         }
       ],
-      "top3_prob_sum": 0.55172,
+      "top3_prob_sum": 0.6004740000000001,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.913754+00:00",
+      "predicted_at": "2026-07-25T01:32:57.629688+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2325,40 +2333,94 @@
       "horse": {
         "number": 10,
         "name": "パイオニアスクエア",
-        "win_prob": 0.120326,
+        "win_prob": 0.12082,
         "nopop_prob": 0.176201,
-        "value_signal": 0.055875,
-        "odds": 4.9,
+        "value_signal": 0.055381,
+        "odds": 4.4,
         "popularity": 2,
-        "ev": 0.5896,
+        "ev": 0.5316,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 11,
           "name": "インナーパッション",
-          "win_prob": 0.219738,
-          "odds": 3.0,
+          "win_prob": 0.200207,
+          "odds": 2.7,
           "popularity": 1
         },
         {
           "number": 10,
           "name": "パイオニアスクエア",
-          "win_prob": 0.120326,
-          "odds": 4.9,
+          "win_prob": 0.12082,
+          "odds": 4.4,
           "popularity": 2
         },
         {
-          "number": 1,
-          "name": "ヴィエントデコラ",
-          "win_prob": 0.073281,
-          "odds": 9.1,
-          "popularity": 3
+          "number": 9,
+          "name": "アヴァランチ",
+          "win_prob": 0.072961,
+          "odds": 11.1,
+          "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.41334499999999996,
+      "top3_prob_sum": 0.393988,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.506073+00:00",
+      "predicted_at": "2026-07-25T01:32:54.422456+00:00",
+      "model_auc": 0.8284750151164771
+    },
+    {
+      "race_id": "202607250702011000",
+      "race_name": null,
+      "course": "中京ダ1800",
+      "distance": 1800,
+      "going": null,
+      "weather": null,
+      "is_g1": false,
+      "hassou_time": "1720",
+      "strategies": [
+        "big",
+        "ultra",
+        "best",
+        "safe"
+      ],
+      "horse": {
+        "number": 9,
+        "name": "アスクチャンスマン",
+        "win_prob": 0.234004,
+        "nopop_prob": 0.128766,
+        "value_signal": -0.105238,
+        "odds": 2.4,
+        "popularity": 1,
+        "ev": 0.5616,
+        "rank_nopop": 1
+      },
+      "top3": [
+        {
+          "number": 9,
+          "name": "アスクチャンスマン",
+          "win_prob": 0.234004,
+          "odds": 2.4,
+          "popularity": 1
+        },
+        {
+          "number": 2,
+          "name": "ガウラディスコ",
+          "win_prob": 0.182176,
+          "odds": 4.0,
+          "popularity": 2
+        },
+        {
+          "number": 6,
+          "name": "ステイクオール",
+          "win_prob": 0.093436,
+          "odds": 8.9,
+          "popularity": 4
+        }
+      ],
+      "top3_prob_sum": 0.509616,
+      "race_date": "2026-07-25",
+      "predicted_at": "2026-07-25T01:32:58.258288+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2385,40 +2447,40 @@
       "horse": {
         "number": 7,
         "name": "ケールハイム",
-        "win_prob": 0.210282,
+        "win_prob": 0.242697,
         "nopop_prob": 0.242692,
-        "value_signal": 0.032411,
-        "odds": 2.8,
+        "value_signal": -5e-06,
+        "odds": 2.4,
         "popularity": 2,
-        "ev": 0.5888,
+        "ev": 0.5825,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "ルージュスプリヤ",
-          "win_prob": 0.360518,
+          "win_prob": 0.358041,
           "odds": 2.1,
           "popularity": 1
         },
         {
           "number": 7,
           "name": "ケールハイム",
-          "win_prob": 0.210282,
-          "odds": 2.8,
+          "win_prob": 0.242697,
+          "odds": 2.4,
           "popularity": 2
         },
         {
-          "number": 2,
-          "name": "ベランジェール",
-          "win_prob": 0.097262,
-          "odds": 8.5,
-          "popularity": 3
+          "number": 5,
+          "name": "ニシノトリビュート",
+          "win_prob": 0.07979,
+          "odds": 11.4,
+          "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.668062,
+      "top3_prob_sum": 0.680528,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:57.012893+00:00",
+      "predicted_at": "2026-07-25T01:32:58.605641+00:00",
       "model_auc": 0.8284750151164771
     }
   ],
@@ -2447,40 +2509,94 @@
       "horse": {
         "number": 7,
         "name": "ケールハイム",
-        "win_prob": 0.210282,
+        "win_prob": 0.242697,
         "nopop_prob": 0.242692,
-        "value_signal": 0.032411,
-        "odds": 2.8,
+        "value_signal": -5e-06,
+        "odds": 2.4,
         "popularity": 2,
-        "ev": 0.5888,
+        "ev": 0.5825,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "ルージュスプリヤ",
-          "win_prob": 0.360518,
+          "win_prob": 0.358041,
           "odds": 2.1,
           "popularity": 1
         },
         {
           "number": 7,
           "name": "ケールハイム",
-          "win_prob": 0.210282,
-          "odds": 2.8,
+          "win_prob": 0.242697,
+          "odds": 2.4,
           "popularity": 2
         },
         {
-          "number": 2,
-          "name": "ベランジェール",
-          "win_prob": 0.097262,
-          "odds": 8.5,
-          "popularity": 3
+          "number": 5,
+          "name": "ニシノトリビュート",
+          "win_prob": 0.07979,
+          "odds": 11.4,
+          "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.668062,
+      "top3_prob_sum": 0.680528,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:57.012893+00:00",
+      "predicted_at": "2026-07-25T01:32:58.605641+00:00",
+      "model_auc": 0.8284750151164771
+    },
+    {
+      "race_id": "202607250702011000",
+      "race_name": null,
+      "course": "中京ダ1800",
+      "distance": 1800,
+      "going": null,
+      "weather": null,
+      "is_g1": false,
+      "hassou_time": "1720",
+      "strategies": [
+        "big",
+        "ultra",
+        "best",
+        "safe"
+      ],
+      "horse": {
+        "number": 9,
+        "name": "アスクチャンスマン",
+        "win_prob": 0.234004,
+        "nopop_prob": 0.128766,
+        "value_signal": -0.105238,
+        "odds": 2.4,
+        "popularity": 1,
+        "ev": 0.5616,
+        "rank_nopop": 1
+      },
+      "top3": [
+        {
+          "number": 9,
+          "name": "アスクチャンスマン",
+          "win_prob": 0.234004,
+          "odds": 2.4,
+          "popularity": 1
+        },
+        {
+          "number": 2,
+          "name": "ガウラディスコ",
+          "win_prob": 0.182176,
+          "odds": 4.0,
+          "popularity": 2
+        },
+        {
+          "number": 6,
+          "name": "ステイクオール",
+          "win_prob": 0.093436,
+          "odds": 8.9,
+          "popularity": 4
+        }
+      ],
+      "top3_prob_sum": 0.509616,
+      "race_date": "2026-07-25",
+      "predicted_at": "2026-07-25T01:32:58.258288+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2499,45 +2615,46 @@
         "value_uren_hot",
         "value_invest",
         "big",
+        "ultra",
         "safe"
       ],
       "horse": {
         "number": 5,
         "name": "ブラックシャリマー",
-        "win_prob": 0.127699,
+        "win_prob": 0.091825,
         "nopop_prob": 0.202116,
-        "value_signal": 0.074417,
-        "odds": 7.8,
-        "popularity": 4,
-        "ev": 0.9961,
+        "value_signal": 0.11029,
+        "odds": 9.1,
+        "popularity": 3,
+        "ev": 0.8356,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 8,
           "name": "ロードフィレール",
-          "win_prob": 0.214238,
-          "odds": 2.5,
+          "win_prob": 0.263678,
+          "odds": 1.9,
           "popularity": 1
         },
         {
           "number": 1,
           "name": "スノースケープ",
-          "win_prob": 0.209783,
-          "odds": 3.2,
+          "win_prob": 0.240631,
+          "odds": 3.3,
           "popularity": 2
         },
         {
-          "number": 5,
-          "name": "ブラックシャリマー",
-          "win_prob": 0.127699,
-          "odds": 7.8,
-          "popularity": 4
+          "number": 3,
+          "name": "サンダーバード",
+          "win_prob": 0.096165,
+          "odds": 12.9,
+          "popularity": 6
         }
       ],
-      "top3_prob_sum": 0.55172,
+      "top3_prob_sum": 0.6004740000000001,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.913754+00:00",
+      "predicted_at": "2026-07-25T01:32:57.629688+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2554,45 +2671,46 @@
         "value_stack_fuku",
         "value_double",
         "value_uren_hot",
-        "value_invest"
+        "value_invest",
+        "big"
       ],
       "horse": {
         "number": 9,
         "name": "ミュージシャン",
-        "win_prob": 0.157846,
+        "win_prob": 0.162999,
         "nopop_prob": 0.183482,
-        "value_signal": 0.025636,
-        "odds": 3.4,
+        "value_signal": 0.020483,
+        "odds": 2.9,
         "popularity": 1,
-        "ev": 0.5367,
+        "ev": 0.4727,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 7,
           "name": "ハーツコンチェルト",
-          "win_prob": 0.189952,
-          "odds": 3.6,
+          "win_prob": 0.186832,
+          "odds": 3.7,
           "popularity": 2
         },
         {
           "number": 9,
           "name": "ミュージシャン",
-          "win_prob": 0.157846,
-          "odds": 3.4,
+          "win_prob": 0.162999,
+          "odds": 2.9,
           "popularity": 1
         },
         {
           "number": 1,
           "name": "ミッキーゴールド",
-          "win_prob": 0.147335,
+          "win_prob": 0.150336,
           "odds": 4.0,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.495133,
+      "top3_prob_sum": 0.500167,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.884195+00:00",
+      "predicted_at": "2026-07-25T01:32:57.279003+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2605,45 +2723,47 @@
       "is_g1": false,
       "hassou_time": "1140",
       "strategies": [
+        "turf",
+        "best",
         "safe"
       ],
       "horse": {
         "number": 12,
         "name": "ファルカータ",
-        "win_prob": 0.219389,
+        "win_prob": 0.237969,
         "nopop_prob": 0.10309,
-        "value_signal": -0.116299,
-        "odds": 1.8,
+        "value_signal": -0.134879,
+        "odds": 1.7,
         "popularity": 1,
-        "ev": 0.3949,
+        "ev": 0.4045,
         "rank_nopop": 2
       },
       "top3": [
         {
           "number": 12,
           "name": "ファルカータ",
-          "win_prob": 0.219389,
-          "odds": 1.8,
+          "win_prob": 0.237969,
+          "odds": 1.7,
           "popularity": 1
         },
         {
           "number": 5,
           "name": "セコンドトゥベスト",
-          "win_prob": 0.106058,
-          "odds": 6.6,
+          "win_prob": 0.107292,
+          "odds": 7.8,
           "popularity": 2
         },
         {
-          "number": 11,
-          "name": "セルヴァジオ",
-          "win_prob": 0.08274,
-          "odds": 8.4,
+          "number": 8,
+          "name": "リアライズアリス",
+          "win_prob": 0.077418,
+          "odds": 8.8,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.40818699999999997,
+      "top3_prob_sum": 0.422679,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.813213+00:00",
+      "predicted_at": "2026-07-25T01:32:56.865372+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2662,46 +2782,45 @@
         "value_uren_hot",
         "value_invest",
         "big",
-        "ultra",
         "safe"
       ],
       "horse": {
         "number": 10,
         "name": "プレスバーン",
-        "win_prob": 0.192065,
+        "win_prob": 0.179475,
         "nopop_prob": 0.16212,
-        "value_signal": -0.029945,
-        "odds": 3.8,
+        "value_signal": -0.017355,
+        "odds": 3.7,
         "popularity": 2,
-        "ev": 0.7298,
+        "ev": 0.6641,
         "rank_nopop": 1
       },
       "top3": [
         {
+          "number": 6,
+          "name": "コスモフィレンツェ",
+          "win_prob": 0.21192,
+          "odds": 3.7,
+          "popularity": 2
+        },
+        {
           "number": 2,
           "name": "レッドブライトン",
-          "win_prob": 0.220466,
-          "odds": 3.2,
+          "win_prob": 0.196725,
+          "odds": 2.9,
           "popularity": 1
         },
         {
           "number": 10,
           "name": "プレスバーン",
-          "win_prob": 0.192065,
-          "odds": 3.8,
+          "win_prob": 0.179475,
+          "odds": 3.7,
           "popularity": 2
-        },
-        {
-          "number": 6,
-          "name": "コスモフィレンツェ",
-          "win_prob": 0.129041,
-          "odds": 4.5,
-          "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.5415719999999999,
+      "top3_prob_sum": 0.58812,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.744558+00:00",
+      "predicted_at": "2026-07-25T01:32:56.366057+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2721,40 +2840,40 @@
       "horse": {
         "number": 11,
         "name": "ブレイクアウェイ",
-        "win_prob": 0.231869,
+        "win_prob": 0.240829,
         "nopop_prob": 0.154532,
-        "value_signal": -0.077337,
-        "odds": 2.0,
+        "value_signal": -0.086298,
+        "odds": 1.9,
         "popularity": 1,
-        "ev": 0.4637,
+        "ev": 0.4576,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 11,
           "name": "ブレイクアウェイ",
-          "win_prob": 0.231869,
-          "odds": 2.0,
+          "win_prob": 0.240829,
+          "odds": 1.9,
           "popularity": 1
         },
         {
-          "number": 1,
-          "name": "エアロクリスタ",
-          "win_prob": 0.102289,
-          "odds": 6.6,
+          "number": 9,
+          "name": "レッドレヴェリー",
+          "win_prob": 0.128271,
+          "odds": 5.7,
           "popularity": 2
         },
         {
           "number": 2,
           "name": "タガノレクシア",
-          "win_prob": 0.101997,
-          "odds": 7.7,
+          "win_prob": 0.108209,
+          "odds": 6.9,
           "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.436155,
+      "top3_prob_sum": 0.477309,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.713076+00:00",
+      "predicted_at": "2026-07-25T01:32:56.029974+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2779,40 +2898,40 @@
       "horse": {
         "number": 6,
         "name": "エコロメジャー",
-        "win_prob": 0.116634,
+        "win_prob": 0.121875,
         "nopop_prob": 0.220925,
-        "value_signal": 0.104291,
-        "odds": 6.8,
+        "value_signal": 0.09905,
+        "odds": 7.2,
         "popularity": 3,
-        "ev": 0.7931,
+        "ev": 0.8775,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 5,
           "name": "エルダークローネ",
-          "win_prob": 0.257923,
-          "odds": 2.0,
+          "win_prob": 0.269366,
+          "odds": 1.9,
           "popularity": 1
         },
         {
           "number": 1,
           "name": "レッドネビュラ",
-          "win_prob": 0.223339,
-          "odds": 2.6,
+          "win_prob": 0.245963,
+          "odds": 2.5,
           "popularity": 2
         },
         {
           "number": 3,
           "name": "アースグリッパー",
-          "win_prob": 0.171417,
-          "odds": 8.3,
+          "win_prob": 0.152876,
+          "odds": 8.5,
           "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.652679,
+      "top3_prob_sum": 0.6682049999999999,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.676665+00:00",
+      "predicted_at": "2026-07-25T01:32:55.881311+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2835,40 +2954,40 @@
       "horse": {
         "number": 10,
         "name": "パイオニアスクエア",
-        "win_prob": 0.120326,
+        "win_prob": 0.12082,
         "nopop_prob": 0.176201,
-        "value_signal": 0.055875,
-        "odds": 4.9,
+        "value_signal": 0.055381,
+        "odds": 4.4,
         "popularity": 2,
-        "ev": 0.5896,
+        "ev": 0.5316,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 11,
           "name": "インナーパッション",
-          "win_prob": 0.219738,
-          "odds": 3.0,
+          "win_prob": 0.200207,
+          "odds": 2.7,
           "popularity": 1
         },
         {
           "number": 10,
           "name": "パイオニアスクエア",
-          "win_prob": 0.120326,
-          "odds": 4.9,
+          "win_prob": 0.12082,
+          "odds": 4.4,
           "popularity": 2
         },
         {
-          "number": 1,
-          "name": "ヴィエントデコラ",
-          "win_prob": 0.073281,
-          "odds": 9.1,
-          "popularity": 3
+          "number": 9,
+          "name": "アヴァランチ",
+          "win_prob": 0.072961,
+          "odds": 11.1,
+          "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.41334499999999996,
+      "top3_prob_sum": 0.393988,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.506073+00:00",
+      "predicted_at": "2026-07-25T01:32:54.422456+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2890,40 +3009,40 @@
       "horse": {
         "number": 5,
         "name": "フィールドノート",
-        "win_prob": 0.186585,
+        "win_prob": 0.180846,
         "nopop_prob": 0.162641,
-        "value_signal": -0.023945,
-        "odds": 2.7,
+        "value_signal": -0.018205,
+        "odds": 2.9,
         "popularity": 1,
-        "ev": 0.5038,
+        "ev": 0.5245,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 5,
           "name": "フィールドノート",
-          "win_prob": 0.186585,
-          "odds": 2.7,
+          "win_prob": 0.180846,
+          "odds": 2.9,
           "popularity": 1
         },
         {
           "number": 7,
           "name": "オルグジェシダ",
-          "win_prob": 0.137377,
-          "odds": 4.6,
+          "win_prob": 0.136376,
+          "odds": 4.5,
           "popularity": 2
         },
         {
           "number": 10,
           "name": "ヴァリスマリネリス",
-          "win_prob": 0.134467,
-          "odds": 6.4,
+          "win_prob": 0.130331,
+          "odds": 6.6,
           "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.458429,
+      "top3_prob_sum": 0.447553,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.399667+00:00",
+      "predicted_at": "2026-07-25T01:32:53.791145+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -2950,40 +3069,91 @@
       "horse": {
         "number": 1,
         "name": "トルタパスカリーナ",
-        "win_prob": 0.389794,
+        "win_prob": 0.485465,
         "nopop_prob": 0.186116,
-        "value_signal": -0.203679,
-        "odds": 1.6,
+        "value_signal": -0.299349,
+        "odds": 1.3,
         "popularity": 1,
-        "ev": 0.6237,
+        "ev": 0.6311,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 1,
           "name": "トルタパスカリーナ",
-          "win_prob": 0.389794,
-          "odds": 1.6,
+          "win_prob": 0.485465,
+          "odds": 1.3,
           "popularity": 1
-        },
-        {
-          "number": 2,
-          "name": "リーベラーリア",
-          "win_prob": 0.124844,
-          "odds": 7.3,
-          "popularity": 2
         },
         {
           "number": 7,
           "name": "プレママドンナ",
-          "win_prob": 0.107461,
-          "odds": 7.3,
+          "win_prob": 0.109447,
+          "odds": 8.5,
           "popularity": 2
+        },
+        {
+          "number": 4,
+          "name": "セプタードアイル",
+          "win_prob": 0.083014,
+          "odds": 13.1,
+          "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.622099,
+      "top3_prob_sum": 0.677926,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.336132+00:00",
+      "predicted_at": "2026-07-25T01:32:53.099328+00:00",
+      "model_auc": 0.8284750151164771
+    },
+    {
+      "race_id": "202607250402010200",
+      "race_name": null,
+      "course": "新潟ダ1200",
+      "distance": 1200,
+      "going": null,
+      "weather": null,
+      "is_g1": false,
+      "hassou_time": "1020",
+      "strategies": [
+        "big"
+      ],
+      "horse": {
+        "number": 4,
+        "name": "ピウモッソ",
+        "win_prob": 0.180365,
+        "nopop_prob": 0.07924,
+        "value_signal": -0.101125,
+        "odds": 3.3,
+        "popularity": 1,
+        "ev": 0.5952,
+        "rank_nopop": 2
+      },
+      "top3": [
+        {
+          "number": 4,
+          "name": "ピウモッソ",
+          "win_prob": 0.180365,
+          "odds": 3.3,
+          "popularity": 1
+        },
+        {
+          "number": 9,
+          "name": "スクワミッシュ",
+          "win_prob": 0.160047,
+          "odds": 3.5,
+          "popularity": 2
+        },
+        {
+          "number": 11,
+          "name": "イニシャルポイント",
+          "win_prob": 0.159645,
+          "odds": 4.1,
+          "popularity": 3
+        }
+      ],
+      "top3_prob_sum": 0.500057,
+      "race_date": "2026-07-25",
+      "predicted_at": "2026-07-25T01:32:52.694495+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -3001,45 +3171,47 @@
         "value_double",
         "value_uren_hot",
         "value_invest",
-        "big"
+        "big",
+        "ultra",
+        "safe"
       ],
       "horse": {
         "number": 10,
         "name": "レゾルーティオ",
-        "win_prob": 0.19141,
+        "win_prob": 0.235257,
         "nopop_prob": 0.19228,
-        "value_signal": 0.000869,
-        "odds": 2.6,
+        "value_signal": -0.042977,
+        "odds": 2.2,
         "popularity": 1,
-        "ev": 0.4977,
+        "ev": 0.5176,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 2,
           "name": "フルーツバスケット",
-          "win_prob": 0.199558,
-          "odds": 3.3,
+          "win_prob": 0.243644,
+          "odds": 2.8,
           "popularity": 2
         },
         {
           "number": 10,
           "name": "レゾルーティオ",
-          "win_prob": 0.19141,
-          "odds": 2.6,
+          "win_prob": 0.235257,
+          "odds": 2.2,
           "popularity": 1
         },
         {
           "number": 7,
           "name": "ノシェリー",
-          "win_prob": 0.130697,
-          "odds": 5.8,
+          "win_prob": 0.111607,
+          "odds": 6.2,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.521665,
+      "top3_prob_sum": 0.590508,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.270448+00:00",
+      "predicted_at": "2026-07-25T01:32:52.318710+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -3060,91 +3232,40 @@
       "horse": {
         "number": 8,
         "name": "ベラジオワールド",
-        "win_prob": 0.286778,
+        "win_prob": 0.301866,
         "nopop_prob": 0.133496,
-        "value_signal": -0.153283,
-        "odds": 2.1,
+        "value_signal": -0.168371,
+        "odds": 1.9,
         "popularity": 1,
-        "ev": 0.6022,
+        "ev": 0.5735,
         "rank_nopop": 2
       },
       "top3": [
         {
           "number": 8,
           "name": "ベラジオワールド",
-          "win_prob": 0.286778,
-          "odds": 2.1,
+          "win_prob": 0.301866,
+          "odds": 1.9,
           "popularity": 1
         },
         {
           "number": 5,
           "name": "セボンサデッセ",
-          "win_prob": 0.140827,
-          "odds": 4.3,
+          "win_prob": 0.137349,
+          "odds": 4.6,
           "popularity": 2
         },
         {
           "number": 9,
           "name": "ライフゲート",
-          "win_prob": 0.130092,
-          "odds": 5.5,
+          "win_prob": 0.115692,
+          "odds": 6.2,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.557697,
+      "top3_prob_sum": 0.554907,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.239041+00:00",
-      "model_auc": 0.8284750151164771
-    },
-    {
-      "race_id": "202607250101011100",
-      "race_name": "ＴＶｈ賞",
-      "course": "札幌芝1200",
-      "distance": 1200,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1525",
-      "strategies": [
-        "safe"
-      ],
-      "horse": {
-        "number": 3,
-        "name": "サウスバンク",
-        "win_prob": 0.202147,
-        "nopop_prob": 0.107127,
-        "value_signal": -0.095019,
-        "odds": 3.3,
-        "popularity": 2,
-        "ev": 0.6671,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 3,
-          "name": "サウスバンク",
-          "win_prob": 0.202147,
-          "odds": 3.3,
-          "popularity": 2
-        },
-        {
-          "number": 7,
-          "name": "ロジケープ",
-          "win_prob": 0.137082,
-          "odds": 3.1,
-          "popularity": 1
-        },
-        {
-          "number": 10,
-          "name": "アスクケンタッキー",
-          "win_prob": 0.106579,
-          "odds": 6.7,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.445808,
-      "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.205596+00:00",
+      "predicted_at": "2026-07-25T01:32:52.068834+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -3163,45 +3284,48 @@
         "value_uren_hot",
         "value_invest",
         "big",
+        "turf",
+        "ultra",
+        "best",
         "safe"
       ],
       "horse": {
         "number": 5,
         "name": "シニャンガ",
-        "win_prob": 0.125064,
+        "win_prob": 0.148097,
         "nopop_prob": 0.160189,
-        "value_signal": 0.035125,
-        "odds": 4.9,
-        "popularity": 3,
-        "ev": 0.6128,
+        "value_signal": 0.012092,
+        "odds": 4.3,
+        "popularity": 2,
+        "ev": 0.6368,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "ルーチェフィオーレ",
-          "win_prob": 0.218593,
-          "odds": 3.0,
+          "win_prob": 0.220998,
+          "odds": 3.2,
           "popularity": 1
         },
         {
-          "number": 4,
-          "name": "ジェルブロア",
-          "win_prob": 0.143089,
-          "odds": 4.7,
+          "number": 5,
+          "name": "シニャンガ",
+          "win_prob": 0.148097,
+          "odds": 4.3,
           "popularity": 2
         },
         {
           "number": 6,
           "name": "ラコンチャビエン",
-          "win_prob": 0.141922,
-          "odds": 6.2,
+          "win_prob": 0.134923,
+          "odds": 6.4,
           "popularity": 4
         }
       ],
-      "top3_prob_sum": 0.5036039999999999,
+      "top3_prob_sum": 0.504018,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.144529+00:00",
+      "predicted_at": "2026-07-25T01:32:51.411927+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -3222,40 +3346,40 @@
       "horse": {
         "number": 12,
         "name": "ピエナオルカ",
-        "win_prob": 0.255911,
+        "win_prob": 0.234983,
         "nopop_prob": 0.115139,
-        "value_signal": -0.140772,
-        "odds": 2.4,
+        "value_signal": -0.119844,
+        "odds": 2.3,
         "popularity": 1,
-        "ev": 0.6142,
+        "ev": 0.5405,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 12,
           "name": "ピエナオルカ",
-          "win_prob": 0.255911,
-          "odds": 2.4,
+          "win_prob": 0.234983,
+          "odds": 2.3,
           "popularity": 1
         },
         {
           "number": 7,
           "name": "オンザムービー",
-          "win_prob": 0.181709,
-          "odds": 3.2,
+          "win_prob": 0.163517,
+          "odds": 3.5,
           "popularity": 2
         },
         {
           "number": 5,
           "name": "ジェネラスキング",
-          "win_prob": 0.099846,
-          "odds": 7.2,
+          "win_prob": 0.103246,
+          "odds": 7.3,
           "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.537466,
+      "top3_prob_sum": 0.501746,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.113048+00:00",
+      "predicted_at": "2026-07-25T01:32:51.326681+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -3280,40 +3404,40 @@
       "horse": {
         "number": 5,
         "name": "トロフィアス",
-        "win_prob": 0.241125,
+        "win_prob": 0.242052,
         "nopop_prob": 0.246338,
-        "value_signal": 0.005213,
-        "odds": 3.9,
-        "popularity": 3,
-        "ev": 0.9404,
+        "value_signal": 0.004286,
+        "odds": 3.3,
+        "popularity": 2,
+        "ev": 0.7988,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "ホウオウシュウ",
-          "win_prob": 0.264888,
-          "odds": 2.4,
+          "win_prob": 0.271374,
+          "odds": 2.5,
           "popularity": 1
         },
         {
           "number": 5,
           "name": "トロフィアス",
-          "win_prob": 0.241125,
-          "odds": 3.9,
-          "popularity": 3
+          "win_prob": 0.242052,
+          "odds": 3.3,
+          "popularity": 2
         },
         {
           "number": 1,
           "name": "レガメデルヴェント",
-          "win_prob": 0.210738,
-          "odds": 3.6,
-          "popularity": 2
+          "win_prob": 0.183757,
+          "odds": 4.2,
+          "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.716751,
+      "top3_prob_sum": 0.697183,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:56.003294+00:00",
+      "predicted_at": "2026-07-25T01:32:50.480131+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -3331,45 +3455,46 @@
         "value_double",
         "value_uren_hot",
         "value_invest",
+        "big",
         "safe"
       ],
       "horse": {
         "number": 8,
         "name": "ブルーフレア",
-        "win_prob": 0.152626,
+        "win_prob": 0.156438,
         "nopop_prob": 0.193614,
-        "value_signal": 0.040988,
+        "value_signal": 0.037176,
         "odds": 5.6,
-        "popularity": 4,
-        "ev": 0.8547,
+        "popularity": 3,
+        "ev": 0.8761,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "ヤマメイッカ",
-          "win_prob": 0.209349,
-          "odds": 2.7,
+          "win_prob": 0.20604,
+          "odds": 2.8,
           "popularity": 1
-        },
-        {
-          "number": 8,
-          "name": "ブルーフレア",
-          "win_prob": 0.152626,
-          "odds": 5.6,
-          "popularity": 4
         },
         {
           "number": 6,
           "name": "アオイミズホ",
-          "win_prob": 0.123523,
-          "odds": 4.7,
+          "win_prob": 0.166132,
+          "odds": 3.9,
           "popularity": 2
+        },
+        {
+          "number": 8,
+          "name": "ブルーフレア",
+          "win_prob": 0.156438,
+          "odds": 5.6,
+          "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.485498,
+      "top3_prob_sum": 0.52861,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:55.940192+00:00",
+      "predicted_at": "2026-07-25T01:32:49.899169+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -3394,40 +3519,40 @@
       "horse": {
         "number": 5,
         "name": "ヌーンベルク",
-        "win_prob": 0.20872,
+        "win_prob": 0.187353,
         "nopop_prob": 0.214087,
-        "value_signal": 0.005368,
-        "odds": 3.9,
+        "value_signal": 0.026735,
+        "odds": 3.6,
         "popularity": 2,
-        "ev": 0.814,
+        "ev": 0.6745,
         "rank_nopop": 1
       },
       "top3": [
         {
+          "number": 4,
+          "name": "コックニー",
+          "win_prob": 0.221929,
+          "odds": 3.3,
+          "popularity": 1
+        },
+        {
           "number": 2,
           "name": "ヴィヴィアンリーチ",
-          "win_prob": 0.243387,
-          "odds": 2.4,
-          "popularity": 1
+          "win_prob": 0.201483,
+          "odds": 3.7,
+          "popularity": 3
         },
         {
           "number": 5,
           "name": "ヌーンベルク",
-          "win_prob": 0.20872,
-          "odds": 3.9,
+          "win_prob": 0.187353,
+          "odds": 3.6,
           "popularity": 2
-        },
-        {
-          "number": 4,
-          "name": "コックニー",
-          "win_prob": 0.17094,
-          "odds": 4.5,
-          "popularity": 3
         }
       ],
-      "top3_prob_sum": 0.623047,
+      "top3_prob_sum": 0.610765,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:55.909487+00:00",
+      "predicted_at": "2026-07-25T01:32:49.439558+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -3447,46 +3572,45 @@
         "value_invest",
         "big",
         "ultra",
-        "best",
         "safe"
       ],
       "horse": {
         "number": 7,
         "name": "カレンココナ",
-        "win_prob": 0.192349,
+        "win_prob": 0.227746,
         "nopop_prob": 0.174336,
-        "value_signal": -0.018013,
-        "odds": 4.2,
-        "popularity": 2,
-        "ev": 0.8079,
+        "value_signal": -0.053409,
+        "odds": 3.8,
+        "popularity": 3,
+        "ev": 0.8654,
         "rank_nopop": 1
       },
       "top3": [
         {
           "number": 3,
           "name": "カッサンドラ",
-          "win_prob": 0.254779,
-          "odds": 1.9,
+          "win_prob": 0.230181,
+          "odds": 2.3,
           "popularity": 1
-        },
-        {
-          "number": 5,
-          "name": "アイビーミャーオ",
-          "win_prob": 0.202412,
-          "odds": 4.4,
-          "popularity": 3
         },
         {
           "number": 7,
           "name": "カレンココナ",
-          "win_prob": 0.192349,
-          "odds": 4.2,
+          "win_prob": 0.227746,
+          "odds": 3.8,
+          "popularity": 3
+        },
+        {
+          "number": 5,
+          "name": "アイビーミャーオ",
+          "win_prob": 0.225221,
+          "odds": 3.3,
           "popularity": 2
         }
       ],
-      "top3_prob_sum": 0.64954,
+      "top3_prob_sum": 0.683148,
       "race_date": "2026-07-25",
-      "predicted_at": "2026-07-25T00:30:55.873739+00:00",
+      "predicted_at": "2026-07-25T01:32:49.256652+00:00",
       "model_auc": 0.8284750151164771
     },
     {
@@ -5184,68 +5308,11 @@
       "race_date": "2026-07-18",
       "predicted_at": "2026-07-24T23:05:00.855749+00:00",
       "model_auc": 0.8284378828170226
-    },
-    {
-      "race_id": "202607181002070300",
-      "race_name": null,
-      "course": "小倉ダ1000",
-      "distance": 1000,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1100",
-      "strategies": [
-        "value_stack_uren",
-        "value_stack_fuku",
-        "value_double",
-        "value_uren_hot",
-        "value_invest",
-        "big",
-        "safe"
-      ],
-      "horse": {
-        "number": 2,
-        "name": "サトノロザリー",
-        "win_prob": 0.152727,
-        "nopop_prob": 0.171853,
-        "value_signal": 0.019126,
-        "odds": 3.2,
-        "popularity": 2,
-        "ev": 0.4887,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 11,
-          "name": "アルムアポジェ",
-          "win_prob": 0.206659,
-          "odds": 2.9,
-          "popularity": 1
-        },
-        {
-          "number": 7,
-          "name": "メイショウマドンナ",
-          "win_prob": 0.164896,
-          "odds": 7.0,
-          "popularity": 4
-        },
-        {
-          "number": 2,
-          "name": "サトノロザリー",
-          "win_prob": 0.152727,
-          "odds": 3.2,
-          "popularity": 2
-        }
-      ],
-      "top3_prob_sum": 0.524282,
-      "race_date": "2026-07-18",
-      "predicted_at": "2026-07-24T23:05:00.822925+00:00",
-      "model_auc": 0.8284378828170226
     }
   ],
   "recommendations_fallback": [],
-  "count_today": 19,
-  "count_recent": 221,
+  "count_today": 20,
+  "count_recent": 222,
   "count_fallback": 0,
   "total_predictions": 4202,
   "fired_by_key": {
@@ -5262,10 +5329,10 @@
     "value_uren_hot": 2040,
     "value_invest": 2040,
     "value_safe": 55,
-    "big": 1854,
-    "turf": 942,
-    "ultra": 1632,
-    "best": 1958,
-    "safe": 2697
+    "big": 1858,
+    "turf": 944,
+    "ultra": 1635,
+    "best": 1960,
+    "safe": 2698
   }
 }
