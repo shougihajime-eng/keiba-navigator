@@ -33,6 +33,21 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+# 🚨 2026-07-31 修正: Windows の既定 cp932 では、フォルダ名の絵文字 (７📦そのほか の 📦)
+#   を print() できず UnicodeEncodeError で即落ちする。
+#   集計とファイル書き出しは終わっているのに、最後の「[write] <パス>」を表示する所だけで
+#   落ちて exit=1 になり、KeibaGapFill-0800 が毎日「失敗(0x18)」と報告していた
+#   (2026-07-19 のフォルダ移動以降ずっと)。
+#   → race_day_pipeline.py と同じやり方で標準出力を UTF-8 に作り直す。
+#   ※集計の中身・数字には一切さわらない (表示の文字コードだけ)。
+for _stream_name in ("stdout", "stderr"):
+    _stream = getattr(sys, _stream_name, None)
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-30T23:06:39.167122+00:00",
+  "generatedAt": "2026-07-31T09:33:30.384469+00:00",
   "todayJst": "2026-07-31",
   "strategies_def": [
     {
@@ -1356,6 +1356,61 @@
   },
   "recommendations_today": [],
   "recommendations_recent": [
+    {
+      "race_id": "202608010101030900",
+      "race_name": "釧路湿原特別",
+      "course": "札幌芝1800",
+      "distance": 1800,
+      "going": null,
+      "weather": null,
+      "is_g1": false,
+      "hassou_time": "1420",
+      "strategies": [
+        "value_stack_uren",
+        "value_stack_fuku",
+        "value_double",
+        "value_uren_hot",
+        "value_invest"
+      ],
+      "horse": {
+        "number": 2,
+        "name": "テルヒコウ",
+        "win_prob": 0.142857,
+        "nopop_prob": 0.167527,
+        "value_signal": 0.02467,
+        "odds": null,
+        "popularity": null,
+        "ev": null,
+        "rank_nopop": 1
+      },
+      "top3": [
+        {
+          "number": 1,
+          "name": "ウィルサヴァイブ",
+          "win_prob": 0.142857,
+          "odds": null,
+          "popularity": null
+        },
+        {
+          "number": 2,
+          "name": "テルヒコウ",
+          "win_prob": 0.142857,
+          "odds": null,
+          "popularity": null
+        },
+        {
+          "number": 3,
+          "name": "フォルテフィオーレ",
+          "win_prob": 0.142857,
+          "odds": null,
+          "popularity": null
+        }
+      ],
+      "top3_prob_sum": 0.42857100000000004,
+      "race_date": "2026-08-01",
+      "predicted_at": "2026-07-31T09:31:31.952315+00:00",
+      "model_auc": 0.8284425682806762
+    },
     {
       "race_id": "202607260702021200",
       "race_name": null,
@@ -4119,78 +4174,26 @@
       "race_date": "2026-07-25",
       "predicted_at": "2026-07-30T23:05:57.834379+00:00",
       "model_auc": 0.8284425682806762
-    },
-    {
-      "race_id": "202607250101010400",
-      "race_name": null,
-      "course": "札幌芝1500",
-      "distance": 1500,
-      "going": null,
-      "weather": null,
-      "is_g1": false,
-      "hassou_time": "1130",
-      "strategies": [
-        "big",
-        "safe"
-      ],
-      "horse": {
-        "number": 11,
-        "name": "フレッチャアズーラ",
-        "win_prob": 0.211491,
-        "nopop_prob": 0.156412,
-        "value_signal": -0.055079,
-        "odds": 2.9,
-        "popularity": 1,
-        "ev": 0.6133,
-        "rank_nopop": 1
-      },
-      "top3": [
-        {
-          "number": 11,
-          "name": "フレッチャアズーラ",
-          "win_prob": 0.211491,
-          "odds": 2.9,
-          "popularity": 1
-        },
-        {
-          "number": 6,
-          "name": "ペカリーナ",
-          "win_prob": 0.146716,
-          "odds": 4.3,
-          "popularity": 2
-        },
-        {
-          "number": 4,
-          "name": "エアヴァイブス",
-          "win_prob": 0.144022,
-          "odds": 4.5,
-          "popularity": 3
-        }
-      ],
-      "top3_prob_sum": 0.502229,
-      "race_date": "2026-07-25",
-      "predicted_at": "2026-07-30T23:05:57.798503+00:00",
-      "model_auc": 0.8284425682806762
     }
   ],
   "recommendations_fallback": [],
   "count_today": 0,
-  "count_recent": 390,
+  "count_recent": 202,
   "count_fallback": 0,
-  "total_predictions": 4236,
+  "total_predictions": 4272,
   "fired_by_key": {
     "value_uren_turf": 98,
     "value_uren_short": 28,
     "value_uren_short_ultra": 12,
-    "value_stack_uren": 2066,
-    "value_stack_fuku": 2066,
-    "value_double": 2066,
+    "value_stack_uren": 2067,
+    "value_stack_fuku": 2067,
+    "value_double": 2067,
     "value_tan3": 145,
     "value_tan3_long": 45,
     "value_tan3_dirt_mid": 29,
     "value_uren": 145,
-    "value_uren_hot": 2066,
-    "value_invest": 2066,
+    "value_uren_hot": 2067,
+    "value_invest": 2067,
     "value_safe": 54,
     "big": 1878,
     "turf": 953,
