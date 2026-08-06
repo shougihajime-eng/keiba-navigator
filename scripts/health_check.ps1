@@ -69,8 +69,14 @@ if (Test-Path $StatusJson) {
             Add "  -> [OK] JV-Link は正常稼働中"
         } elseif ($j.state -match "_failed") {
             Add "  -> [NG] JV-Link がエラー状態。利用キーの期限切れ / 接続不可の可能性"
+        } elseif ($j.state -match "no_data") {
+            Add ("  [WARN] データが 1 件も取れていません (state=" + $j.state + ")")
+            Add "  -> 平日でレースが無い日なら正常。開催日や 2 日以上続くなら異常です。"
+            Add "     いちばん多い原因: JV-Link に新しい版が出て、古い版が配信を止められている。"
+            Add "     確認: https://jra-van.jp/dlb/sft/jv.html から最新の JV-Link を入れ直す"
+            Add "     (今入っている版は Windows の アプリと機能 で JV-Link を見ると分かります)"
         } else {
-            Add ("  -> [?] state=" + $j.state)
+            Add ("  [WARN] state=" + $j.state + " (ready でない状態です・確認してください)")
         }
     } catch {
         Add ("  [NG] status.json 読み込み失敗: " + $_.Exception.Message)
