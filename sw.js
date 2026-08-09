@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v78"; // Fable5 新デザイン (朝焼けの和紙×若葉): 新styles.css/index.htmlを確実に反映 (7/6)
+const CACHE_VERSION = "keiba-nav-v79"; // オッズボタンの飛び先を修理 (403 Forbidden → レース別オッズ) (8/9)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

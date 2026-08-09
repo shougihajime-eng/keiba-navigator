@@ -1196,7 +1196,7 @@
       body.appendChild(det);
     }
 
-    // (6) 大ボタン (詳細を見る + JRA 公式オッズ)
+    // (6) 大ボタン (詳細を見る + いまのオッズ)
     const cta = el("div", { class: "cta-grid" });
     const detailBtnClass = (tier === "ultra" || tier === "prime")
       ? "btn-cta btn-cta-gold"
@@ -1210,7 +1210,8 @@
       href: buildJraOddsUrl(race),
       target: "_blank",
       rel: "noopener noreferrer",
-    }, "JRA 公式オッズを開く ↗"));
+      title: "このレースの単勝・複勝オッズ（netkeiba）をひらきます",
+    }, "いまのオッズを見る ↗"));
     body.appendChild(cta);
 
     // (7) 「+ 買った内容を記録」+ 答え合わせ動線
@@ -1230,11 +1231,30 @@
     return card;
   }
 
-  // JRA 公式の単複オッズページ URL を組み立てる
+  // そのレースの「いまのオッズ」ページの住所を組み立てる
+  //
+  // 🚨 2026-08-09 修理 (本人がボタンを押して 403 Forbidden の画面に飛ばされた)
+  //    ここは以前 https://www.jra.go.jp/keiba/program/2026/odds.html を返していたが、
+  //    **そんなページは JRA に存在しない** (実測 403)。押した人は必ずエラー画面に飛んでいた。
+  //    しかも JRA 公式には「レースごとのオッズを直接ひらく住所」がそもそも無い
+  //    (公式のオッズは POST + 使い捨ての合言葉が要る仕組みで、リンクにできない)。
+  //    → JRA のオッズをそのまま出している netkeiba のレース別ページへ飛ばす。
+  //      (JRA 公式トップへの入口は、レース詳細の中の「JRA 公式へ ↗」ボタンに残してある)
+  //
+  // raceId 例 "202608090101060100" (18桁。16桁のこともある)
+  //    0- 8  開催日 YYYYMMDD
+  //    8-10  競馬場コード (01札幌 02函館 03福島 04新潟 05東京 06中山 07中京 08京都 09阪神 10小倉)
+  //   10-12  回次 / 12-14 日次 / 14-16 レース番号
+  // netkeiba の race_id は「西暦4桁 + 場 + 回次 + 日次 + R」の12桁で、
+  // 競馬場コードの番号は JRA-VAN と同じ。
+  //   例) 202608090101060100 → 202601010601 = 2026年8月9日 札幌1R (実物で確認ずみ)
+  const JRA_ODDS_FALLBACK = "https://www.jra.go.jp/keiba/thisweek/";  // 実在を確認ずみ (200)
   function buildJraOddsUrl(race) {
-    if (!race?.raceId || race.raceId.length < 18) return "https://www.jra.go.jp/";
-    // 競馬 race_id 構造例 "YYYYMMDDVVRRDDR2" — JRA 公式は別の URL 構造を使うのでトップへ
-    return "https://www.jra.go.jp/keiba/program/2026/odds.html";
+    const id = String(race?.raceId || "");
+    if (!/^\d{16}/.test(id)) return JRA_ODDS_FALLBACK;
+    const jyo = id.slice(8, 10);
+    if (jyo < "01" || jyo > "10") return JRA_ODDS_FALLBACK;  // 中央競馬10場いがいは組み立てない
+    return `https://race.netkeiba.com/odds/index.html?type=b1&race_id=${id.slice(0, 4)}${id.slice(8, 16)}`;
   }
 
   function makeBigStat(label, value, tone, primary) {
