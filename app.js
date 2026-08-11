@@ -1404,7 +1404,10 @@
     if (!tp) return null;
     const wrap = el("div", { class: `silk-pick-row silk-tier-${tier}` });
     const head = el("div", { class: "spr-head" });
-    head.appendChild(el("span", { class: "spr-eyebrow" }, "本命 3 頭"));
+    // 2026-08-12 正直化: これは「みんなの予想(オッズ)を実際の勝率に直したもの」であって
+    //   アプリのAIが独自に選んだ馬ではない (実測で AI を混ぜると当たりが下がる)。
+    //   「AIが選んだ本命」と名乗らない。AI自身の意見は下の nopop ブロックに別で出す。
+    head.appendChild(el("span", { class: "spr-eyebrow" }, "本命 3 頭（みんなの予想から）"));
     wrap.appendChild(head);
 
     const row = el("div", { class: "spr-horses" });
@@ -1484,10 +1487,17 @@
     wrap.appendChild(line);
     if (!same && tp && tp.number) {
       wrap.appendChild(el("div", { style: "margin-top:4px;opacity:.82" },
-        `画面の本命は ${tp.number}番（みんなの人気を織り込んだ見方）。こちらは人気を一切見ないAIの見方です。`));
+        `画面の本命は ${tp.number}番（みんなの予想＝オッズから）。こちらは人気を一切見ないAIの見方です。`));
     }
-    wrap.appendChild(el("div", { style: "margin-top:5px;font-size:11.5px;opacity:.66" },
-      "※どちらが当たるかは分かりません。見方を2つ並べているだけです。"));
+    // 2026-08-12: 「なぜ本命は1番人気ばかりなのか」に正直に答える。
+    //   実測(未来を見ていない3,636レース・ベンター式の最尤法)で α=0.000・伸び ΔR²=0.0000。
+    //   αを 0→0.8 と足すほど 本命的中 33.1%→30.8% と一本調子で悪化した。
+    //   ＝AIを混ぜないのが正解。だから本命は市場そのままで、AIの意見はこの枠に別で出す。
+    wrap.appendChild(el("div", { style: "margin-top:6px;font-size:11.5px;line-height:1.7;opacity:.72" },
+      "※本命が1番人気に多いのは手抜きではありません。過去3,636レース（未来を見ずに検証）で"
+      + "AIの意見を混ぜるほど当たりが下がることを確かめたので、本命はあえて"
+      + "「みんなの予想」のままにしています。AI自身の意見はこの枠です。"
+      + "どちらが当たるかは分かりません。"));
     return wrap;
   }
 
@@ -1575,12 +1585,17 @@
     const name = scrubName(tp.name, "");
     const parts = [];
     // 人気と予想の関係(正直に)
+    // 2026-08-12 正直化: この本命は「みんなの予想(オッズ)を実際の勝率に直したもの」であって、
+    //   アプリのAIが独自に選んだ馬ではない。AIを混ぜると当たりが下がることを実測で確認している
+    //   (未来を見ていない 3,636 レースでベンター式の最尤法にかけた結果 α=0.000・伸び ΔR²=0.0000。
+    //    αを 0→0.8 と足すほど本命的中 33.1%→30.8%・当てはまり 0.2507→0.1761 と一本調子で悪化)。
+    //   だから「アプリが人気以上に勝ちそうとみて」のような、独自判断があるかのような言い方をしない。
     if (pop === 1) {
-      parts.push(`${name ? name + "は" : ""}1番人気。みんなの評価もアプリの予想も一致した、いちばん勝ちそうな馬です`);
+      parts.push(`${name ? name + "は" : ""}1番人気。みんなの予想でいちばん勝ちそうな馬です`);
     } else if (pop != null && pop >= 4) {
-      parts.push(`${name ? name + "は" : ""}${pop}番人気と人気は下ですが、アプリは「人気以上に勝ちそう」とみて本命にしました`);
+      parts.push(`${name ? name + "は" : ""}${pop}番人気ですが、実際の勝率に直すとこの馬がいちばん高く出ました`);
     } else if (pop != null) {
-      parts.push(`${name ? name + "は" : ""}${pop}番人気。上位人気の中でいちばん勝ちそうとみています`);
+      parts.push(`${name ? name + "は" : ""}${pop}番人気。上位人気の中でいちばん勝ちそうな数字です`);
     } else if (name) {
       parts.push(`${name}を本命にしました`);
     }
