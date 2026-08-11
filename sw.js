@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v79"; // オッズボタンの飛び先を修理 (403 Forbidden → レース別オッズ) (8/9)
+const CACHE_VERSION = "keiba-nav-v80"; // 画面の嘘(手書き126.8%)を削除 + 本当の成績を表示 + 毎週の学習 (8/11)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

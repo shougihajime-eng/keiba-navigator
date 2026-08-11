@@ -108,6 +108,18 @@ async function serve(req, res) {
         return jsonRes(res, 500, { ok: false, error: e.message });
       }
     }
+    if (p === "/api/live-stats") {
+      // 2026-08-11: 実際に買っていたらいくらになったかの本物の成績 (嘘をつかないための土台)
+      try {
+        const lgbm = require("./predictors/lightgbm_v1");
+        const live = lgbm.loadLiveStats();
+        const umami = lgbm.loadUmamiStatus();
+        if (!live && !umami) return jsonRes(res, 200, { ok: false, reason: "no_live_stats" });
+        return jsonRes(res, 200, { ok: true, live, umami });
+      } catch (e) {
+        return jsonRes(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (p === "/api/rankings") {
       try {
         const lgbm = require("./predictors/lightgbm_v1");
@@ -225,6 +237,7 @@ async function serve(req, res) {
             third: r.third,
             exotic: r.exotic || null,
             overlays: r.overlays || null,
+            nopopPick: r.nopopPick || null,  // 2026-08-11: 人気を見ないAIの本命 (⚠ api/[...slug].js 側にも同じ1行が必要)
             confidence: r.confidence,
             hasOverpop: !!r.hasOverpop,
             hasUnderval: !!r.hasUnderval,
@@ -460,6 +473,29 @@ async function serve(req, res) {
         threshold: { minDiffPct: 5, largeMovePct: 10 },
         note: "JV-Link接続後・複数回更新で履歴が蓄積され、変動が検出されます。",
       });
+    }
+    if (p === "/api/automation-status") {
+      // 2026-08-11: 本番 (Vercel) にしか無く、ローカルでは毎回 404 になっていた。
+      //   そのせいで実ブラウザ検査が毎回「JSエラー1件」と出て、本物の不具合が埋もれる状態だった。
+      //   ("読めていないのに合格/失敗を出す" のを避ける) → 本番と同じ実装に委譲する。
+      try {
+        // Vercel の res は Express 風 (.status().json())、Node 標準の res には無いので薄く足す
+        if (typeof res.status !== "function") {
+          res.status = (code) => { res.statusCode = code; return res; };
+        }
+        if (typeof res.json !== "function") {
+          res.json = (obj) => {
+            if (!res.getHeader("Content-Type")) res.setHeader("Content-Type", "application/json; charset=utf-8");
+            res.end(JSON.stringify(obj));
+            return res;
+          };
+        }
+        const apiHandler = require("./api/[...slug].js");
+        req.url = "/api/automation-status";
+        return await apiHandler(req, res);
+      } catch (e) {
+        return jsonRes(res, 500, { ok: false, error: e.message });
+      }
     }
     if (p === "/api/schedule") {
       const { recommendNextUpdate, PHASE_INTERVAL_SEC } = require("./lib/scheduler");

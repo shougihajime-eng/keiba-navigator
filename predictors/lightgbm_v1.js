@@ -23,6 +23,10 @@ const BACKTEST_PATH = path.join(__dirname, "..", "data", "jv_cache", "backtest_r
 const RECOMMENDATIONS_PATH = path.join(__dirname, "..", "data", "jv_cache", "recommendations.json");
 const RACE_CARD_PATH = path.join(__dirname, "..", "data", "jv_cache", "race_card_latest.json");
 const RANKINGS_PATH = path.join(__dirname, "..", "data", "jv_cache", "rankings.json");
+// 2026-08-11 追加: 「実際に買っていたらいくらになったか」の本物の成績と、毎週の学習けっか。
+//   これまで本物の成績は画面のどこにも出しておらず、検証(バックテスト)の良い数字だけ出していた。
+const LIVE_STATS_PATH = path.join(__dirname, "..", "data", "jv_cache", "strategy_live_stats.json");
+const UMAMI_STATUS_PATH = path.join(__dirname, "..", "data", "jv_cache", "umami_status.json");
 
 function _readJsonSafe(p) {
   try {
@@ -55,6 +59,16 @@ function loadRaceCard() {
 
 function loadRankings() {
   return _readJsonSafe(RANKINGS_PATH);
+}
+
+// 実運用の本当の成績 (strategy_live_log.py が書く)。嘘をつかないための土台。
+function loadLiveStats() {
+  return _readJsonSafe(LIVE_STATS_PATH);
+}
+
+// 毎週の学習けっか (keiba_learn_weekly.cjs が書く)。どの買い方を止めるかの判定。
+function loadUmamiStatus() {
+  return _readJsonSafe(UMAMI_STATUS_PATH);
 }
 
 function loadPrediction(raceId) {
@@ -100,5 +114,7 @@ module.exports = {
   loadRecommendations,
   loadRaceCard,
   loadRankings,
+  loadLiveStats,
+  loadUmamiStatus,
   loadPrediction,
 };

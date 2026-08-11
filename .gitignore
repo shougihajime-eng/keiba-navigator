@@ -92,6 +92,10 @@ catboost_info/
 !data/jv_cache/walk_forward_stacking_pure.json
 !data/jv_cache/win5/
 !data/jv_cache/walk_forward_win5_v1_result.json
+# 2026-08-11: 本物の成績と毎週の学習けっか (画面に正直な数字を出すため)
+# ⚠ .vercelignore にも同じ2行が必要 (片方だけだと本番に届かない)
+!data/jv_cache/strategy_live_stats.json
+!data/jv_cache/umami_status.json
 Usersshoug*_review_*
 _prod.tmp
 

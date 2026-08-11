@@ -79,6 +79,44 @@ function loadOverlaysFor(raceId) {
   } catch { return null; }
 }
 
+// ─── 2026-08-11 新設: 「人気を見ないAI」の本命を本番へ運ぶ ─────────────
+// これまで画面に出る本命は市場オッズそのままで、実測すると 77.2% が 1 番人気だった
+// (4,380 レース中 3,383 レース)。持ち主から「1 番人気ばかりしか買わない」と指摘された。
+// 一方 Python 側 (predict_lightgbm.py) は「人気を見ないAI(nopop)」も同時に計算しており、
+// 実測で 52.1% のレースで別の馬を推していた。しかしその答えを本番へ運ぶ処理が
+// どこにも無く、画面に一度も出ていなかった。ここで運ぶ。
+const PRED_DIR = path.join(ROOT, "data", "jv_cache", "predictions");
+function loadNopopPickFor(raceId) {
+  try {
+    const rid = String(raceId || "");
+    if (!rid) return null;
+    // predictions/ は 18 桁 (末尾00) でも 16 桁でも置かれうるので両方ためす
+    const cands = [rid, rid.length === 16 ? rid + "00" : null, rid.length === 18 ? rid.slice(0, 16) : null]
+      .filter(Boolean)
+      .map((x) => path.join(PRED_DIR, x + ".json"));
+    const hit = cands.find((p) => fs.existsSync(p));
+    if (!hit) return null;
+    const d = JSON.parse(fs.readFileSync(hit, "utf-8"));
+    const horses = (d && Array.isArray(d.horses) ? d.horses : []).filter((h) => h && h.number);
+    if (!horses.length) return null;
+    const withNopop = horses.filter((h) => Number.isFinite(h.nopop_prob));
+    if (!withNopop.length) return null;
+    const nTop = withNopop.reduce((a, b) => ((b.nopop_prob || 0) > (a.nopop_prob || 0) ? b : a));
+    const mTop = horses.reduce((a, b) => ((b.win_prob || 0) > (a.win_prob || 0) ? b : a));
+    return {
+      number:     nTop.number ?? null,
+      name:       nTop.name ?? null,
+      odds:       Number.isFinite(nTop.odds) ? nTop.odds : null,
+      popularity: Number.isFinite(nTop.popularity) ? nTop.popularity : null,
+      prob:       Number.isFinite(nTop.nopop_prob) ? Math.round(nTop.nopop_prob * 10000) / 10000 : null,
+      // 市場寄りの本命と食い違っているか (ここが「1番人気ばかり」の卒業の肝)
+      disagrees:  !!(mTop && nTop.number !== mTop.number),
+      marketTopNumber: mTop ? (mTop.number ?? null) : null,
+      valueSignal: Number.isFinite(nTop.value_signal) ? Math.round(nTop.value_signal * 10000) / 10000 : null,
+    };
+  } catch { return null; }
+}
+
 // LightGBM モデル meta を一緒に乗せる (UI で「最後の学習時刻」を出すため)
 function readLgbmMeta() {
   try {
@@ -142,6 +180,7 @@ function compactConclusion(c, race) {
     picks,
     exotic:        c.exotic ?? null,   // ★連系・3連系の正直な的中率(ワイド/3連複)
     overlays:      loadOverlaysFor(race.race_id),  // ★直前オッズ由来の「うまみ候補」(あれば)
+    nopopPick:     loadNopopPickFor(race.race_id), // ★人気を見ないAIの本命 (市場と食い違う時が見どころ)
     underval:      c.underval  ? summarizePick(c.underval)  : null,
     overpop:       c.overpop   ? summarizePick(c.overpop)   : null,
     hasUnderval:   !!c.underval,

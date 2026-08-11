@@ -36,6 +36,7 @@
     autostatus: null, // ★Wave16-QA: /api/automation-status の結果。初回描画前は null
     mlStatus: null,   // ★Wave17: /api/ml-status の結果 (LightGBM 学習メタ + 過去レース実証回収率)
     recommendations: null,  // ★Wave19: /api/recommendations の結果 (100% 越え戦略の今日の推奨レース)
+    liveStats: null,  // 2026-08-11: /api/live-stats (実際に買っていたらいくらだったかの本物の成績)
     // ★Wave22.8: エフェクト用 (一度しか発火させない)
     lastClopRaceId: null,        // 結論カードに描いた raceId (重複再生防止)
     flashedImminentFor: null,    // 「もうすぐ発走」フラッシュ済みの raceId
@@ -393,13 +394,15 @@
       // WIN5 は日曜 (発売・購入日) は毎回、それ以外は 5 分間隔 + 初回 + 強制時のみ
       const includeWin5 = !!force || !state.win5 || new Date().getDay() === 0 || includeSlow;
       const nul = () => Promise.resolve(null);
-      const [status, races, win5, autostatus, mlStatus, recommendations] = await Promise.all([
+      const [status, races, win5, autostatus, mlStatus, recommendations, liveStats] = await Promise.all([
         api("/api/status"),
         api("/api/races"),
         includeWin5 ? api(w5Url) : nul(),
         includeSlow ? api("/api/automation-status") : nul(),
         includeSlow ? api("/api/ml-status") : nul(),
         includeSlow ? api("/api/recommendations") : nul(),
+        // 2026-08-11: 本物の成績 (週1回しか変わらないので slow でよい)
+        includeSlow ? api("/api/live-stats") : nul(),
       ]);
       if (includeSlow) lastSlowFetchAt = Date.now();
       if (status) state.status = status;
@@ -417,6 +420,7 @@
       if (autostatus) state.autostatus = autostatus;
       if (mlStatus) state.mlStatus = mlStatus;
       if (recommendations) state.recommendations = recommendations;
+      if (liveStats) state.liveStats = liveStats;
       saveSnapshot();
       render();
     } finally {
@@ -1084,6 +1088,10 @@
       if (silkRow) body.appendChild(silkRow);
     }
 
+    // (1.5) 人気を見ないAIの別の見方 (「1番人気ばかり」の卒業・折りたたみに隠さない)
+    const nopopBox = buildNopopBox(race);
+    if (nopopBox) body.appendChild(nopopBox);
+
     // (2) ★主役: 「この買い方がおすすめ」— どの券種がお得か・当たりやすさ付きで大きく
     const reco = buildRecommendedBuys(race, tier);
     if (reco) body.appendChild(reco);
@@ -1439,6 +1447,47 @@
       row.appendChild(card);
     });
     wrap.appendChild(row);
+    return wrap;
+  }
+
+  // ─── 2026-08-11 新設:「人気を見ないAI」の別の見方 ────────────────
+  //   持ち主から「1番人気ばかりしか買わない」と強く指摘された。実測すると本当に
+  //   4,380 レース中 3,383 レース (77.2%) で本命が 1 番人気だった。
+  //   一方 Python 側は「人気(オッズ)を一切見ないAI」も同時に計算しており、
+  //   実測 52.1% のレースで別の馬を推していた。その答えを画面に出していなかっただけ。
+  //   ここでは「市場(みんなの人気)」と「人気を見ないAI」の食い違いを正直に並べる。
+  //   ⚠ どちらが当たるとは言わない。当たる保証は無い。見方を2つ見せるだけ。
+  function buildNopopBox(race) {
+    const np = race && race.nopopPick;
+    if (!np || !np.number) return null;
+    const tp = race.topPick;
+    const same = !np.disagrees;
+    const nm = scrubName(np.name, "");
+    const oddsTxt = Number.isFinite(np.odds) ? `${np.odds.toFixed(1)}倍` : "—";
+    const popTxt = Number.isFinite(np.popularity) ? `${np.popularity}番人気` : "人気不明";
+    const wrap = el("div", {
+      class: "nopop-box " + (same ? "is-same" : "is-diff"),
+      style: "margin:8px 0 2px;padding:11px 13px;border-radius:11px;font-size:13px;line-height:1.7;"
+        + (same
+          ? "background:rgba(90,110,90,.16);border-left:3px solid #7fae7f;"
+          : "background:rgba(120,80,140,.18);border-left:3px solid #b98fd8;")
+        + "color:var(--c-ink,#eadfc6)",
+    });
+    wrap.appendChild(el("div", { style: "font-weight:800;margin-bottom:5px;color:" + (same ? "#9ed49e" : "#d6aef2") },
+      same ? "人気を見ないAIも 同じ馬を推しています" : "人気を見ないAIは 別の馬を推しています"));
+    const line = el("div", { style: "display:flex;gap:10px;align-items:baseline;flex-wrap:wrap" });
+    line.appendChild(el("b", { style: "font-size:17px" }, `${np.number}番 ${nm || ""}`.trim()));
+    line.appendChild(el("span", { style: "opacity:.85" }, `${popTxt}・${oddsTxt}`));
+    if (Number.isFinite(np.prob)) {
+      line.appendChild(el("span", { style: "opacity:.85" }, `AIの見立て ${(np.prob * 100).toFixed(1)}%`));
+    }
+    wrap.appendChild(line);
+    if (!same && tp && tp.number) {
+      wrap.appendChild(el("div", { style: "margin-top:4px;opacity:.82" },
+        `画面の本命は ${tp.number}番（みんなの人気を織り込んだ見方）。こちらは人気を一切見ないAIの見方です。`));
+    }
+    wrap.appendChild(el("div", { style: "margin-top:5px;font-size:11.5px;opacity:.66" },
+      "※どちらが当たるかは分かりません。見方を2つ並べているだけです。"));
     return wrap;
   }
 
@@ -1938,28 +1987,17 @@
       grid.appendChild(card);
     });
     if (grid.children.length === 0) {
-      // フォールバック: recommendations 未取得時のスタブ
-      const fallback = [
-        { key: "best", short_label: "BEST", roi_pct: 126.8, hit_rate_pct: 83, fired_count: 53, trust_level: 4,
-          walk_forward: { mean_roi_pct: 112.1, win_periods: 7, active_periods: 7 }, desc: "本命確率22%+ かつ 対抗差4pt+で複勝" },
-        { key: "safe", short_label: "SAFE", roi_pct: 106.3, hit_rate_pct: 72, fired_count: 100, trust_level: 3,
-          walk_forward: { mean_roi_pct: 106.7, win_periods: 6, active_periods: 7 }, desc: "本命確率20%+で複勝・発火多め" },
-      ];
-      fallback.forEach((d) => {
-        const cls = d.trust_level >= 4 ? "trusted" : "stable";
-        const stars = "★".repeat(d.trust_level) + "☆".repeat(4 - d.trust_level);
-        const card = el("div", { class: `strat-trust-card ${cls}` });
-        card.appendChild(el("div", { class: "head" },
-          el("span", { class: "name" }, d.short_label),
-          el("span", { class: "stars" }, stars)
-        ));
-        card.appendChild(el("div", { class: "big-roi" }, d.roi_pct.toFixed(1) + "%"));
-        card.appendChild(el("div", { class: "meta", html:
-          `過去 ${d.fired_count} 回・当たり ${d.hit_rate_pct}%<br>${d.walk_forward.win_periods}/${d.walk_forward.active_periods} 期間で 100% 超え<br>期間別の平均 ${d.walk_forward.mean_roi_pct}%`
-        }));
-        card.appendChild(el("div", { class: "desc" }, d.desc));
-        grid.appendChild(card);
-      });
+      // 🚫 ここに「126.8%」「106.3%」を手で書いた固定の数字を出していた (2026-08-11 削除)。
+      //    実際の成績は best 79.9% / safe 77.7% で、画面の数字は嘘だった。
+      //    データが取れない時は「取れていない」と正直に出す。数字は絶対に作らない。
+      const card = el("div", { class: "strat-trust-card" });
+      card.appendChild(el("div", { class: "head" },
+        el("span", { class: "name" }, "成績データなし")
+      ));
+      card.appendChild(el("div", { class: "meta", html:
+        "いまは成績を読み込めていません。<br>数字を作って出すことはしません。"
+      }));
+      grid.appendChild(card);
     }
     body.appendChild(grid);
 
@@ -3231,6 +3269,8 @@
       memoRender("reflect", [state.bets], renderRecentMiss);
       memoRender("profit", [state.bets], renderProfitSummary);
       memoRender("budget", [state.bets, todayJst()], renderBudgetGuard);
+      // 2026-08-11: 本当の成績 (折りたたみの外・必ず見える位置)
+      memoRender("honestrecord", [state.liveStats], renderHonestRecord);
       // ── 折りたたみセクション群 ──
       memoRender("autostatus", [state.autostatus, minuteBucket], renderAutostatus);
       memoRender("mlstatus", [state.mlStatus], renderMlStatus);
@@ -3653,10 +3693,85 @@
     `;
   }
 
+  // ─── 2026-08-11 新設: 「本当の成績」ブロック ────────────────
+  //   これまで画面には検証(過去に当てはめた計算)の良い数字しか出しておらず、
+  //   実際に買っていたらどうだったかを一度も出していなかった。
+  //   本当は 14 個の買い方すべてが 100% 割れ (合計 -151,620 円)。
+  //   ここで必ず本物を先に見せる。数字は全部 /api/live-stats の実データで、手書きしない。
+  function buildHonestRecordHtml() {
+    const ls = state.liveStats;
+    if (!ls || !ls.ok || !ls.live || !ls.live.by_strategy) return "";
+    const bs = ls.live.by_strategy;
+    const rows = Object.entries(bs).map(([k, v]) => ({ key: k, ...v }));
+    if (!rows.length) return "";
+    const totalCost = rows.reduce((s, v) => s + (v.invest_jpy || 0), 0);
+    const totalRet = rows.reduce((s, v) => s + (v.payout_jpy || 0), 0);
+    if (totalCost <= 0) return "";
+    const totalRoi = totalRet / totalCost * 100;
+    const profit = totalRet - totalCost;
+    const winners = rows.filter((v) => (v.roi_pct || 0) >= 100);
+    const worst = rows.slice().sort((a, b) => (a.roi_pct || 0) - (b.roi_pct || 0))[0];
+
+    // 毎週の学習けっかで「出してよい」と判定された買い方
+    const um = ls.umami || {};
+    const allowed = Array.isArray(um.allowed_bet_types) ? um.allowed_bet_types : [];
+    const LBL = { umaren: "馬連", wide: "ワイド", sanren: "3連複" };
+    const umamiRows = (um.umami && um.umami.byType) ? Object.entries(um.umami.byType) : [];
+
+    const fmt = (n) => (n >= 0 ? "+" : "") + Math.round(n).toLocaleString() + "円";
+    return `
+      <div class="honest-record ${totalRoi >= 100 ? "is-plus" : "is-minus"}">
+        <div class="hr-head">
+          <span class="hr-icon">${totalRoi >= 100 ? "📈" : "📉"}</span>
+          <span class="hr-title">本当の成績（実際に買っていたら）</span>
+        </div>
+        <div class="hr-big">
+          <span class="hr-roi">${totalRoi.toFixed(1)}%</span>
+          <span class="hr-profit">${fmt(profit)}</span>
+        </div>
+        <div class="hr-sub">
+          ${ls.live.resolved_entries ? `結果が出た ${ls.live.resolved_entries.toLocaleString()} 件` : ""}
+          ／ ${rows.length} 個の買い方のうち <b>100% を超えたのは ${winners.length} 個</b>
+          ${worst ? `／ いちばん悪いのは <b>${escapeHtml(worst.key)} の ${worst.roi_pct}%</b>（最大 ${worst.max_losing_streak} 連敗）` : ""}
+        </div>
+        ${umamiRows.length ? `
+          <div class="hr-umami">
+            <div class="hr-umami-head">毎週しらべている「うまみ買い」${um.checked_at ? `<span class="hr-when">${escapeHtml(um.checked_at)} 時点</span>` : ""}</div>
+            <div class="hr-umami-list">
+              ${umamiRows.map(([k, v]) => `
+                <div class="hr-umami-row ${v.allow ? "is-ok" : "is-ng"}">
+                  <span class="u-name">${escapeHtml(LBL[k] || k)}</span>
+                  <span class="u-roi">${v.roi_pct}%</span>
+                  <span class="u-note">${v.allow ? "◯ 出してよい" : "✕ 止める"}</span>
+                </div>`).join("")}
+            </div>
+            <div class="hr-umami-note">
+              ${allowed.length
+                ? `いま出してよいのは <b>${allowed.map((a) => escapeHtml(LBL[a] || a)).join("・")}</b> だけです。`
+                : `いま出してよい買い方は <b>ありません</b>。`}
+              判定の決まり＝150点以上・回収率100%以上・いちばん大きい当たりを1回抜いても100%以上。
+            </div>
+          </div>` : ""}
+        <div class="hr-honest">
+          競馬は賭けたお金の <b>20%</b>（3連系は25%）が自動で引かれます。だから「ふつうに買えば必ず負ける」のがスタート地点です。
+          この数字は毎週 月曜の朝に自動で計算し直しています。
+        </div>
+      </div>`;
+  }
+
+  // 本当の成績を独立したブロックとして必ず描く (推奨が 0 件の日でも見える)
+  function renderHonestRecord() {
+    const root = $("#honest-record-mount");
+    if (!root) return;
+    const html = buildHonestRecordHtml();
+    if (!html) { root.hidden = true; root.innerHTML = ""; return; }
+    root.hidden = false;
+    root.innerHTML = html;
+  }
+
   // ─── 描画: 今日の推奨レース (Wave19.3: 3 戦略マルチアサイン) ──
-  // BEST: fuku_top1_prob_022 (確率 22%+ で複勝) 65 件 112.2%
-  // SAFE: fuku_top1_prob_020 (確率 20%+ で複勝) 100 件 106.3%
-  // WIDE: wide_top3_conf_050 (top3 合計 50%+ でワイド 3 点) 49 件 132%
+  // ⚠ 下のコメントの数字は「検証(過去に当てはめた計算)」の値であって、
+  //   実際に買ったときの成績ではない (実際は best 79.9% / safe 77.7% = 負け)。
   function renderRecommendations() {
     const root = $("#recommend-mount");
     if (!root) return;
@@ -3827,11 +3942,12 @@
     root.innerHTML = `
       <div class="rec-head">
         <span class="rec-icon">★</span>
-        <span class="rec-title">回収率 100% を超えた本物の戦略</span>
+        <span class="rec-title">検証で 100% を超えた買い方</span>
         <span class="rec-pill is-go">${todayList.length > 0 ? `今日 ${todayList.length} 件` : "直近の実績"}</span>
       </div>
       <p class="rec-criteria">
-        過去 ${stats.best?.test_races || 0} レースで <b>厳しい検証 (未来を見ずに過去だけで合格)</b> に通った戦略の中から、今日狙えるレースを表示しています。
+        過去 ${stats.best?.test_races || 0} レースの <b>検証 (過去のデータに当てはめた計算)</b> で 100% を超えた買い方です。
+        <b>検証の数字と、実際に買ったときの成績は別物</b>です。上の「本当の成績」を必ず見てください。
       </p>
       ${todayList.length > 0 ? `
         <div class="rec-section">

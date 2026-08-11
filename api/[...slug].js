@@ -109,6 +109,16 @@ module.exports = async (req, res) => {
       if (!r) return ok(res, { ok: false, reason: "no_rankings" });
       return ok(res, r);
     }
+    if (path === "/live-stats") {
+      // 2026-08-11: 「実際に買っていたらいくらになったか」の本物の成績 + 毎週の学習けっか。
+      //   これまで画面には検証(バックテスト)の良い数字しか出しておらず、
+      //   本当は 14 個の買い方すべてが 100% 割れ (合計 -151,620 円) だった。
+      //   嘘をつかないため、この本物の数字を画面のいちばん上に出す。
+      const live = lightgbm_v1.loadLiveStats();
+      const umami = lightgbm_v1.loadUmamiStatus();
+      if (!live && !umami) return ok(res, { ok: false, reason: "no_live_stats" });
+      return ok(res, { ok: true, live, umami });
+    }
     if (path === "/ml-status") {
       // LightGBM の学習メタ + 過去レース実証結果 (回収率)
       const meta = lightgbm_v1.loadModelMeta();
@@ -217,6 +227,7 @@ module.exports = async (req, res) => {
             third: r.third,
             exotic: r.exotic || null,
             overlays: r.overlays || null,
+            nopopPick: r.nopopPick || null,  // 2026-08-11: 人気を見ないAIの本命 (⚠ server.js 側にも同じ1行が必要)
             confidence: r.confidence,
             hasOverpop: !!r.hasOverpop,
             hasUnderval: !!r.hasUnderval,
