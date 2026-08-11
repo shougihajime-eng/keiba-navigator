@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v80"; // 画面の嘘(手書き126.8%)を削除 + 本当の成績を表示 + 毎週の学習 (8/11)
+const CACHE_VERSION = "keiba-nav-v81"; // 見やすさの磨き上げ(styles.polish.css)を追加 (8/12)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",
@@ -31,6 +31,10 @@ const NETWORK_TIMEOUT_MS = 2500;
 //     → HTML は **network-only** に格下げ。offline 時のみ最小フォールバック。
 const NETWORK_FIRST_PATHS = [
   "/app.js", "/styles.css",
+  // 2026-08-11 追加: styles.polish.css を入れ忘れると cache-first になり、
+  //   見やすさを直しても古い見た目が残る (本人がいちばん嫌う事故)。
+  //   ⚠ startsWith 判定なので "/styles.css" では polish 版に当たらない。必ず別に書く。
+  "/styles.polish.css",
   "/predictors/", "/lib/",
 ];
 

@@ -458,6 +458,9 @@ def main():
                     help="build_all.py をスキップ")
     ap.add_argument("--skip-features", action="store_true",
                     help="aggregate_features.py をスキップ")
+    ap.add_argument("--run-legacy-features", action="store_true",
+                    help="古い aggregate_features.py(v1) も走らせる。既定は走らせない "
+                         "(v1 は未来の結果が混ざる版で、v2 が後継。2026-08-11 に既定オフ化)")
     ap.add_argument("--skip-features-v2", action="store_true",
                     help="aggregate_features_v2.py (leak-free) をスキップ")
     ap.add_argument("--skip-train", action="store_true",
@@ -494,11 +497,22 @@ def main():
         rc = run_build_all()
         if rc == -2: timed_out = True
         if rc != 0: overall |= 0x04
-    if not args.skip_features:
+    # 🚫 2026-08-11: 古い集計 (aggregate_features.py / v1) を毎朝走らせるのをやめた。
+    #   理由:
+    #     ① v1 は「未来の結果が混ざる」作り (CLAUDE.md の LEAK-1 / LEAK-2)。
+    #        それを直すために v2 を作ったのに、毎朝 v1 → v2 の順で両方走らせていた。
+    #        普段は v2 が上書きするので無害だが、v2 だけ失敗した日は
+    #        リーク入りの features.json が残り、そのままAIの学習に使われる。
+    #     ② v1 は 8/11 朝に 300 秒でタイムアウトしており、時間の無駄でもあった。
+    #   安全の根拠: v1 と v2 は同じ features.json を書き、v2 は v1 の出力を読まない。
+    #     実際 8/11 は v1 が落ちて v2 だけが動いたが、その features.json で
+    #     予想・学習とも正常に回っている (＝v2 単独で完結すると実証ずみ)。
+    #   もし戻したくなったら --run-legacy-features を付ける。
+    if getattr(args, "run_legacy_features", False) and not args.skip_features:
         rc = run_aggregate_features()
         if rc == -2: timed_out = True
         if rc != 0: overall |= 0x08
-    # ★Wave17: leak-free 版の集計 (旧 features.json を上書き)
+    # ★Wave17: leak-free 版の集計 (これが本番。v1 の後継)
     if not getattr(args, "skip_features_v2", False):
         rc = run_aggregate_features_v2()
         if rc == -2: timed_out = True

@@ -43,6 +43,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="styles.css">
+  <!-- 2026-08-11: 見やすさの磨き上げ (必ず styles.css の "あと" に読む・後勝ちで上書き)。
+       今のテーマは明るい和紙なのに、暗いテーマ時代の白っぽい文字色が置き忘れられていて
+       実測コントラスト 1.1:1 = ほぼ読めない箇所が 36 種あった。それを 4.5:1 以上に直す。
+       あわせて 12px 未満の文字 58 種 → 0、44px 未満の押しどころ 8 種 → 0。 -->
+  <link rel="stylesheet" href="styles.polish.css">
 <style id="tap-polish">
 /* ⚡ タップを世界一クラスに（あと付け・2026-06-23 本人「全アプリに入れて」）
    長押しメニュー抑止＋押した瞬間に反応＋押した手ごたえ。入力欄の貼り付け/選択は温存。

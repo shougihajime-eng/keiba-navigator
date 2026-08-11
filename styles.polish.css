@@ -1,0 +1,373 @@
+/* ============================================================================
+   styles.polish.css — 見やすさ・デザインの磨き上げ (2026-08-11)
+   ----------------------------------------------------------------------------
+   ・styles.css の「あと」に読み込む上書き専用ファイル (後勝ち・!important 使用)。
+   ・index.html / styles.css / app.js は一切さわらない前提で書いてある。
+   ・現行テーマ = Fable5「朝焼けの和紙 × 芝の若葉」(明るい地)。
+     暗いテーマ(NOIR)時代の置き忘れ色 (白文字・薄ミント・薄鼠) が
+     明るい地で読めなくなっていたのを、実測コントラスト 4.5:1 以上に直す。
+   ・直した数字は全部 Playwright の実測 (iPhone390 / iPad1024 / PC1440) で確認済み。
+
+   目次
+   ① 色トークンの底上げ (薄すぎる茶・金を濃く = 4.5:1 以上)
+   ② 暗テーマの置き忘れ色の修正 (自動化ステータス・AI成績・WIN5)
+   ③ 「本当の成績」ブロックの全面リペイント (最重要)
+   ④ 12px 未満の文字を全部 12px 以上へ
+   ⑤ 押せる所を 44px 以上へ
+   ⑥ 意味の色づけ (100%以上=若葉 / 100%未満=柿) と数字の等幅
+   ⑦ 細部の品質 (フォーカス・見出し・余白)
+   ============================================================================ */
+
+
+/* ============================================================
+   ① 色トークンの底上げ
+   ------------------------------------------------------------
+   実測: --c-ink-mute #947B62 = 3.92:1 / --c-ink-dim #B39C85 = 2.58:1 /
+         --gold #A8771D = 3.88:1 / --gold-deep #B08A45 = 3.14:1 (白カード上)。
+   全部 4.5:1 を割っていたので、同じ色味のまま濃くする。
+   (--c-ink-mute #77604A = 5.80:1 / --c-ink-dim #7E6950 ≈ 5.1:1 /
+    --gold #8A6112 = 5.43:1 / --gold-deep #7E621F = 5.65:1)
+   ============================================================ */
+:root {
+  --c-ink-mute: #77604A;          /* 補足文字: 3.92:1 → 5.80:1 */
+  --c-ink-dim:  #7E6950;          /* 薄い注記: 2.58:1 → 約5.1:1 */
+  --gold:       #8A6112;          /* 金の文字: 3.88:1 → 5.43:1 */
+  --gold-deep:  #7E621F;          /* 控えめ金: 3.14:1 → 5.65:1 */
+  /* .hr-title が var(--ink, #ECEDEF) を参照するが --ink は未定義で
+     ほぼ白 (#ECEDEF) に落ちて見えなくなっていた。ここで定義して救う。 */
+  --ink: var(--c-ink, #463527);
+  /* 意味の色 (このファイル内で使う): 勝ち=深い若葉 / 負け=深い柿 */
+  --win-ink:  #1F7A4E;            /* 白カード上 5.22:1 */
+  --loss-ink: #A63A26;            /* 白カード上 6.34:1 */
+}
+
+
+/* ============================================================
+   ② 暗テーマの置き忘れ色の修正
+   ------------------------------------------------------------
+   自動化ステータスの「稼働中」が薄ミント #74D6A6 (1.73:1) 等、
+   黒地用の色が白地に残っていて実質見えなかった。
+   ============================================================ */
+
+/* --- 自動化ステータス --- */
+.autostatus-label { color: var(--c-ink-mute) !important; }          /* #8A9198 3.13:1 → 5.8:1 */
+.autostatus-sub   { color: var(--c-ink-mute) !important; }          /* #8A9198 3.13:1 → 5.8:1 */
+.autostatus-note  { color: var(--c-ink-mute) !important; }          /* #B4BAC0 1.92:1 → 5.8:1 */
+.autostatus-value.is-ok   { color: var(--win-ink) !important; }     /* #74D6A6 1.73:1 → 5.2:1 */
+.autostatus-value.is-warn { color: #8A5E10 !important; }
+.autostatus-value.is-ng   { color: var(--loss-ink) !important; }
+.autostatus-pill.is-warn  { color: #8A5E10 !important; }            /* #E0C28A → 濃い山吹 */
+
+/* --- AI モデル成績 (過去検証データの中) --- */
+.ml-strat.is-win   .ml-strat-roi { color: var(--win-ink) !important; }   /* #74D6A6 → 5.2:1 */
+.ml-strat.is-close .ml-strat-roi { color: #8A5E10 !important; }          /* #D9B779 → 濃い山吹 */
+.ml-strat.is-lose  .ml-strat-roi { color: var(--loss-ink) !important; }  /* #E0707A → 6.3:1 */
+.ml-rec-icon,
+.ml-rec-title   { color: var(--win-ink) !important; }
+.ml-rec-note b  { color: var(--win-ink) !important; }               /* #74D6A6 1.67:1 → 5.2:1 */
+
+/* --- 推奨レースの買い目 (緑文字が小さい所は濃い若葉に) --- */
+.rec-bet { color: var(--wakaba-d, #2F7A4C) !important; }            /* 3.58:1 → 5.2:1 */
+.ml-cell-value { color: var(--wakaba-d, #2F7A4C) !important; }      /* AI精度の数字と%も濃い若葉に */
+
+/* --- WIN5 カードの紫・黒の置き忘れを和紙に統一 --- */
+.win5-card::before { display: none !important; }                    /* 上半分の黒いベール */
+.win5-card {
+  border-color: var(--gold-line-soft) !important;
+  box-shadow: var(--sh) !important;
+  background: var(--c-bg-card, #FFFDF6) !important;
+}
+.win5-head {
+  background: linear-gradient(135deg, rgba(61, 90, 150, 0.08), rgba(221, 156, 43, 0.10)) !important;
+  border-bottom: 1px solid var(--gold-line-soft) !important;
+}
+.win5-head .title { color: var(--c-ink) !important; font-size: 17px !important; }
+.win5-head .day   { font-size: 12px !important; color: var(--gold) !important; }
+.win5-body { background: transparent !important; }
+/* 「AI 最適化」黒いボタン → 柿の行動ボタン (白文字 4.8:1) */
+.budget-btn {
+  background: var(--kaki-d, #C7492B) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+}
+
+
+/* ============================================================
+   ③ 「本当の成績」ブロックの全面リペイント (最重要)
+   ------------------------------------------------------------
+   このブロックは黒地用の CSS のまま白地に出ていた:
+   ・見出しが ほぼ白 #ECEDEF = 地に溶けて読めない
+   ・回収率 54.1% が薄サーモン #F0A584 = 1.9:1
+   負けている数字を正直に・しかし品よく見せる場所なので、
+   白いカード + 柿(負け)/若葉(勝ち)の帯で堂々と見せる。
+   ============================================================ */
+.honest-record {
+  margin: 14px 0 18px !important;
+  padding: 18px 18px 16px !important;
+  border-radius: 16px !important;
+  background: var(--c-bg-card, #FFFDF6) !important;
+  border: 1px solid var(--gold-line-soft) !important;
+  border-left-width: 6px !important;
+  box-shadow: var(--sh, 0 10px 28px rgba(150, 90, 40, 0.14)) !important;
+}
+.honest-record.is-minus { border-left-color: var(--loss-ink) !important; box-shadow: var(--sh) !important; }
+.honest-record.is-plus  { border-left-color: var(--win-ink)  !important; box-shadow: var(--sh) !important; }
+
+.honest-record .hr-head  { margin-bottom: 8px !important; }
+.honest-record .hr-icon  { font-size: 20px !important; }
+.honest-record .hr-title {
+  color: var(--c-ink, #463527) !important;      /* ほぼ白 → 焙じ茶の墨 (10:1 以上) */
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+.honest-record .hr-roi { font-size: 46px !important; letter-spacing: -0.01em !important; }
+.honest-record.is-minus .hr-roi    { color: var(--loss-ink) !important; }  /* 1.9:1 → 6.3:1 */
+.honest-record.is-plus  .hr-roi    { color: var(--win-ink) !important; }
+.honest-record .hr-profit          { opacity: 1 !important; font-size: 21px !important; }
+.honest-record.is-minus .hr-profit { color: var(--loss-ink) !important; }
+.honest-record.is-plus  .hr-profit { color: var(--win-ink) !important; }
+.honest-record .hr-sub {
+  font-size: 13.5px !important;
+  color: var(--c-ink-soft, #5F4A38) !important;
+  opacity: 1 !important;
+}
+.honest-record .hr-sub b { color: var(--c-ink) !important; }
+
+/* うまみ買いの表 */
+.honest-record .hr-umami       { border-top: 1px dashed rgba(70, 53, 39, 0.28) !important; margin-top: 12px !important; padding-top: 12px !important; }
+.honest-record .hr-umami-head  { font-size: 13px !important; color: var(--c-ink) !important; opacity: 1 !important; }
+.honest-record .hr-when        { color: var(--c-ink-mute) !important; opacity: 1 !important; font-size: 12px !important; }
+.honest-record .hr-umami-row {
+  background: rgba(70, 53, 39, 0.05) !important;   /* 白ガラス → 薄い墨の面 */
+  font-size: 13px !important;
+  padding: 8px 10px !important;
+  border-radius: 10px !important;
+}
+.honest-record .hr-umami-row .u-name { color: var(--c-ink) !important; font-weight: 700 !important; }
+.honest-record .hr-umami-row.is-ok  .u-roi,
+.honest-record .hr-umami-row.is-ok  .u-note { color: var(--win-ink) !important; }   /* 薄緑 → 5.2:1 */
+.honest-record .hr-umami-row.is-ng  .u-roi,
+.honest-record .hr-umami-row.is-ng  .u-note { color: var(--loss-ink) !important; }  /* 薄橙 → 6.3:1 */
+.honest-record .hr-umami-row .u-note { font-size: 12.5px !important; }
+/* 「△ まだ分からない」(3段階めの状態) — 薄金 #E8C87A (1.46:1) → 濃い山吹 5.4:1 */
+.honest-record .hr-umami-row.is-unknown .u-roi,
+.honest-record .hr-umami-row.is-unknown .u-note { color: #8A5E10 !important; }
+/* 「運の幅 63〜247%」の注記 11px → 12px・読める濃さに */
+.honest-record .hr-umami-row .u-ci {
+  font-size: 12px !important;
+  color: var(--c-ink-mute) !important;
+  opacity: 1 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.honest-record .hr-umami-note {
+  font-size: 12.5px !important;
+  color: var(--c-ink-soft) !important;
+  opacity: 1 !important;
+}
+.honest-record .hr-umami-note b { color: var(--c-ink) !important; }
+.honest-record .hr-honest {
+  font-size: 12.5px !important;
+  color: var(--c-ink-mute) !important;
+  opacity: 1 !important;
+  border-top: 1px dashed rgba(70, 53, 39, 0.18) !important;
+  margin-top: 12px !important;
+  padding-top: 10px !important;
+}
+.honest-record .hr-honest b { color: var(--c-ink-soft) !important; }
+@media (max-width: 480px) {
+  .honest-record { padding: 16px 14px 14px !important; }
+  .honest-record .hr-roi    { font-size: 40px !important; }
+  .honest-record .hr-profit { font-size: 18px !important; }
+}
+
+
+/* ============================================================
+   ④ 12px 未満の文字を全部 12px 以上へ (実測 58 種 → 0)
+   ============================================================ */
+
+/* --- マストヘッド --- */
+.nm-tag  { font-size: 12px !important; letter-spacing: 0.22em !important; color: var(--c-ink-mute) !important; }
+.nm-meta { font-size: 12.5px !important; }
+.nm-meta small, .nm-m small { font-size: 12px !important; }
+.nm-m b { font-variant-numeric: tabular-nums; }
+
+/* --- ライブ行 (LIVE・予想・取得・学習中・音 ON/OFF) ---
+   ボタンを 44px にしても 1 行に収まるよう、すき間を少し詰める */
+.live-thin { font-size: 12px !important; padding: 5px 8px !important; gap: 5px !important; }
+.live-label { font-size: 12px !important; }
+.live-meta, .live-thin .live-meta { font-size: 12px !important; }
+.live-meta b, .live-thin .live-meta b { font-size: 12.5px !important; }
+.live-thin .learning-badge, .learning-badge { font-size: 12px !important; padding: 3px 9px !important; }
+.ai-thinking { font-size: 12px !important; }
+/* 元 CSS に「.sound-toggle .st-icon 10px !important」があるので同じ強さで上書き */
+.st-icon, .sound-toggle .st-icon, .live-thin .sound-toggle .st-icon { font-size: 12px !important; }
+
+/* --- 休む日ヒーロー --- */
+.noday-head-label { font-size: 12px !important; }
+.noday-next-card .lab-row { font-size: 12px !important; }
+.noday-next-card .lab-row .countdown-small { font-size: 13px !important; }
+.noday-next-card .next-date-cell .label { font-size: 13px !important; }
+/* 下の小さな注記 (インラインで 11px 指定) */
+.block-battle p[style*="font-size:11px"] { font-size: 12.5px !important; }
+
+/* --- 戦略カード (短距離・実力派 100.4% など) ---
+   元 CSS に「.strat-trust-card.mixed .head .stars 10px !important」等の
+   強いセレクタがあるので、同じ強さのセレクタで上書きする。 */
+.strat-trust-card .stars,
+.strat-trust-card .head .stars,
+.strat-trust-card.trusted .head .stars,
+.strat-trust-card.stable  .head .stars,
+.strat-trust-card.mixed   .head .stars,
+.strat-trust-card.risky   .head .stars { font-size: 12px !important; letter-spacing: 0.06em !important; }
+.big-roi-label,
+.strat-trust-card.trusted .big-roi-label,
+.strat-trust-card.risky   .big-roi-label { font-size: 12.5px !important; }
+.strat-trust-card .meta { font-size: 12.5px !important; line-height: 1.65 !important; }
+.trap-warn  { font-size: 12.5px !important; }
+.trust-note { font-size: 12.5px !important; }
+.strat-trust-card .desc { font-size: 12.5px !important; }
+
+/* --- 成績・予算・記録まわり --- */
+.ps-eyebrow  { font-size: 12px !important; letter-spacing: 0.14em !important; }
+.ps-msg-sub  { font-size: 13px !important; }
+.bg-sub      { font-size: 12.5px !important; }
+.profit-cell .label { font-size: 12px !important; }
+.profit-cell .sub   { font-size: 12px !important; }
+
+/* --- 推奨レース (過去検証データの中) --- */
+.rec-pill     { font-size: 12px !important; }
+.rec-criteria { font-size: 12.5px !important; }
+.rec-section-head { font-size: 12.5px !important; }
+/* 元 CSS の「.rec-badge[class*="rec-b-"] 9.5px !important」に同じ強さで勝つ */
+.rec-badge, .rec-badge[class*="rec-b-"] { font-size: 12px !important; padding: 3px 9px !important; }
+.rec-hmeta { font-size: 12.5px !important; }
+.rec-date  { font-size: 12px !important; }
+.rec-empty { color: var(--c-ink-soft) !important; }
+
+/* --- AI モデル成績 --- */
+.ml-cell-label { font-size: 12px !important; }
+.ml-cell-sub   { font-size: 12px !important; }
+.ml-rec-pill   { font-size: 12px !important; color: #045D43 !important; }
+.ml-rec-meta   { font-size: 12px !important; }
+.ml-rec-note   { font-size: 12.5px !important; }
+.ml-strats-title { font-size: 12.5px !important; }
+.ml-strat-meta { font-size: 12px !important; }
+
+/* --- 自動化ステータス --- */
+.autostatus-pill  { font-size: 12px !important; }
+.autostatus-label { font-size: 12px !important; }
+.autostatus-sub   { font-size: 12px !important; }
+.autostatus-note  { font-size: 12.5px !important; }
+
+/* --- 全レース・ニュース・その他 --- */
+.section-head .extra { font-size: 12.5px !important; }
+.placeholder-sub { font-size: 12.5px !important; }
+.win5-head .day { font-size: 12px !important; }
+.h-hint { font-size: 12px !important; }                        /* 折りたたみ見出しの補足 11px → 12px */
+.collapsibles-divider span { font-size: 12px !important; }     /* 「もっと見る」10px → 12px */
+.bottom-nav__item span { font-size: 12px !important; }         /* 下のナビ「本日/WIN5/履歴」10px → 12px */
+
+
+/* ============================================================
+   ⑤ 押せる所を 44px 以上へ (Apple の指の基準)
+   ------------------------------------------------------------
+   実測: 更新ボタン 30×21 / 音 39×36 / WIN5 の各ボタン 26〜34px。
+   ============================================================ */
+
+/* 更新・音 (ライブ行の右はし) */
+.refresh-btn, .sound-toggle {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+}
+.refresh-btn .rf-icon { font-size: 17px !important; color: var(--gold) !important; }
+
+/* WIN5 ツールバー (期待値/的中の切替・予算・AI最適化・通知) */
+.win5-toolbar button { min-height: 44px !important; padding: 8px 14px !important; font-size: 13px !important; }
+.win5-toolbar input  { min-height: 44px !important; font-size: 16px !important; }  /* 16px = iPhone で勝手にズームしない */
+
+/* 絞り込みチップ (全て / 本命予想 / 重賞のみ …) */
+.chip-filter { min-height: 44px !important; padding: 9px 14px !important; font-size: 13px !important; }
+.chip-filter.is-active { color: #A33A20 !important; font-weight: 700 !important; }  /* 4.22:1 → 6.5:1 */
+.chip-filter:not(.is-active) { color: var(--c-ink-soft) !important; }               /* 3.9:1 → 7:1 台 */
+
+/* 予算ボタン (win5) は budget-btn を含む — 高さだけ足す */
+.budget-btn { min-height: 44px !important; padding: 8px 16px !important; }
+
+
+/* ============================================================
+   ⑥ 意味の色づけ + 数字の等幅
+   ------------------------------------------------------------
+   ・回収率: 100% 以上 = 深い若葉 / 100% 未満 = 深い柿。
+     「どの買い方が勝てているか」が読む前に色で分かる。
+   ・お金と % の数字は tabular-nums で桁がそろう。
+   ============================================================ */
+
+/* 戦略カードの大きな回収率
+   元 CSS に「.strat-trust-card.mixed .big-roi 〜 !important」等の強い色指定が
+   あるので、同じ強さの一覧で上書きする。
+   100% 以上 = 深い若葉 / 100% 未満 = 深い柿 (読む前に色で分かる) */
+.strat-trust-card .big-roi,
+.strat-trust-card.trusted .big-roi,
+.strat-trust-card.stable  .big-roi,
+.strat-trust-card.mixed   .big-roi,
+.strat-trust-card.risky   .big-roi { color: var(--win-ink) !important; }
+.strat-trust-card .big-roi.is-loss,
+.strat-trust-card.trusted .big-roi.is-loss,
+.strat-trust-card.stable  .big-roi.is-loss,
+.strat-trust-card.mixed   .big-roi.is-loss,
+.strat-trust-card.risky   .big-roi.is-loss { color: var(--loss-ink) !important; }
+.strat-trust-card .name,
+.strat-trust-card .head .name,
+.strat-trust-card.trusted .head .name,
+.strat-trust-card.stable  .head .name,
+.strat-trust-card.mixed   .head .name,
+.strat-trust-card.risky   .head .name { color: var(--c-ink) !important; font-weight: 700 !important; font-size: 14px !important; }
+.strat-trust-card .stars { color: var(--gold) !important; }
+
+/* 数字の等幅 (桁ぞろえ) */
+.big-roi, .hr-roi, .hr-profit, .u-roi,
+.nm-m b, .live-meta b,
+.profit-cell .val, .ml-cell-val, .ml-strat-roi,
+.rec-hmeta, .rec-date,
+.countdown-small, .noday-next-card .next-date-cell .day,
+.autostatus-sub, .win5-head .day {
+  font-variant-numeric: tabular-nums !important;
+}
+
+
+/* ============================================================
+   ⑦ 細部の品質
+   ============================================================ */
+
+/* キーボード操作でどこにいるか見えるように (マウス/指では出ない) */
+button:focus-visible, a:focus-visible, summary:focus-visible,
+select:focus-visible, input:focus-visible {
+  outline: 3px solid var(--ruri, #3D5A96) !important;
+  outline-offset: 2px !important;
+}
+
+/* 見出し行の副情報も読める濃さに */
+.section-head .extra { color: var(--c-ink-mute) !important; }
+
+/* 引っ張って更新の文字 (3.88:1 → 5.4:1 は ①のトークンで解決済み)
+   ここでは大きさだけ確保 */
+.ptr-inner { font-size: 12.5px !important; }
+
+/* 「もっと見る」折りたたみの行間を少しゆったり (押し間違い防止) */
+.hideable-summary { min-height: 52px !important; }
+
+/* トースト文字 */
+.toast { font-size: 13.5px !important; }
+
+/* --- モーダル (手動入力・WIN5編集・レース詳細) --- */
+.modal-close { min-width: 44px !important; min-height: 44px !important; }   /* × 40×40 → 44×44 */
+.form-group .label { font-size: 12.5px !important; }                        /* 項目名 11px → 12.5px */
+.form-group .hint  { font-size: 12px !important; }                          /* 補足 11px → 12px */
+/* 入力欄は 16px にすると iPhone で勝手に画面が拡大されない */
+.modal-body input, .modal-body select { font-size: 16px !important; min-height: 44px !important; }
