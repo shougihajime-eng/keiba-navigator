@@ -192,9 +192,15 @@ def run_fetch_tomorrow() -> int:
 def run_build_all() -> int:
     log_line("[step3] build_all.py (raw.bin → races/results JSON)")
     py = python_exe()
+    # 2026-08-11: 600 秒では足りず、8/11 朝の実行がタイムアウトで強制終了していた。
+    #   その結果 8/8・8/9 の 72 レースぶんの「結果(着順・払戻)」が取り込まれず、
+    #   答え合わせ(検証)のサンプルが 20% 足りない状態になっていた。
+    #   build_all は生データ 9,536 ファイルを毎回ぜんぶ読み直す作りで、
+    #   データが増えるほど遅くなる。当面は上限を伸ばして止まらないようにする。
+    #   🔜 本筋は「処理ずみの生データを飛ばす(差分だけ読む)」ようにすること。
     return run_subprocess(
         [py, str(JV_BRIDGE / "build_all.py")],
-        "build_all", timeout=600,
+        "build_all", timeout=2400,
     )
 
 
@@ -202,9 +208,10 @@ def run_build_all() -> int:
 def run_aggregate_features() -> int:
     log_line("[step4] aggregate_features.py (features.json 更新)")
     py = python_exe()
+    # 2026-08-11: これも 300 秒で毎回タイムアウトしていた (8/11 朝の実測)。
     return run_subprocess(
         [py, str(JV_BRIDGE / "aggregate_features.py")],
-        "aggregate_features", timeout=300,
+        "aggregate_features", timeout=900,
     )
 
 

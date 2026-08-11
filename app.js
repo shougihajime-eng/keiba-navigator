@@ -1830,12 +1830,13 @@
       const trueRoi2 = s.overall_roi_pct_v2 ?? s.roi_pct ?? (s.final_period_roi ?? wf.final_period_roi);
       card2.appendChild(el("div", { class: "big-roi" + (trueRoi2 != null && trueRoi2 < 100 ? " is-loss" : "") },
         trueRoi2 != null ? trueRoi2.toFixed(1) + "%" : "—"));
-      card2.appendChild(el("div", { class: "big-roi-label" }, "お金ベースの本当の回収率"));
+      card2.appendChild(el("div", { class: "big-roi-label" }, "検証（過去に当てはめた計算）"));
       const meanRoi2 = wf.mean_roi_pct;
       const inflated2 = meanRoi2 != null && trueRoi2 != null && (meanRoi2 - trueRoi2) >= 5;
       let meta2 = `${s.fired_count}件・的中${s.hit_rate_pct}%`;
       if (meanRoi2 != null) meta2 += `<br>期間別の平均 ${meanRoi2.toFixed(1)}%`;
-      if (inflated2) meta2 += `<br><span class="trap-warn">⚠ この「平均 ${meanRoi2.toFixed(1)}%」は時々の大当たりで釣り上がっています。本当の回収率は上の ${trueRoi2.toFixed(1)}%（お金ベース）です</span>`;
+      if (inflated2) meta2 += `<br><span class="trap-warn">⚠ この「平均 ${meanRoi2.toFixed(1)}%」は時々の大当たりで釣り上がっています。検証の数字は上の ${trueRoi2.toFixed(1)}% です</span>`;
+      meta2 += liveRoiHtml(d.key);   // ★実際に買ったらどうだったか
       if (s.trust_label) meta2 += `<br><span class="trust-note">判定: ${s.trust_label}</span>`;
       card2.appendChild(el("div", { class: "meta", html: meta2 }));
       grid.appendChild(card2);
@@ -1972,15 +1973,18 @@
       const trueRoi = overallV2_2 ?? s.roi_pct ?? finalRoi;
       const mainRoi = trueRoi != null ? trueRoi.toFixed(1) + "%" : "—";
       card.appendChild(el("div", { class: "big-roi" + (trueRoi != null && trueRoi < 100 ? " is-loss" : "") }, mainRoi));
-      card.appendChild(el("div", { class: "big-roi-label" }, "お金ベースの本当の回収率"));
+      // 2026-08-11: ここを「お金ベースの本当の回収率」と呼んでいたが、これは検証の数字であって
+      //   実際に買ったときの成績ではない (実際は下の行)。誤解を生むので言い換えた。
+      card.appendChild(el("div", { class: "big-roi-label" }, "検証（過去に当てはめた計算）"));
       // 期間別の平均が本当の回収率より目立って高い = 大当たりで釣り上がった「平均の罠」
       const meanRoiNum = wf.mean_roi_pct;
       const inflated = meanRoiNum != null && trueRoi != null && (meanRoiNum - trueRoi) >= 5;
       let metaHtml = `過去 ${s.fired_count} 回・当たり ${s.hit_rate_pct}%`;
       if (wfRoi) metaHtml += `<br>期間別の平均 ${wfRoi} (${wfWin || "—"})`;
       if (inflated) {
-        metaHtml += `<br><span class="trap-warn">⚠ この「平均 ${wfRoi}」は時々の大当たりで釣り上がっています。本当の回収率は上の ${trueRoi.toFixed(1)}%（お金ベース）です</span>`;
+        metaHtml += `<br><span class="trap-warn">⚠ この「平均 ${wfRoi}」は時々の大当たりで釣り上がっています。検証の数字は上の ${trueRoi.toFixed(1)}% です</span>`;
       }
+      metaHtml += liveRoiHtml(d.key);   // ★実際に買ったらどうだったか (負けなら「✕止める」)。鍵は d 側に在る
       if (s.trust_label) metaHtml += `<br><span class="trust-note">判定: ${s.trust_label}</span>`;
       card.appendChild(el("div", { class: "meta", html: metaHtml }));
       if (d.label) card.appendChild(el("div", { class: "desc" }, d.label));
@@ -3273,8 +3277,10 @@
       memoRender("honestrecord", [state.liveStats], renderHonestRecord);
       // ── 折りたたみセクション群 ──
       memoRender("autostatus", [state.autostatus, minuteBucket], renderAutostatus);
-      memoRender("mlstatus", [state.mlStatus], renderMlStatus);
-      memoRender("recommend", [state.recommendations], renderRecommendations);
+      // 2026-08-11: state.liveStats (実際に買ったらどうだったか) を条件に足す。
+      //   足さないと「成績が届く前に1回描いたきり」で、戦略カードに実際の成績が出ない。
+      memoRender("mlstatus", [state.mlStatus, state.liveStats], renderMlStatus);
+      memoRender("recommend", [state.recommendations, state.liveStats], renderRecommendations);
       memoRender("win5", [state.win5, state.win5Mode, state.win5Budget, state.win5SelectedKey, state.win5UserPlan], renderWin5);
       memoRender("allraces", [state.races, state.allRacesFilter, state.allRacesSort, minuteBucket], renderAllRaces);
       memoRender("history", [state.bets], renderHistory);
@@ -3738,18 +3744,26 @@
           <div class="hr-umami">
             <div class="hr-umami-head">毎週しらべている「うまみ買い」${um.checked_at ? `<span class="hr-when">${escapeHtml(um.checked_at)} 時点</span>` : ""}</div>
             <div class="hr-umami-list">
-              ${umamiRows.map(([k, v]) => `
-                <div class="hr-umami-row ${v.allow ? "is-ok" : "is-ng"}">
+              ${umamiRows.map(([k, v]) => {
+                // 3 段階: ◯出してよい / △まだ分からない / ✕止める
+                const st = v.allow ? "is-ok" : (v.promising ? "is-unknown" : "is-ng");
+                const mk = v.allow ? "◯ 出してよい" : (v.promising ? "△ まだ分からない" : "✕ 止める");
+                return `
+                <div class="hr-umami-row ${st}">
                   <span class="u-name">${escapeHtml(LBL[k] || k)}</span>
                   <span class="u-roi">${v.roi_pct}%</span>
-                  <span class="u-note">${v.allow ? "◯ 出してよい" : "✕ 止める"}</span>
-                </div>`).join("")}
+                  <span class="u-note">${mk}</span>
+                  ${Number.isFinite(v.ci95_low_pct) ? `<span class="u-ci">運の幅 ${v.ci95_low_pct}〜${v.ci95_high_pct}%</span>` : ""}
+                </div>`;
+              }).join("")}
             </div>
             <div class="hr-umami-note">
               ${allowed.length
                 ? `いま出してよいのは <b>${allowed.map((a) => escapeHtml(LBL[a] || a)).join("・")}</b> だけです。`
-                : `いま出してよい買い方は <b>ありません</b>。`}
-              判定の決まり＝150点以上・回収率100%以上・いちばん大きい当たりを1回抜いても100%以上。
+                : `いま「出してよい」と言い切れる買い方は <b>ありません</b>。`}
+              判定の決まり＝150点以上・回収率100%以上・いちばん大きい当たりを1回抜いても100%以上・
+              <b>運の幅（95%）の下も100%を超えていること</b>。
+              回収率が100%を超えていても幅が100%をまたぐうちは「まだ分からない」＝見送りです。
             </div>
           </div>` : ""}
         <div class="hr-honest">
@@ -3757,6 +3771,33 @@
           この数字は毎週 月曜の朝に自動で計算し直しています。
         </div>
       </div>`;
+  }
+
+  // 2026-08-11: 戦略ごとの「実際に買っていたらどうだったか」を引く。
+  //   これまで戦略カードは検証(過去に当てはめた計算)の数字を
+  //   「お金ベースの本当の回収率」と呼んで出していたが、それは実際の成績ではない。
+  //   本物は strategy_live_stats.json 側にあり、14 個すべて 100% 割れだった。
+  function liveRoiFor(key) {
+    const ls = state.liveStats;
+    const bs = ls && ls.ok && ls.live && ls.live.by_strategy;
+    if (!bs || !key || !bs[key]) return null;
+    const v = bs[key];
+    return {
+      roi: Number.isFinite(v.roi_pct) ? v.roi_pct : null,
+      bets: v.bets || 0,
+      streak: v.max_losing_streak || 0,
+      profit: v.profit_jpy || 0,
+      allow: (v.bets || 0) >= 150 && (v.roi_pct || 0) >= 100,
+    };
+  }
+  // 戦略カードに足す「実際の成績」行 (負けている買い方は はっきり止めると出す)
+  function liveRoiHtml(key) {
+    const lv = liveRoiFor(key);
+    if (!lv || lv.roi == null) return "";
+    const cls = lv.allow ? "live-ok" : "live-ng";
+    const mark = lv.allow ? "◯ 出してよい" : "✕ 止める";
+    return `<br><span class="${cls}">実際に買ったら <b>${lv.roi}%</b>`
+      + `（${lv.bets}回・最大${lv.streak}連敗・${lv.profit >= 0 ? "+" : ""}${lv.profit.toLocaleString()}円）… ${mark}</span>`;
   }
 
   // 本当の成績を独立したブロックとして必ず描く (推奨が 0 件の日でも見える)

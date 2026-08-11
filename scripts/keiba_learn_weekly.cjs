@@ -16,10 +16,23 @@
 //     ④ はじめさん向けのやさしい日本語レポートを書く
 //
 //   ★合格の条件(全部満たしたものだけ「出してよい」)
-//     - 賭け数 150 点以上           … 少なすぎる成績は運
-//     - 回収率 100% 以上            … 控除の壁を越えている
-//     - 大当たり 1 回を抜いても 100% … 1 回のまぐれで稼いでいない
-//   ※ 95% 信頼区間の下限が 100% を超えたら「本物確定」扱い(まだ先の話)
+//     - 賭け数 150 点以上            … 少なすぎる成績は運
+//     - 回収率 100% 以上             … 控除の壁を越えている
+//     - 大当たり 1 回を抜いても 100%  … 1 回のまぐれで稼いでいない
+//     - 95% の幅の下限も 100% 超      … ★2026-08-11 追加。ここが本丸。
+//
+//   ⚠ 2026-08-11 追記(この日の深い検証で判明・判定を厳しくした):
+//     最初は上の 3 つだけで「馬連 133.3% = 出してよい」と判定していたが、
+//     360 レース・29,334 通りで厳しく検証したところ:
+//       ・95% の幅が 65.8〜210% で 100% をまたぐ = 勝ち負けを区別できない
+//       ・オッズの 26% が「発走より後」のもので、実際に買える時刻に直すと
+//         121% → 約 100.7% まで落ちる
+//       ・しきい値を過去成績で選び直す運用は実際にやると 94.2% で負ける
+//       ・EV が高いほど良い、という坂になっていない(1.20〜1.50 の帯だけ ROI 57%)
+//     「モデルに予想力があること自体」は確か(p=0.004)だが、その大きさは
+//     控除率をちょうど打ち消す程度で、「もうかる」はまだ言えない(p=0.25〜0.32)。
+//     → 3 条件だけで「出してよい」と出すのは、消したはずの「いいとこ取り」と同じ。
+//     → 幅の下限も 100% を超えるまでは「△ まだ分からない(見送り)」にする。
 //
 //   使い方: node scripts/keiba_learn_weekly.cjs
 // ============================================================
@@ -106,7 +119,10 @@ function analyzeUmami(minEV, minProb) {
     const top = hits[0] || 0;
     const roiNoTop = cost ? (ret - top) / cost * 100 : 0;
     const ci = bootstrapCI(a);
-    const allow = a.length >= MIN_BETS && roi >= 100 && roiNoTop >= 100;
+    const proven = ci[0] > 1;   // 95% の幅の下限も 100% 超 = 運では説明しにくい
+    // 3 条件までは通ったが幅が 100% をまたぐもの = 「有望だが まだ分からない」
+    const promising = a.length >= MIN_BETS && roi >= 100 && roiNoTop >= 100;
+    const allow = promising && proven;   // ★ここを厳しくした (2026-08-11)
     result[k] = {
       label: LBL[k], bets: a.length, hits: hits.length, cost, ret,
       profit: ret - cost,
@@ -116,12 +132,15 @@ function analyzeUmami(minEV, minProb) {
       ci95_low_pct: +(ci[0] * 100).toFixed(0),
       ci95_high_pct: +(ci[1] * 100).toFixed(0),
       race_days: days[k].size,
-      proven: ci[0] > 1,
+      proven,
+      promising,
       allow,
+      state: allow ? "ok" : promising ? "unknown" : "ng",
       reason: a.length < MIN_BETS ? `賭け数が${a.length}点で少なすぎる(${MIN_BETS}点必要)`
         : roi < 100 ? `回収率が${roi.toFixed(1)}%で負けている`
           : roiNoTop < 100 ? `大当たり1回を抜くと${roiNoTop.toFixed(1)}%=まぐれ頼み`
-            : `合格(回収率${roi.toFixed(1)}%・大当たり抜きでも${roiNoTop.toFixed(1)}%)`,
+            : !proven ? `回収率は${roi.toFixed(1)}%だが、運の幅が${(ci[0]*100).toFixed(0)}%〜${(ci[1]*100).toFixed(0)}%で100%をまたぐ＝まだ勝ち負けを区別できない`
+              : `合格(回収率${roi.toFixed(1)}%・大当たり抜き${roiNoTop.toFixed(1)}%・運の幅の下も${(ci[0]*100).toFixed(0)}%)`,
     };
   }
   return { races, waiting, minEV, minProb, byType: result };
@@ -185,7 +204,8 @@ function main() {
       L.push(`　回収率 ${v.roi_pct}%　（収支 ${v.profit >= 0 ? "+" : ""}${v.profit.toLocaleString()}円）`);
       L.push(`　いちばん大きい当たり ${v.biggest_hit.toLocaleString()}円 を1回抜くと → ${v.roi_without_top_hit_pct}%`);
       L.push(`　運の幅（95%）: ${v.ci95_low_pct}% 〜 ${v.ci95_high_pct}%`);
-      L.push(`　判定: ${v.allow ? "◯ 出してよい" : "✕ 止める"} … ${v.reason}`);
+      const mark = v.allow ? "◯ 出してよい" : v.promising ? "△ まだ分からない（見送り）" : "✕ 止める";
+      L.push(`　判定: ${mark} … ${v.reason}`);
       if (v.proven) L.push("　★運の幅の下も100%超え＝本物の可能性が高い");
       L.push("");
     }
