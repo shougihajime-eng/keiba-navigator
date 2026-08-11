@@ -492,8 +492,18 @@
       el("span", { style: "font-size:18px" }, "🎯"),
       el("h2", { style: "font-size:15px;font-weight:900;margin:0;color:var(--c-gold,#e0b24a)" }, "本命の答え合わせ（最近の成績）")
     ));
-    card.appendChild(el("p", { style: "font-size:11.5px;color:var(--c-ink-soft,#b8ad95);margin:0 0 12px;line-height:1.6" },
-      `直近 ${log.count} レースで、アプリの本命（いちばん勝ちそうとみた馬）が実際にどうだったかの正直な記録です。`
+    // 🚨 2026-08-12: ここは「正直な記録です」と書いていたが、実際は後出しだった。
+    //   build-honmei-log.cjs は results の win_odds（＝レースが終わってから決まった確定オッズ）で
+    //   本命を選び直している（データの method 欄にも「確定オッズで再現」と書いてある）。
+    //   ＝当日に出せる本命ではなく、数字は甘めに出る。「正直」と名乗りながら後出しは最悪なので明記する。
+    card.appendChild(el("p", { style: "font-size:11.5px;color:var(--c-ink-soft,#b8ad95);margin:0 0 8px;line-height:1.6" },
+      `直近 ${log.count} レースで、アプリの本命（いちばん勝ちそうとみた馬）が実際にどうだったかの記録です。`
+    ));
+    card.appendChild(el("p", { style:
+      "font-size:11.5px;line-height:1.65;margin:0 0 12px;padding:8px 10px;border-radius:9px;"
+      + "background:rgba(150,60,40,.14);border-left:3px solid #d8744a;color:var(--c-ink,#eadfc6)" },
+      "⚠ この本命は、レースが終わってから決まった「確定オッズ」で選び直したものです。"
+      + "当日その場で出せる本命とは違い、数字は甘めに出ます。実際に買えた本命の成績は上の「本当の成績」を見てください。"
     ));
 
     // 大きな2つの数字: 単勝的中 / 複勝(3着内)
