@@ -713,5 +713,158 @@ test("win5_engine: 極低確率 5 戦でも probSum が 0 にならない", () =
   assert.ok(w.strategies.safe.hitProb > 0, `hitProb=${w.strategies.safe.hitProb}`);
 });
 
+// ============================================================
+// 2026-08-12: late_move（直前5分のオッズの動き）
+//
+//   なぜテストするか＝ここを間違えると「実際には買えない発走後のオッズ」で
+//   検証してしまい、回収率が下駄を履く（実測 121% → 約100.7%）。
+//   さらに研究では -15〜-10分“だけ”を切り出すと符号が逆転する(+0.3674)ので、
+//   「直前5分」と「それより前」が絶対に混ざらないことを機械で見張る。
+// ============================================================
+console.log("\n=== late_move: 直前5分のオッズの動き ===");
+{
+  const LM = require("../lib/late_move");
+  const POST = LM.postTimeFromHassou("2026080901010601", "1000"); // 10:00 JST
+
+  // 発走まで min 分（マイナス＝発走前）のスナップを作る。odds は 馬番→単勝オッズ。
+  const snap = (min, odds, extra) => Object.assign({
+    raceid: "2026080901010601",
+    fetchedAt: new Date(POST + min * 60000).toISOString(),
+    odds: {
+      tansho: { kind: "tansho", items: Object.keys(odds).map(n => ({ number: Number(n), odds: odds[n] })) },
+    },
+  }, extra || {});
+
+  test("postTimeFromHassou: JST の発走時刻を作れる（機械の時計設定に左右されない）", () => {
+    assert.strictEqual(POST, Date.UTC(2026, 7, 9, 1, 0, 0, 0)); // 10:00 JST = 01:00 UTC
+  });
+  test("postTimeFromHassou: 変な入力は null", () => {
+    assert.strictEqual(LM.postTimeFromHassou("2026080901010601", "99999"), null);
+    assert.strictEqual(LM.postTimeFromHassou("bad", "1000"), null);
+    assert.strictEqual(LM.postTimeFromHassou("2026080901010601", null), null);
+  });
+
+  test("annotate: 発走前/後の印が正しい（発走ちょうどは『買えない』側）", () => {
+    const rows = LM.annotate([snap(-3, { 1: 2 }), snap(0, { 1: 2 }), snap(+2, { 1: 2 })], POST);
+    assert.deepStrictEqual(rows.map(r => r.beforePost), [true, false, false]);
+  });
+
+  test("pickLastPrePost: 発走後のスナップを拾わない（これが26%の事故の直し）", () => {
+    const snaps = [snap(-20, { 1: 5 }), snap(-2, { 1: 4 }), snap(+1, { 1: 3.5 })];
+    const got = LM.pickLastPrePost(snaps, POST);
+    assert.strictEqual(got.beforePost, true);
+    assert.ok(Math.abs(got.minutesToPost + 2) < 1e-9, `minutesToPost=${got.minutesToPost}`);
+    assert.strictEqual(got.snapshot.odds.tansho.items[0].odds, 4); // 発走後の 3.5 ではない
+  });
+  test("pickLastPrePost: 締切を1分前にすると、その1枚も採らない", () => {
+    const snaps = [snap(-20, { 1: 5 }), snap(-0.5, { 1: 4 })];
+    const got = LM.pickLastPrePost(snaps, POST, { cutoffMinutes: 1 });
+    assert.ok(Math.abs(got.minutesToPost + 20) < 1e-9, `minutesToPost=${got.minutesToPost}`);
+  });
+  test("pickLastPrePost: 発走時刻が分からないときは正直に印を付ける", () => {
+    const got = LM.pickLastPrePost([snap(-5, { 1: 5 })], null);
+    assert.strictEqual(got.postTimeKnown, false);
+    assert.strictEqual(got.beforePost, null);
+  });
+
+  test("15分おき(むかしの取り方)では『直前5分』を名乗らせない", () => {
+    // -5分の基準点が -12分しか無い＝早い時間の動き(研究では符号が逆)が混ざる
+    const r = LM.computeLateMove({
+      snapshots: [snap(-35, { 1: 5 }), snap(-20, { 1: 5 }), snap(-12, { 1: 4 })], postAt: POST,
+    });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.late.reason, "anchor_too_old");
+  });
+  test("ちょうど発走5分前の1枚しか無いときも『直前5分』を名乗らせない", () => {
+    const r = LM.computeLateMove({
+      snapshots: [snap(-35, { 1: 5 }), snap(-20, { 1: 5 }), snap(-5, { 1: 4 })], postAt: POST,
+    });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.late.reason, "no_snapshot_inside_late_window");
+  });
+  test("最後の1枚が発走の7分前なら『直前5分』にならない", () => {
+    const r = LM.computeLateMove({
+      snapshots: [snap(-20, { 1: 5 }), snap(-7, { 1: 4.5 })], postAt: POST,
+    });
+    assert.strictEqual(r.late.reason, "no_snapshot_inside_late_window");
+  });
+
+  test("2分おき(あたらしい取り方)なら『直前5分』が計算できる", () => {
+    const snaps = [snap(-30, { 1: 5, 2: 3 }), snap(-20, { 1: 5, 2: 3 }), snap(-14, { 1: 5, 2: 3 }),
+                   snap(-10, { 1: 5, 2: 3 }), snap(-6, { 1: 5, 2: 3 }), snap(-4, { 1: 4.4, 2: 3.3 }),
+                   snap(-2, { 1: 4, 2: 3.6 }), snap(+1, { 1: 3.8, 2: 3.7 })];
+    const r = LM.computeLateMove({ snapshots: snaps, postAt: POST });
+    assert.strictEqual(r.ok, true, `reason=${r.reason}`);
+    assert.ok(r.late.from.minutesToPost <= -5, `from=${r.late.from.minutesToPost}`);
+    assert.ok(r.late.from.minutesToPost >= -10, `from=${r.late.from.minutesToPost}`);
+    assert.ok(r.late.to.minutesToPost > -5 && r.late.to.minutesToPost < 0, `to=${r.late.to.minutesToPost}`);
+    // 5.0 → 4.0 は -20%（お金が入って人気が上がった＝研究のいう良い向き）
+    assert.ok(Math.abs(r.late.byKey["1"].changeRate - (-0.2)) < 1e-12, r.late.byKey["1"].changeRate);
+    assert.ok(Math.abs(r.late.byKey["2"].changeRate - 0.2) < 1e-12, r.late.byKey["2"].changeRate);
+    assert.ok(Math.abs(r.late.byKey["1"].logChange - Math.log(4 / 5)) < 1e-12);
+    // 発走後(+1分)の 3.8 を終点にしていないこと
+    assert.strictEqual(r.late.byKey["1"].to, 4);
+    assert.strictEqual(r.counts.after, 1);
+  });
+
+  test("直前5分と、それより前の窓が重ならない（符号の反転を混ぜない）", () => {
+    const snaps = [snap(-30, { 1: 6 }), snap(-16, { 1: 5.5 }), snap(-12, { 1: 5.2 }),
+                   snap(-6, { 1: 5 }), snap(-2, { 1: 4 })];
+    const r = LM.computeLateMove({ snapshots: snaps, postAt: POST });
+    assert.strictEqual(r.ok, true, `reason=${r.reason}`);
+    // late は -6 → -2、early は -30 → -6。継ぎ目は同じ1点で、二重に数えない。
+    assert.strictEqual(r.late.from.minutesToPost, -6);
+    assert.strictEqual(r.early.to.minutesToPost, -6);
+    assert.strictEqual(r.early.from.minutesToPost, -30);
+    assert.ok(r.early.to.minutesToPost <= -5, "early の終点が直前5分に入り込んでいる");
+    // -15〜-10分だけの帯は別枠で出す（研究でここだけ符号が逆になる＝診断用。
+    //  early の中に含まれるが、late には絶対に混ざらない）
+    assert.strictEqual(r.mid1510.ok, true, `mid reason=${r.mid1510.reason}`);
+    assert.strictEqual(r.mid1510.from.minutesToPost, -16);
+    assert.strictEqual(r.mid1510.to.minutesToPost, -12);
+  });
+
+  test("ワイドは下限と上限の真ん中を値段として使う", () => {
+    const wsnap = (min, lo, hi) => ({
+      fetchedAt: new Date(POST + min * 60000).toISOString(),
+      odds: { wide: { items: [{ key: "1-2", odds_low: lo, odds_high: hi }] } },
+    });
+    const r = LM.computeLateMove({ snapshots: [wsnap(-6, 4, 6), wsnap(-2, 3, 5)], postAt: POST, kind: "wide" });
+    assert.strictEqual(r.ok, true, `reason=${r.reason}`);
+    assert.strictEqual(r.late.byKey["1-2"].from, 5); // (4+6)/2
+    assert.strictEqual(r.late.byKey["1-2"].to, 4);   // (3+5)/2
+    const rl = LM.computeLateMove({ snapshots: [wsnap(-6, 4, 6), wsnap(-2, 3, 5)], postAt: POST, kind: "wide", wideUse: "low" });
+    assert.strictEqual(rl.late.byKey["1-2"].from, 4);
+  });
+
+  test("値の付いていないオッズ(1.0以下)は混ぜない", () => {
+    const r = LM.computeLateMove({
+      snapshots: [snap(-6, { 1: 5, 2: 0, 3: 1 }), snap(-2, { 1: 4, 2: 9, 3: 9 })], postAt: POST,
+    });
+    assert.deepStrictEqual(Object.keys(r.late.byKey), ["1"]);
+  });
+
+  test("JRAが値段を出した時刻も返す（実測でだいたい1分前・隠さない）", () => {
+    // 09:57 に取ったが、JRAがその値段を出したのは 09:56（＝発走4分前の値段）
+    const s = (min, hh, mi, odds) => ({
+      fetchedAt: new Date(POST + min * 60000).toISOString(),
+      odds: { tansho: { happyo_time: "0809" + hh + mi, items: [{ number: 1, odds }] } },
+    });
+    const r = LM.computeLateMove({ snapshots: [s(-6, "09", "53", 5), s(-3, "09", "56", 4)], postAt: POST });
+    assert.strictEqual(r.ok, true, `reason=${r.reason}`);
+    assert.strictEqual(r.late.to.minutesToPost, -3);              // 取った時刻
+    assert.strictEqual(r.late.to.publishedMinutesToPost, -4);     // JRAが出した時刻
+    assert.strictEqual(r.late.from.publishedMinutesToPost, -7);
+    assert.strictEqual(LM.publishedMinutesToPost({ happyoTime: "08090956" }, POST), -4); // 新形式の印でも読める
+    assert.strictEqual(LM.publishedMinutesToPost({ happyoTime: "zzzz" }, POST), null);
+  });
+
+  test("発走時刻が分からないときは計算しない（推測しない）", () => {
+    const r = LM.computeLateMove({ snapshots: [snap(-6, { 1: 5 }), snap(-2, { 1: 4 })], postAt: null });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, "post_time_unknown");
+  });
+}
+
 console.log(`\n=== 合計: ${passed} 通過 / ${failed} 失敗 ===`);
 process.exit(failed > 0 ? 1 : 0);

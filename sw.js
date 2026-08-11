@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v83"; // 本命の答え合わせが後出し(確定オッズ)だと明記 (8/12)
+const CACHE_VERSION = "keiba-nav-v84"; // 本命の答え合わせを発走前オッズの本物に差し替え (8/12)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

@@ -483,8 +483,21 @@
     }
     mount.hidden = false;
     mount.innerHTML = "";
-    const winPct = log.winRate != null ? Math.round(log.winRate * 100) : null;
-    const placePct = log.placeRate != null ? Math.round(log.placeRate * 100) : null;
+    // 2026-08-12: 「当日その場で本当に出せた本命」だけの成績(preRace)があればそちらを主役にする。
+    //   後出し(確定オッズ)で選び直した本命は 1着率が +3.3pt / 単勝回収が +7.2pt 甘く出る(645レースで実測)。
+    const pr = log.preRace && log.preRace.count ? log.preRace : null;
+    const src = pr || log;
+    const showCount = src.count;
+    const winPct = src.winRate != null ? Math.round(src.winRate * 100) : null;
+    const placePct = src.placeRate != null ? Math.round(src.placeRate * 100) : null;
+    // 表示するぶんが全部「発走前オッズ」で選べたか
+    const allPre = !!(pr && log.count && pr.count >= log.count);
+    // オッズの古さ（発走の何分前か）の中央値
+    let oddsAge = null;
+    try {
+      const ages = (log.entries || []).map((e) => e.oddsAgeMin).filter((v) => Number.isFinite(v)).sort((a, b) => a - b);
+      if (ages.length) oddsAge = ages[Math.floor(ages.length / 2)];
+    } catch (e) { /* 表示だけの話なので黙って諦める */ }
 
     const card = el("section", { class: "honmei-record-card",
       style: "margin:14px 0;padding:16px;border-radius:14px;background:linear-gradient(160deg,rgba(40,30,12,.55),rgba(20,16,8,.55));border:1px solid rgba(200,160,60,.28)" });
@@ -497,13 +510,22 @@
     //   本命を選び直している（データの method 欄にも「確定オッズで再現」と書いてある）。
     //   ＝当日に出せる本命ではなく、数字は甘めに出る。「正直」と名乗りながら後出しは最悪なので明記する。
     card.appendChild(el("p", { style: "font-size:11.5px;color:var(--c-ink-soft,#b8ad95);margin:0 0 8px;line-height:1.6" },
-      `直近 ${log.count} レースで、アプリの本命（いちばん勝ちそうとみた馬）が実際にどうだったかの記録です。`
+      `直近 ${showCount} レースで、アプリの本命（いちばん勝ちそうとみた馬）が実際にどうだったかの記録です。`
     ));
+    // ここは以前「正直な記録です」と書きながら、レース後の確定オッズで本命を選び直していた（後出し）。
+    // いまは発走前の実オッズで選び直している。どちらなのかを必ず画面に出す。
     card.appendChild(el("p", { style:
       "font-size:11.5px;line-height:1.65;margin:0 0 12px;padding:8px 10px;border-radius:9px;"
-      + "background:rgba(150,60,40,.14);border-left:3px solid #d8744a;color:var(--c-ink,#eadfc6)" },
-      "⚠ この本命は、レースが終わってから決まった「確定オッズ」で選び直したものです。"
-      + "当日その場で出せる本命とは違い、数字は甘めに出ます。実際に買えた本命の成績は上の「本当の成績」を見てください。"
+      + (allPre
+        ? "background:rgba(60,110,70,.16);border-left:3px solid #7fae7f;"
+        : "background:rgba(150,60,40,.14);border-left:3px solid #d8744a;")
+      + "color:var(--c-ink,#eadfc6)" },
+      allPre
+        ? `✅ この数字は「発走前のオッズ」で選んだ本命の成績です${oddsAge != null ? `（発走の約${oddsAge}分前のオッズ）` : ""}。`
+          + "レースが終わってから選び直した数字ではありません。"
+          + "（以前は確定オッズで選び直していて、1着率で約3pt 甘く出ていました）"
+        : "⚠ この本命の一部は、レースが終わってから決まった「確定オッズ」で選び直したものです。"
+          + "当日その場で出せる本命とは違い、数字は甘めに出ます。"
     ));
 
     // 大きな2つの数字: 単勝的中 / 複勝(3着内)

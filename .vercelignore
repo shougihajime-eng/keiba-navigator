@@ -99,6 +99,15 @@ catboost_info/
 # ⚠ .gitignore にも同じ2行が必要 (片方だけだと本番に届かない)
 !data/jv_cache/strategy_live_stats.json
 !data/jv_cache/umami_status.json
+# 2026-08-12: JRAの払戻率が上がる日 (ウルトラ85%/スーパー80%/プレミアム/プラス10)
+# scripts/jra_premium_days.mjs が JRA公式から取ってくる。画面で「今日は得な日」を出す用。
+# ⚠ .gitignore にも同じ行が必要 (片方だけだと本番に届かない)
+!data/jv_cache/jra_premium.json
+# 2026-08-12: 馬柱（各馬の過去5走）の索引。出馬表の画面がこれを読む。
+# 作り方 = node scripts/build_umabashira.cjs
+# ⚠ .gitignore にも同じ行が必要 (片方だけだと本番に届かない)
+# ※ umabashira_full.json (全馬ぶん・30MB) は本番に要らないのでわざと通していない
+!data/jv_cache/umabashira.json
 Usersshoug*_review_*
 _prod.tmp
 

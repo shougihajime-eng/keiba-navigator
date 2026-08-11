@@ -58,6 +58,44 @@ function computeRecovery() {
   };
 }
 
+// ─── 2026-08-12 新設: 発走前オッズ（本物）を取る ───────────────
+//   signals/<raceId>.json = 発走前オッズの時系列。[{ts, go, we, horses:[{n,o,p,...}]}, ...]
+//   発走時刻は races/*.json の hassou_time（"HHMM"・JST）が本物。
+//   ⚠「09:50から25分おき」のような決め打ちは絶対にしない（過去にそれで失敗している）。
+const SIGNALS = path.join(ROOT, "data", "jv_cache", "signals");
+const PRE_MARGIN_MIN = 2;   // 発走2分前より前のスナップだけ使う（既存のリーク対策と同じ）
+function preRaceOddsFor(raceId, race) {
+  try {
+    const hhmm = String(race && race.hassou_time || "").trim();
+    if (!/^\d{4}$/.test(hhmm)) return null;
+    const d = String(raceId).slice(0, 8);
+    if (!/^\d{8}$/.test(d)) return null;
+    const post = Date.parse(
+      `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${hhmm.slice(0,2)}:${hhmm.slice(2,4)}:00+09:00`);
+    if (!Number.isFinite(post)) return null;
+    const p = path.join(SIGNALS, raceId + ".json");
+    if (!fs.existsSync(p)) return null;
+    const snaps = readJson(p);
+    if (!Array.isArray(snaps) || !snaps.length) return null;
+    const cutoff = post - PRE_MARGIN_MIN * 60000;
+    let best = null, bestT = -Infinity;
+    for (const s of snaps) {
+      const t = Date.parse(s && s.ts);
+      if (!Number.isFinite(t) || t > cutoff) continue;
+      if (t > bestT) { bestT = t; best = s; }
+    }
+    if (!best || !Array.isArray(best.horses)) return null;
+    const odds = {};
+    let cnt = 0;
+    for (const h of best.horses) {
+      const n = Number(h.n), o = Number(h.o);
+      if (Number.isFinite(n) && Number.isFinite(o) && o > 1) { odds[n] = o; cnt++; }
+    }
+    if (cnt < 2) return null;
+    return { odds, ts: best.ts, minsBefore: Math.round((post - bestT) / 60000) };
+  } catch { return null; }
+}
+
 function buildHonmeiLog(limit = 150) {
   if (!fs.existsSync(RESULTS)) return null;
   // 新しい順(race_id 先頭8桁=日付の降順)
@@ -65,12 +103,15 @@ function buildHonmeiLog(limit = 150) {
 
   const entries = [];
   let win = 0, place = 0, n = 0;
+  // 2026-08-12: 発走前オッズで選べたレースだけの集計（＝当日その場で出せた本物の成績）
+  let pWin = 0, pPlace = 0, pN = 0;
   for (const f of resFiles) {
     if (entries.length >= limit) break;
     const res = readJson(path.join(RESULTS, f));
     const race = readJson(path.join(RACES, f));
     if (!res || !Array.isArray(res.results) || !race || !Array.isArray(race.horses)) continue;
 
+    const id0 = String(race.race_id || f.replace(/\.json$/, ""));
     const rankByNum = {}, oddsByNum = {};
     for (const r of res.results) {
       const num = Number(r.number), rank = Number(r.rank), o = Number(r.win_odds);
@@ -79,9 +120,20 @@ function buildHonmeiLog(limit = 150) {
     }
     if (Object.keys(oddsByNum).length < 2 || Object.keys(rankByNum).length < 2) continue;
 
+    // 🚨 2026-08-12 正直化: ここは results の win_odds＝**レースが終わってから決まった確定オッズ**
+    //   だけを使って本命を選び直していた。当日その場では選べない本命なので数字が甘く出る。
+    //   実測（645レースで比べた結果）:
+    //     後出し(確定オッズ) : 1着率 36.0% / 3着内率 66.2% / 単勝回収 84.9%
+    //     発走前オッズ(本物) : 1着率 32.7% / 3着内率 62.1% / 単勝回収 77.7%
+    //     ＝ 1着率で +3.3pt、単勝回収で +7.2pt 甘くなっていた。本命の馬そのものも 23.5% で違った。
+    //   → signals/（発走前オッズの時系列）があるレースは、**発走2分前より前の最後のオッズ**を使う。
+    //     無いレース（2026-06-13より前）は確定オッズにフォールバックし、印を付けて区別する。
+    const pre = preRaceOddsFor(id0, race);
+    const oddsSource = pre ? "prerace" : "final";
+    const useOdds = pre ? pre.odds : oddsByNum;
     const horses = race.horses.map(h => ({
       ...h,
-      win_odds: Number.isFinite(oddsByNum[h.number]) ? oddsByNum[h.number]
+      win_odds: Number.isFinite(useOdds[h.number]) ? useOdds[h.number]
         : (Number.isFinite(Number(h.win_odds)) ? Number(h.win_odds) : null),
     }));
     let c;
@@ -91,9 +143,10 @@ function buildHonmeiLog(limit = 150) {
     const rank = rankByNum[hm.number];
     if (rank == null) continue;
 
-    const id = String(race.race_id || f.replace(/\.json$/, ""));
+    const id = id0;
     const won = rank === 1, placed = rank <= 3;
     n++; if (won) win++; if (placed) place++;
+    if (oddsSource === "prerace") { pN++; if (won) pWin++; if (placed) pPlace++; }
     entries.push({
       race_id: id,
       date: id.slice(0, 8),                 // YYYYMMDD
@@ -104,17 +157,30 @@ function buildHonmeiLog(limit = 150) {
                 popularity: Number.isFinite(hm.popularity) ? hm.popularity : null },
       rank,
       won, placed,
+      oddsSource,                                   // "prerace"(本物) か "final"(後出し)
+      oddsAgeMin: pre ? pre.minsBefore : null,      // 発走の何分前のオッズか
       finishedAt: res.finishedAt || null,
     });
   }
 
   const out = {
     generatedAt: new Date().toISOString(),
-    method: "本命=今のモデルの推定勝率1位(確定オッズで再現)。結果は確定着順。",
+    method: "本命=今のモデルの推定勝率1位。オッズは signals があれば発走2分前より前の実オッズ、"
+      + "無ければ確定オッズ(後出し)。結果は確定着順。",
     count: n,
     winRate: n ? Number((win / n).toFixed(4)) : null,
     placeRate: n ? Number((place / n).toFixed(4)) : null,
     wins: win, places: place,
+    // ★2026-08-12 追加: 「当日その場で本当に出せた本命」だけの成績。画面はこちらを主役にする。
+    //   645レースで比べた実測 = 後出しは 1着率 +3.3pt / 単勝回収 +7.2pt 甘くなる。
+    //   本命の馬そのものも 23.5% のレースで違った。
+    preRace: pN ? {
+      count: pN,
+      winRate: Number((pWin / pN).toFixed(4)),
+      placeRate: Number((pPlace / pN).toFixed(4)),
+      wins: pWin, places: pPlace,
+      note: "発走2分前より前の実オッズで選んだ本命だけ＝当日その場で出せた本物の成績",
+    } : null,
     recovery: computeRecovery(),   // ★全レース買ったらの本当の回収率(単勝/複勝・正直)
     entries,  // 新しい順
   };
