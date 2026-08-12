@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v87"; // グレード判定の修正 + 調教API + 手書き成績の削除 (8/12)
+const CACHE_VERSION = "keiba-nav-v88"; // 払戻率アップの日 + G1判定 + 調教API (8/12)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

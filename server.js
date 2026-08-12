@@ -108,6 +108,13 @@ async function serve(req, res) {
         return jsonRes(res, 500, { ok: false, error: e.message });
       }
     }
+    if (p === "/api/premium-days") {
+      // 2026-08-12: 払戻率が上がる日。⚠ api/[...slug].js 側にも同じ処理が要る
+      try {
+        const { buildPremiumView } = require("./lib/premium.js");
+        return jsonRes(res, 200, buildPremiumView());
+      } catch (e) { return jsonRes(res, 500, { ok: false, error: e.message }); }
+    }
     if (p === "/api/chokyo") {
       // 2026-08-12: 調教（追い切り）。⚠ api/[...slug].js 側にも同じ処理が要る
       try {

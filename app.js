@@ -36,6 +36,7 @@
     autostatus: null, // ★Wave16-QA: /api/automation-status の結果。初回描画前は null
     mlStatus: null,   // ★Wave17: /api/ml-status の結果 (LightGBM 学習メタ + 過去レース実証回収率)
     recommendations: null,  // ★Wave19: /api/recommendations の結果 (100% 越え戦略の今日の推奨レース)
+    premiumDays: null,  // 2026-08-12: /api/premium-days (払戻率が上がる日)
     liveStats: null,  // 2026-08-11: /api/live-stats (実際に買っていたらいくらだったかの本物の成績)
     // ★Wave22.8: エフェクト用 (一度しか発火させない)
     lastClopRaceId: null,        // 結論カードに描いた raceId (重複再生防止)
@@ -394,7 +395,7 @@
       // WIN5 は日曜 (発売・購入日) は毎回、それ以外は 5 分間隔 + 初回 + 強制時のみ
       const includeWin5 = !!force || !state.win5 || new Date().getDay() === 0 || includeSlow;
       const nul = () => Promise.resolve(null);
-      const [status, races, win5, autostatus, mlStatus, recommendations, liveStats] = await Promise.all([
+      const [status, races, win5, autostatus, mlStatus, recommendations, liveStats, premiumDays] = await Promise.all([
         api("/api/status"),
         api("/api/races"),
         includeWin5 ? api(w5Url) : nul(),
@@ -403,6 +404,8 @@
         includeSlow ? api("/api/recommendations") : nul(),
         // 2026-08-11: 本物の成績 (週1回しか変わらないので slow でよい)
         includeSlow ? api("/api/live-stats") : nul(),
+        // 2026-08-12: 払戻率が上がる日 (1日1回しか変わらないので slow でよい)
+        includeSlow ? api("/api/premium-days") : nul(),
       ]);
       if (includeSlow) lastSlowFetchAt = Date.now();
       if (status) state.status = status;
@@ -421,6 +424,7 @@
       if (mlStatus) state.mlStatus = mlStatus;
       if (recommendations) state.recommendations = recommendations;
       if (liveStats) state.liveStats = liveStats;
+      if (premiumDays) state.premiumDays = premiumDays;
       saveSnapshot();
       render();
     } finally {
@@ -3426,6 +3430,8 @@
       memoRender("budget", [state.bets, todayJst()], renderBudgetGuard);
       // 2026-08-11: 本当の成績 (折りたたみの外・必ず見える位置)
       memoRender("honestrecord", [state.liveStats], renderHonestRecord);
+      // 2026-08-12: 払戻率が上がる日（今の一番いい成績も使うので liveStats も条件に入れる）
+      memoRender("premiumdays", [state.premiumDays, state.liveStats], renderPremiumDays);
       // ── 折りたたみセクション群 ──
       memoRender("autostatus", [state.autostatus, minuteBucket], renderAutostatus);
       // 2026-08-11: state.liveStats (実際に買ったらどうだったか) を条件に足す。
@@ -3949,6 +3955,96 @@
     const mark = lv.allow ? "◯ 出してよい" : "✕ 止める";
     return `<br><span class="${cls}">実際に買ったら <b>${lv.roi}%</b>`
       + `（${lv.bets}回・最大${lv.streak}連敗・${lv.profit >= 0 ? "+" : ""}${lv.profit.toLocaleString()}円）… ${mark}</span>`;
+  }
+
+  // ─── 2026-08-12: JRAが払戻率を上げる日 ────────────────────────
+  //   ふつうの単勝・複勝は 払戻率80%（＝控除率20%＝100円が平均80円になる）。
+  //   「JRAウルトラプレミアム」の日は **85%**（80% + 上乗せ5%）。
+  //   ＝予想の腕とは無関係に、控除が 20% → 15% に減る（4分の1が消える）。
+  //   このアプリで唯一「確実に・数字で・誰でも」得をする差なので必ず出す。
+  // 🚫 数字は絶対に手書きしない（API が計算した値だけを出す）。
+  //    「1番人気ばかり」「オッズ見てない」と同じで、手書きは必ず古くなって嘘になる。
+  function buildPremiumHtml() {
+    const pd = state.premiumDays;
+    if (!pd || !pd.ok) return "";
+
+    const be = Number(pd.breakEvenRoiPct) || null;      // この日なら100%を超える回収率
+    const boost = Number(pd.boostRatio) || 1;           // もどりが何倍になるか
+    const ultraPct = (pd.payoutByKind && pd.payoutByKind.ultra && pd.payoutByKind.ultra.payoutPct) || null;
+
+    // 今いちばん良い「実際の成績」を探して、この日ならどうなるかを出す（手書きしない）
+    let bestLive = null;
+    const bs = state.liveStats && state.liveStats.ok && state.liveStats.live && state.liveStats.live.by_strategy;
+    if (bs) {
+      for (const k of Object.keys(bs)) {
+        const v = bs[k];
+        if (!v || !Number.isFinite(v.roi_pct) || (v.bets || 0) < 30) continue;
+        if (!bestLive || v.roi_pct > bestLive.roi_pct) bestLive = { key: k, ...v };
+      }
+    }
+
+    const head = pd.today
+      ? `<div class="pd-hit"><span class="pd-hit-badge">🎉 今日がその日</span>`
+        + `<div class="pd-hit-name">${escapeHtml(pd.today.raceName || pd.today.label || "払戻率アップ")}</div>`
+        + `<div class="pd-hit-sub">この日は もどりが <b>${escapeHtml(String(pd.today.payoutPct))}%</b>`
+        + `（ふだんは 80%）</div></div>`
+      : pd.next
+        ? `<div class="pd-next">つぎは <b>${escapeHtml(fmtYmd(pd.next.date))}</b>`
+          + `（${escapeHtml(pd.next.weekday || "")}）`
+          + `${pd.next.raceName ? " " + escapeHtml(pd.next.raceName) : ""}</div>`
+        : `<div class="pd-none">つぎの日は <b>まだ公表されていません</b>`
+          + `<span class="pd-none-note">（「今年は無い」ではありません。JRAは年度ごとに後から発表します）</span></div>`;
+
+    const proof = pd.lastKnown
+      ? `<div class="pd-proof">いちばん最近やった日 … ${escapeHtml(fmtYmd(pd.lastKnown.date))}`
+        + `（過去 <b>${pd.ultraCount}</b> 日が 85%・<b>${pd.superCount}</b> 日が 80%上限）</div>`
+      : "";
+
+    const math = be
+      ? `<div class="pd-math">`
+        + `<div class="pd-math-row"><span>ふだん</span><b>もどり 80%</b><span class="pd-math-note">＝ 100円が平均80円</span></div>`
+        + `<div class="pd-math-row is-up"><span>この日</span><b>もどり ${ultraPct || 85}%</b>`
+        + `<span class="pd-math-note">＝ 引かれる分が 20% → ${100 - (ultraPct || 85)}%（4分の1が消える）</span></div>`
+        + `<div class="pd-math-key">つまり <b>回収率 ${be}% 以上</b>の買い方なら、<b>この日だけは 100% を超える</b>計算になります。</div>`
+        + `</div>`
+      : "";
+
+    const mine = bestLive
+      ? `<div class="pd-mine ${bestLive.roi_pct * boost >= 100 ? "is-ok" : "is-ng"}">`
+        + `いまの一番いい買い方は <b>${bestLive.roi_pct}%</b>（${bestLive.bets}回）`
+        + ` → この日なら <b>${Math.round(bestLive.roi_pct * boost * 10) / 10}%</b>`
+        + `${bestLive.roi_pct * boost >= 100 ? "（100%を超えます）" : "（それでも100%には届きません）"}`
+        + `</div>`
+      : "";
+
+    const always = (pd.alwaysOn || []).map((a) =>
+      `<li><b>${escapeHtml(a.label)}</b> … ${escapeHtml(a.rule || "")}<span class="pd-always-note">（日付の指定なし・いつでも）</span></li>`
+    ).join("");
+
+    return `<div class="premium-card ${pd.today ? "is-today" : ""}">`
+      + `<div class="pd-head"><span class="pd-icon">💴</span>`
+      + `<span class="pd-title">JRAが払戻率を上げる日</span>`
+      + `<span class="pd-tag">腕は要らない・確実に得する唯一の差</span></div>`
+      + head + math + mine + proof
+      + (always ? `<div class="pd-always"><div class="pd-always-h">いつでも効いているもの</div><ul>${always}</ul></div>` : "")
+      + `<div class="pd-honest">⚠ 正直に言うと、これは「勝てる日」ではなく`
+      + `<b>「負けが小さくなる日」</b>です。もどりが上がっても、当たらなければ0円なのは同じ。</div>`
+      + `</div>`;
+  }
+
+  function fmtYmd(s) {
+    const t = String(s || "");
+    if (!/^\d{8}$/.test(t)) return t;
+    return `${t.slice(0, 4)}年${Number(t.slice(4, 6))}月${Number(t.slice(6, 8))}日`;
+  }
+
+  function renderPremiumDays() {
+    const root = $("#premium-mount");
+    if (!root) return;
+    const html = buildPremiumHtml();
+    if (!html) { root.hidden = true; root.innerHTML = ""; return; }
+    root.hidden = false;
+    root.innerHTML = html;
   }
 
   // 本当の成績を独立したブロックとして必ず描く (推奨が 0 件の日でも見える)

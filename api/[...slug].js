@@ -45,6 +45,7 @@ const CACHE_POLICY = {
   "/g1-history":        [300, 3600],
   "/result":            [120, 3600],
   "/venues":            [3600, 86400],
+  "/premium-days":      [3600, 86400],
   "/connection":        [60, 600],
   "/automation-status": [60, 600],
   "/schedule":          [30, 300],
@@ -108,6 +109,13 @@ module.exports = async (req, res) => {
       const r = lightgbm_v1.loadRankings();
       if (!r) return ok(res, { ok: false, reason: "no_rankings" });
       return ok(res, r);
+    }
+    if (path === "/premium-days") {
+      // 2026-08-12 新設: JRAが払戻率を上げる日（控除率 20% → 15%）。
+      try {
+        const { buildPremiumView } = require("../lib/premium.js");
+        return ok(res, buildPremiumView());
+      } catch (e) { return bad(res, 500, { ok: false, error: e.message }); }
     }
     if (path === "/chokyo") {
       // 2026-08-12 新設: 調教（追い切り）。JRA-VAN を月2,090円払って契約しているのに未使用だったデータ。

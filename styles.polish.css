@@ -409,3 +409,104 @@ select:focus-visible, input:focus-visible {
   .umb-tbl{ font-size:12px; }
   .umb-tbl th, .umb-tbl td{ padding:4px 5px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2026-08-12: JRAが払戻率を上げる日（控除率 20% → 15%）
+   ─────────────────────────────────────────────────────────────────────────
+   このアプリで唯一「予想の腕と無関係に・確実に・数字で」得をする差なので、
+   見のがされないよう画面のいちばん上に置く。
+   色は styles.polish.css のトークン（白カード上で 4.5:1 以上）だけを使う。
+   文字は 13px 以上・押しどころは作らない（読むだけのカード）。
+   ══════════════════════════════════════════════════════════════════════════ */
+.premium-card{
+  margin:10px 12px 4px; padding:14px 16px 13px;
+  border:1.5px solid rgba(138,97,18,.34); border-radius:16px;
+  background:linear-gradient(160deg,#FFFDF6 0%,#FFF7E4 100%);
+  box-shadow:0 2px 10px rgba(70,53,39,.07);
+}
+.premium-card.is-today{
+  border-color:rgba(138,97,18,.72); border-width:2px;
+  box-shadow:0 0 0 3px rgba(212,168,90,.16),0 4px 16px rgba(138,97,18,.15);
+}
+.pd-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:9px}
+.pd-icon{font-size:19px;line-height:1}
+.pd-title{font-size:16px;font-weight:800;color:var(--c-ink,#463527);letter-spacing:.01em}
+.pd-tag{
+  font-size:12px;font-weight:700;color:#6A4E0E;
+  background:rgba(212,168,90,.22);border:1px solid rgba(138,97,18,.28);
+  border-radius:999px;padding:3px 9px;
+}
+/* 今日がその日 */
+.pd-hit{
+  background:linear-gradient(135deg,#FFF3D0,#FFE9B4);
+  border:1.5px solid rgba(138,97,18,.5);border-radius:12px;
+  padding:11px 13px;margin-bottom:10px;
+}
+.pd-hit-badge{
+  display:inline-block;font-size:13px;font-weight:800;color:#5E430A;
+  background:rgba(255,255,255,.7);border-radius:999px;padding:2px 10px;margin-bottom:5px;
+}
+.pd-hit-name{font-size:18px;font-weight:800;color:var(--c-ink,#463527);line-height:1.35}
+.pd-hit-sub{font-size:13.5px;color:#5E430A;margin-top:3px}
+.pd-hit-sub b{font-size:17px}
+/* つぎの日／未公表 */
+.pd-next,.pd-none{
+  font-size:14px;color:var(--c-ink,#463527);line-height:1.6;
+  padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.62);
+  border:1px solid rgba(138,97,18,.18);margin-bottom:10px;
+}
+.pd-none-note{display:block;font-size:12.5px;color:var(--c-ink-mute,#77604A);margin-top:3px}
+/* 数字の説明（ここが主役） */
+.pd-math{
+  background:rgba(255,255,255,.72);border:1px solid rgba(138,97,18,.2);
+  border-radius:12px;padding:10px 12px;margin-bottom:9px;
+}
+.pd-math-row{
+  display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+  font-size:13.5px;color:var(--c-ink,#463527);padding:3px 0;
+}
+.pd-math-row>span:first-child{
+  min-width:4.2em;font-size:12.5px;font-weight:700;color:var(--c-ink-mute,#77604A);
+}
+.pd-math-row b{font-size:16px;font-weight:800;color:var(--c-ink,#463527)}
+.pd-math-row.is-up b{color:#1F7A4E}
+.pd-math-note{font-size:12.5px;color:var(--c-ink-mute,#77604A)}
+.pd-math-key{
+  margin-top:8px;padding-top:8px;border-top:1px dashed rgba(138,97,18,.28);
+  font-size:14px;line-height:1.65;color:var(--c-ink,#463527);
+}
+.pd-math-key b{color:#1F7A4E;font-weight:800}
+/* 自分の成績を当てはめたら */
+.pd-mine{
+  font-size:13.5px;line-height:1.6;padding:9px 11px;border-radius:10px;margin-bottom:9px;
+}
+.pd-mine b{font-size:16px;font-weight:800}
+.pd-mine.is-ok{background:rgba(31,122,78,.1);border:1px solid rgba(31,122,78,.3);color:#155C3A}
+.pd-mine.is-ok b{color:#1F7A4E}
+.pd-mine.is-ng{background:rgba(176,60,44,.08);border:1px solid rgba(176,60,44,.26);color:#8A3323}
+.pd-mine.is-ng b{color:#A8391F}
+/* 実在の証拠 */
+.pd-proof{font-size:12.5px;color:var(--c-ink-mute,#77604A);line-height:1.6;margin-bottom:8px}
+.pd-proof b{color:var(--c-ink,#463527);font-weight:700}
+/* いつでも効くもの */
+.pd-always{
+  background:rgba(255,255,255,.55);border:1px solid rgba(138,97,18,.16);
+  border-radius:10px;padding:9px 11px;margin-bottom:8px;
+}
+.pd-always-h{font-size:12.5px;font-weight:700;color:var(--c-ink-mute,#77604A);margin-bottom:4px}
+.pd-always ul{margin:0;padding-left:1.1em}
+.pd-always li{font-size:13px;line-height:1.6;color:var(--c-ink,#463527)}
+.pd-always-note{font-size:12.5px;color:var(--c-ink-mute,#77604A)}
+/* 正直な但し書き（必ず出す） */
+.pd-honest{
+  font-size:12.5px;line-height:1.65;color:var(--c-ink-mute,#77604A);
+  padding-top:8px;border-top:1px solid rgba(138,97,18,.16);
+}
+.pd-honest b{color:var(--c-ink,#463527);font-weight:700}
+@media (max-width:480px){
+  .premium-card{margin:8px 10px 4px;padding:12px 13px}
+  .pd-title{font-size:15px}
+  .pd-hit-name{font-size:16.5px}
+  .pd-math-row{font-size:13px}
+}
+
