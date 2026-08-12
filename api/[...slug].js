@@ -587,7 +587,19 @@ module.exports = async (req, res) => {
         lastDataFetch: status.jvBridge?.updatedAt || null,
         predictionsFresh: predCache.isPredictionsFresh(),
         predictionsComputedAt: meta?.fetchedAt || null,
-        lastGitPushDeploy: lastCommitISO,
+        // 🚨 2026-08-12 修正: Vercel は配置したファイルの更新時刻を
+        //   **1540000000000（2018-10-20）に固定**する（再現性のあるビルドのため）。
+        //   その偽の時刻をそのまま返していたので、画面に「本番反映 2853日前」という
+        //   実在しない数字が出て、しかも常に赤い「要対応」になっていた。
+        //   → 分からないものは **null（分からない）** を返す。作り話をしない。
+        lastGitPushDeploy: (() => {
+          if (!lastCommitISO) return null;
+          const t = Date.parse(lastCommitISO);
+          if (!Number.isFinite(t)) return null;
+          if (Math.abs(t - 1540000000000) < 86400000) return null;   // Vercel の固定値
+          if (Date.now() - t > 365 * 86400000) return null;          // 1年より古い＝あてにならない
+          return lastCommitISO;
+        })(),
         nextCronFinalizeISO: nextCron.toISOString(),
         learning,
       });

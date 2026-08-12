@@ -2308,19 +2308,25 @@
     }
 
     // ── 戦略カード (4-5 列) ──
+    // 🚨 2026-08-12 修正: 開催日以外は w5.ok=false で w5.strategies が**存在しない**のに、
+    //   この下で w5.strategies.custom を守りなしで読んでいて TypeError で止まっていた。
+    //   その結果、上で作った「次回WIN5の予定」カードごと画面に出ず、
+    //   折りたたみを開くと**ずっと真っ白**だった（4機種で実測・コンソールに毎回エラー）。
+    //   → 以降は必ず _st を使う。空でも落ちない。
+    const _st = w5.strategies || {};
     const strategyList = [
       { key: "safe", name: "堅め", sub: "1×1×1×1×1 = 1点" },
       { key: "axis", name: "軸1頭流し", sub: "高信頼 2R は 1 頭・残り 3R は 2 頭" },
       { key: "mid",  name: "中波",     sub: "2×2×2×2×2 = 32点" },
       { key: "wide", name: "万舟",     sub: "3×3×3×3×3 = 243点" },
     ];
-    if (w5.strategies.custom) strategyList.push({ key: "custom", name: "予算最適", sub: `AI が ¥${fmtYen(w5.budget)} 以内で最適化` });
-    if (w5.strategies.userCustom) strategyList.push({ key: "userCustom", name: "あなたのカスタム", sub: "編集した内容" });
+    if (_st.custom) strategyList.push({ key: "custom", name: "予算最適", sub: `AI が ¥${fmtYen(w5.budget)} 以内で最適化` });
+    if (_st.userCustom) strategyList.push({ key: "userCustom", name: "あなたのカスタム", sub: "編集した内容" });
 
-    const stratsGrid = el("div", { class: "win5-strategies" + (w5.strategies.custom || w5.strategies.userCustom ? " has-custom" : "") });
+    const stratsGrid = el("div", { class: "win5-strategies" + (_st.custom || _st.userCustom ? " has-custom" : "") });
     const rec = w5.recommended;
     strategyList.forEach((s) => {
-      const st = w5.strategies[s.key];
+      const st = _st[s.key];
       if (!st) return;
       const c = el("div", { class: "win5-strategy" + (rec === s.key ? " is-recommended" : "") });
       if (rec === s.key) c.appendChild(el("div", { class: "rec-badge" }, "AI 推奨"));
@@ -2382,10 +2388,10 @@
     let plan;
     if (state.win5UserPlan && state.win5UserPlan.length === w5.perRace.length) {
       plan = [...state.win5UserPlan];
-    } else if (baseKey && w5.strategies[baseKey]?.plan) {
-      plan = [...w5.strategies[baseKey].plan];
-    } else if (w5.strategies.safe?.plan) {
-      plan = [...w5.strategies.safe.plan];
+    } else if (baseKey && _st[baseKey]?.plan) {
+      plan = [..._st[baseKey].plan];
+    } else if (_st.safe?.plan) {
+      plan = [..._st.safe.plan];
     } else {
       plan = w5.perRace.map(() => 1);
     }
@@ -3284,7 +3290,10 @@
         if (tab === "home") {
           $("#decision-mount").scrollIntoView({ behavior: "smooth", block: "start" });
         } else if (tab === "win5") {
+          // 履歴と同じ罠: 行き先が閉じた折りたたみの中だと scrollIntoView が空振りする。
           const w = $("#win5-mount");
+          const wd = w && w.closest("details");
+          if (wd && !wd.open) wd.open = true;
           if (w && w.children.length > 0) {
             w.scrollIntoView({ behavior: "smooth", block: "start" });
           } else {
@@ -3292,8 +3301,16 @@
           }
         } else if (tab === "history") {
           // 「買ったもの と 収支」セクションは #profit-grid を含む section-card
+          // 🚨 2026-08-12 修正: 行き先が**閉じた折りたたみの中**にあると
+          //   scrollIntoView が空振りして、押しても何も起きない死にボタンになる。
+          //   （まっさらな状態で実測＝scrollY が 0 のまま動かなかった）
+          //   Wave28 で「答え合わせを見る」には同じ手当てが入っていたが、ナビ側だけ残っていた。
           const profitCard = document.getElementById("profit-grid")?.closest(".section-card");
-          if (profitCard) profitCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (profitCard) {
+            const d = profitCard.closest("details");
+            if (d && !d.open) d.open = true;
+            profitCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
         } else if (tab === "add") {
           openAddBetModal();
         } else if (tab === "settings") {
@@ -3520,7 +3537,17 @@
     const root = $("#achievements-mount");
     if (!root) return;
     const aclist = computeAchievements(state.bets || []);
-    if (aclist.length === 0) { root.hidden = true; return; }
+    // 🚨 2026-08-12: ここで hidden にすると、記録がゼロの人（＝はじめて使う人 全員）が
+    //   「達成バッジ と 連勝記録」を開いたとき **まっしろな空間** が出るだけだった。
+    //   空っぽを黙って出さない。何をすれば埋まるかを書く。
+    if (aclist.length === 0) {
+      root.hidden = false;
+      root.innerHTML = `<div class="ach-empty">
+        まだ記録がありません。<br>
+        馬券を記録すると、ここにバッジが並びます（下の「＋ 記録」から入れられます）。
+      </div>`;
+      return;
+    }
     root.hidden = false;
     root.innerHTML = `
       <div class="ach-head">
@@ -3549,7 +3576,15 @@
     if (!root) return;
     const bets = state.bets || [];
     const settled = bets.filter((b) => b.result === "hit" || b.result === "miss");
-    if (settled.length < 3) { root.hidden = true; return; }
+    // 同上。3件たまるまで まっしろにしない。
+    if (settled.length < 3) {
+      root.hidden = false;
+      root.innerHTML = `<div class="ach-empty">
+        連勝の記録は、結果を入れた馬券が <b>3件</b> たまると出ます
+        （いまは ${settled.length} 件）。
+      </div>`;
+      return;
+    }
     const hits = settled.filter((b) => b.result === "hit");
     const sortedByDate = [...settled].sort((a, b) => (b.id || 0) - (a.id || 0));
     let currentStreak = 0;
@@ -4083,7 +4118,7 @@
           + `<span class="pd-none-note">（「今年は無い」ではありません。JRAは年度ごとに後から発表します）</span></div>`;
 
     const proof = pd.lastKnown
-      ? `<div class="pd-proof">いちばん最近やった日 … ${escapeHtml(fmtYmd(pd.lastKnown.date))}`
+      ? `<div class="pd-proof">いちばん最近やった日＝ ${escapeHtml(fmtYmd(pd.lastKnown.date))}`
         + `（過去 <b>${pd.ultraCount}</b> 日が 85%・<b>${pd.superCount}</b> 日が 80%上限）</div>`
       : "";
 
@@ -4501,8 +4536,14 @@
         key: "deploy", labelEl: "#autostatus-deploy", subEl: "#autostatus-deploy-sub",
         ageH: ageHours(a.lastGitPushDeploy),
         okIfUnder: 72,
-        okText: "反映済", warnText: "やや古い", ngText: "停止中",
-        sub: a.lastGitPushDeploy ? `本番反映 ${fmtHours(ageHours(a.lastGitPushDeploy))}` : "未反映",
+        // 時刻が分からないときは「予想の計算が新しいか」で代わりに見る（そちらは本物の時刻）
+        unknownIsOk: !a.lastGitPushDeploy && !!a.predictionsFresh,
+        okText: a.lastGitPushDeploy ? "反映済" : "たぶん動いています",
+        warnText: "やや古い", ngText: "停止中",
+        // 🚨 2026-08-12: 分からないときに「未反映」と出すと、動いているのに壊れて見える。
+        //   Vercel はファイルの時刻を固定するので、本番では**そもそも計れない**。
+        //   計れないことを、計れないと書く。
+        sub: a.lastGitPushDeploy ? `本番反映 ${fmtHours(ageHours(a.lastGitPushDeploy))}` : "この画面では計れません",
       },
       {
         key: "finalize", labelEl: "#autostatus-finalize", subEl: "#autostatus-finalize-sub",
@@ -4526,6 +4567,9 @@
       if (c.key === "finalize") {
         if (a.nextCronFinalizeISO) { cls = "is-ok"; txt = c.okText; okCount++; }
         else { cls = "is-warn"; txt = c.warnText; warnCount++; }
+      } else if (c.ageH == null && c.unknownIsOk) {
+        // 「分からない」と「壊れている」は別。分からないものを赤で叫ばない。
+        cls = "is-ok"; txt = c.okText; okCount++;
       } else if (c.ageH == null) {
         cls = "is-ng"; txt = c.ngText;
       } else if (c.ageH < c.okIfUnder) {
@@ -4553,7 +4597,10 @@
       if (okCount === cells.length) {
         note.textContent = "緑 4 つ揃っているので手動操作は不要です。寝ていてもデータが揃います。";
       } else {
-        note.textContent = "赤/橙のセルがあります。設定 → 自動化 から詳細を確認できます。";
+        // 🚨 2026-08-12: 「設定 → 自動化」と案内していたが、**設定タブは 2026-06-23 に撤去ずみ**。
+        //   存在しない場所へ案内していた。行ける所だけを案内する。
+        note.textContent = "赤や橙のセルがあります。ほとんどは「今日はレースが無い日」など"
+          + "ふつうのことですが、土日に赤が出ていたら私（チャット）に「競馬の自動が止まってる」と言ってください。";
       }
     }
   }
