@@ -22,6 +22,22 @@
 #
 #   When no race is close to post time it exits in under a second.
 #
+# 2026-08-12 SCHEDULE FIX (found by scripts/near_post_verify.mjs):
+#   The task was registered as 09:20 + repeat every 2min for 7h40m, i.e. it
+#   STOPPED AT 17:00. That came from the wrong belief that "JRA races run until
+#   about 16:40". In summer they do not:
+#     JRA runs a TWO-PART day (2-bu-sei, a heat countermeasure) at Niigata and
+#     Chukyo in late July / August. Races 1-5 run 09:40-11:50, then a ~3h20m
+#     break, then races 6-12 run 15:00-18:30.
+#     Measured in our own data: 28 such meeting-days across 2025 and 2026,
+#     only at Niigata and Chukyo, always a gap right after race 5.
+#     Cross-checked against netkeiba: 2026-08-09 Niigata 7R 15:35 = Leopard S
+#     (G3), and 2026-07-26 Niigata 7R 15:45 = the 61st running (Sekiya Kinen).
+#     So our race numbers and post times are correct; the schedule really is
+#     split. 6 races per two-part day were NEVER covered by this task.
+#   Duration raised to PT9H30M (09:20 -> 18:50).
+#   IF THIS TASK IS EVER RE-REGISTERED, KEEP THE 9H30M DURATION.
+#
 # ASCII ONLY on purpose: PowerShell 5.1 reads BOM-less UTF-8 as Shift-JIS
 # and SILENTLY EATS LINES when Japanese text is present (a comment can
 # swallow the next line of code with no error). Japanese lives in the

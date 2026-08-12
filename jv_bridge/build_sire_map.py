@@ -110,7 +110,33 @@ def _um_father(rec: bytes):
 
 def main():
     # 血統系の生binを集める(BLOD取得物 + 既存rawも一応走査)
-    bins = list(CACHE.glob("aggregate_*_BLOD/raw_*.bin")) + list(CACHE.glob("aggregate_*BLOD*/*.bin"))
+    # 血統(父)が載っている生binを集める。
+    #   BLOD … 昔ながらの血統セットアップ（2023-07-31 までの馬。SK/HN）
+    #   BLDN … 新しい血統（いま登録された新しい馬。SK/HN）
+    #   DIFN … 新しい蓄積情報（UM=競走馬マスタ。いま走っている馬が全部入る）
+    #   DIFF … 昔の蓄積情報（UM）
+    # ⚠ 以前はここが BLOD しか見ておらず、BLDN と DIFN を取ってきても
+    #   1件も読んでいなかった（しかも同じファイルを2回数えていた）。
+    #
+    # 🚨 置き場所は data/jv_cache/kettou_raw/ （aggregate_*/ に置かない）
+    #    build_all.py は毎朝 aggregate_*/raw_*.bin を「中身を見ずに全部」読む。
+    #    血統の生bin（とくに DIFN は約300MB で RA/SE も入っている）をそこに置くと、
+    #    毎朝の処理が重くなるうえ、中途半端なレース情報が races/ results/ に
+    #    書き込まれてアプリのデータを汚すおそれがある。
+    #    （調教データを chokyo_raw/ に分けてあるのと同じ理由）
+    seen = set()
+    bins = []
+    for p in sorted((CACHE / "kettou_raw").glob("*.bin")):
+        rp = p.resolve()
+        if rp not in seen:
+            seen.add(rp)
+            bins.append(p)
+    for spec in ("BLOD", "BLDN", "DIFF", "DIFN"):
+        for p in sorted(CACHE.glob(f"aggregate_*{spec}/*.bin")):
+            rp = p.resolve()
+            if rp not in seen:
+                seen.add(rp)
+                bins.append(p)
     if not bins:
         # フォールバック: 全aggregateフォルダ + 直下rawから血統レコードを拾う
         bins = list(CACHE.glob("aggregate_*/raw_*.bin")) + list(CACHE.glob("raw_*.bin"))

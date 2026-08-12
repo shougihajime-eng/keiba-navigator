@@ -200,4 +200,8 @@ if($left){
   Say 'OK: no leftover JV-Link process.'
 }
 
+# 一時ファイルは残さない（中身は setup_fetch.log に全部写してある）
+Remove-Item $outF -ErrorAction SilentlyContinue
+Remove-Item $errF -ErrorAction SilentlyContinue
+
 if($hung){ exit 7 } else { exit 0 }

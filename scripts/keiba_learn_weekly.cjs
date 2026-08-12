@@ -242,6 +242,21 @@ function main() {
   console.log("");
   console.log("[OK] " + OUT_JSON);
   console.log("[OK] " + REPORT);
+
+  // 2026-08-12 追加: 「発走直前のオッズが本当に取れているか」も毎週かならず数える。
+  //   ⚠ ここを人の記憶に頼ると「やったつもり」で終わる（実際に一度そうなった）。
+  //     新しいタスクを足さず、すでに毎週動いているこの処理にぶら下げる＝止まりようがない。
+  //   ⚠ 失敗しても週の学習レポートは出す（try で囲む）。
+  try {
+    const { spawnSync } = require("child_process");
+    const r = spawnSync(process.execPath,
+      [path.join(ROOT, "scripts", "near_post_verify.mjs"), "--days=14"],
+      { cwd: ROOT, encoding: "utf8", timeout: 120000, windowsHide: true });
+    if (r.stdout) console.log("" + r.stdout);
+    console.log("[OK] 直前オッズの点検 (near_post_verify) 終了コード " + r.status);
+  } catch (e) {
+    console.log("[WARN] 直前オッズの点検に失敗: " + e.message);
+  }
 }
 
 main();
