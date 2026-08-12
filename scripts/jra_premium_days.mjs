@@ -37,6 +37,7 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import fsSync from 'node:fs';   // お知らせの書き出し（同期でよい）
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -663,6 +664,70 @@ async function main() {
   await fs.rename(tmp, OUT_PATH);
 
   console.log(`✓ ${path.relative(ROOT, OUT_PATH)} を更新しました`);
+
+  // ── 2026-08-12 追加: これからの対象日が出たら、その日だけ本人に知らせる ──
+  //   なぜ要るか＝JRAは年度ごとに後から発表するので、いつ出るか分からない。
+  //   人（私）が毎日見に行くのは続かないので、機械が毎朝見て**出た日だけ**知らせる。
+  //   ⚠ 静かに待つのが基本（出ていない日は お知らせを消す）。
+  //   ⚠ 「85%の日 × 単勝1.4倍未満の1番人気の複勝」だけが、
+  //      12年半 43,459レースの検証で 運の幅の下も 100% を超えた唯一の形。
+  //      ただし年に1〜2レースあるかどうか＝**その日にだけ意味がある**。
+  try {
+    // ⚠ パスは**スラッシュ**で書く。円マークだと JS の逃げ文字になって潰れる。
+    //    実際に潰れて 'C:UsersshougOneDrive…' になり、書けていないのに
+    //    「知らせました」と出していた（＝できていないのに成功と言う型）。
+    const BOXES = [
+      'C:/Users/shoug/OneDrive/デスクトップ/📋 自動チェックの結果（毎日のお知らせ）',
+      'C:/Users/shoug/Desktop/📋 自動チェックの結果（毎日のお知らせ）',
+    ];
+    const NAME = '🎯JRAの払戻率アップの日が発表されました.txt';
+    // --test-notify で「出たとき本当に知らせるか」を確かめられる（ニセの日を1件入れる）。
+    //   ⚠ この確認をしないと「書いたけど一度も動かない」ものになる（今日それを何度も見た）。
+    const _fake = ARGV.includes('--test-notify')
+      ? [{ date: '20261231', weekday: '木曜', coverage: 'day', payoutPct: 85, raceName: '（お試し）' }]
+      : [];
+    const wholeDay = [..._fake, ...future.filter((d) => d && d.coverage === 'day' && Number(d.payoutPct) >= 85)];
+    let text = null;
+    if (wholeDay.length) {
+      const L = [];
+      L.push('JRA が「払戻率を上げる日」を発表しました');
+      L.push('');
+      L.push('この日は もどりが 85%（ふだんは 80%）＝引かれる分が 20% → 15% になります。');
+      L.push('予想の腕とはまったく関係なく、確実に得をする唯一の差です。');
+      L.push('');
+      L.push('■ 対象の日');
+      for (const d of wholeDay.slice(0, 10)) {
+        const y = String(d.date || '');
+        L.push(`   ${y.slice(0,4)}年${Number(y.slice(4,6))}月${Number(y.slice(6,8))}日`
+          + `（${d.weekday || ''}）${d.raceName ? ' ' + d.raceName : ''}`);
+      }
+      L.push('');
+      L.push('■ この日にだけ意味がある買い方（12年半 43,459レースで検証）');
+      L.push('   「1番人気の複勝を、単勝1.4倍未満のときだけ買う」');
+      L.push('   ふつうの日 97.55% → この日 103.65%（運の幅 101.7〜105.5% ＝ 下も100%超）');
+      L.push('   ⚠ ただし単勝1.4倍未満は年に約78レース。この日に重なるのは年に1〜2回あるかどうかです。');
+      L.push('   ⚠ オッズは締切前に見て決める必要があります（確定オッズとは入れ替わることがあります）。');
+      L.push('');
+      L.push(`しらべた時刻: ${new Date().toLocaleString('ja-JP')}`);
+      text = L.join(String.fromCharCode(13,10));
+    }
+    for (const box of BOXES) {
+      try {
+        if (!fsSync.existsSync(box)) continue;
+        const f = path.join(box, NAME);
+        if (text) fsSync.writeFileSync(f, text, 'utf8');
+        else if (fsSync.existsSync(f)) fsSync.unlinkSync(f);   // 出ていない日は静かに消す
+      } catch {}
+    }
+    // 🚨 書けたと言う前に、**本当にファイルが在るか**を見る。
+    if (text) {
+      const wrote = BOXES.filter((b) => { try { return fsSync.existsSync(path.join(b, NAME)); } catch { return false; } });
+      if (wrote.length) console.log('  🎯 これからの対象日が見つかったので お知らせを置きました（' + wrote.length + 'か所）');
+      else console.log('  ⚠ お知らせを置けませんでした（箱が見つからない）');
+    }
+  } catch (e) {
+    console.log('  （お知らせの書き出しに失敗: ' + e.message + '）');
+  }
   console.log(`  実施日: ${allDays.length}件 / これから: ${future.length}件 / 今日: ${todayEntry ? todayEntry.label : 'なし'}`);
   console.log(`  いつでも適用: ${alwaysOn.map((a) => a.label).join('、') || 'なし'}`);
   if (errors.length) console.log(`  読めなかったもの: ${errors.length}件（JSONの errors を見てください）`);
