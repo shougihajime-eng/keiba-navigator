@@ -336,8 +336,10 @@ def run_umabashira() -> int:
     if not node_exe:
         log_line("  node が無いのでスキップ")
         return 0
+    # 既定7日だと、取り込みが2〜3日こけた時に「今 画面に出ているレース」が
+    # 索引から落ちて馬柱が出なくなる。14日にして余裕を持たせる（10.7MB→約5MB・1秒）。
     return run_subprocess(
-        [node_exe, str(SCRIPTS / "build_umabashira.cjs")],
+        [node_exe, str(SCRIPTS / "build_umabashira.cjs"), "--days", "14"],
         "build_umabashira", timeout=300,
     )
 
