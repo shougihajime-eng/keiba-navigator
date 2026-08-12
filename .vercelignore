@@ -125,3 +125,7 @@ data/jv_cache/fetch_diff.lock
 # 2026-08-12: 嘘チェックの中身は内部メモなので本番に出さない
 # (vercel.json の outputDirectory:"." のせいで、置くだけで公開されてしまう)
 検品/
+
+# 2026-08-12: 血統データ取り込みの一時ログ（作業のあと・git に入れない）
+jv_bridge/_setup_*.txt
+jv_bridge/setup_fetch.log
