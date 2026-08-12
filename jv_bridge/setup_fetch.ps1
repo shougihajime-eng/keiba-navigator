@@ -34,8 +34,18 @@ param(
   [string]$FromTime   = '20140101000000',
   [int]   $Option     = 3,
   [int]   $TimeoutMin = 90,
+  [string]$OutDir     = '',   # isolated mode: put raw data here (relative to data/jv_cache is OK)
   [switch]$ProbeOnly          # only ask "how many files?", do not download/read
 )
+# ---- WHY -OutDir MATTERS -------------------------------------------------
+#  build_all.py (the every-morning importer) auto-globs
+#      data/jv_cache/aggregate_*/raw_*.bin
+#  If the 10-year setup dump (multi-GB, ONE file) lands there, the next
+#  morning run tries to expand 10 years at once. That run uses 32-bit
+#  Python (2GB address space) -> MemoryError, and every later morning the
+#  huge file is pulled in as a "companion" file because it also contains
+#  today's races. So: fetch into an isolated folder, import explicitly.
+# --------------------------------------------------------------------------
 
 $ErrorActionPreference = 'Continue'
 
@@ -78,6 +88,7 @@ if($ProbeOnly){
 } else {
   $script = 'jv_bridge\jv_fetch.py'
   $argline = ('{0} aggregate --dataspec {1} --option {2} --fromtime {3}' -f $script,$DataSpec,$Option,$FromTime)
+  if($OutDir -ne ''){ $argline = $argline + (' --outdir "{0}"' -f $OutDir) }
 }
 
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -200,7 +211,9 @@ if($left){
   Say 'OK: no leftover JV-Link process.'
 }
 
-# 一時ファイルは残さない（中身は setup_fetch.log に全部写してある）
+# Drop the temp files; everything is already copied into setup_fetch.log.
+# (This comment MUST stay ASCII: PS 5.1 reads BOM-less .ps1 as Shift-JIS and a
+#  Japanese comment silently swallows the next line -- see global CLAUDE.md.)
 Remove-Item $outF -ErrorAction SilentlyContinue
 Remove-Item $errF -ErrorAction SilentlyContinue
 

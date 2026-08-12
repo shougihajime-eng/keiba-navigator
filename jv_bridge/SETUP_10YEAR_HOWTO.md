@@ -80,27 +80,59 @@ py -3.12-64 jv_bridge/build_sire_map.py
 
 ---
 
-## 3. レースを10年ぶん取る ← まだやっていない（やり方だけ確定した）
+## 3. レースを10年ぶん取る ← **2026-08-12 実行ずみ。手順はこれで確定**
 
-**窓の答え方はもう分かっていて、`setup_fetch.ps1` が自動で答える。**
-2026-08-12 に「注文」まで通し、`rc=0 / 該当2349ファイル` と
-**約2GBのダウンロードが実際に始まるところまで確認ずみ**（そのぶんはPCに残っている）。
+### 🚨 いちばん大事なこと＝生データを `aggregate_*` に置いてはいけない
+
+毎朝の `build_all.py` は `data/jv_cache/aggregate_*/raw_*.bin` を**自動で全部**拾う。
+JV-Link は 1 回の取得を**1個の巨大な .bin** にまとめるので、そこに置くと次が同時に起きる:
+
+| | 何が起きるか |
+|---|---|
+| ① | **翌朝の build_all.py が 10 年ぶんを展開しにいく。** しかも build_all.py は **32bit Python** で動く（`race_day_pipeline.py` の `python_exe()`）。32bit のメモリ上限は約2GB → MemoryError |
+| ② | **その後も毎朝ダメ。** 差分ビルドは「dirty なレースを含む古いファイルも道連れで読む」作り。10年ファイルは**今日のレースも含む**ので毎回 道連れ → 毎朝 数GB を読む |
+| ③ | races/ が 4,380 → 約40,000 に増えると **features.json が 42MB → 約380MB**。features.json は **git に載せて Vercel に配っている**。GitHub は 100MB 超のファイルを受け付けない → **毎朝の git push が落ちて本番が止まる** |
+
+→ だから **「取る」と「取り込む」を分ける**（血統の `kettou_raw/` と同じ考え方）。
+
+### 手順（この2行）
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File "C:\Users\shoug\はじめアプリ\７📦そのほか\競馬\jv_bridge\setup_fetch.ps1" -DataSpec RACE -Option 3 -FromTime 20140101000000 -TimeoutMin 90
+# ① 取る（隔離フォルダへ。_status.json にも触らない）
+powershell -ExecutionPolicy Bypass -File "C:\Users\shoug\はじめアプリ\７📦そのほか\競馬\jv_bridge\setup_fetch.ps1" -DataSpec RACE -Option 3 -FromTime 20140101000000 -TimeoutMin 180 -OutDir history_raw
+
+# ② 取り込む（64bit python。人が見ている時に）
+cd "C:\Users\shoug\はじめアプリ\７📦そのほか\競馬"
+& "$env:LOCALAPPDATA\Programs\Python\Python312-64\python.exe" jv_bridge\import_history.py
 ```
 
-### ⚠️ これを走らせる前に必ず読む
-1. **走らせた瞬間から「毎朝の処理」が別物になる。**
-   出来上がる生データは `aggregate_20140101_RACE/` に入り、
-   **翌朝8時の `build_all.py` が10年ぶんを展開しにいく**（今は約15か月ぶん）。
-   何時間かかるか・途中で落ちないかは未確認。**朝の更新が止まる危険がある。**
-   → **やるなら「取る」と「展開する」を別の日に、人が見ている時に。**
-2. 空きディスクを確認する（2026-08-12 時点で 128GB 空き。生データは数GB規模）。
-3. **土日月・金の夕方は走らせない**（その時間は毎時の取得タスクが JV-Link を使う。
+- 出来上がり＝**`data/jv_cache/history/races|results/*.json`**（本番の `races/` とは別）。
+  `history/` は build_all.py の索引にも入らず、毎朝のどの処理からも読まれない。
+- **本番の `races/` `results/` に既にあるレースは絶対に書き換えない**（本番側には
+  毎時オッズなど、セットアップデータに無い情報が入っているため）。
+- 中央競馬（JRA・競馬場コード01〜10）だけ入れる。地方競馬は `--include-nar` で入る。
+- メモリ対策＝巨大 .bin を **年月ごとの部品**に切ってから 1 個ずつ組み立てる
+  （1レースの全レコードは必ず同じ日付なので、年月で切ってもレースは分断されない。
+  「丸ごと読んだ版と1バイトも変わらない」ことを実データで検証ずみ）。
+
+### 学習で使うとき（毎朝の features.json は増やさない）
+
+```powershell
+# 10年ぶんを足した features を別ファイルに作る（git には載せない）
+& $py64 jv_bridge\aggregate_features_v2.py --extra-dir data/jv_cache/history --out data/jv_cache/features_10y.json
+# 「増やすと本当に強くなるのか」をリークなしで測る（AUC と 回収率の両方）
+& $py64 jv_bridge\experiment_10y.py --blocks 5
+```
+
+### ⚠️ そのほかの注意
+1. 空きディスクを確認する（2026-08-12 時点で 127GB 空き。生データは数GB規模）。
+2. **土日月・金の夕方は走らせない**（その時間は毎時の取得タスクが JV-Link を使う。
    JV-Link は同時に2つ動かせない）。**火・水・木の昼間が安全**。
-4. 取れたあとの流れは `SETUP_10YEAR_DEBUG.md` の「取れたあとの流れ」を参照
-   （build_all → aggregate_features_v2 → train_lightgbm → walk_forward → experiment_engine）。
+   翌朝8時の `KeibaGapFill-0800` までに終わらせる。
+3. **`build_all.py --full` を軽い気持ちで走らせない**。実測すると 4,380 レースのうち
+   **95 レースの単勝オッズが書き換わった**（古い生データは容量のため削除ずみで、
+   いま残っている生データだけからは当時と同じ値を再現できない）。
+   `races/` は「積み上げてきた結果」なので、全部作り直すと情報が減ることがある。
 
 ---
 

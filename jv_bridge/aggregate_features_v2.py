@@ -86,23 +86,42 @@ def _shrunk_rate(wins: int, samples: int, baseline: float, k: int = SHRINKAGE_K)
     return (wins + k * baseline) / (samples + k)
 
 
+# 🆕 2026-08-12: 過去10年ぶん (data/jv_cache/history/) を「足して」集計したいとき用。
+#   既定は空 = いままでと 1 バイトも変わらない挙動。
+#   毎朝のパイプラインはこれを使わない (features.json は git に載せて Vercel に配るので、
+#   10 年ぶんを入れると 42MB → 約380MB になり GitHub の 100MB 制限で push が落ちる)。
+EXTRA_DIRS: List[Tuple[Path, Path]] = []
+
+
 def load_all() -> Tuple[List[Dict[str, Any]], Dict[str, Dict[str, Any]]]:
     races = []
     results = {}
+    seen_race_ids = set()
     if not RACES_DIR.exists():
         return [], {}
-    for p in sorted(RACES_DIR.glob("*.json")):
-        try:
-            races.append(json.loads(p.read_text(encoding="utf-8")))
-        except Exception:
+    # 本番の races/ が最優先 (毎時オッズなど、過去データには無い情報が入っているため)
+    for rdir, sdir in [(RACES_DIR, RESULTS_DIR)] + EXTRA_DIRS:
+        if not rdir.exists():
             continue
-    for p in sorted(RESULTS_DIR.glob("*.json")):
-        try:
-            data = json.loads(p.read_text(encoding="utf-8"))
-            rid = data.get("race_id") or p.stem
-            results[rid] = data
-        except Exception:
+        for p in sorted(rdir.glob("*.json")):
+            if p.stem in seen_race_ids:
+                continue
+            try:
+                races.append(json.loads(p.read_text(encoding="utf-8")))
+                seen_race_ids.add(p.stem)
+            except Exception:
+                continue
+        if not sdir.exists():
             continue
+        for p in sorted(sdir.glob("*.json")):
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                rid = data.get("race_id") or p.stem
+                if rid in results:
+                    continue
+                results[rid] = data
+            except Exception:
+                continue
     return races, results
 
 
@@ -322,7 +341,16 @@ def build_features() -> Dict[str, Any]:
 def main() -> int:
     ap = argparse.ArgumentParser(description="時系列リーク排除版 features.json 生成")
     ap.add_argument("--out", default=str(FEATURES_PATH))
+    ap.add_argument("--extra-dir", action="append", default=[],
+                    help="過去データを足す (races/ と results/ を持つ親フォルダ。"
+                         "例: data/jv_cache/history)。既定は無し=いままで通り。")
     args = ap.parse_args()
+    for d in args.extra_dir:
+        base = Path(d)
+        if not base.is_absolute():
+            base = ROOT / base
+        EXTRA_DIRS.append((base / "races", base / "results"))
+        print(f"[extra] {base} を足して集計します", flush=True)
     features = build_features()
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)

@@ -297,7 +297,18 @@ def cmd_aggregate(args) -> int:
     DataSpec 'RACE' で一定期間分のRACEデータを取得。
     結果を ../data/jv_cache/aggregate_<from>-<to>/ に保存。
     バイナリ完全パースは仕様書取得後に実装(現状は raw + recordType のみ)。
+
+    🆕 2026-08-12 `--outdir` (隔離モード):
+      置き場所を自分で決めたいとき用。指定すると
+        ① 生データは aggregate_* ではなく指定フォルダに置く
+        ② _status.json に一切さわらない
+      になる。
+      なぜ要るか＝毎朝の build_all.py は `data/jv_cache/aggregate_*/raw_*.bin` を
+      自動で全部拾う。過去10年のセットアップデータ(数GB・1ファイル)をそこに置くと
+      翌朝の取り込みが 10 年ぶんの展開を始めて壊れる (32bit Python のメモリ上限も超える)。
+      だから「取る」と「取り込む」を分ける。血統の kettou_raw/ と同じ考え方。
     """
+    isolated = bool(getattr(args, "outdir", None))
     if not (require_pywin32() and require_32bit()):
         return cmd_init(args)
     try:
@@ -313,7 +324,8 @@ def cmd_aggregate(args) -> int:
         #  fromtime が直近で「もう取得済」になると毎時失敗続きになっていた)
         if rc == -1:
             print(f"[info] JVOpen rc=-1 (該当データなし・正常終了)")
-            write_status("aggregate_no_data", fromtime=args.fromtime, dataspec=args.dataspec)
+            if not isolated:
+                write_status("aggregate_no_data", fromtime=args.fromtime, dataspec=args.dataspec)
             return 0  # exit 0 で「データなし正常」を伝える
         if rc < 0:
             # その他の負値は本物のエラー
@@ -338,7 +350,12 @@ def cmd_aggregate(args) -> int:
                     break
                 print(f"  ダウンロード進捗: {stat}/{downloadcount}")
                 time.sleep(2)
-        agg_dir = CACHE_DIR / f"aggregate_{args.fromtime[:8]}_{args.dataspec}"
+        if isolated:
+            agg_dir = Path(args.outdir)
+            if not agg_dir.is_absolute():
+                agg_dir = CACHE_DIR / agg_dir
+        else:
+            agg_dir = CACHE_DIR / f"aggregate_{args.fromtime[:8]}_{args.dataspec}"
         agg_dir.mkdir(parents=True, exist_ok=True)
         out_path = agg_dir / f"raw_{int(dt.datetime.now().timestamp())}.bin"
         records = []
@@ -388,18 +405,20 @@ def cmd_aggregate(args) -> int:
             "mode": "aggregate",
             "dataspec": args.dataspec,
             "fromtime": args.fromtime,
-            "rawFile": str(out_path.relative_to(CACHE_DIR)),
+            "rawFile": str(out_path),
             "recordCount": len(records),
             "fetchedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
             "note": "完全パースはJVData仕様書取得後。",
         }
         meta_path = agg_dir / "meta.json"
         meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
-        write_status("ready", lastAggregate=meta)
+        if not isolated:
+            write_status("ready", lastAggregate=meta)
         print(f"[OK] 集計取得完了。{len(records)} レコード → {out_path.name}")
         return 0
     except Exception as e:
-        write_status("aggregate_failed", error=str(e), trace=traceback.format_exc())
+        if not isolated:
+            write_status("aggregate_failed", error=str(e), trace=traceback.format_exc())
         print(f"[NG] JVOpen aggregate 失敗: {e}")
         return 6
 
@@ -429,6 +448,10 @@ def main():
     p_agg.add_argument("--dataspec", default="RACE", help="例: RACE/UMA/SE/HR")
     p_agg.add_argument("--fromtime", required=True, help="例: 20140101000000 (10年前)")
     p_agg.add_argument("--option", default="1", help="1=今回 2=今回+前回 3=ダイアログあり 4=セットアップ")
+    p_agg.add_argument("--outdir", default=None,
+                       help="隔離モード: 生データの置き場所を自分で決める "
+                            "(data/jv_cache からの相対パスも可)。指定すると _status.json に触らない。"
+                            "毎朝の build_all.py に拾わせたくない大きなデータ用。")
 
     args = parser.parse_args()
     if args.mode == "init":      sys.exit(cmd_init(args))
