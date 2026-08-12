@@ -1,5 +1,5 @@
 {
-  "computed_at": "2026-08-12T02:04:25.657869+00:00",
+  "computed_at": "2026-08-12T02:51:12.927738+00:00",
   "total_entries": 3134,
   "resolved_entries": 2511,
   "by_strategy": {
@@ -163,6 +163,56 @@
         "hit_rate_pct": 35.5,
         "profit_jpy": -11330
       }
-    }
+    },
+    "bands_from": "20250517",
+    "bands_to": "20260809",
+    "bands_base_roi_pct": 85.45,
+    "bands_base_bets": 4327,
+    "bands": [
+      {
+        "cut": 1.6,
+        "label": "1番人気の複勝を「単勝1.6倍未満」のときだけ",
+        "bets": 348,
+        "roi_pct": 95.83,
+        "hit_rate_pct": 89.08,
+        "profit_jpy": -1450,
+        "months_above_base": 9,
+        "months_total": 9,
+        "roi_pct_on_85day": 101.82
+      },
+      {
+        "cut": 2.0,
+        "label": "1番人気の複勝を「単勝2.0倍未満」のときだけ",
+        "bets": 1054,
+        "roi_pct": 91.2,
+        "hit_rate_pct": 82.64,
+        "profit_jpy": -9280,
+        "months_above_base": 15,
+        "months_total": 16,
+        "roi_pct_on_85day": 96.9
+      },
+      {
+        "cut": 2.5,
+        "label": "1番人気の複勝を「単勝2.5倍未満」のときだけ",
+        "bets": 2009,
+        "roi_pct": 89.09,
+        "hit_rate_pct": 77.6,
+        "profit_jpy": -21910,
+        "months_above_base": 12,
+        "months_total": 16,
+        "roi_pct_on_85day": 94.66
+      },
+      {
+        "cut": 3.0,
+        "label": "1番人気の複勝を「単勝3.0倍未満」のときだけ",
+        "bets": 2961,
+        "roi_pct": 88.69,
+        "hit_rate_pct": 73.62,
+        "profit_jpy": -33490,
+        "months_above_base": 12,
+        "months_total": 16,
+        "roi_pct_on_85day": 94.23
+      }
+    ]
   }
 }

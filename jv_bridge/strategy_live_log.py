@@ -214,6 +214,7 @@ def compute_yardstick(from_ymd: str, to_ymd: str) -> Dict[str, Any]:
     ⚠ 戦略が賭けた期間と同じ範囲で測る（別の期間と比べたら意味がない）。
     """
     out: Dict[str, Any] = {"from": from_ymd, "to": to_ymd, "races": 0, "rules": {}}
+    fav_rows = []   # 1番人気ごとの {ymd, 単勝オッズ, 複勝払戻}（あとで帯べつに切る）
     acc = {
         "fav_fuku": {"label": "1番人気の複勝をベタ買い", "inv": 0, "pay": 0, "hit": 0},
         "fav_tan": {"label": "1番人気の単勝をベタ買い", "inv": 0, "pay": 0, "hit": 0},
@@ -233,6 +234,11 @@ def compute_yardstick(from_ymd: str, to_ymd: str) -> Dict[str, Any]:
             continue
         num = int(fav["number"])
         out["races"] += 1
+        try:
+            _odds = float(fav.get("win_odds")) if fav.get("win_odds") is not None else None
+        except Exception:
+            _odds = None
+        fav_rows.append({"ymd": ymd, "odds": _odds, "fuku": _payout_fuku(pay, num)})
         # 複勝
         fp = _payout_fuku(pay, num)
         acc["fav_fuku"]["inv"] += 100
@@ -263,6 +269,80 @@ def compute_yardstick(from_ymd: str, to_ymd: str) -> Dict[str, Any]:
             "hit_rate_pct": round(a["hit"] / n * 100, 2) if n else None,
             "profit_jpy": a["pay"] - a["inv"],
         }
+
+    # ─── 2026-08-12: 「もし買うなら、いちばん損が小さい買い方」 ───────────
+    #   7,231通りの総当たりで唯一 生き残ったのが **オッズの安い1番人気の複勝**。
+    #   にせデータ(プラセボ)では合格ゼロ、多重比較の補正(SPA)後も p=0.0013。
+    #   しかも100年前から知られている「人気馬は割安・大穴は割高」そのもので、
+    #   データを掘って出た偶然ではない。
+    #   ⚠ それでも **どれも100%未満**＝長く続ければ必ず負ける。
+    #      「おすすめ」ではなく「買うなら これが一番マシ」として出す。
+    #   ⚠ 締切後の確定オッズで切っているので、実際は境目の馬が入れ替わる。
+    #      切る場所を動かしても なだらかに変わるだけなので致命的ではない（実測）。
+    # ⚠ 帯は **全期間** で数える。戦略が賭けた期間（645レース）だと
+    #   1.6倍未満が57件しかなく、「少なすぎて分からない」ものを見せてしまう。
+    #   ものさし本体は「戦略と同じ期間」で測る（くらべる相手だから）が、
+    #   帯は「どの買い方が一番マシか」を知るためなので、多いほうがよい。
+    fav_all = []
+    for f in sorted(RESULTS_DIR.glob("*.json")):
+        try:
+            j = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        rows = j.get("results") or []
+        pay = j.get("payouts") or {}
+        fav = next((h for h in rows if h.get("popularity") == 1 and h.get("number")), None)
+        if not fav:
+            continue
+        try:
+            o = float(fav.get("win_odds")) if fav.get("win_odds") is not None else None
+        except Exception:
+            o = None
+        fav_all.append({"ymd": f.name[:8], "odds": o, "fuku": _payout_fuku(pay, int(fav["number"]))})
+    fav_rows = fav_all
+    if fav_all:
+        out["bands_from"] = min(r["ymd"] for r in fav_all)
+        out["bands_to"] = max(r["ymd"] for r in fav_all)
+        _bi = 100 * len(fav_all)
+        _bp = sum(r["fuku"] for r in fav_all)
+        out["bands_base_roi_pct"] = round(_bp / _bi * 100, 2)   # 全期間のベタ買い（帯の比較相手）
+        out["bands_base_bets"] = len(fav_all)
+
+    bands = []
+    for cut in (1.6, 2.0, 2.5, 3.0):
+        by_month = {}
+        inv = pay = hit = 0
+        for row in fav_rows:
+            if row["odds"] is None or row["odds"] >= cut:
+                continue
+            inv += 100
+            pay += row["fuku"]
+            if row["fuku"] > 0:
+                hit += 1
+            m = row["ymd"][:6]
+            b = by_month.setdefault(m, [0, 0])
+            b[0] += 100
+            b[1] += row["fuku"]
+        if inv < 100:
+            continue
+        n = inv // 100
+        base = out.get("bands_base_roi_pct")
+        months = [(v[1] / v[0] * 100) for v in by_month.values() if v[0] >= 2000]  # 20レース以上の月だけ
+        above = sum(1 for r in months if base is not None and r > base)
+        bands.append({
+            "cut": cut,
+            "label": f"1番人気の複勝を「単勝{cut}倍未満」のときだけ",
+            "bets": n,
+            "roi_pct": round(pay / inv * 100, 2),
+            "hit_rate_pct": round(hit / n * 100, 2),
+            "profit_jpy": pay - inv,
+            "months_above_base": above,
+            "months_total": len(months),
+        })
+    out["bands"] = bands
+    # 85%の日（もどり85/80=1.0625倍）に乗せたらどうなるか。画面で計算させない。
+    for b in bands:
+        b["roi_pct_on_85day"] = round(b["roi_pct"] * 85 / 80, 2)
     return out
 
 

@@ -3942,6 +3942,39 @@
                   <span class="y-note">${r.bets}回・的中 ${r.hit_rate_pct}%</span>
                 </div>`).join("")}
             </div>
+            ${(yd.bands && yd.bands.length) ? `
+              <div class="hr-band">
+                <div class="hr-band-head">もし買うなら（損がいちばん小さい買い方）</div>
+                <div class="hr-band-lead">
+                  7,231通りを総当たりで調べて、唯一 生き残ったのが
+                  <b>「オッズの安い1番人気の複勝」</b>でした。
+                  にせデータで同じことをすると合格ゼロ＝この調べ方は幻を作りません。
+                  100年前から知られている「人気馬は割安・大穴は割高」そのものです。
+                </div>
+                <div class="hr-band-list">
+                  ${yd.bands.map((b) => `
+                    <div class="hr-band-row">
+                      <span class="b-cut">単勝 ${b.cut} 倍未満のときだけ</span>
+                      <span class="b-roi">${b.roi_pct}%</span>
+                      <span class="b-meta">${b.bets}回・的中 ${b.hit_rate_pct}%
+                        ${b.months_total ? `・${b.months_total}か月中 ${b.months_above_base}か月でベタ買いに勝つ` : ""}</span>
+                      <span class="b-85">85%の日なら ${b.roi_pct_on_85day}%</span>
+                    </div>`).join("")}
+                  <div class="hr-band-row is-base">
+                    <span class="b-cut">しぼらず ぜんぶ買う</span>
+                    <span class="b-roi">${yd.bands_base_roi_pct}%</span>
+                    <span class="b-meta">${yd.bands_base_bets}回</span>
+                    <span class="b-85"></span>
+                  </div>
+                </div>
+                <div class="hr-band-warn">
+                  ⚠ <b>どれも 100% より下です</b>＝長く続ければ必ず負けます。「おすすめ」ではなく
+                  <b>「買うなら これが一番マシ」</b>という意味です。
+                  85%の日にいちばん絞った形だけが 100% を超えますが、
+                  <b>運の幅（95%）は まだ 100% をまたぎます</b>＝勝てると言い切れません。
+                  <br>損がいちばん小さいのは、いまでも <b>買わないこと</b>です。
+                </div>
+              </div>` : ""}
             <div class="hr-yard-note ${loseToYd > rows.length / 2 ? "is-bad" : ""}">
               考えずに買うだけで <b>${ydBest.roi_pct}%</b> です。
               ${loseToYd
