@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v89"; // プラス10の文言を正直に (8/12)
+const CACHE_VERSION = "keiba-nav-v90"; // ものさし（1番人気の複勝と比べる） (8/12)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",

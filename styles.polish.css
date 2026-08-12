@@ -511,3 +511,25 @@ select:focus-visible, input:focus-visible {
 }
 
 .pd-always-warn{display:block;margin-top:3px;font-size:12.5px;line-height:1.6;color:var(--c-ink-mute,#77604A)}
+
+/* 2026-08-12: ものさし（くらべる基準）。79.9% が良いのか悪いのか分かるようにする。 */
+.hr-yard{
+  margin-top:10px;padding:10px 12px;border-radius:12px;
+  background:rgba(255,255,255,.62);border:1px solid rgba(138,97,18,.2);
+}
+.hr-yard-head{font-size:12.5px;font-weight:700;color:var(--c-ink-mute,#77604A);margin-bottom:6px}
+.hr-yard-row{
+  display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+  padding:4px 0;border-top:1px dashed rgba(138,97,18,.16);
+}
+.hr-yard-row:first-child{border-top:0}
+.y-name{flex:1 1 10em;font-size:13.5px;color:var(--c-ink,#463527)}
+.y-roi{font-size:17px;font-weight:800;color:var(--c-ink,#463527);font-variant-numeric:tabular-nums}
+.y-note{font-size:12.5px;color:var(--c-ink-mute,#77604A)}
+.hr-yard-note{
+  margin-top:7px;padding-top:7px;border-top:1px solid rgba(138,97,18,.18);
+  font-size:13px;line-height:1.65;color:var(--c-ink,#463527);
+}
+.hr-yard-note.is-bad{color:#8A3323}
+.hr-yard-note.is-bad b{color:#A8391F}
+.hr-yard-why{display:block;margin-top:4px;font-size:12.5px;color:var(--c-ink-mute,#77604A)}

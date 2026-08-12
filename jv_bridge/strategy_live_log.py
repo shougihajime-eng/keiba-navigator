@@ -200,6 +200,72 @@ def resolve_pending():
     return resolved
 
 
+def compute_yardstick(from_ymd: str, to_ymd: str) -> Dict[str, Any]:
+    """ものさし＝「何も考えずに買う」いちばん単純な買い方の成績。
+
+    なぜ要るか（2026-08-12）:
+      画面には戦略の回収率だけが並んでいて、**比べる基準が無かった**。
+      79.9% と出ていても、それが良いのか悪いのか誰にも分からない。
+      実測すると「1番人気の複勝をベタ買い」だけで 83.2% ある。
+      つまり多くの戦略は **いちばん単純な買い方に負けている**。
+      それを隠さないために、同じ期間・同じレースで測って必ず並べて出す。
+
+    ⚠ 数字は results/*.json の本物の払戻から数える（推定しない）。
+    ⚠ 戦略が賭けた期間と同じ範囲で測る（別の期間と比べたら意味がない）。
+    """
+    out: Dict[str, Any] = {"from": from_ymd, "to": to_ymd, "races": 0, "rules": {}}
+    acc = {
+        "fav_fuku": {"label": "1番人気の複勝をベタ買い", "inv": 0, "pay": 0, "hit": 0},
+        "fav_tan": {"label": "1番人気の単勝をベタ買い", "inv": 0, "pay": 0, "hit": 0},
+    }
+    for f in sorted(RESULTS_DIR.glob("*.json")):
+        ymd = f.name[:8]
+        if ymd < from_ymd or ymd > to_ymd:
+            continue
+        try:
+            j = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        rows = j.get("results") or []
+        pay = j.get("payouts") or {}
+        fav = next((h for h in rows if h.get("popularity") == 1 and h.get("number")), None)
+        if not fav:
+            continue
+        num = int(fav["number"])
+        out["races"] += 1
+        # 複勝
+        fp = _payout_fuku(pay, num)
+        acc["fav_fuku"]["inv"] += 100
+        acc["fav_fuku"]["pay"] += fp
+        if fp > 0:
+            acc["fav_fuku"]["hit"] += 1
+        # 単勝
+        # ⚠ tan は配列ではなく {"winner": 11, "amount": 490} の辞書
+        #   （fuku だけが配列）。ここを配列だと思って回すと、キーの文字列を
+        #   .get しようとして落ちる（実際に落ちた）。
+        tp = 0
+        tan = pay.get("tan")
+        if isinstance(tan, dict) and int(tan.get("winner") or 0) == num:
+            tp = int(tan.get("amount") or 0)
+        acc["fav_tan"]["inv"] += 100
+        acc["fav_tan"]["pay"] += tp
+        if tp > 0:
+            acc["fav_tan"]["hit"] += 1
+
+    for k, a in acc.items():
+        if a["inv"] <= 0:
+            continue
+        n = a["inv"] // 100
+        out["rules"][k] = {
+            "label": a["label"],
+            "bets": n,
+            "roi_pct": round(a["pay"] / a["inv"] * 100, 2),
+            "hit_rate_pct": round(a["hit"] / n * 100, 2) if n else None,
+            "profit_jpy": a["pay"] - a["inv"],
+        }
+    return out
+
+
 def compute_stats():
     """戦略別の実 ROI / 連敗 / DD を集計"""
     log = _load_log()
@@ -244,11 +310,34 @@ def compute_stats():
             "max_losing_streak": max_loss,
             "max_drawdown_jpy": max_dd,
         }
+    # ものさし＝同じ期間を「何も考えず買った」場合。戦略が賭けた日の範囲で測る。
+    # ⚠ 項目名は race_date（date ではない）。無ければ race_id の先頭8桁から取る。
+    #   ここを間違えると「日付ゼロ件」になって ものさしが黙って消える（実際に一度そうなった）。
+    def _ymd_of(e):
+        # ⚠ race_date は "2026-06-13" のハイフン入り。数字だけ残してから8桁にする。
+        #   ここを [:8] で切ると "2026-06-" になり、レースが1件も当たらず
+        #   ものさしが黙って消える（実際に一度そうなった）。
+        raw = str(e.get("race_date") or e.get("date") or "")
+        d = "".join(ch for ch in raw if ch.isdigit())[:8]
+        if len(d) == 8:
+            return d
+        rid = "".join(ch for ch in str(e.get("race_id") or "") if ch.isdigit())
+        return rid[:8] if len(rid) >= 8 else ""
+    dates = sorted({d for d in (_ymd_of(e) for e in log["entries"]) if d})
+    yard = None
+    if dates:
+        try:
+            yard = compute_yardstick(dates[0], dates[-1])
+        except Exception as ex:
+            print(f"[warn] ものさしの計算に失敗: {ex}")
+
     stats_doc = {
         "computed_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         "total_entries": len(log["entries"]),
         "resolved_entries": sum(1 for e in log["entries"] if e.get("result") is not None),
         "by_strategy": out,
+        # 2026-08-12 追加: 比べる基準が無いと 79.9% が良いのか悪いのか分からない。
+        "yardstick": yard,
     }
     STATS_PATH.write_text(json.dumps(stats_doc, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[stats] 戦略別実 ROI を {STATS_PATH.name} に保存")

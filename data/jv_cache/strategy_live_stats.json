@@ -1,5 +1,5 @@
 {
-  "computed_at": "2026-08-11T23:11:33.664005+00:00",
+  "computed_at": "2026-08-12T02:04:25.657869+00:00",
   "total_entries": 3134,
   "resolved_entries": 2511,
   "by_strategy": {
@@ -142,6 +142,27 @@
       "hit_rate_pct": 8.11,
       "max_losing_streak": 16,
       "max_drawdown_jpy": 2580
+    }
+  },
+  "yardstick": {
+    "from": "20260613",
+    "to": "20260809",
+    "races": 645,
+    "rules": {
+      "fav_fuku": {
+        "label": "1番人気の複勝をベタ買い",
+        "bets": 645,
+        "roi_pct": 84.9,
+        "hit_rate_pct": 65.27,
+        "profit_jpy": -9740
+      },
+      "fav_tan": {
+        "label": "1番人気の単勝をベタ買い",
+        "bets": 645,
+        "roi_pct": 82.43,
+        "hit_rate_pct": 35.5,
+        "profit_jpy": -11330
+      }
     }
   }
 }

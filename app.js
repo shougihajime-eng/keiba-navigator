@@ -3881,6 +3881,20 @@
     const LBL = { umaren: "馬連", wide: "ワイド", sanren: "3連複" };
     const umamiRows = (um.umami && um.umami.byType) ? Object.entries(um.umami.byType) : [];
 
+    // ─── 2026-08-12 追加: ものさし（比べる基準）────────────────
+    //   これまで「79.9%」と出しても、それが良いのか悪いのか誰にも分からなかった。
+    //   同じ期間・同じレースで「何も考えず1番人気の複勝を買った場合」を並べる。
+    //   実測すると多くの買い方が**この単純な買い方に負けている**。それを隠さない。
+    //   🚫 数字は手書きしない（/api/live-stats が計算した値だけ）。
+    const yd = ls.live.yardstick;
+    const ydRules = (yd && yd.rules) ? Object.values(yd.rules) : [];
+    const ydBest = ydRules.length
+      ? ydRules.reduce((a, b) => ((b.roi_pct || 0) > (a.roi_pct || 0) ? b : a))
+      : null;
+    const loseToYd = ydBest
+      ? rows.filter((v) => Number.isFinite(v.roi_pct) && v.roi_pct < ydBest.roi_pct).length
+      : 0;
+
     const fmt = (n) => (n >= 0 ? "+" : "") + Math.round(n).toLocaleString() + "円";
     return `
       <div class="honest-record ${totalRoi >= 100 ? "is-plus" : "is-minus"}">
@@ -3897,6 +3911,26 @@
           ／ ${rows.length} 個の買い方のうち <b>100% を超えたのは ${winners.length} 個</b>
           ${worst ? `／ いちばん悪いのは <b>${escapeHtml(worst.key)} の ${worst.roi_pct}%</b>（最大 ${worst.max_losing_streak} 連敗）` : ""}
         </div>
+        ${ydBest ? `
+          <div class="hr-yard">
+            <div class="hr-yard-head">ものさし（くらべる基準）</div>
+            <div class="hr-yard-list">
+              ${ydRules.map((r) => `
+                <div class="hr-yard-row">
+                  <span class="y-name">${escapeHtml(r.label)}</span>
+                  <span class="y-roi">${r.roi_pct}%</span>
+                  <span class="y-note">${r.bets}回・的中 ${r.hit_rate_pct}%</span>
+                </div>`).join("")}
+            </div>
+            <div class="hr-yard-note ${loseToYd > rows.length / 2 ? "is-bad" : ""}">
+              考えずに買うだけで <b>${ydBest.roi_pct}%</b> です。
+              ${loseToYd
+                ? `いまの ${rows.length} 個の買い方のうち <b>${loseToYd} 個がこれに負けています</b>。`
+                : `いまの買い方はすべてこれを上回っています。`}
+              <span class="hr-yard-why">⚠ これでも 100% には届きません（賭けたお金の 20% が自動で引かれるため）。
+              「ものさしに勝つ」ことと「もうかる」ことは別です。</span>
+            </div>
+          </div>` : ""}
         ${umamiRows.length ? `
           <div class="hr-umami">
             <div class="hr-umami-head">毎週しらべている「うまみ買い」${um.checked_at ? `<span class="hr-when">${escapeHtml(um.checked_at)} 時点</span>` : ""}</div>
