@@ -621,3 +621,25 @@ select:focus-visible, input:focus-visible {
 /* 「JRA 公式へ」ボタン 3.40:1 → 0.84倍に暗くして 4.62:1 */
 .rh-actions .btn-cta-go{
   background:linear-gradient(rgb(195,81,50),rgb(167,61,36)) !important; color:#fff !important; }
+
+/* ═══ 2026-08-12: 日曜の WIN5 画面（ふだん誰も見られない＝壊れていても気づけない） ═══
+   実機で初めて中を見たら 10px の文字が40個・読めない馬番が2個あった。 */
+.win5-honest{
+  margin:10px 0;padding:11px 13px;border-radius:12px;
+  background:rgba(176,60,44,.07);border:1.5px solid rgba(176,60,44,.3);
+  font-size:13px;line-height:1.7;color:#8A3323;
+}
+.win5-honest b{color:#A8391F;font-weight:800}
+/* 12px未満が40個あった。実機で class を数えて特定した5種類（9〜11px）。 */
+.win5-strategy .sub,.win5-strategy .pts,.win5-strategy .cost,
+.win5-strategies .sub,.wsc-meta,.wsc-sub,.win5-card .sub,
+.wsc-leg,.wsc-prob-label,.wsc-conf-label,.wsc-sub-label,
+.win5-card .surface-pill,#win5-mount .surface-pill{ font-size:12px !important; }
+/* 読めない馬番（WIN5のミニ勝負服）— 手動入力と同じ直し方でそろえる */
+.wsc-mini-silk.silk-1{ color:#1F2937 !important; text-shadow:none !important; }
+.wsc-mini-silk.silk-5{ color:#111827 !important; text-shadow:none !important; }
+.wsc-mini-silk.silk-3{ background:linear-gradient(135deg,rgb(210,60,60),rgb(163,25,25)) !important; color:#fff !important; }
+.wsc-mini-silk.silk-4{ background:linear-gradient(135deg,rgb(52,114,216),rgb(26,69,190)) !important; color:#fff !important; }
+.wsc-mini-silk.silk-6{ background:linear-gradient(135deg,rgb(23,134,64),rgb(14,87,41)) !important; color:#fff !important; text-shadow:none !important; }
+.wsc-mini-silk.silk-7{ background:linear-gradient(135deg,rgb(189,87,17),rgb(147,49,9)) !important; color:#fff !important; text-shadow:none !important; }
+.wsc-mini-silk.silk-8{ background:linear-gradient(135deg,rgb(203,62,132),rgb(163,21,80)) !important; color:#fff !important; text-shadow:none !important; }
