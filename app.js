@@ -1862,9 +1862,19 @@
     `}));
 
     // 戦略の信頼性ティア (休む日でも見せる)
+    // 2026-08-12: ものさし（何も考えず1番人気の複勝を買う）に負けている買い方は出さない。
     const stats = state.recommendations?.stats || {};
-    const defs = state.recommendations?.strategies_def || DEFAULT_STRAT_DEFS;
+    const _fd0 = filterStratDefs(state.recommendations?.strategies_def || DEFAULT_STRAT_DEFS);
+    const defs = _fd0.shown;
     const grid = el("div", { class: "strat-trust-grid" });
+    if (_fd0.hidden > 0) {
+      grid.appendChild(el("div", { class: "strat-hidden-note" },
+        `${_fd0.hidden} 個の買い方を出していません。「何も考えず1番人気の複勝を買う（${_fd0.yard}%）」に負けているか、賭けた回数が ${MIN_BETS_TO_SHOW} 回に満たず まだ分からないためです。くわしい成績は上の「本当の成績」に出ています。`));
+    }
+    if (!defs.length) {
+      grid.appendChild(el("div", { class: "strat-hidden-none" },
+        "いま おすすめできる買い方は ありません。見送りが正解です。"));
+    }
     defs.slice(0, 4).forEach((d) => {
       const s = stats[d.key];
       if (!s) return;
@@ -1997,9 +2007,19 @@
     body.appendChild(nextCard);
 
     // ③ 4 戦略の信頼性ティア (Walk-forward 検証 ROI)
+    // 2026-08-12: ものさしに負けている買い方は出さない（上と同じ決まり）。
     const stats = state.recommendations?.stats || {};
-    const defs = state.recommendations?.strategies_def || DEFAULT_STRAT_DEFS;
+    const _fd1 = filterStratDefs(state.recommendations?.strategies_def || DEFAULT_STRAT_DEFS);
+    const defs = _fd1.shown;
     const grid = el("div", { class: "strat-trust-grid" });
+    if (_fd1.hidden > 0) {
+      grid.appendChild(el("div", { class: "strat-hidden-note" },
+        `${_fd1.hidden} 個の買い方を出していません。「何も考えず1番人気の複勝を買う（${_fd1.yard}%）」に負けているか、賭けた回数が ${MIN_BETS_TO_SHOW} 回に満たず まだ分からないためです。`));
+    }
+    if (!defs.length) {
+      grid.appendChild(el("div", { class: "strat-hidden-none" },
+        "いま おすすめできる買い方は ありません。見送りが正解です。"));
+    }
     defs.slice(0, 4).forEach((d) => {
       const s = stats[d.key];
       if (!s) return;
@@ -4089,6 +4109,40 @@
     root.innerHTML = html;
   }
 
+  // ─── 2026-08-12: ものさし（1番人気の複勝ベタ買い）に勝てない買い方は画面に出さない ───
+  //   実測すると 14個の買い方のうち 12個が「何も考えず買う」に負けていた。
+  //   負けている買い方を「おすすめ」として並べるのは、いちばんタチの悪い嘘なので出すのをやめる。
+  //   🚫 どれを消すかを名前で決め打ちしない（データが変われば勝ち負けも変わる）。
+  //      必ず /api/live-stats の実成績と ものさし を比べて、その場で決める。
+  function yardstickRoiPct() {
+    const y = state.liveStats && state.liveStats.ok
+      && state.liveStats.live && state.liveStats.live.yardstick;
+    const rules = (y && y.rules) ? Object.values(y.rules) : [];
+    if (!rules.length) return null;
+    return rules.reduce((m, r) => Math.max(m, Number(r.roi_pct) || 0), 0) || null;
+  }
+  // 「回数が少ないものは判断しない」の下限。
+  //   このアプリが既に「うまみ買い」で使っている基準と同じ 150 回にそろえる。
+  //   ⚠ ここで新しい数字を勝手に作らない（基準が2つあると、都合のよい方を使ってしまう）。
+  //   実例: value_uren_short_ultra は 87.5% だが **8回しか賭けていない** ＝ 運の範囲。
+  const MIN_BETS_TO_SHOW = 150;
+  /** その買い方は ものさしに勝っているか。実成績が無い／回数が少ない＝判断できないので出さない。 */
+  function beatsYardstick(key) {
+    const yd = yardstickRoiPct();
+    if (yd == null) return true;                       // ものさしが無い間は今までどおり出す
+    const lv = liveRoiFor(key);
+    if (!lv || lv.roi == null) return false;           // 実績が無いものは出さない
+    if ((lv.bets || 0) < MIN_BETS_TO_SHOW) return false; // 回数が少なすぎるものは出さない
+    return lv.roi >= yd;
+  }
+  /** 画面に出してよい買い方だけに絞る。何個外したかも返す（黙って消さない）。 */
+  function filterStratDefs(defs) {
+    const yd = yardstickRoiPct();
+    if (yd == null || !Array.isArray(defs)) return { shown: defs || [], hidden: 0, yard: null };
+    const shown = defs.filter((d) => beatsYardstick(d.key));
+    return { shown, hidden: defs.length - shown.length, yard: yd };
+  }
+
   // 本当の成績を独立したブロックとして必ず描く (推奨が 0 件の日でも見える)
   function renderHonestRecord() {
     const root = $("#honest-record-mount");
@@ -4109,11 +4163,24 @@
     if (!r || !r.ok) { root.hidden = true; return; }
     const stratDefs = r.strategies_def || [];
     const stats = r.stats || {};
-    const todayList = r.recommendations_today || [];
-    const recentList = (r.recommendations_recent || []).filter(
-      (x) => x.race_date !== r.todayJst,
-    ).slice(0, 8);
-    const fallbackList = (r.recommendations_fallback || []).slice(0, 12);
+    // 2026-08-12: 「ものさし（何も考えず1番人気の複勝を買う）」に負けている買い方"だけ"で
+    //   推されているレースは、おすすめとして出さない。負けている買い方を勧めるのが一番の嘘なので。
+    //   ⚠ 消した件数は必ず画面に出す（黙って減らさない）。
+    const _okStrat = (x) => {
+      const ks = Array.isArray(x && x.strategies) ? x.strategies : (x && x.strategy ? [x.strategy] : []);
+      if (!ks.length) return true;               // どの買い方か分からないものは触らない
+      return ks.some((k) => beatsYardstick(k));
+    };
+    const _rawToday = r.recommendations_today || [];
+    const _rawRecent = (r.recommendations_recent || []).filter((x) => x.race_date !== r.todayJst);
+    const _rawFallback = r.recommendations_fallback || [];
+    const todayList = _rawToday.filter(_okStrat);
+    const recentList = _rawRecent.filter(_okStrat).slice(0, 8);
+    const fallbackList = _rawFallback.filter(_okStrat).slice(0, 12);
+    const _droppedCount = (_rawToday.length - todayList.length)
+      + (_rawRecent.length - _rawRecent.filter(_okStrat).length)
+      + (_rawFallback.length - _rawFallback.filter(_okStrat).length);
+    const _yardPct = yardstickRoiPct();
     root.hidden = false;
 
     const fmtHorse = (h) => {
@@ -4279,6 +4346,10 @@
         過去 ${stats.best?.test_races || 0} レースの <b>検証 (過去のデータに当てはめた計算)</b> で 100% を超えた買い方です。
         <b>検証の数字と、実際に買ったときの成績は別物</b>です。上の「本当の成績」を必ず見てください。
       </p>
+      ${_droppedCount > 0 ? `<p class="rec-dropped">
+        ⚠ <b>${_droppedCount} 件</b>のおすすめを外しました。
+        「何も考えず1番人気の複勝を買う（${_yardPct}%）」に負けている買い方でしか推されていないためです。
+      </p>` : ""}
       ${todayList.length > 0 ? `
         <div class="rec-section">
           <div class="rec-section-head">今日 (${r.todayJst}) の推奨 ${todayList.length} 件</div>

@@ -533,3 +533,15 @@ select:focus-visible, input:focus-visible {
 .hr-yard-note.is-bad{color:#8A3323}
 .hr-yard-note.is-bad b{color:#A8391F}
 .hr-yard-why{display:block;margin-top:4px;font-size:12.5px;color:var(--c-ink-mute,#77604A)}
+/* 2026-08-12: ものさしに負ける買い方を外したことを黙って隠さない */
+.strat-hidden-note,.rec-dropped{
+  grid-column:1/-1;margin:0 0 8px;padding:8px 11px;border-radius:10px;
+  background:rgba(176,60,44,.07);border:1px solid rgba(176,60,44,.24);
+  font-size:13px;line-height:1.6;color:#8A3323;
+}
+.rec-dropped b{color:#A8391F}
+.strat-hidden-none{
+  grid-column:1/-1;padding:12px;border-radius:10px;text-align:center;
+  background:rgba(255,255,255,.6);border:1px dashed rgba(138,97,18,.3);
+  font-size:14px;font-weight:700;color:var(--c-ink,#463527);
+}
