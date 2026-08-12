@@ -139,6 +139,8 @@ async function serve(req, res) {
         const OH = require("./lib/odds_history");
         const wm = u.query.windowMin;
         const d = OH.readOddsHistory(String(raceId), wm != null ? { windowMin: Number(wm) } : undefined);
+        // 2026-08-12: 出来上がりのグラフも返す（⚠ api/[...slug].js 側にも同じ処理が要る）
+        try { if (d && d.ok) d.svg = OH.buildOddsChartSvg(d, { width: 360 }); } catch (e) { d.svgError = e.message; }
         return jsonRes(res, 200, d);
       } catch (e) {
         return jsonRes(res, 500, { ok: false, error: e.message });

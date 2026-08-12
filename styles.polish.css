@@ -610,3 +610,14 @@ select:focus-visible, input:focus-visible {
 .ah-silk-btn.silk-4,.wsc-mini-silk.silk-4{
   background:linear-gradient(135deg,rgb(52,114,216),rgb(26,69,190)) !important;
   color:#fff !important; }
+
+/* ═══ 2026-08-12: レース詳細（馬柱・オッズ推移）の枠番と JRA ボタン ═══════
+   実機で初めて中を見たら 4.5:1 に届かない所が3つあった。
+   ⚠ JRAの本来の配色（1白黒字/2黒白字/3赤白字/4青白字/5黄黒字/6緑白字/7橙黒字/8桃黒字）を守る。
+     白字が正しい枠(3赤・6緑)は**色を少し暗く**、黒字が正しい枠(7橙)は**文字を黒に**。 */
+.rh-f3{ background:#CD4242 !important; }              /* 4.38:1 → 4.72:1 */
+.rh-f6{ background:#2F764A !important; }              /* 3.34:1 → 4.6:1  */
+.rh-f7{ color:#1A1A1A !important; border-color:#C67430 !important; }  /* 2.61:1 → 6.66:1（7枠は本来 黒字）*/
+/* 「JRA 公式へ」ボタン 3.40:1 → 0.84倍に暗くして 4.62:1 */
+.rh-actions .btn-cta-go{
+  background:linear-gradient(rgb(195,81,50),rgb(167,61,36)) !important; color:#fff !important; }

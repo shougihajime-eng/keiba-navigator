@@ -147,6 +147,13 @@ module.exports = async (req, res) => {
         const OH = require("../lib/odds_history");
         const wm = firstQuery(req.query && req.query.windowMin);
         const d = OH.readOddsHistory(String(raceId), wm != null ? { windowMin: Number(wm) } : undefined);
+        // 🚨 2026-08-12: ここで「出来上がりのグラフ」も一緒に返す。
+        //   API とハブ(lib/race_hub.js)が別々に作られていて **一度も繋がっていなかった**。
+        //   ハブは配列 hist / hist.history を待っていたが、API はそれを返さないので
+        //   実機では ずっと「オッズの動きの記録はまだありません」と出ていた（データはあるのに）。
+        //   グラフを描く関数は lib/odds_history.js に既にある（線24本の実物が出る）ので、
+        //   画面側で描き直さず これを渡す＝作りを2つ持たない。
+        try { if (d && d.ok) d.svg = OH.buildOddsChartSvg(d, { width: 360 }); } catch (e) { d.svgError = e.message; }
         return ok(res, d);
       } catch (e) {
         return bad(res, 500, { ok: false, error: e.message });

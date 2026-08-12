@@ -307,3 +307,7 @@
   .rh-tab, .rh-btn { transition: none; }
   .rh-spinner { animation: none; }
 }
+
+/* 2026-08-12: オッズの動きのグラフ（サーバーが作ったSVGをそのまま置く） */
+.rh-chart{ margin:6px 0 4px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.rh-chart svg{ display:block; max-width:100%; height:auto; }
