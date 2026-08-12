@@ -10,7 +10,7 @@
 //   - 静的アセットのみ "cache-first → network fallback"
 //   - キャッシュキーをバージョン管理 (古いキャッシュは activate で破棄)
 
-const CACHE_VERSION = "keiba-nav-v85"; // 馬柱(過去5走)を追加 + 馬連の較正を適用 (8/12)
+const CACHE_VERSION = "keiba-nav-v86"; // 1レース=ハブ+タブ / オッズ推移 / api/race の id 無視バグ修正 (8/12)
 const PRECACHE = [
   "/manifest.json",
   "/icon.svg",
@@ -35,6 +35,8 @@ const NETWORK_FIRST_PATHS = [
   //   見やすさを直しても古い見た目が残る (本人がいちばん嫌う事故)。
   //   ⚠ startsWith 判定なので "/styles.css" では polish 版に当たらない。必ず別に書く。
   "/styles.polish.css",
+  // 2026-08-12 追加: ハブのCSS。startsWith 判定なので "/styles.css" では当たらない。必ず別に書く。
+  "/styles.hub.css",
   "/predictors/", "/lib/",
 ];
 

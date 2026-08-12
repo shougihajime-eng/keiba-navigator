@@ -1,0 +1,309 @@
+/* =====================================================================
+   KEIBA NAVIGATOR — styles.hub.css
+   「1レース＝ハブ＋タブ」画面 (lib/race_hub.js) 専用の見た目。
+   テーマ: 朝焼けの和紙 × 若葉 × 柿 (Fable5 共通デザインシステム準拠)
+
+   約束:
+     ・position: sticky を使わない (スクロールで画面が揺れるため・全体ルール)
+     ・dvh を使わない (iPhone のアドレスバーで高さが変わるため)
+     ・押す所は 44px 以上 / 文字は 12px 以上 / 横にはみ出さない
+     ・クラスは全部 rh- 始まり (既存 CSS と衝突しない)
+   ===================================================================== */
+
+.rh-hub {
+  /* アプリ本体の色があればそれを使い、単体でも同じ色で立つ (予備値つき) */
+  --rh-ink:       var(--c-ink, #463527);
+  --rh-ink-soft:  var(--c-ink-soft, #5F4A38);
+  --rh-ink-mute:  var(--c-ink-mute, #947B62);
+  --rh-card:      var(--c-bg-card, #FFFDF6);
+  --rh-panel:     var(--c-bg-panel, #FDF4E6);
+  --rh-washi:     var(--washi, #FBEDDC);
+  --rh-washi-d:   var(--washi-deep, #F5DEC2);
+  --rh-ruri:      var(--ruri, #3D5A96);
+  --rh-kaki:      var(--kaki, #E8603C);
+  --rh-kaki-d:    var(--kaki-d, #C7492B);
+  --rh-wakaba:    var(--wakaba, #43965F);
+  --rh-wakaba-d:  var(--wakaba-d, #2F7A4C);
+  --rh-gold:      var(--gold, #A8771D);
+  --rh-gold-b:    var(--gold-bright, #8F5F10);
+  --rh-line:      var(--gold-line, rgba(156, 110, 46, 0.38));
+  --rh-line-soft: var(--gold-line-soft, rgba(156, 110, 46, 0.20));
+  --rh-gold-soft: var(--gold-soft, rgba(221, 156, 43, 0.14));
+
+  max-width: 100%;
+  color: var(--rh-ink);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.rh-hub *, .rh-hub *::before, .rh-hub *::after { box-sizing: border-box; }
+
+/* ─── 上のメタ帯 (コース・馬場・天気・頭数・発走) ─────────────── */
+.rh-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.rh-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; color: var(--rh-ink-soft);
+  background: var(--rh-gold-soft); border: 1px solid var(--rh-line-soft);
+}
+.rh-pill-shiba { background: rgba(67, 150, 95, 0.14); color: var(--rh-wakaba-d); border-color: rgba(67, 150, 95, 0.32); }
+.rh-pill-dirt  { background: rgba(150, 106, 62, 0.14); color: #7A5230; border-color: rgba(150, 106, 62, 0.32); }
+.rh-pill-shou  { background: rgba(61, 90, 150, 0.12); color: var(--rh-ruri); border-color: rgba(61, 90, 150, 0.30); }
+.rh-pill-g1    { background: var(--rh-kaki); color: #fff; border-color: var(--rh-kaki-d); }
+.rh-pill-time  { background: var(--rh-card); }
+.rh-pill-conf  { background: rgba(67, 150, 95, 0.14); color: var(--rh-wakaba-d); border-color: rgba(67, 150, 95, 0.32); flex: none; }
+
+/* ─── タブ (馬券売場の窓口札ふう: 開いている札だけ下のカードとつながる) ── */
+.rh-tabs {
+  display: flex; gap: 4px;
+  padding: 6px 6px 0;
+  background: var(--rh-washi-d);
+  border: 1.5px solid var(--rh-line-soft);
+  border-bottom: none;
+  border-radius: 14px 14px 0 0;
+}
+.rh-tab {
+  flex: 1 1 0; min-width: 0; min-height: 54px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  padding: 6px 2px 8px;
+  border: 1.5px solid transparent; border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: var(--rh-ink-soft);   /* 薄すぎると読めないので本文色 */
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s ease, color .15s ease;
+}
+.rh-tab-ico { font-size: 16px; line-height: 1.2; }
+.rh-tab-label { font-size: 12px; letter-spacing: .02em; white-space: nowrap; }
+.rh-tab:hover { background: var(--rh-gold-soft); color: var(--rh-ink-soft); }
+.rh-tab:focus-visible { outline: 2px solid var(--rh-ruri); outline-offset: -2px; }
+.rh-tab-on {
+  background: var(--rh-card);
+  border-color: var(--rh-line-soft);
+  color: var(--rh-kaki-d);
+  margin-bottom: -1.5px;          /* 下のカードの線に重ねて「つながる」 */
+  padding-bottom: 9.5px;
+  box-shadow: 0 -3px 10px rgba(150, 90, 40, 0.08);
+}
+.rh-tab-on .rh-tab-ico { transform: translateY(-1px); }
+
+/* ─── タブの中身 (カード面) ──────────────────────────────── */
+.rh-panel {
+  background: var(--rh-card);
+  border: 1.5px solid var(--rh-line-soft);
+  border-top: 1.5px solid var(--rh-line-soft);
+  border-radius: 0 0 14px 14px;
+  padding: 14px 12px 16px;
+  max-width: 100%;
+  overflow: hidden;               /* 中の表は .rh-scroll の中だけで横スクロール */
+}
+.rh-panel[hidden] { display: none; }
+
+/* ─── ① 予想 ──────────────────────────────────────── */
+.rh-deadline {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 10px 12px; margin: 0 0 12px;
+  background: var(--rh-panel);
+  border: 1px solid var(--rh-line-soft); border-radius: 10px;
+  font-size: 13px; color: var(--rh-ink-soft);
+}
+.rh-deadline b { font-size: 16px; color: var(--rh-ink); }
+.rh-deadline-clock { font-size: 16px; }
+.rh-deadline-sub { font-size: 12px; color: var(--rh-ink-mute); }
+.rh-deadline-none { color: var(--rh-ink-mute); }
+
+.rh-verdict {
+  padding: 12px 14px; margin: 0 0 12px;
+  background: linear-gradient(135deg, rgba(67, 150, 95, 0.10), rgba(221, 156, 43, 0.08));
+  border: 1.5px solid rgba(67, 150, 95, 0.30);
+  border-radius: 12px;
+}
+.rh-verdict-pass {
+  background: rgba(70, 53, 39, 0.05);
+  border-color: var(--rh-line-soft);
+}
+.rh-verdict-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.rh-verdict-title { font-size: 17px; font-weight: 800; color: var(--rh-ink); }
+.rh-verdict-reason { margin: 6px 0 0; font-size: 12.5px; color: var(--rh-ink-soft); }
+
+.rh-warn {
+  margin: 0 0 12px; padding: 8px 12px;
+  background: rgba(199, 73, 43, 0.08); border: 1px solid rgba(199, 73, 43, 0.30);
+  border-radius: 10px; font-size: 12.5px; font-weight: 700; color: var(--rh-kaki-d);
+}
+
+.rh-cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 860px) { .rh-cards { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+.rh-card {
+  background: var(--rh-panel);
+  border: 1px solid var(--rh-line-soft);
+  border-radius: 12px;
+  padding: 12px;
+  min-width: 0;
+}
+.rh-card + .rh-card { margin-top: 0; }
+.rh-panel > .rh-card + .rh-card { margin-top: 12px; }
+.rh-card-title {
+  margin: 0 0 10px; font-size: 13px; font-weight: 800; color: var(--rh-gold-b);
+  letter-spacing: .04em;
+}
+
+/* 印 (◎○▲) */
+.rh-picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rh-pick {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr auto;
+  grid-template-areas:
+    "mark mlabel chip name nums"
+    "bar  bar    bar  bar  bar"
+    "note note   note note note";
+  align-items: center; column-gap: 8px; row-gap: 4px;
+  background: var(--rh-card);
+  border: 1px solid var(--rh-line-soft); border-radius: 10px;
+  padding: 8px 10px;
+}
+.rh-mark { grid-area: mark; font-size: 20px; font-weight: 800; line-height: 1; }
+.rh-pick-honmei .rh-mark { color: var(--rh-kaki-d); }
+.rh-pick-taikou .rh-mark { color: var(--rh-ruri); }
+.rh-pick-tanana .rh-mark { color: var(--rh-gold-b); }
+.rh-mark-label { grid-area: mlabel; font-size: 12px; font-weight: 800; color: var(--rh-ink-mute); }
+.rh-pick .rh-num { grid-area: chip; }
+.rh-pick-name { grid-area: name; min-width: 0; display: flex; flex-direction: column; }
+/* 馬名は切らずに折り返す (「レインボーステ…」のような途切れを出さない) */
+.rh-pick-name b { font-size: 15px; color: var(--rh-ink); line-height: 1.3; word-break: break-all; }
+.rh-pick-name small { font-size: 12px; color: var(--rh-ink-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rh-pick-nums { grid-area: nums; text-align: right; display: flex; flex-direction: column; line-height: 1.3; }
+.rh-prob { font-size: 17px; font-weight: 800; color: var(--rh-wakaba-d); }
+.rh-pick-nums small { font-size: 12px; color: var(--rh-ink-mute); }
+.rh-odds-s { font-weight: 700; color: var(--rh-ink-soft); }
+.rh-bar { grid-area: bar; height: 7px; border-radius: 999px; background: var(--rh-gold-soft); overflow: hidden; }
+.rh-bar-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--rh-wakaba), var(--rh-wakaba-d)); }
+.rh-place-note { grid-area: note; font-size: 12px; color: var(--rh-ink-mute); }
+
+/* 買い目 */
+.rh-bets { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rh-bet {
+  display: grid; grid-template-columns: auto 1fr; grid-template-areas: "type body" "type note";
+  column-gap: 10px; row-gap: 2px; align-items: center;
+  background: var(--rh-card);
+  border: 1px solid var(--rh-line-soft); border-radius: 10px;
+  padding: 8px 10px;
+}
+.rh-bet-type {
+  grid-area: type;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 56px; padding: 6px 8px;
+  background: var(--rh-ruri); color: #fff;
+  border-radius: 8px; font-size: 12px; font-weight: 800; letter-spacing: .06em;
+}
+.rh-bet-body { grid-area: body; font-size: 15px; font-weight: 800; color: var(--rh-ink); }
+.rh-bet-note { grid-area: note; font-size: 12px; color: var(--rh-ink-mute); }
+.rh-honest { margin: 10px 0 0; font-size: 12px; color: var(--rh-ink-mute); }
+
+/* ─── 表 (出馬表・馬柱・オッズ) ─────────────────────────── */
+.rh-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; border-radius: 10px; }
+.rh-tbl {
+  border-collapse: collapse; width: max-content; min-width: 100%;
+  font-size: 12px; white-space: nowrap;
+  background: var(--rh-card);
+}
+.rh-tbl th, .rh-tbl td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--rh-line-soft); }
+.rh-tbl th { background: var(--rh-washi-d); color: var(--rh-ink-soft); font-size: 12px; font-weight: 800; }
+.rh-tbl td { color: var(--rh-ink-soft); }
+.rh-tbl td b { color: var(--rh-ink); }
+.rh-tbl tbody tr:nth-child(even) td { background: rgba(70, 53, 39, 0.03); }
+.rh-left { text-align: left !important; }
+.rh-rank { font-weight: 800; }
+.rh-r1 { background: rgba(221, 156, 43, 0.22) !important; color: var(--rh-gold-b) !important; }
+.rh-r2 { background: rgba(70, 53, 39, 0.10) !important; }
+.rh-r3 { background: rgba(150, 106, 62, 0.14) !important; }
+.rh-note { margin: 8px 0 0; font-size: 12px; color: var(--rh-ink-mute); }
+
+/* 枠色つき馬番 (JRA の枠色: 1白 2黒 3赤 4青 5黄 6緑 7橙 8桃) */
+.rh-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 6px;
+  font-size: 12px; font-weight: 800; line-height: 1;
+  border: 1px solid rgba(70, 53, 39, 0.25);
+}
+.rh-f1 { background: #FFFFFF; color: #463527; }
+.rh-f2 { background: #4A4A4A; color: #FFFFFF; border-color: #333; }
+.rh-f3 { background: #D64545; color: #FFFFFF; border-color: #B93A3A; }
+.rh-f4 { background: #3D6BC7; color: #FFFFFF; border-color: #3358A5; }
+.rh-f5 { background: #E8CF4E; color: #4A3B12; border-color: #C9B23E; }
+.rh-f6 { background: #3F9E63; color: #FFFFFF; border-color: #348352; }
+.rh-f7 { background: #E58A3C; color: #FFFFFF; border-color: #C67430; }
+.rh-f8 { background: #EFA9BE; color: #5C2A3A; border-color: #D890A6; }
+
+/* ─── 馬柱 ─────────────────────────────────────────── */
+.rh-umb { margin: 0 0 14px; }
+.rh-umb:last-of-type { margin-bottom: 0; }
+.rh-umb-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 6px; }
+.rh-umb-name { font-size: 14px; color: var(--rh-ink); }
+.rh-umb-sex { font-size: 12px; color: var(--rh-ink-mute); }
+.rh-umb-rec {
+  font-size: 12px; font-weight: 700; color: var(--rh-ink-soft);
+  background: var(--rh-gold-soft); border-radius: 6px; padding: 2px 7px;
+}
+.rh-umb-none {
+  padding: 10px 12px; font-size: 12.5px; color: var(--rh-ink-mute);
+  background: var(--rh-panel); border: 1px dashed var(--rh-line-soft); border-radius: 8px;
+}
+
+/* オッズの動き */
+.rh-move { font-size: 12px; }
+.rh-move-down { color: var(--rh-kaki-d); font-weight: 800; }
+.rh-move-up { color: var(--rh-ruri); font-weight: 700; }
+
+/* ─── ⑤ 根拠 ─────────────────────────────────────── */
+.rh-reasons { margin: 0; padding: 0 0 0 1.3em; display: grid; gap: 8px; }
+.rh-reasons li { font-size: 13px; color: var(--rh-ink-soft); }
+.rh-facts { margin: 0; display: grid; gap: 8px; }
+.rh-fact { display: grid; grid-template-columns: 9em 1fr; gap: 8px; align-items: baseline; }
+.rh-fact dt { font-size: 12px; font-weight: 800; color: var(--rh-ink-mute); }
+.rh-fact dd { margin: 0; font-size: 13px; color: var(--rh-ink-soft); }
+@media (max-width: 480px) { .rh-fact { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ─── 空のとき・読み込み中・ボタン ────────────────────── */
+.rh-empty {
+  text-align: center;
+  padding: 26px 14px;
+  border: 1.5px dashed var(--rh-line-soft);
+  border-radius: 12px;
+  background: var(--rh-panel);
+}
+.rh-empty-ico { font-size: 26px; line-height: 1; margin-bottom: 8px; color: var(--rh-ink-mute); }
+.rh-empty-title { font-size: 14px; font-weight: 800; color: var(--rh-ink-soft); }
+.rh-empty-note { margin-top: 4px; font-size: 12.5px; color: var(--rh-ink-mute); }
+.rh-card .rh-empty { border: none; background: transparent; padding: 14px 6px; }
+
+.rh-loading {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 30px 10px; font-size: 13px; color: var(--rh-ink-mute);
+}
+.rh-spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 3px solid var(--rh-gold-soft); border-top-color: var(--rh-kaki);
+  animation: rh-spin 0.9s linear infinite;
+}
+@keyframes rh-spin { to { transform: rotate(360deg); } }
+
+.rh-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; margin-top: 12px; padding: 10px 20px;
+  background: var(--rh-kaki); color: #fff;
+  border: none; border-radius: 10px;
+  font-family: inherit; font-size: 14px; font-weight: 800;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-btn:hover { background: var(--rh-kaki-d); }
+.rh-btn:focus-visible { outline: 2px solid var(--rh-ruri); outline-offset: 2px; }
+
+/* 動きを控えたい人には動かさない */
+@media (prefers-reduced-motion: reduce) {
+  .rh-tab, .rh-btn { transition: none; }
+  .rh-spinner { animation: none; }
+}

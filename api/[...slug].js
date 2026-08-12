@@ -109,6 +109,22 @@ module.exports = async (req, res) => {
       if (!r) return ok(res, { ok: false, reason: "no_rankings" });
       return ok(res, r);
     }
+    if (path === "/odds-history") {
+      // 2026-08-12 新設: オッズ推移（発走までの単勝オッズの動き）。
+      //   ⚠「直前5分の変化率」は 1時間おき収集の期間は 0件（起点が古すぎる）。
+      //     2分おきの KeibaNearPostOdds が回り始めた週末から出る。理由は画面に出す。
+      try {
+        const raceId = firstQuery(req.query && req.query.raceId)
+          || (new URL(req.url, "http://localhost").searchParams.get("raceId"));
+        if (!raceId) return bad(res, 400, { ok: false, reason: "raceId が要ります" });
+        const OH = require("../lib/odds_history");
+        const wm = firstQuery(req.query && req.query.windowMin);
+        const d = OH.readOddsHistory(String(raceId), wm != null ? { windowMin: Number(wm) } : undefined);
+        return ok(res, d);
+      } catch (e) {
+        return bad(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (path === "/umabashira") {
       // 2026-08-12 新設: 馬柱（各馬の過去5走）。netkeiba等の中核なのにこのアプリに無かった。
       //   ?raceId=<18桁> で、そのレースの出走各馬の過去5走を返す。

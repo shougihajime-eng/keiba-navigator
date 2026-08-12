@@ -3065,8 +3065,39 @@
     //   まず「入れる場所」を作る。中身は下で非同期に読み込む（モーダルの表示を待たせない）。
     html += `<div id="md-umabashira" style="margin-top:16px"></div>`;
 
-    body.innerHTML = html;
-    renderUmabashira(raceId);   // 非同期・失敗しても本体は壊さない
+    // ★2026-08-12: 1レース＝ハブ＋タブ（netkeibaの基本骨格）に切り替える。
+    //   縦に全部つながる巻物だと、情報が増えるほど読めなくなるため。
+    //   ⚠ハブが読み込めていない時は、これまでの縦並びのまま出す（画面が真っ白にならないように）。
+    const useHub = !!(window.kbRaceHub && typeof window.kbRaceHub.renderRaceHub === "function");
+    if (useHub) {
+      body.innerHTML = "";
+      const hubBox = el("div", { class: "rh-mount" });
+      body.appendChild(hubBox);
+      try {
+        window.kbRaceHub.renderRaceHub(hubBox, {
+          raceId,
+          race: data.race,
+          conclusion: data.conclusion || c || null,
+          fetchUmabashira: () => api(`/api/umabashira?raceId=${encodeURIComponent(raceId)}`),
+          fetchOddsHistory: () => api(`/api/odds-history?raceId=${encodeURIComponent(raceId)}`),
+          escapeHtml, scrubName,
+        });
+      } catch (e) {
+        // ハブが落ちたら、これまでの表示に戻す（黙って空にしない）
+        body.innerHTML = html;
+        renderUmabashira(raceId);
+      }
+      // 記録ボタン等は残す（ハブは「見る」担当・「記録する」はアプリ側の機能）
+      const acts = el("div", { class: "rh-actions",
+        style: "margin-top:14px;display:flex;gap:8px;flex-wrap:wrap" });
+      acts.innerHTML = `
+        <a class="btn-cta btn-cta-go" href="https://www.jra.go.jp/" target="_blank" rel="noopener" style="flex:1;text-decoration:none;text-align:center">JRA 公式へ ↗</a>
+        <button class="btn-cta btn-cta-mute" id="md-record-btn" style="flex:1">+ この内容で記録</button>`;
+      body.appendChild(acts);
+    } else {
+      body.innerHTML = html;
+      renderUmabashira(raceId);   // 非同期・失敗しても本体は壊さない
+    }
 
     const recBtn = document.getElementById("md-record-btn");
     if (recBtn) {

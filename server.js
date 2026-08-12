@@ -108,6 +108,19 @@ async function serve(req, res) {
         return jsonRes(res, 500, { ok: false, error: e.message });
       }
     }
+    if (p === "/api/odds-history") {
+      // 2026-08-12: オッズ推移。⚠ api/[...slug].js 側にも同じ処理が要る
+      try {
+        const raceId = u.query && u.query.raceId;
+        if (!raceId) return jsonRes(res, 400, { ok: false, reason: "raceId が要ります" });
+        const OH = require("./lib/odds_history");
+        const wm = u.query.windowMin;
+        const d = OH.readOddsHistory(String(raceId), wm != null ? { windowMin: Number(wm) } : undefined);
+        return jsonRes(res, 200, d);
+      } catch (e) {
+        return jsonRes(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (p === "/api/umabashira") {
       // 2026-08-12: 馬柱（各馬の過去5走）。⚠ api/[...slug].js 側にも同じ処理が要る
       try {
@@ -195,12 +208,30 @@ async function serve(req, res) {
       return jsonRes(res, data.ok ? 200 : 502, data);
     }
     if (p === "/api/race") {
-      const race = readLatestRace();
+      // 🚨 2026-08-12 修正: ここは ?id= を完全に無視して「最新の1レース」を返していた。
+      //   ＝レース詳細でどのレースを開いても同じレースが出る（本番の api/[...slug].js は id を見ている）。
+      //   さらに conclusion を付けていなかったので、画面は本命を出せなかった。
+      const wantId = (u.query && u.query.id) ? String(u.query.id) : null;
+      let race = null;
+      if (wantId) {
+        try {
+          const pth = require("path").join(__dirname, "data", "jv_cache", "races", wantId + ".json");
+          if (require("fs").existsSync(pth)) race = JSON.parse(require("fs").readFileSync(pth, "utf8"));
+        } catch (e) { race = null; }
+        if (!race) {
+          // 黙って別のレースを返さない（それが今までの不具合）
+          return jsonRes(res, 404, { ok: false, reason: `レース ${wantId} のデータがありません` });
+        }
+      } else {
+        race = readLatestRace();
+      }
       if (!race) return jsonRes(res, 503, {
         ok: false, status: "unavailable",
         reason: "出走馬データはまだ取得していません。JRA-VAN（有料）の接続設定が完了すると、ここに表示されます。",
       });
-      return jsonRes(res, 200, { ok: true, race });
+      let conclusion = null;
+      try { conclusion = buildConclusion(race); } catch (e) { conclusion = null; }
+      return jsonRes(res, 200, { ok: true, race, conclusion });
     }
     if (p === "/api/conclusion") {
       return jsonRes(res, 200, buildConclusion(readLatestRace()));
