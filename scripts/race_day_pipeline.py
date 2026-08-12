@@ -320,6 +320,19 @@ def run_validate_lightgbm() -> int:
 
 
 # ─── ステップ 4.8: precompute_predictions.js (全レース予想を事前計算) ─────
+def run_chokyo() -> int:
+    """調教（追い切り）の索引を作り直す。data/jv_cache/chokyo/index.json。
+    ⚠乗り役・併せ馬・脚色・外厩は JRA-VAN に項目が無い（netkeibaのあれは独自取材）。
+      無いものは null で返す（作らない）。
+    """
+    log_line("[step4.86] build_chokyo.py (調教＝追い切り)")
+    py = python_exe_64() or python_exe()
+    return run_subprocess(
+        [py, str(JV_BRIDGE / "build_chokyo.py")],
+        "build_chokyo", timeout=600,
+    )
+
+
 def run_umabashira() -> int:
     """馬柱（各馬の過去5走）の索引を作り直す。
     data/jv_cache/umabashira.json → /api/umabashira がレース詳細で読む。
@@ -489,6 +502,8 @@ def main():
                     help="aggregate_features.py をスキップ")
     ap.add_argument("--skip-umabashira", action="store_true",
                     help="馬柱(各馬の過去5走)の索引づくりをスキップ")
+    ap.add_argument("--skip-chokyo", action="store_true",
+                    help="調教(追い切り)の索引づくりをスキップ")
     ap.add_argument("--run-legacy-features", action="store_true",
                     help="古い aggregate_features.py(v1) も走らせる。既定は走らせない "
                          "(v1 は未来の結果が混ざる版で、v2 が後継。2026-08-11 に既定オフ化)")
@@ -600,6 +615,12 @@ def main():
         rc = run_umabashira()
         if rc == -2: timed_out = True
         if rc != 0: overall |= 0x200
+    # ★2026-08-12: 調教（追い切り）の索引。月2,090円払っているのに未使用だったデータ。
+    #   ⚠出馬表が出るのは木・金なので、週末レースの馬を索引に入れるには金曜以降の再生成が要る。
+    if not getattr(args, "skip_chokyo", False):
+        rc = run_chokyo()
+        if rc == -2: timed_out = True
+        if rc != 0: overall |= 0x400
     # ★2026-05-30: 実験室 (自己成長する実験モード) を更新
     #   リークなし再学習 (重い・数分) → 12 作戦を紙上ベット採点 → experiment_status.json
     #   これで「使うほど成長する」が自動で回る。Supabase 非依存 (git push のみ)。

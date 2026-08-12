@@ -109,6 +109,25 @@ module.exports = async (req, res) => {
       if (!r) return ok(res, { ok: false, reason: "no_rankings" });
       return ok(res, r);
     }
+    if (path === "/chokyo") {
+      // 2026-08-12 新設: 調教（追い切り）。JRA-VAN を月2,090円払って契約しているのに未使用だったデータ。
+      //   ⚠乗り役・併せ馬・脚色・外厩は JRA-VAN に項目が無い（netkeibaのあれは独自取材）。無いものは null。
+      try {
+        const raceId = firstQuery(req.query && req.query.raceId)
+          || (new URL(req.url, "http://localhost").searchParams.get("raceId"));
+        if (!raceId) return bad(res, 400, { ok: false, reason: "raceId が要ります" });
+        const C = require("../lib/chokyo.js");
+        const fsx = require("fs"), px = require("path");
+        const p = px.join(__dirname, "..", "data", "jv_cache", "chokyo", "index.json");
+        if (!fsx.existsSync(p)) return ok(res, { ok: false, reason: "no_chokyo" });
+        const idx = JSON.parse(fsx.readFileSync(p, "utf8"));
+        const rows = C.rowsForRaceId(idx, String(raceId));
+        if (!rows || !rows.length) return ok(res, { ok: false, reason: "not_in_index" });
+        return ok(res, { ok: true, raceId: String(raceId), rows, notAvailable: idx.notAvailable || null });
+      } catch (e) {
+        return bad(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (path === "/odds-history") {
       // 2026-08-12 新設: オッズ推移（発走までの単勝オッズの動き）。
       //   ⚠「直前5分の変化率」は 1時間おき収集の期間は 0件（起点が古すぎる）。

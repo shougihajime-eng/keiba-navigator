@@ -105,6 +105,14 @@ catboost_info/
 # ⚠ .vercelignore にも同じ行が必要 (片方だけだと本番に届かない)
 # ※ umabashira_full.json (全馬ぶん・30MB) は本番に要らないのでわざと通していない
 !data/jv_cache/umabashira.json
+# 2026-08-12: 調教（追い切り）の索引。lib/chokyo.js がこれを読む。
+# 作り方 = py -3.12-32 jv_bridge/build_chokyo.py
+# ⚠ .vercelignore にも同じ3行が必要 (片方だけだと本番に届かない)
+# ※ chokyo_full.json (全馬ぶん・53MB) と chokyo_raw/ (JV-Link の生データ) は
+#    わざと通していない。特に生データは JRA-VAN の規約上ぜったいに公開しない。
+!data/jv_cache/chokyo/
+data/jv_cache/chokyo/*
+!data/jv_cache/chokyo/index.json
 Usersshoug*_review_*
 _prod.tmp
 

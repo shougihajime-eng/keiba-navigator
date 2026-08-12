@@ -108,6 +108,22 @@ async function serve(req, res) {
         return jsonRes(res, 500, { ok: false, error: e.message });
       }
     }
+    if (p === "/api/chokyo") {
+      // 2026-08-12: 調教（追い切り）。⚠ api/[...slug].js 側にも同じ処理が要る
+      try {
+        const raceId = u.query && u.query.raceId;
+        if (!raceId) return jsonRes(res, 400, { ok: false, reason: "raceId が要ります" });
+        const C = require("./lib/chokyo.js");
+        const pth = require("path").join(__dirname, "data", "jv_cache", "chokyo", "index.json");
+        if (!require("fs").existsSync(pth)) return jsonRes(res, 200, { ok: false, reason: "no_chokyo" });
+        const idx = JSON.parse(require("fs").readFileSync(pth, "utf8"));
+        const rows = C.rowsForRaceId(idx, String(raceId));
+        if (!rows || !rows.length) return jsonRes(res, 200, { ok: false, reason: "not_in_index" });
+        return jsonRes(res, 200, { ok: true, raceId: String(raceId), rows, notAvailable: idx.notAvailable || null });
+      } catch (e) {
+        return jsonRes(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (p === "/api/odds-history") {
       // 2026-08-12: オッズ推移。⚠ api/[...slug].js 側にも同じ処理が要る
       try {

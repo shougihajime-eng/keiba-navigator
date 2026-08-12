@@ -30,6 +30,18 @@ WEATHER_LABELS = {"1": "晴", "2": "曇", "3": "雨", "4": "小雨", "5": "雪",
 SURFACE_SHORT = {"芝": "芝", "ダート": "ダ", "障害": "障"}
 
 
+
+# 2026-08-12: JV-Data のグレードコード → 人が読める名前。
+#   実データで確証ずみ（日本ダービー="A" / 目黒記念="B"）。
+#   分からないコードは None を返す（勝手に名前を作らない）。
+_GRADE_LABELS = {"A": "G1", "B": "G2", "C": "G3", "D": "重賞", "E": "特別", "L": "リステッド"}
+
+
+def _grade_label(code):
+    c = str(code or "").strip().upper()
+    return _GRADE_LABELS.get(c)
+
+
 def _build_race_id(ra: Dict[str, Any]) -> Optional[str]:
     """JRA 18 桁レース ID = 年(4) + 月日(4) + 場(2) + 回(2) + 日次(2) + R(2) + サフィックス"00"
     フロント (lib/race_id.js: JRA_18DIGIT) と完全一致させるため末尾 00 を付与する。"""
@@ -178,7 +190,15 @@ def merge(ra: Dict[str, Any], se_list: List[Dict[str, Any]], o1: Optional[Dict[s
         "hassou_time":   ra.get("hassou_time"),
         "going":         _going_from_ra(ra, surface),
         "weather":       WEATHER_LABELS.get(str(ra.get("weather") or "").strip()),
-        "is_g1":         (str(ra.get("grade_code") or "").strip() == "1"),
+        # 🚨 2026-08-12 修正: ここは grade_code を "1" と比べていた。
+        #   JV-Data のグレードコードは**アルファベット**なので、**4,380レース全部が false** だった
+        #   （有馬記念も日本ダービーもG1と判定されていなかった）。2人のエージェントが独立に発見。
+        #   実データで確証: 2026-05-31 東京11R 芝2400m 18頭（＝日本ダービー）の grade_code は "A"、
+        #   同12R 芝2500m（＝目黒記念 G2）は "B"。仕様書にも「L(リステッド)を追加」とある。
+        #   → A=G1 / B=G2 / C=G3 / L=リステッド / E=特別（重賞以外）/ 空=一般
+        "is_g1":         (str(ra.get("grade_code") or "").strip().upper() == "A"),
+        "grade_code":    (str(ra.get("grade_code") or "").strip().upper() or None),
+        "grade":         _grade_label(ra.get("grade_code")),
         "source":        "jv_link",
         "is_dummy":      False,
         "last_updated":  datetime.now(timezone.utc).isoformat(),
