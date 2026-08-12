@@ -4017,8 +4017,16 @@
         + `</div>`
       : "";
 
+    // ⚠ 2026-08-12 実測: JRA公式は「すべてのレース・すべての買い方」と書いているが、
+    //   うちの手元データ（JRA-VANの確定払戻）には 100円のままの当たりが見つかった。
+    //   さらに、仮に全部に+10円が付いたとしても回収率はほとんど動かない大きさだった。
+    //   → 「いつでも」とだけ書くと期待させすぎるので、確かめられなかったことも書く。
+    //   🚫 件数は書かない（データが増えると古くなる＝手書きの嘘になる）。
     const always = (pd.alwaysOn || []).map((a) =>
-      `<li><b>${escapeHtml(a.label)}</b> … ${escapeHtml(a.rule || "")}<span class="pd-always-note">（日付の指定なし・いつでも）</span></li>`
+      `<li><b>${escapeHtml(a.label)}</b> … ${escapeHtml(a.rule || "")}`
+      + `<span class="pd-always-note">（JRAは「すべてのレース・すべての買い方」と言っています）</span>`
+      + `<span class="pd-always-warn">⚠ ただし手元の記録には、これが付いていない当たりも見つかりました。`
+      + `付いたとしても金額が小さく、買い方を変える理由にはなりません。</span></li>`
     ).join("");
 
     return `<div class="premium-card ${pd.today ? "is-today" : ""}">`
