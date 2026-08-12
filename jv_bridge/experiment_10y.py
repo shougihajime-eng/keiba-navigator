@@ -166,34 +166,51 @@ def main() -> int:
         _log("[NG] 過去データが増えていません (history/ が空?)")
         return 1
 
-    feats_a = json.loads(FEAT_A.read_text(encoding="utf-8"))
-    feats_b = json.loads(FEAT_B.read_text(encoding="utf-8"))
-
     # テスト区間 = 「いままでの手元データ」の後ろ半分。A と B で完全に同じレース。
     cut = int(len(pairs_a) * (1.0 - args.test_fraction))
     test_all = pairs_a[cut:]
     block = max(1, len(test_all) // args.blocks)
     _log(f"[plan] テストに使うレース {len(test_all):,} (A と B で同一) を {args.blocks} 区間に分けます")
 
-    rows: List[Dict[str, Any]] = []
+    blocks: List[Tuple[int, List]] = []
     for b in range(args.blocks):
         lo = b * block
         hi = (b + 1) * block if b < args.blocks - 1 else len(test_all)
-        test_pairs = test_all[lo:hi]
-        if not test_pairs:
-            continue
-        first_rid = test_pairs[0][0]
-        train_a = [p for p in pairs_a if p[0] < first_rid]
-        train_b = [p for p in pairs_b if p[0] < first_rid]
-        _log(f"\n[区間 {b+1}/{args.blocks}] テスト {len(test_pairs)} R "
-             f"(train A={len(train_a):,} R / B={len(train_b):,} R)")
-        ra = train_and_eval(train_a, test_pairs, feats_a, np, lgb, args.num_boost, "A いままで")
-        rb = train_and_eval(train_b, test_pairs, feats_b, np, lgb, args.num_boost, "B 10年")
+        tp = test_all[lo:hi]
+        if tp:
+            blocks.append((b + 1, tp))
+
+    # ⚠ features は片方で 380MB 級になるので、A を全部やってから B に移る
+    #   (両方いっぺんに開くとメモリが厳しい)
+    import gc
+    got: Dict[str, Dict[int, Any]] = {"a": {}, "b": {}}
+    for tag, feat_path, pairs_src, label in (
+        ("a", FEAT_A, pairs_a, "A いままで"),
+        ("b", FEAT_B, pairs_b, "B 10年"),
+    ):
+        _log(f"\n########## {label} ##########")
+        feats = json.loads(feat_path.read_text(encoding="utf-8"))
+        for bno, test_pairs in blocks:
+            first_rid = test_pairs[0][0]
+            train = [p for p in pairs_src if p[0] < first_rid]
+            _log(f"\n[区間 {bno}/{len(blocks)}] テスト {len(test_pairs)} R / 学習 {len(train):,} R")
+            r = train_and_eval(train, test_pairs, feats, np, lgb, args.num_boost, label)
+            if r:
+                r["train_races"] = len(train)
+                got[tag][bno] = r
+                _log(f"    AUC {r['auc']:.4f}")
+        del feats
+        gc.collect()
+
+    rows: List[Dict[str, Any]] = []
+    for bno, test_pairs in blocks:
+        ra = got["a"].get(bno)
+        rb = got["b"].get(bno)
         if not ra or not rb:
             continue
-        _log(f"    AUC  A {ra['auc']:.4f}  →  B {rb['auc']:.4f}  (差 {rb['auc']-ra['auc']:+.4f})")
-        rows.append({"block": b + 1, "test_races": len(test_pairs),
-                     "train_races_a": len(train_a), "train_races_b": len(train_b),
+        _log(f"[区間 {bno}] AUC  A {ra['auc']:.4f}  →  B {rb['auc']:.4f}  (差 {rb['auc']-ra['auc']:+.4f})")
+        rows.append({"block": bno, "test_races": len(test_pairs),
+                     "train_races_a": ra["train_races"], "train_races_b": rb["train_races"],
                      "a": ra, "b": rb})
 
     if not rows:
