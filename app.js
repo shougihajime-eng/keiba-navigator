@@ -2796,6 +2796,67 @@
     `;
   }
 
+  // ─── 2026-08-12 新設: 馬柱（各馬の過去5走）────────────────────
+  //   競馬アプリの中核。日付・場・距離馬場・頭数・枠馬番・人気・着順・タイム・上り・
+  //   通過・斤量・騎手・馬体重 を netkeiba 流の順で1行にする。
+  //   ⚠数字を作らない。過去走が無い馬は「新馬」等をそのまま出す。
+  async function renderUmabashira(raceId) {
+    const mount = document.getElementById("md-umabashira");
+    if (!mount) return;
+    mount.innerHTML = `<div style="padding:10px;font-size:12px;opacity:.7">馬柱（各馬の過去5走）を読み込み中…</div>`;
+    let d = null;
+    try { d = await api(`/api/umabashira?raceId=${encodeURIComponent(raceId)}`); } catch (e) { d = null; }
+    if (!d || !d.ok || !Array.isArray(d.rows) || !d.rows.length) {
+      // 黙って消さない。なぜ出ないのかを書く（入口で黙って return しない）
+      const why = d && d.reason === "not_in_index" ? "このレースはまだ索引に入っていません（索引は直近7日ぶん）"
+        : d && d.reason === "no_umabashira" ? "馬柱のデータがまだ作られていません"
+        : "馬柱を読み込めませんでした";
+      mount.innerHTML = `<div style="padding:10px;font-size:12px;opacity:.7">${escapeHtml(why)}</div>`;
+      return;
+    }
+    const esc = (v) => escapeHtml(v == null ? "" : String(v));
+    const cell = (v) => `<td>${esc(v)}</td>`;
+    let h = `<div class="umb-wrap">`;
+    h += `<div class="umb-head">📋 馬柱（各馬の過去5走）</div>`;
+    for (const row of d.rows) {
+      const silk = `silk-${(((parseInt(row.number, 10) || 1) - 1) % 8) + 1}`;
+      h += `<div class="umb-horse">`;
+      h += `<div class="umb-name"><span class="umb-num ${silk}">${esc(row.number)}</span>`
+        + `<b>${esc(row.name)}</b><span class="umb-sex">${esc(row.sexAge || "")}</span>`;
+      if (row.record && row.record.starts) {
+        h += `<span class="umb-rec">[${esc(row.record.win)}-${esc(row.record.second)}-${esc(row.record.third)}-`
+          + `${esc(Math.max(0, (row.record.starts || 0) - (row.record.win || 0) - (row.record.second || 0) - (row.record.third || 0)))}]</span>`;
+      }
+      h += `</div>`;
+      if (!row.runs || !row.runs.length) {
+        h += `<div class="umb-none">${esc(row.historyNote || "過去走なし")}</div></div>`;
+        continue;
+      }
+      h += `<div class="umb-scroll"><table class="umb-tbl"><thead><tr>`
+        + `<th>日付</th><th>場</th><th>距離</th><th>馬場</th><th>頭</th><th>枠</th><th>馬番</th>`
+        + `<th>人気</th><th>着順</th><th>タイム</th><th>上り</th><th>通過</th><th>斤量</th><th>騎手</th><th>馬体重</th>`
+        + `</tr></thead><tbody>`;
+      for (const r2 of row.runs) {
+        const rk = Number(r2.rank);
+        const rkCls = rk === 1 ? "r1" : rk === 2 ? "r2" : rk === 3 ? "r3" : (rk >= 1 && rk <= 5 ? "r5" : "");
+        const dt = String(r2.date || "");
+        h += `<tr>`
+          + cell(dt.length === 8 ? `${dt.slice(4, 6)}/${dt.slice(6, 8)}` : dt)
+          + cell(r2.venue) + cell(r2.courseLabel) + cell(r2.going) + cell(r2.fieldSize)
+          + cell(r2.frame) + cell(r2.number) + cell(r2.popularity)
+          + `<td class="umb-rank ${rkCls}">${esc(r2.rankLabel != null ? r2.rankLabel : r2.rank)}</td>`
+          + cell(r2.time) + cell(r2.last3f) + cell(r2.passing) + cell(r2.weight)
+          + cell(r2.jockey) + cell(r2.bodyLabel)
+          + `</tr>`;
+      }
+      h += `</tbody></table></div></div>`;
+    }
+    h += `<div class="umb-note">※このアプリが持っている中央競馬（2025年5月17日以降）だけの記録です。`
+      + `着差（馬身）は元データに無いので出していません。</div>`;
+    h += `</div>`;
+    mount.innerHTML = h;
+  }
+
   // ─── 詳細モーダル ────────────────────────────────────────
   async function openDetailModal(raceId) {
     if (!raceId) return;
@@ -2999,7 +3060,13 @@
       <button class="btn-cta btn-cta-mute" id="md-record-btn" style="flex:1">+ この内容で記録</button>
     </div>`;
 
+    // 2026-08-12 新設: 馬柱（各馬の過去5走）。
+    //   netkeiba等では出馬表と並ぶ中核なのに、このアプリには全く無かった。
+    //   まず「入れる場所」を作る。中身は下で非同期に読み込む（モーダルの表示を待たせない）。
+    html += `<div id="md-umabashira" style="margin-top:16px"></div>`;
+
     body.innerHTML = html;
+    renderUmabashira(raceId);   // 非同期・失敗しても本体は壊さない
 
     const recBtn = document.getElementById("md-record-btn");
     if (recBtn) {

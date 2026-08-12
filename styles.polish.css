@@ -371,3 +371,41 @@ select:focus-visible, input:focus-visible {
 .form-group .hint  { font-size: 12px !important; }                          /* 補足 11px → 12px */
 /* 入力欄は 16px にすると iPhone で勝手に画面が拡大されない */
 .modal-body input, .modal-body select { font-size: 16px !important; min-height: 44px !important; }
+
+/* ============================================================
+   馬柱（各馬の過去5走） 2026-08-12 新設
+   netkeiba等では出馬表と並ぶ中核。このアプリには全く無かった。
+   ・馬番・馬名の列は固定せず、表ごと横スクロール（スマホの定石）
+   ・着順は 1/2/3着 と 5着以内で色を変える（読む前に強弱が分かる）
+   ・数字は等幅で桁をそろえる
+   ============================================================ */
+.umb-wrap{ margin-top:6px; }
+.umb-head{ font-size:14px; font-weight:800; margin-bottom:8px; color:var(--flame-ink,#B24E00); }
+.umb-horse{ margin-bottom:12px; padding:8px 10px; border-radius:10px;
+  background:rgba(0,0,0,.03); border:1px solid rgba(0,0,0,.08); }
+.umb-name{ display:flex; align-items:center; gap:7px; margin-bottom:6px; flex-wrap:wrap; font-size:14px; }
+.umb-name b{ font-size:15px; }
+.umb-num{ display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:5px; font-size:12.5px; font-weight:800;
+  font-variant-numeric:tabular-nums; border:1px solid rgba(0,0,0,.25); }
+.umb-sex{ font-size:12px; opacity:.75; }
+.umb-rec{ font-size:12px; opacity:.75; font-variant-numeric:tabular-nums; }
+.umb-none{ font-size:12.5px; opacity:.75; padding:2px 0 2px 2px; }
+.umb-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.umb-tbl{ border-collapse:collapse; width:max-content; min-width:100%; font-size:12.5px;
+  font-variant-numeric:tabular-nums; }
+.umb-tbl th{ font-size:12px; font-weight:700; padding:4px 6px; white-space:nowrap;
+  border-bottom:1px solid rgba(0,0,0,.18); opacity:.8; text-align:center; }
+.umb-tbl td{ padding:4px 6px; white-space:nowrap; text-align:center;
+  border-bottom:1px solid rgba(0,0,0,.07); }
+.umb-tbl tbody tr:last-child td{ border-bottom:none; }
+.umb-rank{ font-weight:800; }
+.umb-rank.r1{ color:#B24E00; }            /* 1着 */
+.umb-rank.r2{ color:#1B7A2A; }            /* 2着 */
+.umb-rank.r3{ color:#2A5DA8; }            /* 3着 */
+.umb-rank.r5{ opacity:.85; }              /* 4-5着 */
+.umb-note{ font-size:11.5px; line-height:1.6; opacity:.7; margin-top:4px; }
+@media (max-width:480px){
+  .umb-tbl{ font-size:12px; }
+  .umb-tbl th, .umb-tbl td{ padding:4px 5px; }
+}

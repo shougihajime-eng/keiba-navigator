@@ -109,6 +109,25 @@ module.exports = async (req, res) => {
       if (!r) return ok(res, { ok: false, reason: "no_rankings" });
       return ok(res, r);
     }
+    if (path === "/umabashira") {
+      // 2026-08-12 新設: 馬柱（各馬の過去5走）。netkeiba等の中核なのにこのアプリに無かった。
+      //   ?raceId=<18桁> で、そのレースの出走各馬の過去5走を返す。
+      try {
+        const raceId = firstQuery(req.query && req.query.raceId)
+          || (new URL(req.url, "http://localhost").searchParams.get("raceId"));
+        if (!raceId) return bad(res, 400, { ok: false, reason: "raceId が要ります" });
+        const U = require("../lib/umabashira.js");
+        const fsx = require("fs"), px = require("path");
+        const p = px.join(__dirname, "..", "data", "jv_cache", "umabashira.json");
+        if (!fsx.existsSync(p)) return ok(res, { ok: false, reason: "no_umabashira" });
+        const uma = JSON.parse(fsx.readFileSync(p, "utf8"));
+        const rows = U.rowsForRaceId(uma, String(raceId));
+        if (!rows || !rows.length) return ok(res, { ok: false, reason: "not_in_index" });
+        return ok(res, { ok: true, raceId: String(raceId), columns: uma.columns || U.COLUMNS || [], rows });
+      } catch (e) {
+        return bad(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (path === "/live-stats") {
       // 2026-08-11: 「実際に買っていたらいくらになったか」の本物の成績 + 毎週の学習けっか。
       //   これまで画面には検証(バックテスト)の良い数字しか出しておらず、

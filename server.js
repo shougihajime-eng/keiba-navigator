@@ -108,6 +108,23 @@ async function serve(req, res) {
         return jsonRes(res, 500, { ok: false, error: e.message });
       }
     }
+    if (p === "/api/umabashira") {
+      // 2026-08-12: 馬柱（各馬の過去5走）。⚠ api/[...slug].js 側にも同じ処理が要る
+      try {
+        // ⚠ ここの u は parseReqUrl() が返す {pathname, query} であって URL ではない
+        const raceId = u.query && u.query.raceId;
+        if (!raceId) return jsonRes(res, 400, { ok: false, reason: "raceId が要ります" });
+        const U = require("./lib/umabashira.js");
+        const pth = require("path").join(__dirname, "data", "jv_cache", "umabashira.json");
+        if (!require("fs").existsSync(pth)) return jsonRes(res, 200, { ok: false, reason: "no_umabashira" });
+        const uma = JSON.parse(require("fs").readFileSync(pth, "utf8"));
+        const rows = U.rowsForRaceId(uma, String(raceId));
+        if (!rows || !rows.length) return jsonRes(res, 200, { ok: false, reason: "not_in_index" });
+        return jsonRes(res, 200, { ok: true, raceId: String(raceId), columns: uma.columns || U.COLUMNS || [], rows });
+      } catch (e) {
+        return jsonRes(res, 500, { ok: false, error: e.message });
+      }
+    }
     if (p === "/api/live-stats") {
       // 2026-08-11: 実際に買っていたらいくらになったかの本物の成績 (嘘をつかないための土台)
       try {

@@ -195,9 +195,14 @@ def run_build_all() -> int:
     # 2026-08-11: 600 秒では足りず、8/11 朝の実行がタイムアウトで強制終了していた。
     #   その結果 8/8・8/9 の 72 レースぶんの「結果(着順・払戻)」が取り込まれず、
     #   答え合わせ(検証)のサンプルが 20% 足りない状態になっていた。
-    #   build_all は生データ 9,536 ファイルを毎回ぜんぶ読み直す作りで、
-    #   データが増えるほど遅くなる。当面は上限を伸ばして止まらないようにする。
-    #   🔜 本筋は「処理ずみの生データを飛ばす(差分だけ読む)」ようにすること。
+    #   当面の応急処置として上限を 600→2400 秒に伸ばした。
+    # ✅ 2026-08-12 根治: build_all.py を差分ビルドにした (既定で差分)。
+    #   「どのファイルがどのレースを含むか」の索引を持ち、新しく増えたファイルと
+    #   それが触れたレースを含む古いファイルだけを読む。
+    #   実測: 全読み 45秒 → 差分 7〜8秒 / 何も増えていない時は 1.2秒。
+    #   全部読み直した版と races/results が 1 バイトも変わらないことを実データで確認ずみ。
+    #   ⚠ 索引が無い/壊れているときは自動で全読みに落ちる(安全側)ので、
+    #     2400 秒の上限はそのまま残す。手で全部作り直すときは --full。
     return run_subprocess(
         [py, str(JV_BRIDGE / "build_all.py")],
         "build_all", timeout=2400,
@@ -315,6 +320,28 @@ def run_validate_lightgbm() -> int:
 
 
 # ─── ステップ 4.8: precompute_predictions.js (全レース予想を事前計算) ─────
+def run_umabashira() -> int:
+    """馬柱（各馬の過去5走）の索引を作り直す。
+    data/jv_cache/umabashira.json → /api/umabashira がレース詳細で読む。
+    既定は直近7日ぶん（実測 1秒未満）。安全装置つきで、読めない材料が多いときは
+    書き出さずに終了コード2で止まり、前の良いファイルを残す。
+    """
+    log_line("[step4.85] build_umabashira.cjs (馬柱＝各馬の過去5走)")
+    node_exe = None
+    for cand in ("node", "node.exe"):
+        r = subprocess.run(["where", cand], capture_output=True, text=True)
+        if r.returncode == 0 and r.stdout.strip():
+            node_exe = cand
+            break
+    if not node_exe:
+        log_line("  node が無いのでスキップ")
+        return 0
+    return run_subprocess(
+        [node_exe, str(SCRIPTS / "build_umabashira.cjs")],
+        "build_umabashira", timeout=300,
+    )
+
+
 def run_precompute_predictions() -> int:
     """Node.js で全レースの buildConclusion を 1 回回して
     data/jv_cache/predictions.json に書き出す。
@@ -458,6 +485,8 @@ def main():
                     help="build_all.py をスキップ")
     ap.add_argument("--skip-features", action="store_true",
                     help="aggregate_features.py をスキップ")
+    ap.add_argument("--skip-umabashira", action="store_true",
+                    help="馬柱(各馬の過去5走)の索引づくりをスキップ")
     ap.add_argument("--run-legacy-features", action="store_true",
                     help="古い aggregate_features.py(v1) も走らせる。既定は走らせない "
                          "(v1 は未来の結果が混ざる版で、v2 が後継。2026-08-11 に既定オフ化)")
@@ -562,6 +591,13 @@ def main():
         rc = run_precompute_predictions()
         if rc == -2: timed_out = True
         if rc != 0: overall |= 0x40
+    # ★2026-08-12: 馬柱（各馬の過去5走）の索引を作り直す。
+    #   competition の中核なのに今まで無かった機能。つながないと索引が古いままになる。
+    #   既定は直近7日ぶん・実測 1秒未満。失敗しても本体は止めない (画面側は「まだ索引に無い」と正直に出す)。
+    if not getattr(args, "skip_umabashira", False):
+        rc = run_umabashira()
+        if rc == -2: timed_out = True
+        if rc != 0: overall |= 0x200
     # ★2026-05-30: 実験室 (自己成長する実験モード) を更新
     #   リークなし再学習 (重い・数分) → 12 作戦を紙上ベット採点 → experiment_status.json
     #   これで「使うほど成長する」が自動で回る。Supabase 非依存 (git push のみ)。

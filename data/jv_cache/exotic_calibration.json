@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-11T15:05:47.729Z",
+  "generatedAt": "2026-08-11T23:36:53.880Z",
   "races": 4248,
   "discount": {
     "lam": 0.92,
@@ -79,5 +79,362 @@
       "rate": 0.42424242424242425,
       "nn": 33
     }
-  ]
+  ],
+  "overlay": {
+    "note": "lib/overlay.js 用。全組合せを1点ずつ数えて作ったカーブ。bins は pMid(その帯の平均予想確率)→rate(実測的中率) の節点で、lib/exotic.js の applyCurve が直線でつないで使う。上の wide/trio(1レース1標本)とは標本のとり方が違うので混ぜないこと。",
+    "usage": "EX.pQuinellaCal(winProb,a,b) / EX.pWideCal(winProb,a,b) / EX.pTrioCal(winProb,a,b,c)",
+    "umaren": {
+      "sampleSpace": "レース内の全ペア",
+      "races": 4248,
+      "samples": 381220,
+      "minP": 0.03,
+      "applied": true,
+      "method": "全体倍率",
+      "multiplier": 0.955699,
+      "validation": {
+        "method": "時系列 walk-forward 10回 (毎回それより前だけで較正を作り、未来を採点)",
+        "rangeMinP": 0.03,
+        "none": {
+          "folds": 10,
+          "biasAbsPct": 6.908186,
+          "eceRelPct": 18.072936,
+          "logLoss": 0.240344
+        },
+        "multiplier": {
+          "folds": 10,
+          "biasAbsPct": 4.746644,
+          "eceRelPct": 17.329343,
+          "logLoss": 0.240246
+        },
+        "curve": {
+          "folds": 10,
+          "biasAbsPct": 4.865202,
+          "eceRelPct": 17.405092,
+          "logLoss": 0.240349
+        },
+        "multVsNone": {
+          "biasImprovePt": 2.161541,
+          "biasT": 2.219509,
+          "eceImprovePt": 0.743594,
+          "eceT": 2.86154
+        },
+        "curveVsNone": {
+          "biasImprovePt": 2.042984,
+          "biasT": 2.035464,
+          "eceImprovePt": 0.667845,
+          "eceT": 1.08135
+        }
+      },
+      "bins": [
+        {
+          "pMid": 0.1,
+          "rate": 0.09557
+        }
+      ],
+      "diagnosticBins": [
+        {
+          "pMax": 0.002,
+          "pMid": 0.000647,
+          "rate": 0.000757,
+          "nn": 186297
+        },
+        {
+          "pMax": 0.005,
+          "pMid": 0.003256,
+          "rate": 0.003247,
+          "nn": 64360
+        },
+        {
+          "pMax": 0.01,
+          "pMid": 0.007144,
+          "rate": 0.008237,
+          "nn": 43221
+        },
+        {
+          "pMax": 0.02,
+          "pMid": 0.014207,
+          "rate": 0.014662,
+          "nn": 35057
+        },
+        {
+          "pMax": 0.03,
+          "pMid": 0.024521,
+          "rate": 0.025955,
+          "nn": 16182
+        },
+        {
+          "pMax": 0.05,
+          "pMid": 0.038552,
+          "rate": 0.037551,
+          "nn": 15632
+        },
+        {
+          "pMax": 0.07,
+          "pMid": 0.058889,
+          "rate": 0.053925,
+          "nn": 7529
+        },
+        {
+          "pMax": 0.1,
+          "pMid": 0.083043,
+          "rate": 0.079433,
+          "nn": 5640
+        },
+        {
+          "pMax": 0.14,
+          "pMid": 0.117209,
+          "rate": 0.107093,
+          "nn": 3595
+        },
+        {
+          "pMax": 0.2,
+          "pMid": 0.165593,
+          "rate": 0.156104,
+          "nn": 2146
+        },
+        {
+          "pMax": 0.28,
+          "pMid": 0.23167,
+          "rate": 0.239212,
+          "nn": 1066
+        },
+        {
+          "pMax": 1,
+          "pMid": 0.355906,
+          "rate": 0.359596,
+          "nn": 495
+        }
+      ]
+    },
+    "wide": {
+      "sampleSpace": "レース内の全ペア",
+      "races": 4248,
+      "samples": 381220,
+      "minP": 0.03,
+      "applied": false,
+      "method": "なし",
+      "reason": "未来ぶんの採点で良くならなかったので較正しない (mult: ズレ改善 0.66pt / ビン別改善 -0.78pt (t=-2.64) ／ curve: ズレ改善 0.66pt / ビン別改善 -1.47pt (t=-3.19))",
+      "validation": {
+        "method": "時系列 walk-forward 10回 (毎回それより前だけで較正を作り、未来を採点)",
+        "rangeMinP": 0.03,
+        "none": {
+          "folds": 10,
+          "biasAbsPct": 3.772515,
+          "eceRelPct": 11.733449,
+          "logLoss": 0.288589
+        },
+        "multiplier": {
+          "folds": 10,
+          "biasAbsPct": 3.114386,
+          "eceRelPct": 12.510258,
+          "logLoss": 0.288605
+        },
+        "curve": {
+          "folds": 10,
+          "biasAbsPct": 3.116461,
+          "eceRelPct": 13.202129,
+          "logLoss": 0.288745
+        },
+        "multVsNone": {
+          "biasImprovePt": 0.658129,
+          "biasT": 0.940069,
+          "eceImprovePt": -0.776809,
+          "eceT": -2.641665
+        },
+        "curveVsNone": {
+          "biasImprovePt": 0.656054,
+          "biasT": 0.952788,
+          "eceImprovePt": -1.46868,
+          "eceT": -3.192546
+        }
+      },
+      "bins": null,
+      "diagnosticBins": [
+        {
+          "pMax": 0.005,
+          "pMid": 0.002119,
+          "rate": 0.001495,
+          "nn": 122406
+        },
+        {
+          "pMax": 0.01,
+          "pMid": 0.007264,
+          "rate": 0.005647,
+          "nn": 57733
+        },
+        {
+          "pMax": 0.02,
+          "pMid": 0.014392,
+          "rate": 0.013383,
+          "nn": 60896
+        },
+        {
+          "pMax": 0.04,
+          "pMid": 0.028523,
+          "rate": 0.0284,
+          "nn": 54437
+        },
+        {
+          "pMax": 0.07,
+          "pMid": 0.052911,
+          "rate": 0.05463,
+          "nn": 35109
+        },
+        {
+          "pMax": 0.1,
+          "pMid": 0.083577,
+          "rate": 0.086571,
+          "nn": 17477
+        },
+        {
+          "pMax": 0.15,
+          "pMid": 0.121892,
+          "rate": 0.123043,
+          "nn": 15011
+        },
+        {
+          "pMax": 0.2,
+          "pMid": 0.172247,
+          "rate": 0.172537,
+          "nn": 7581
+        },
+        {
+          "pMax": 0.28,
+          "pMid": 0.234538,
+          "rate": 0.233495,
+          "nn": 5756
+        },
+        {
+          "pMax": 0.38,
+          "pMid": 0.321731,
+          "rate": 0.328961,
+          "nn": 2973
+        },
+        {
+          "pMax": 0.5,
+          "pMid": 0.428469,
+          "rate": 0.42901,
+          "nn": 1303
+        },
+        {
+          "pMax": 1,
+          "pMid": 0.590041,
+          "rate": 0.613383,
+          "nn": 538
+        }
+      ]
+    },
+    "trio": {
+      "sampleSpace": "レース内の全3頭の組合せ",
+      "races": 4248,
+      "samples": 1619591,
+      "minP": 0.03,
+      "applied": false,
+      "method": "なし",
+      "reason": "未来ぶんの採点で良くならなかったので較正しない (mult: ズレ改善 0.51pt / ビン別改善 -1.56pt (t=-1.84) ／ curve: ズレ改善 0.37pt / ビン別改善 -0.76pt (t=-2.05))",
+      "validation": {
+        "method": "時系列 walk-forward 10回 (毎回それより前だけで較正を作り、未来を採点)",
+        "rangeMinP": 0.03,
+        "none": {
+          "folds": 10,
+          "biasAbsPct": 12.916305,
+          "eceRelPct": 19.496618,
+          "logLoss": 0.22012
+        },
+        "multiplier": {
+          "folds": 10,
+          "biasAbsPct": 12.405806,
+          "eceRelPct": 21.061195,
+          "logLoss": 0.220076
+        },
+        "curve": {
+          "folds": 10,
+          "biasAbsPct": 12.541939,
+          "eceRelPct": 20.261228,
+          "logLoss": 0.220039
+        },
+        "multVsNone": {
+          "biasImprovePt": 0.510499,
+          "biasT": 0.345608,
+          "eceImprovePt": -1.564576,
+          "eceT": -1.840587
+        },
+        "curveVsNone": {
+          "biasImprovePt": 0.374367,
+          "biasT": 0.280712,
+          "eceImprovePt": -0.76461,
+          "eceT": -2.047909
+        }
+      },
+      "bins": null,
+      "diagnosticBins": [
+        {
+          "pMax": 0.0005,
+          "pMid": 0.00014,
+          "rate": 0.000113,
+          "nn": 901519
+        },
+        {
+          "pMax": 0.001,
+          "pMid": 0.000719,
+          "rate": 0.000616,
+          "nn": 189863
+        },
+        {
+          "pMax": 0.002,
+          "pMid": 0.00143,
+          "rate": 0.001242,
+          "nn": 170677
+        },
+        {
+          "pMax": 0.005,
+          "pMid": 0.00318,
+          "rate": 0.003185,
+          "nn": 174905
+        },
+        {
+          "pMax": 0.01,
+          "pMid": 0.007032,
+          "rate": 0.007127,
+          "nn": 87419
+        },
+        {
+          "pMax": 0.02,
+          "pMid": 0.013928,
+          "rate": 0.013787,
+          "nn": 53165
+        },
+        {
+          "pMax": 0.035,
+          "pMid": 0.02604,
+          "rate": 0.025879,
+          "nn": 23494
+        },
+        {
+          "pMax": 0.06,
+          "pMid": 0.044854,
+          "rate": 0.045973,
+          "nn": 11485
+        },
+        {
+          "pMax": 0.1,
+          "pMid": 0.075486,
+          "rate": 0.07356,
+          "nn": 4758
+        },
+        {
+          "pMax": 0.16,
+          "pMid": 0.122816,
+          "rate": 0.131486,
+          "nn": 1696
+        },
+        {
+          "pMax": 1,
+          "pMid": 0.222024,
+          "rate": 0.257377,
+          "nn": 610
+        }
+      ]
+    }
+  }
 }
