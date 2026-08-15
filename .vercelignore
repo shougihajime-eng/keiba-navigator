@@ -99,6 +99,9 @@ catboost_info/
 # ⚠ .gitignore にも同じ2行が必要 (片方だけだと本番に届かない)
 !data/jv_cache/strategy_live_stats.json
 !data/jv_cache/umami_status.json
+# 説明文で使う「当たり前の数字」(1番人気の勝率など)。2026-08-13 新設。
+# ⚠ .gitignore にも同じ行が要る。片方だけだと「手元では出るのに本番では出ない」。
+!data/jv_cache/basic_facts.json
 # 2026-08-12: JRAの払戻率が上がる日 (ウルトラ85%/スーパー80%/プレミアム/プラス10)
 # scripts/jra_premium_days.mjs が JRA公式から取ってくる。画面で「今日は得な日」を出す用。
 # ⚠ .gitignore にも同じ行が必要 (片方だけだと本番に届かない)
@@ -129,3 +132,30 @@ data/jv_cache/fetch_diff.lock
 # 2026-08-12: 血統データ取り込みの一時ログ（作業のあと・git に入れない）
 jv_bridge/_setup_*.txt
 jv_bridge/setup_fetch.log
+
+# 🚨🚨 2026-08-16: 内部メモと取得コードが、本番から丸ごと読める状態だった（実測して確認）
+#   vercel.json が outputDirectory:"." なので、フォルダに置いたファイルは
+#   そのまま全部インターネットに配られる。実際に誰でも開けたもの＝
+#     https://keiba-navigator.vercel.app/CLAUDE.md              200 / 291KB
+#     https://keiba-navigator.vercel.app/QUICK_START.md         200
+#     https://keiba-navigator.vercel.app/BUG_AUDIT_RESULT.md    200
+#     https://keiba-navigator.vercel.app/scripts/self_heal_prompt.md  200
+#     https://keiba-navigator.vercel.app/jv_bridge/jv_fetch.py  200
+#   🚨 CLAUDE.md の中には **JRA-VAN の利用キー**（月2,090円の契約・パソコン1台に1本）が
+#      書いてある。他人に登録されると本人が使えなくなる＝お金と契約に直結する。
+#   ⚠ 除外する前に「本番の api/ と server.js がこれらを1つも読んでいない」ことを
+#      grep で確認した（読んでいたら本番が壊れる）。
+#   ⚠ 仕様書PDF (_jvdata_spec.pdf など) は 404 ＝ もともと git に入っておらず無事だった。
+#   ⚠ **この設定を書いただけでは、本番からは消えない。**
+#      いま本番に出ているファイルを消すには、1回だけ公開（デプロイ）が要る。
+#      本人の「もう公開しないで」に触れるので、判断をあおいでから実行する。
+#   ＝ memory [[claude-md-was-public-on-3-sites]] とまったく同じ事故。
+#      そのとき3サイトは直したが、競馬だけ取り残されていた。
+*.md
+jv_bridge/
+scripts/
+tests/
+logs/
+catboost_info/
+scratchpad/
+.claude/
